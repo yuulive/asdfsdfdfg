@@ -1,6 +1,7 @@
-use crate::polynomial::Poly;
+use crate::polynomial::{Eval, Poly};
 
 use nalgebra::DVector;
+use num_complex::Complex64;
 
 pub struct Tf {
     num: Poly,
@@ -26,5 +27,11 @@ impl Tf {
 
     pub fn zeros(&self) -> DVector<f64> {
         self.num.roots()
+    }
+}
+
+impl Eval<Complex64> for Tf {
+    fn eval(&self, s: Complex64) -> Complex64 {
+        self.num.eval(s) / self.den.eval(s)
     }
 }

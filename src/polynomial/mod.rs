@@ -96,7 +96,7 @@ impl Poly {
 }
 
 /// Trait for the implementation of polynomial evaluation
-trait Eval<T> {
+pub trait Eval<T> {
     /// Evaluate the polynomial at the value x
     ///
     /// # Arguments
