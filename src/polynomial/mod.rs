@@ -4,24 +4,45 @@ use nalgebra::{DMatrix, DVector, Schur, VectorN};
 use num_complex::{Complex, Complex64};
 use num_traits::{Float, Num, Zero};
 
+/// Polynomial object
+///
+/// Contains the vector of coefficients form the lowest to the higher degree
+///
+/// p(x) = c0 + c1*x + c2*x^2 + ...
 #[derive(Debug, PartialEq, Clone)]
 struct Poly {
     coeffs: Vec<f64>,
 }
 
+/// Implementation methods for Poly struct
 impl Poly {
+    /// Create a new polynomial given a slice of real coefficients.
+    ///
+    /// # Arguments
+    ///
+    /// * `coeffs` - slice of coefficients
     fn new_from_coeffs(coeffs: &[f64]) -> Self {
         Poly {
             coeffs: Poly::trim(coeffs).into(),
         }
     }
 
+    /// Create a new polynomial given a slice of real roots
+    ///
+    /// # Arguments
+    ///
+    /// * `roots` - slice of roots
     fn new_from_roots(roots: &[f64]) -> Self {
         roots.iter().fold(Poly::new_from_coeffs(&[1.]), |acc, &r| {
             acc * Poly::new_from_coeffs(&[-r, 1.])
         })
     }
 
+    /// Trim the zeros coefficients of high degree terms
+    ///
+    /// # Arguments
+    ///
+    /// * `coeffs` - slice of coefficients
     fn trim(coeffs: &[f64]) -> &[f64] {
         if let Some(p) = coeffs.iter().rposition(|&c| c != 0.0) {
             &coeffs[..=p]
@@ -33,6 +54,7 @@ impl Poly {
         }
     }
 
+    /// Degree of the polynomial
     fn degree(&self) -> usize {
         if self.coeffs.is_empty() {
             0
@@ -41,10 +63,14 @@ impl Poly {
         }
     }
 
+    /// Vector of the polynomial's coefficients
     fn coeffs(&self) -> Vec<f64> {
         self.coeffs.clone()
     }
 
+    /// Build the companion matrix of the polynomial.
+    ///
+    /// Subdiagonal terms are 1., rightmost column contains the coefficients
     fn companion(&self) -> DMatrix<f64> {
         let length = self.degree();
         let hi_coeff = self.coeffs[length];
@@ -59,14 +85,22 @@ impl Poly {
         })
     }
 
+    /// Find the roots of the polynomial
     fn roots(&self) -> DVector<f64> {
+        // Build the companion matrix
         let comp = self.companion();
         let schur = Schur::new(comp);
         schur.eigenvalues().unwrap()
     }
 }
 
+/// Trait for the implementation of polynomial evaluation
 trait Eval<T> {
+    /// Evaluate the polynomial at the value x
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - Value at which the polynomial is evaluated
     fn eval(&self, x: T) -> T;
 }
 
@@ -85,10 +119,12 @@ impl Eval<f64> for Poly {
     }
 }
 
+/// Implementation of polynomial addition
 impl Add for Poly {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
+        // Check which polynomial has the highest degree
         let new_coeffs = if self.degree() < other.degree() {
             let mut res = other.coeffs.to_vec();
             for (i, c) in self.coeffs.iter().enumerate() {
@@ -108,19 +144,23 @@ impl Add for Poly {
     }
 }
 
+/// Implementation of polynomial subtraction
 impl Sub for Poly {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
+        // Just multiply 'other' by -1 and use addition.
         let sub_p: Vec<_> = other.coeffs.iter().map(|&c| -c).collect();
         self.add(Poly::new_from_coeffs(&sub_p))
     }
 }
 
+/// Implementation of polynomial multiplication
 impl Mul for Poly {
     type Output = Poly;
 
     fn mul(self, other: Self) -> Self {
+        // Polynomial multiplication is implemented as discrete convolution.
         let new_degree = self.degree() + other.degree();
         let mut new_coeffs: Vec<f64> = vec![0.; new_degree + 1];
         for i in 0..=self.degree() {
@@ -141,6 +181,13 @@ impl Mul for Poly {
 // {
 //     left.zip(right).map(move |(l, r)| combo(l, r))
 // }
+/// Zip two slices with the given function
+///
+/// # Arguments
+///
+/// * `left` - first slice to zip
+/// * `right` - second slice to zip
+/// * `f` - function used to zip the two lists
 fn zip_with<T, F>(left: &[T], right: &[T], mut f: F) -> Vec<T>
 where
     F: FnMut(&T, &T) -> T,
