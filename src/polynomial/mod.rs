@@ -184,11 +184,21 @@ impl fmt::Display for Poly {
             return write!(f, "{}", self.coeffs[0]);
         }
         let mut s = String::new();
-        for (i, c) in self.coeffs.iter().skip(1).enumerate() {
+        let mut sep = "";
+        for (i, c) in self.coeffs.iter().enumerate() {
+            if *c == 0.0 {
+                continue;
+            }
+            s.push_str(sep);
+            let sign = if c.signum() == 1.0 { "+" } else { "" };
             if i == 0 {
                 s.push_str(&format!("{}", c));
+            } else if i == 1 {
+                s.push_str(&format!("{}{}*s", sign, c));
+            } else {
+                s.push_str(&format!("{}{}*s^{}", sign, c, i));
             }
-            s.push_str(&format!("{}*s^{}", c, i));
+            sep = " ";
         }
 
         write!(f, "{}", s)
