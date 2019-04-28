@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::{Add, Mul, Sub};
 
 use nalgebra::{DMatrix, DVector, Schur};
@@ -172,6 +173,25 @@ impl Mul for Poly {
             }
         }
         Poly::new_from_coeffs(&new_coeffs)
+    }
+}
+
+impl fmt::Display for Poly {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.coeffs.is_empty() {
+            return write!(f, "0");
+        } else if self.degree() == 0 {
+            return write!(f, "{}", self.coeffs[0]);
+        }
+        let mut s = String::new();
+        for (i, c) in self.coeffs.iter().skip(1).enumerate() {
+            if i == 0 {
+                s.push_str(&format!("{}", c));
+            }
+            s.push_str(&format!("{}*s^{}", c, i));
+        }
+
+        write!(f, "{}", s)
     }
 }
 
