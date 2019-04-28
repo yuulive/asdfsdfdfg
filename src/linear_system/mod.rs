@@ -58,7 +58,7 @@ impl Ss {
     /// * `u` - Input vector
     pub fn equilibrium(&self, u: &[f64]) -> Option<Equilibrium> {
         let u = DMatrix::from_row_slice(u.len(), 1, u);
-        let inv_a = &self.a.clone().try_inverse().unwrap();
+        let inv_a = &self.a.clone().try_inverse()?;
         let x = inv_a * &self.b * &u;
         let y = (-&self.c * inv_a * &self.b + &self.d) * u;
         Some(Equilibrium::new(x, y))
