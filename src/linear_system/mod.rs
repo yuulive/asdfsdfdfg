@@ -9,6 +9,10 @@ pub struct Ss {
 }
 
 impl Ss {
+    pub fn new(a: DMatrix<f64>, b: DMatrix<f64>, c: DMatrix<f64>, d: DMatrix<f64>) -> Self {
+        Ss { a, b, c, d }
+    }
+
     pub fn a(&self) -> DMatrix<f64> {
         self.a.clone()
     }
