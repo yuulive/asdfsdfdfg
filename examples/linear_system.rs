@@ -14,4 +14,7 @@ fn main() {
 
     println!("{}", &sys);
     println!("poles: {}", poles);
+
+    let eq = sys.equilibrium(&[0.]);
+    println!("{}", eq.unwrap());
 }
