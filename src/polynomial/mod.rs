@@ -1,5 +1,6 @@
 use std::ops::{Add, Mul, Sub};
 
+use nalgebra::{DMatrix, DVector, Schur, VectorN};
 use num_complex::{Complex, Complex64};
 use num_traits::{Float, Num, Zero};
 
@@ -42,6 +43,26 @@ impl Poly {
 
     fn coeffs(&self) -> Vec<f64> {
         self.coeffs.clone()
+    }
+
+    fn companion(&self) -> DMatrix<f64> {
+        let length = self.degree();
+        let hi_coeff = self.coeffs[length];
+        DMatrix::from_fn(length, length, |i, j| {
+            if j == length - 1 {
+                -self.coeffs[i] / hi_coeff
+            } else if i == j + 1 {
+                1.
+            } else {
+                0.
+            }
+        })
+    }
+
+    fn roots(&self) -> DVector<f64> {
+        let comp = self.companion();
+        let schur = Schur::new(comp);
+        schur.eigenvalues().unwrap()
     }
 }
 
@@ -185,6 +206,19 @@ mod tests {
             Poly::new_from_coeffs(&[4., 4., 1.]),
             Poly::new_from_roots(&[-2., -2.])
         );
+
+        assert!(
+            (DVector::from_element(2, -2.) - Poly::new_from_roots(&[-2., -2.]).roots())
+                .abs()
+                .iter()
+                .all(|&x| x < 0.000001)
+        );
+
+        assert!((DVector::from_column_slice(&[1., 2., 3.])
+            - Poly::new_from_roots(&[1., 2., 3.]).roots())
+        .abs()
+        .iter()
+        .all(|&x| x < 0.000001));
 
         assert_eq!(
             Poly::new_from_coeffs(&[0., -2., 1., 1.]),
