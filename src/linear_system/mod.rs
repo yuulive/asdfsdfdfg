@@ -26,7 +26,7 @@ impl Ss {
         self.d.clone()
     }
 
-    pub fn poles(self) -> DVector<Complex64> {
-        Schur::new(self.a).complex_eigenvalues()
+    pub fn poles(&self) -> DVector<Complex64> {
+        Schur::new(self.a.clone()).complex_eigenvalues()
     }
 }
