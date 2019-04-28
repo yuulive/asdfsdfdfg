@@ -1,8 +1,8 @@
 use std::ops::{Add, Mul, Sub};
 
-use nalgebra::{DMatrix, DVector, Schur, VectorN};
+use nalgebra::{DMatrix, DVector, Schur};
 use num_complex::{Complex, Complex64};
-use num_traits::{Float, Num, Zero};
+use num_traits::Zero;
 
 /// Polynomial object
 ///
@@ -10,7 +10,7 @@ use num_traits::{Float, Num, Zero};
 ///
 /// p(x) = c0 + c1*x + c2*x^2 + ...
 #[derive(Debug, PartialEq, Clone)]
-struct Poly {
+pub struct Poly {
     coeffs: Vec<f64>,
 }
 
@@ -21,7 +21,7 @@ impl Poly {
     /// # Arguments
     ///
     /// * `coeffs` - slice of coefficients
-    fn new_from_coeffs(coeffs: &[f64]) -> Self {
+    pub fn new_from_coeffs(coeffs: &[f64]) -> Self {
         Poly {
             coeffs: Poly::trim(coeffs).into(),
         }
@@ -32,7 +32,7 @@ impl Poly {
     /// # Arguments
     ///
     /// * `roots` - slice of roots
-    fn new_from_roots(roots: &[f64]) -> Self {
+    pub fn new_from_roots(roots: &[f64]) -> Self {
         roots.iter().fold(Poly::new_from_coeffs(&[1.]), |acc, &r| {
             acc * Poly::new_from_coeffs(&[-r, 1.])
         })
@@ -55,7 +55,7 @@ impl Poly {
     }
 
     /// Degree of the polynomial
-    fn degree(&self) -> usize {
+    pub fn degree(&self) -> usize {
         if self.coeffs.is_empty() {
             0
         } else {
@@ -64,14 +64,14 @@ impl Poly {
     }
 
     /// Vector of the polynomial's coefficients
-    fn coeffs(&self) -> Vec<f64> {
+    pub fn coeffs(&self) -> Vec<f64> {
         self.coeffs.clone()
     }
 
     /// Build the companion matrix of the polynomial.
     ///
     /// Subdiagonal terms are 1., rightmost column contains the coefficients
-    fn companion(&self) -> DMatrix<f64> {
+    pub fn companion(&self) -> DMatrix<f64> {
         let length = self.degree();
         let hi_coeff = self.coeffs[length];
         DMatrix::from_fn(length, length, |i, j| {
@@ -86,7 +86,7 @@ impl Poly {
     }
 
     /// Find the roots of the polynomial
-    fn roots(&self) -> DVector<f64> {
+    pub fn roots(&self) -> DVector<f64> {
         // Build the companion matrix
         let comp = self.companion();
         let schur = Schur::new(comp);

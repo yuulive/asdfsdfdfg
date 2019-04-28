@@ -1,4 +1,4 @@
-mod polynomial;
+pub mod polynomial;
 
 #[cfg(test)]
 mod tests {
