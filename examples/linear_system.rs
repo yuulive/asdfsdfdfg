@@ -12,9 +12,6 @@ fn main() {
     let sys = Ss::new(a, b, c, d);
     let poles = sys.poles();
 
-    println!("A: {}", &sys.a());
-    println!("B: {}", &sys.b());
-    println!("C: {}", &sys.c());
-    println!("D: {}", &sys.d());
+    println!("{}", &sys);
     println!("poles: {}", poles);
 }
