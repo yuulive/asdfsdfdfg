@@ -159,6 +159,7 @@ impl Sub for Poly {
 impl Mul for Poly {
     type Output = Poly;
 
+    #[allow(clippy::suspicious_arithmetic_impl)]
     fn mul(self, other: Self) -> Self {
         // Polynomial multiplication is implemented as discrete convolution.
         let new_degree = self.degree() + other.degree();
