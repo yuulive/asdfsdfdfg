@@ -1,4 +1,5 @@
 pub mod polynomial;
+pub mod linear_system;
 
 #[cfg(test)]
 mod tests {
