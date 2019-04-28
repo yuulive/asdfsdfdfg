@@ -1,5 +1,6 @@
-pub mod polynomial;
 pub mod linear_system;
+pub mod polynomial;
+pub mod transfer_function;
 
 #[cfg(test)]
 mod tests {
