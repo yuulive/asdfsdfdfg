@@ -3,6 +3,9 @@ use crate::polynomial::{Eval, Poly};
 use nalgebra::DVector;
 use num_complex::Complex64;
 
+use std::fmt;
+
+#[derive(Debug)]
 pub struct Tf {
     num: Poly,
     den: Poly,
@@ -33,5 +36,17 @@ impl Tf {
 impl Eval<Complex64> for Tf {
     fn eval(&self, s: Complex64) -> Complex64 {
         self.num.eval(s) / self.den.eval(s)
+    }
+}
+
+impl fmt::Display for Tf {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s_num = self.num.to_string();
+        let s_den = self.den.to_string();
+
+        let length = s_num.len().max(s_den.len());
+        let dash = "─".repeat(length);
+
+        write!(f, "{}\n{}\n{}", s_num, dash, s_den)
     }
 }
