@@ -1,3 +1,5 @@
+use crate::polynomial::Poly;
+
 use nalgebra::{DMatrix, DVector, Schur};
 use num_complex::Complex64;
 
@@ -63,6 +65,41 @@ impl Ss {
         let y = (-&self.c * inv_a * &self.b + &self.d) * u;
         Some(Equilibrium::new(x, y))
     }
+}
+
+/// Faddeev–LeVerrier algorithm
+///
+/// (https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm)
+///
+/// B(s) =       B1*s^(n-1) + B2*s^(n-2) + B3*s^(n-3) + ...
+/// a(s) = s^n + a1*s^(n-1) + a2*s^(n-2) + a3*s^(n-3) + ...
+///
+/// with B1 = I = eye(n,n)
+/// a1 = -trace(A); ak = -1/k * trace(A*Bk)
+/// Bk = a_(k-1)I* + A*B_(k-1)
+pub fn leverrier(A: &DMatrix<f64>) -> (Poly, Vec<DMatrix<f64>>) {
+    let size = A.nrows(); // A is a square matrix.
+    let mut a = vec![1.0];
+    let a1 = -A.trace();
+    a.insert(0, a1);
+
+    let B1 = DMatrix::identity(size, size); // eye(n,n)
+    let mut B = vec![B1.clone()];
+    if size == 1 {
+        return (Poly::new_from_coeffs(&a), B);
+    }
+
+    let mut Bk = B1.clone();
+    let mut ak = a1;
+    for k in 2..=size {
+        Bk = ak * &B1 + A * &Bk;
+        B.insert(0, Bk.clone());
+
+        let ABk = A * &Bk;
+        ak = -f64::from(k as u32).recip() * &ABk.trace();
+        a.insert(0, ak);
+    }
+    (Poly::new_from_coeffs(&a), B)
 }
 
 impl fmt::Display for Ss {

@@ -1,6 +1,6 @@
 extern crate automatica;
 
-use automatica::linear_system::Ss;
+use automatica::linear_system::{self, Ss};
 use nalgebra::DMatrix;
 
 fn main() {
@@ -17,4 +17,8 @@ fn main() {
 
     let eq = sys.equilibrium(&[0.]);
     println!("{}", eq.unwrap());
+
+    let a = DMatrix::from_row_slice(3,3,&[3.,1.,5.,3.,3.,1.,4.,6.,4.]);
+    let (p, B) = linear_system::leverrier(&a);
+    println!("A: {}\np: {}\nB: {:?}", &a, &p, &B);
 }
