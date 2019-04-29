@@ -121,7 +121,7 @@ impl Eval<f64> for Poly {
 }
 
 /// Implementation of polynomial addition
-impl Add for Poly {
+impl Add<Poly> for Poly {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
@@ -140,6 +140,36 @@ impl Add for Poly {
             res
         } else {
             zip_with(&self.coeffs, &other.coeffs, |l, r| l + r)
+        };
+        Poly::new_from_coeffs(&new_coeffs)
+    }
+}
+
+impl Add<f64> for Poly {
+    type Output = Self;
+
+    fn add(self, other: f64) -> Self {
+        let new_coeffs = if self.coeffs.is_empty() {
+            vec![other]
+        } else {
+            let mut res = self.coeffs.to_owned();
+            res[0] += other;
+            res
+        };
+        Poly::new_from_coeffs(&new_coeffs)
+    }
+}
+
+impl Add<Poly> for f64 {
+    type Output = Poly;
+
+    fn add(self, other: Poly) -> Poly {
+        let new_coeffs = if other.coeffs.is_empty() {
+            vec![self]
+        } else {
+            let mut res = other.coeffs.to_owned();
+            res[0] += self;
+            res
         };
         Poly::new_from_coeffs(&new_coeffs)
     }

@@ -11,4 +11,6 @@ fn main() {
 
     let p3 = Poly::new_from_roots(&[1., -2., 3.]);
     println!("{}", p3);
+
+    println!("{}", 2. + p3 + 2.);
 }
