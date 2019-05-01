@@ -1,7 +1,7 @@
 use crate::Eval;
 
 use std::fmt;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Index, IndexMut, Mul, Sub};
 
 use nalgebra::{DMatrix, DVector, Schur};
 use num_complex::{Complex, Complex64};
@@ -114,6 +114,30 @@ impl Eval<Complex64> for Poly {
 impl Eval<f64> for Poly {
     fn eval(&self, x: f64) -> f64 {
         self.coeffs.iter().rev().fold(0.0, |acc, &c| acc * x + c)
+    }
+}
+
+/// Implement read only indexing of polynomial returning its coefficients.
+///
+/// # Panics
+///
+/// Panics for out of bounds access.
+impl Index<usize> for Poly {
+    type Output = f64;
+
+    fn index(&self, i: usize) -> &f64 {
+        &self.coeffs[i]
+    }
+}
+
+/// Implement mutable indexing of polynomial returning its coefficients.
+///
+/// # Panics
+///
+/// Panics for out of bounds access.
+impl IndexMut<usize> for Poly {
+    fn index_mut(&mut self, i: usize) -> &mut f64 {
+        &mut self.coeffs[i]
     }
 }
 
@@ -424,5 +448,14 @@ mod tests {
             Poly::new_from_coeffs(&[-3., 0., -3.]),
             Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::new_from_coeffs(&[-3.])
         );
+    }
+
+    #[test]
+    fn indexing_test() {
+        assert_eq!(3., Poly::new_from_coeffs(&[1., 3.])[1]);
+
+        let mut p = Poly::new_from_roots(&[1., 4., 5.]);
+        p[2] = 3.;
+        assert_eq!(Poly::new_from_coeffs(&[-20., 29., 3., 1.]), p);
     }
 }
