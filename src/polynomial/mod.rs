@@ -1,7 +1,7 @@
 use crate::Eval;
 
 use std::fmt;
-use std::ops::{Add, Index, IndexMut, Mul, Sub};
+use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
 
 use nalgebra::{DMatrix, DVector, Schur};
 use num_complex::{Complex, Complex64};
@@ -154,22 +154,22 @@ impl IndexMut<usize> for Poly {
 impl Add<Poly> for Poly {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self {
+    fn add(self, rhs: Self) -> Self {
         // Check which polynomial has the highest degree
-        let new_coeffs = if self.degree() < other.degree() {
-            let mut res = other.coeffs.to_vec();
+        let new_coeffs = if self.degree() < rhs.degree() {
+            let mut res = rhs.coeffs.to_vec();
             for (i, c) in self.coeffs.iter().enumerate() {
                 res[i] += c;
             }
             res
-        } else if other.degree() < self.degree() {
+        } else if rhs.degree() < self.degree() {
             let mut res = self.coeffs.to_owned();
-            for (i, c) in other.coeffs.iter().enumerate() {
+            for (i, c) in rhs.coeffs.iter().enumerate() {
                 res[i] += c;
             }
             res
         } else {
-            zip_with(&self.coeffs, &other.coeffs, |l, r| l + r)
+            zip_with(&self.coeffs, &rhs.coeffs, |l, r| l + r)
         };
         Poly::new_from_coeffs(&new_coeffs)
     }
@@ -179,15 +179,10 @@ impl Add<Poly> for Poly {
 impl Add<f64> for Poly {
     type Output = Self;
 
-    fn add(self, other: f64) -> Self {
-        let new_coeffs = if self.coeffs.is_empty() {
-            vec![other]
-        } else {
-            let mut res = self.coeffs.to_owned();
-            res[0] += other;
-            res
-        };
-        Poly::new_from_coeffs(&new_coeffs)
+    fn add(self, rhs: f64) -> Self {
+        let mut res = self.coeffs.to_owned();
+        res[0] += rhs;
+        Poly::new_from_coeffs(&res)
     }
 }
 
@@ -195,15 +190,8 @@ impl Add<f64> for Poly {
 impl Add<Poly> for f64 {
     type Output = Poly;
 
-    fn add(self, other: Poly) -> Poly {
-        let new_coeffs = if other.coeffs.is_empty() {
-            vec![self]
-        } else {
-            let mut res = other.coeffs.to_owned();
-            res[0] += self;
-            res
-        };
-        Poly::new_from_coeffs(&new_coeffs)
+    fn add(self, rhs: Poly) -> Poly {
+        rhs + self
     }
 }
 
@@ -211,30 +199,81 @@ impl Add<Poly> for f64 {
 impl Sub for Poly {
     type Output = Self;
 
-    fn sub(self, other: Self) -> Self {
-        // Just multiply 'other' by -1 and use addition.
-        let sub_p: Vec<_> = other.coeffs.iter().map(|&c| -c).collect();
+    fn sub(self, rhs: Self) -> Self {
+        // Just multiply 'rhs' by -1 and use addition.
+        let sub_p: Vec<_> = rhs.coeffs.iter().map(|&c| -c).collect();
         self.add(Poly::new_from_coeffs(&sub_p))
+    }
+}
+
+/// Implementation of polynomial and float subtraction
+impl Sub<f64> for Poly {
+    type Output = Self;
+
+    fn sub(self, rhs: f64) -> Self {
+        let mut res = self.coeffs.to_owned();
+        res[0] -= rhs;
+        Poly::new_from_coeffs(&res)
+    }
+}
+
+/// Implementation of float and polynomial subtraction
+impl Sub<Poly> for f64 {
+    type Output = Poly;
+
+    fn sub(self, rhs: Poly) -> Poly {
+        let mut res = rhs.coeffs.to_owned();
+        res[0] -= self;
+        Poly::new_from_coeffs(&res)
     }
 }
 
 /// Implementation of polynomial multiplication
 impl Mul for Poly {
-    type Output = Poly;
+    type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
-    fn mul(self, other: Self) -> Self {
+    fn mul(self, rhs: Self) -> Self {
         // Polynomial multiplication is implemented as discrete convolution.
-        let new_degree = self.degree() + other.degree();
+        let new_degree = self.degree() + rhs.degree();
         let mut new_coeffs: Vec<f64> = vec![0.; new_degree + 1];
         for i in 0..=self.degree() {
-            for j in 0..=other.degree() {
+            for j in 0..=rhs.degree() {
                 let a = self.coeffs.get(i).unwrap_or(&0.);
-                let b = other.coeffs.get(j).unwrap_or(&0.);
+                let b = rhs.coeffs.get(j).unwrap_or(&0.);
                 new_coeffs[i + j] += a * b;
             }
         }
         Poly::new_from_coeffs(&new_coeffs)
+    }
+}
+
+/// Implementation of polynomial and float multiplication
+impl Mul<f64> for Poly {
+    type Output = Self;
+
+    fn mul(self, rhs: f64) -> Self {
+        let res: Vec<_> = self.coeffs.iter().map(|x| x * rhs).collect();
+        Poly::new_from_coeffs(&res)
+    }
+}
+
+/// Implementation of float and polynomial multiplication
+impl Mul<Poly> for f64 {
+    type Output = Poly;
+
+    fn mul(self, rhs: Poly) -> Poly {
+        rhs * self
+    }
+}
+
+/// Implementation of polynomial and float division
+impl Div<f64> for Poly {
+    type Output = Self;
+
+    fn div(self, rhs: f64) -> Self {
+        let res: Vec<_> = self.coeffs.iter().map(|x| x / rhs).collect();
+        Poly::new_from_coeffs(&res)
     }
 }
 
