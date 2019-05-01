@@ -93,12 +93,19 @@ impl Poly {
         })
     }
 
-    /// Find the roots of the polynomial
-    pub fn roots(&self) -> DVector<f64> {
+    /// Calculate the real roots of the polynomial
+    pub fn roots(&self) -> Option<DVector<f64>> {
         // Build the companion matrix
         let comp = self.companion();
         let schur = Schur::new(comp);
-        schur.eigenvalues().unwrap()
+        schur.eigenvalues()
+    }
+
+    /// Calculate the complex roots of the polynomial
+    pub fn complex_roots(&self) -> DVector<Complex64> {
+        let comp = self.companion();
+        let schur = Schur::new(comp);
+        schur.complex_eigenvalues()
     }
 }
 
@@ -341,15 +348,14 @@ mod tests {
             Poly::new_from_roots(&[-2., -2.])
         );
 
-        assert!(
-            (DVector::from_element(2, -2.) - Poly::new_from_roots(&[-2., -2.]).roots())
-                .abs()
-                .iter()
-                .all(|&x| x < 0.000001)
-        );
+        assert!((DVector::from_element(2, -2.)
+            - Poly::new_from_roots(&[-2., -2.]).roots().unwrap())
+        .abs()
+        .iter()
+        .all(|&x| x < 0.000001));
 
         assert!((DVector::from_column_slice(&[1., 2., 3.])
-            - Poly::new_from_roots(&[1., 2., 3.]).roots())
+            - Poly::new_from_roots(&[1., 2., 3.]).roots().unwrap())
         .abs()
         .iter()
         .all(|&x| x < 0.000001));

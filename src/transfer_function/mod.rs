@@ -37,13 +37,23 @@ impl Tf {
     }
 
     /// Calculate the poles of the transfer function
-    pub fn poles(&self) -> DVector<f64> {
+    pub fn poles(&self) -> Option<DVector<f64>> {
         self.den.roots()
     }
 
+    /// Calculate the poles of the transfer function
+    pub fn complex_poles(&self) -> DVector<Complex64> {
+        self.den.complex_roots()
+    }
+
     /// Calculate the zeros of the transfer function
-    pub fn zeros(&self) -> DVector<f64> {
+    pub fn zeros(&self) -> Option<DVector<f64>> {
         self.num.roots()
+    }
+
+    /// Calculate the zeros of the transfer function
+    pub fn complex_zeros(&self) -> DVector<Complex64> {
+        self.num.complex_roots()
     }
 }
 
