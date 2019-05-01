@@ -9,7 +9,7 @@ fn main() {
     let c = DMatrix::from_row_slice(2, 2, &[0., 1., -1., 1.]);
     let d = DMatrix::from_row_slice(2, 1, &[0., 1.]);
 
-    let sys = Ss::new(a, b, c, d);
+    let sys = Ss::new(a.clone(), b.clone(), c.clone(), d.clone());
     let poles = sys.poles();
 
     println!("{}", &sys);
@@ -18,7 +18,16 @@ fn main() {
     let eq = sys.equilibrium(&[0.]);
     println!("{}", eq.unwrap());
 
-    let a = DMatrix::from_row_slice(3,3,&[3.,1.,5.,3.,3.,1.,4.,6.,4.]);
-    let (p, B) = linear_system::leverrier(&a);
-    println!("A: {}\np: {}\nB: {:?}", &a, &p, &B);
+    let (pc, a_inv) = linear_system::leverrier(&a);
+    let g1 = &c * &a_inv[0] * &b;// + &d;
+    let g2 = &c * &a_inv[1] * &b;// + &d;
+    println!("pc: {}\n(sI-A)^-1: {}\n", &pc, &a_inv[1]);
+    println!("g1:{}\ng2:{}", &g1, &g2);
+
+    let t = DMatrix::from_row_slice(3, 3, &[3., 1., 5., 3., 3., 1., 4., 6., 4.]);
+    let (p, B) = linear_system::leverrier(&t);
+    println!("T: {}\np: {}\n", &t, &p);
+    for (i, b) in B.iter().enumerate() {
+        println!("B{}: {}", i, b);
+    }
 }
