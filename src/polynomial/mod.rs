@@ -23,9 +23,12 @@ impl Poly {
     ///
     /// * `coeffs` - slice of coefficients
     pub fn new_from_coeffs(coeffs: &[f64]) -> Self {
-        Poly {
-            coeffs: Poly::trim(coeffs).into(),
-        }
+        let mut p = Poly {
+            coeffs: coeffs.into(),
+        };
+        p.trim();
+        debug_assert!(!p.coeffs.is_empty());
+        p
     }
 
     /// Create a new polynomial given a slice of real roots
@@ -44,14 +47,11 @@ impl Poly {
     /// # Arguments
     ///
     /// * `coeffs` - slice of coefficients
-    fn trim(coeffs: &[f64]) -> &[f64] {
-        if let Some(p) = coeffs.iter().rposition(|&c| c != 0.0) {
-            &coeffs[..=p]
-        } else if coeffs.iter().any(|&c| c == 0.0) {
-            // Case where all coefficients are zero.
-            &coeffs[0..0]
+    fn trim(&mut self) {
+        if let Some(p) = self.coeffs.iter().rposition(|&c| c != 0.0) {
+            self.coeffs.truncate(p + 1);
         } else {
-            &coeffs
+            self.coeffs.resize(1, 0.0);
         }
     }
 
@@ -304,8 +304,8 @@ mod tests {
         let c2 = [0., 1., 1., 0., 0., 0.];
         assert_eq!([0., 1., 1.], Poly::new_from_coeffs(&c2).coeffs.as_slice());
 
-        let empty: [f64; 0] = [];
-        assert_eq!(empty, Poly::new_from_coeffs(&[0., 0.]).coeffs.as_slice());
+        let zero: [f64; 1] = [0.];
+        assert_eq!(zero, Poly::new_from_coeffs(&[0., 0.]).coeffs.as_slice());
     }
 
     #[test]
