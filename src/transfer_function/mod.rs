@@ -1,4 +1,4 @@
-use crate::polynomial::{Eval, Poly};
+use crate::{polynomial::Poly, Eval};
 
 use nalgebra::DVector;
 use num_complex::Complex64;

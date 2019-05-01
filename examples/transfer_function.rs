@@ -1,7 +1,7 @@
 extern crate automatica;
 
-use automatica::polynomial::{Eval, Poly};
 use automatica::transfer_function::Tf;
+use automatica::{polynomial::Poly, Eval};
 
 use num_complex::Complex;
 

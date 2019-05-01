@@ -1,3 +1,5 @@
+use crate::Eval;
+
 use std::fmt;
 use std::ops::{Add, Mul, Sub};
 
@@ -98,16 +100,6 @@ impl Poly {
         let schur = Schur::new(comp);
         schur.eigenvalues().unwrap()
     }
-}
-
-/// Trait for the implementation of polynomial evaluation
-pub trait Eval<T> {
-    /// Evaluate the polynomial at the value x
-    ///
-    /// # Arguments
-    ///
-    /// * `x` - Value at which the polynomial is evaluated
-    fn eval(&self, x: T) -> T;
 }
 
 impl Eval<Complex64> for Poly {
