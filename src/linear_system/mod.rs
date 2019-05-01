@@ -77,6 +77,7 @@ impl Ss {
 /// with B1 = I = eye(n,n)
 /// a1 = -trace(A); ak = -1/k * trace(A*Bk)
 /// Bk = a_(k-1)I* + A*B_(k-1)
+#[allow(non_snake_case)]
 pub fn leverrier(A: &DMatrix<f64>) -> (Poly, Vec<DMatrix<f64>>) {
     let size = A.nrows(); // A is a square matrix.
     let mut a = vec![1.0];
