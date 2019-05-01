@@ -57,11 +57,11 @@ impl Poly {
 
     /// Degree of the polynomial
     pub fn degree(&self) -> usize {
-        if self.coeffs.is_empty() {
-            0
-        } else {
-            self.coeffs.len() - 1
-        }
+        assert!(
+            !self.coeffs.is_empty(),
+            "Degree is not defined on empty polynomial"
+        );
+        self.coeffs.len() - 1
     }
 
     /// Vector of the polynomial's coefficients
