@@ -20,11 +20,36 @@ impl Ss {
     ///
     /// # Arguments
     ///
-    /// * `a` - A matrix
-    /// * `b` - B matrix
-    /// * `c` - C matrix
-    /// * `d` - D matrix
+    /// * `a` - A matrix (nxn)
+    /// * `b` - B matrix (nxm)
+    /// * `c` - C matrix (pxn)
+    /// * `d` - D matrix (pxm)
+    ///
+    /// # Panics
+    ///
+    /// Panics if matrix dimensions do not match
     pub fn new(a: DMatrix<f64>, b: DMatrix<f64>, c: DMatrix<f64>, d: DMatrix<f64>) -> Self {
+        assert!(a.is_square(), "A matrix must be square");
+        assert_eq!(
+            b.nrows(),
+            a.nrows(),
+            "The number of rows of matices A and B must be equal (state variables)."
+        );
+        assert_eq!(
+            c.ncols(),
+            a.ncols(),
+            "The number of columns of matices A and C must be equal (state variables)."
+        );
+        assert_eq!(
+            c.nrows(),
+            d.nrows(),
+            "The number of rows of matices C and D must be equal (output variables)."
+        );
+        assert_eq!(
+            b.ncols(),
+            d.ncols(),
+            "The number of columns of matices B and D must be equal (input variables)."
+        );
         Ss { a, b, c, d }
     }
 
@@ -59,6 +84,7 @@ impl Ss {
     ///
     /// * `u` - Input vector
     pub fn equilibrium(&self, u: &[f64]) -> Option<Equilibrium> {
+        assert_eq!(u.len(), self.b.ncols(), "Wrong number of inputs.");
         let u = DMatrix::from_row_slice(u.len(), 1, u);
         let inv_a = &self.a.clone().try_inverse()?;
         let x = inv_a * &self.b * &u;
