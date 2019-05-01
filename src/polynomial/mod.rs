@@ -5,7 +5,7 @@ use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
 
 use nalgebra::{DMatrix, DVector, Schur};
 use num_complex::{Complex, Complex64};
-use num_traits::Zero;
+use num_traits::{One, Zero};
 
 /// Polynomial object
 ///
@@ -277,6 +277,28 @@ impl Div<f64> for Poly {
     }
 }
 
+/// Implementation of the additive identity for polynomials
+impl Zero for Poly {
+    fn zero() -> Self {
+        Poly { coeffs: vec![0.0] }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.coeffs == vec![0.0]
+    }
+}
+
+/// Implementation of the multiplicative identity for polynomials
+impl One for Poly {
+    fn one() -> Self {
+        Poly { coeffs: vec![1.0] }
+    }
+
+    fn is_one(&self) -> bool {
+        self.coeffs == vec![1.0]
+    }
+}
+
 /// Implement printing of polynomial
 impl fmt::Display for Poly {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -507,5 +529,11 @@ mod tests {
         let mut p = Poly::new_from_roots(&[1., 4., 5.]);
         p[2] = 3.;
         assert_eq!(Poly::new_from_coeffs(&[-20., 29., 3., 1.]), p);
+    }
+
+    #[test]
+    fn identities_test() {
+        assert!(Poly::zero().is_zero());
+        assert!(Poly::one().is_one());
     }
 }
