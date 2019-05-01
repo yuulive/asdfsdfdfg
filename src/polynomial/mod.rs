@@ -37,9 +37,14 @@ impl Poly {
     ///
     /// * `roots` - slice of roots
     pub fn new_from_roots(roots: &[f64]) -> Self {
-        roots.iter().fold(Poly::new_from_coeffs(&[1.]), |acc, &r| {
-            acc * Poly::new_from_coeffs(&[-r, 1.])
-        })
+        let mut p = roots.iter().fold(Poly { coeffs: vec![1.] }, |acc, &r| {
+            acc * Poly {
+                coeffs: vec![-r, 1.],
+            }
+        });
+        p.trim();
+        debug_assert!(!p.coeffs.is_empty());
+        p
     }
 
     /// Trim the zeros coefficients of high degree terms
