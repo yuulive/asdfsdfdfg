@@ -102,6 +102,7 @@ pub fn leverrier(A: &DMatrix<f64>) -> (Poly, Vec<DMatrix<f64>>) {
     (Poly::new_from_coeffs(&a), B)
 }
 
+/// Implementation of state-space representation
 impl fmt::Display for Ss {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -134,6 +135,7 @@ impl Equilibrium {
     }
 }
 
+/// Implementation of printing of equilibrium point
 impl fmt::Display for Equilibrium {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "x: {}\ny: {}", self.x, self.y)

@@ -102,6 +102,7 @@ impl Poly {
     }
 }
 
+/// Evaluate the polynomial at the given float number
 impl Eval<Complex64> for Poly {
     fn eval(&self, x: Complex64) -> Complex64 {
         self.coeffs
@@ -111,6 +112,7 @@ impl Eval<Complex64> for Poly {
     }
 }
 
+/// Evaluate the polynomial at the given complex number
 impl Eval<f64> for Poly {
     fn eval(&self, x: f64) -> f64 {
         self.coeffs.iter().rev().fold(0.0, |acc, &c| acc * x + c)
@@ -166,6 +168,7 @@ impl Add<Poly> for Poly {
     }
 }
 
+/// Implementation of polynomial and float addition
 impl Add<f64> for Poly {
     type Output = Self;
 
@@ -181,6 +184,7 @@ impl Add<f64> for Poly {
     }
 }
 
+/// Implementation of float and polynomial addition
 impl Add<Poly> for f64 {
     type Output = Poly;
 
@@ -227,6 +231,7 @@ impl Mul for Poly {
     }
 }
 
+/// Implement printing of polynomial
 impl fmt::Display for Poly {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.coeffs.is_empty() {
