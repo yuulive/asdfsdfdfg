@@ -556,9 +556,8 @@ impl PolyMatrix {
     ///
     /// * `coeffs` - slice of matrix coefficients
     pub(crate) fn new_from_coeffs(matr_coeffs: &[DMatrix<f64>]) -> Self {
-        assert!(matr_coeffs.iter().all(|c| c.is_square()));
-        let rows = matr_coeffs[0].nrows();
-        assert!(matr_coeffs.iter().all(|c| c.nrows() == rows));
+        let shape = matr_coeffs[0].shape();
+        assert!(matr_coeffs.iter().all(|c| c.shape() == shape));
         PolyMatrix {
             matr_coeffs: matr_coeffs.into(),
         }
