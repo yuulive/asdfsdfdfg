@@ -9,7 +9,7 @@ use num_traits::{One, Zero};
 
 /// Polynomial object
 ///
-/// Contains the vector of coefficients form the lowest to the higher degree
+/// Contains the vector of coefficients form the lowest to the highest degree
 ///
 /// p(x) = c0 + c1*x + c2*x^2 + ...
 #[derive(Debug, PartialEq, Clone)]
@@ -535,5 +535,82 @@ mod tests {
     fn identities_test() {
         assert!(Poly::zero().is_zero());
         assert!(Poly::one().is_one());
+    }
+}
+
+/// Polynomial matrix object
+///
+/// Contains the vector of coefficients form the lowest to the highest degree
+///
+/// P(x) = C0 + C1*x + C2*x^2 + ...
+#[derive(Clone, Debug)]
+pub struct PolyMatrix {
+    matr_coeffs: Vec<DMatrix<f64>>,
+}
+
+/// Implementation methods for PolyMatrix struct
+impl PolyMatrix {
+    /// Create a new polynomial matrix given a slice of matrix coefficients.
+    ///
+    /// # Arguments
+    ///
+    /// * `coeffs` - slice of matrix coefficients
+    pub(crate) fn new_from_coeffs(matr_coeffs: &[DMatrix<f64>]) -> Self {
+        assert!(matr_coeffs.iter().all(|c| c.is_square()));
+        let rows = matr_coeffs[0].nrows();
+        assert!(matr_coeffs.iter().all(|c| c.nrows() == rows));
+        PolyMatrix {
+            matr_coeffs: matr_coeffs.into(),
+        }
+    }
+
+    /// Degree of the polynomial matrix
+    pub(crate) fn degree(&self) -> usize {
+        assert!(
+            !self.matr_coeffs.is_empty(),
+            "Degree is not defined on empty polynomial matrix"
+        );
+        self.matr_coeffs.len() - 1
+    }
+}
+
+/// Implementation of read only indexing of polynomial matrix
+/// returning its coefficients.
+///
+/// # Panics
+///
+/// Panics for out of bounds access.
+impl Index<usize> for PolyMatrix {
+    type Output = DMatrix<f64>;
+
+    fn index(&self, i: usize) -> &DMatrix<f64> {
+        &self.matr_coeffs[i]
+    }
+}
+
+/// Implemantation of polynomial matrix printing
+impl fmt::Display for PolyMatrix {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.degree() == 0 {
+            return write!(f, "{}", self.matr_coeffs[0]);
+        }
+        let mut s = String::new();
+        let mut sep = "";
+        for (i, c) in self.matr_coeffs.iter().enumerate() {
+            if c.iter().all(|&x| x == 0.0) {
+                continue;
+            }
+            s.push_str(sep);
+            if i == 0 {
+                s.push_str(&format!("{}", c));
+            } else if i == 1 {
+                s.push_str(&format!("+{}*s", c));
+            } else {
+                s.push_str(&format!("+{}*s^{}", c, i));
+            }
+            sep = " ";
+        }
+
+        write!(f, "{}", s)
     }
 }

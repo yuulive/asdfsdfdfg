@@ -1,4 +1,4 @@
-use crate::polynomial::Poly;
+use crate::polynomial::{Poly, PolyMatrix};
 
 use nalgebra::{DMatrix, DVector, Schur};
 use num_complex::Complex64;
@@ -104,7 +104,7 @@ impl Ss {
 /// a1 = -trace(A); ak = -1/k * trace(A*Bk)
 /// Bk = a_(k-1)I* + A*B_(k-1)
 #[allow(non_snake_case)]
-pub fn leverrier(A: &DMatrix<f64>) -> (Poly, Vec<DMatrix<f64>>) {
+pub fn leverrier(A: &DMatrix<f64>) -> (Poly, PolyMatrix) {
     let size = A.nrows(); // A is a square matrix.
     let mut a = vec![1.0];
     let a1 = -A.trace();
@@ -113,7 +113,7 @@ pub fn leverrier(A: &DMatrix<f64>) -> (Poly, Vec<DMatrix<f64>>) {
     let B1 = DMatrix::identity(size, size); // eye(n,n)
     let mut B = vec![B1.clone()];
     if size == 1 {
-        return (Poly::new_from_coeffs(&a), B);
+        return (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B));
     }
 
     let mut Bk = B1.clone();
@@ -126,7 +126,7 @@ pub fn leverrier(A: &DMatrix<f64>) -> (Poly, Vec<DMatrix<f64>>) {
         ak = -f64::from(k as u32).recip() * &ABk.trace();
         a.insert(0, ak);
     }
-    (Poly::new_from_coeffs(&a), B)
+    (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
 }
 
 /// Implementation of state-space representation
