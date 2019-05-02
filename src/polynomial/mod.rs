@@ -571,6 +571,22 @@ impl PolyMatrix {
         );
         self.matr_coeffs.len() - 1
     }
+
+    /// Implementation of polynomial matrix and matrix multiplication
+    ///
+    /// PolyMatrix * DMatrix
+    pub fn right_mul(&self, rhs: &DMatrix<f64>) -> Self {
+        let res: Vec<_> = self.matr_coeffs.iter().map(|x| x * rhs).collect();
+        Self::new_from_coeffs(&res)
+    }
+
+    /// Implementation of matrix and polynomial matrix multiplication
+    ///
+    /// DMatrix * PolyMatrix
+    pub fn left_mul(&self, lhs: &DMatrix<f64>) -> Self {
+        let res: Vec<_> = self.matr_coeffs.iter().map(|r| lhs * r).collect();
+        Self::new_from_coeffs(&res)
+    }
 }
 
 /// Implementation of read only indexing of polynomial matrix

@@ -20,15 +20,12 @@ fn main() {
     println!("{}", eq.unwrap());
 
     let (pc, a_inv) = linear_system::leverrier(&a);
-    let g1 = &c * &a_inv[0] * &b; // + &d;
-    let g2 = &c * &a_inv[1] * &b; // + &d;
-    println!("pc: {}\n(sI-A)^-1: {}\n", &pc, &a_inv[1]);
-    println!("g1:{}\ng2:{}", &g1, &g2);
+    let g = a_inv.left_mul(&c).right_mul(&b); // + &d;
+    println!("pc: {}\n(sI-A)^-1: {}\n", &pc, &a_inv);
+    println!("g:{}", g);
 
     let t = DMatrix::from_row_slice(3, 3, &[3., 1., 5., 3., 3., 1., 4., 6., 4.]);
     let (p, poly_matrix) = linear_system::leverrier(&t);
     println!("T: {}\np: {}\n", &t, &p);
-    for (i, b) in poly_matrix.iter().enumerate() {
-        println!("B{}: {}", i, b);
-    }
+    println!("B: {}", &poly_matrix);
 }
