@@ -34,10 +34,4 @@ fn main() {
     let u = DVector::from_element(1, Complex::new(0.0, 0.9));
     let ynum = tf_vec.eval(u.clone());
     println!("u:{}\ny:{}", &u, &ynum);
-
-    println!("\nExample of LeVerrier algorithm (Wikipedia)");
-    let t = DMatrix::from_row_slice(3, 3, &[3., 1., 5., 3., 3., 1., 4., 6., 4.]);
-    let (p, poly_matrix) = linear_system::leverrier(&t);
-    println!("T: {}\np: {}\n", &t, &p);
-    println!("B: {}", &poly_matrix);
 }
