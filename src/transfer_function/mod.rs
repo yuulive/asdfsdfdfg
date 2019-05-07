@@ -1,6 +1,9 @@
-use crate::{polynomial::Poly, Eval};
+use crate::{
+    polynomial::{Poly, PolyMatrix},
+    Eval,
+};
 
-use nalgebra::DVector;
+use nalgebra::{DMatrix, DVector};
 use num_complex::Complex64;
 
 use std::fmt;
@@ -71,6 +74,73 @@ impl fmt::Display for Tf {
         let s_den = self.den.to_string();
 
         let length = s_num.len().max(s_den.len());
+        let dash = "─".repeat(length);
+
+        write!(f, "{}\n{}\n{}", s_num, dash, s_den)
+    }
+}
+
+/// Matrix of transfer functions
+pub struct TfMatrix {
+    /// Polynomial matrix of the numerators
+    num: PolyMatrix,
+    /// Common polynomial denominator
+    den: Poly,
+}
+
+/// Implementation of transfer function matrix
+impl TfMatrix {
+    /// Create a new transfer function matrix
+    ///
+    /// # Arguments
+    ///
+    /// * `num` - Polynomial matrix
+    /// * `den` - Characteristic polynomial of the system
+    pub fn new(num: PolyMatrix, den: Poly) -> Self {
+        Self { num, den }
+    }
+}
+
+impl Eval<DVector<Complex64>> for TfMatrix {
+    fn eval(&self, s: DVector<Complex64>) -> DVector<Complex64> {
+        //
+        // ┌  ┐ ┌┌         ┐ ┌     ┐┐┌  ┐
+        // │y1│=││1/pc 1/pc│*│n1 n2│││s1│
+        // │y2│ ││1/pc 1/pc│ │n3 n4│││s2│
+        // └  ┘ └└         ┘ └     ┘┘└  ┘
+        // `*` is the element by element multiplication
+        // ┌     ┐ ┌┌         ┐ ┌     ┐┐ ┌┌     ┐ ┌     ┐┐
+        // │y1 y2│=││1/pc 1/pc│.│s1 s2││*││n1 n2│.│s1 s2││
+        // │y3 y4│ ││1/pc 1/pc│ │s1 s2││ ││n3 n4│ │s1 s2││
+        // └     ┘ └└         ┘ └     ┘┘ └└     ┘ └     ┘┘
+        // `.` means 'evaluated in'
+        let rows = self.num[0].nrows();
+        let cols = self.num[0].ncols();
+
+        let mut s_matr = DMatrix::zeros(rows, cols);
+        for r in 0..rows {
+            s_matr.set_row(r, &s.transpose());
+        }
+
+        let num_matr = self.num.eval(s_matr);
+
+        let pc_matr = s.map(|si| self.den.eval(si)).transpose();
+        let mut den_matr = DMatrix::zeros(rows,cols);
+        for r in 0..rows {
+            den_matr.set_row(r, &pc_matr);
+        }
+
+        num_matr.component_div(&den_matr).column_sum()
+    }
+}
+
+/// Implementation of transfer function matrix printing
+impl fmt::Display for TfMatrix {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s_num = self.num.to_string();
+        let s_den = self.den.to_string();
+
+        let length = s_den.len();
         let dash = "─".repeat(length);
 
         write!(f, "{}\n{}\n{}", s_num, dash, s_den)
