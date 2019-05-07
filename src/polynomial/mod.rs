@@ -600,6 +600,55 @@ impl PolyMatrix {
     }
 }
 
+impl Eval<DMatrix<Complex64>> for PolyMatrix {
+    fn eval(&self, s: DMatrix<Complex64>) -> DMatrix<Complex64> {
+        // transform matr_coeffs in complex numbers matrices
+        //
+        // ┌     ┐ ┌       ┐ ┌       ┐ ┌     ┐
+        // │P1 P2│=│a01 a02│+│a11 a12│*│s1 s2│
+        // │P3 P4│ │a03 a04│ │a13 a14│ │s1 s2│
+        // └     ┘ └       ┘ └       ┘ └     ┘
+        // `*` is the element by element multiplication
+        // If i have a 2x2 matr_coeff the result shall be a 2x2 matrix,
+        // because otherwise i will sum P1 and P2 (P3 and P4)
+        let rows = self.matr_coeffs[0].nrows();
+        let cols = self.matr_coeffs[0].ncols();
+
+        let mut res = DMatrix::from_element(rows, cols, Complex64::zero());
+
+        for mc in self.matr_coeffs.iter().rev() {
+            let mcplx = mc.map(|x| Complex64::new(x, 0.0));
+            res = res.component_mul(&s) + mcplx;
+        }
+        res
+    }
+}
+
+/// Implementation of polynomial matices addition
+impl Add<PolyMatrix> for PolyMatrix {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        // Check which polynomial matrix has the highest degree
+        let new_coeffs = if self.degree() < rhs.degree() {
+            let mut res = rhs.matr_coeffs.to_vec();
+            for (i, c) in self.matr_coeffs.iter().enumerate() {
+                res[i] += c;
+            }
+            res
+        } else if rhs.degree() < self.degree() {
+            let mut res = self.matr_coeffs.to_owned();
+            for (i, c) in rhs.matr_coeffs.iter().enumerate() {
+                res[i] += c;
+            }
+            res
+        } else {
+            zip_with(&self.matr_coeffs, &rhs.matr_coeffs, |l, r| l + r)
+        };
+        PolyMatrix::new_from_coeffs(&new_coeffs)
+    }
+}
+
 /// Implementation of read only indexing of polynomial matrix
 /// returning its coefficients.
 ///
