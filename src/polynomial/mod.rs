@@ -325,6 +325,7 @@ impl fmt::Display for Poly {
                 continue;
             }
             s.push_str(sep);
+            #[allow(clippy::float_cmp)] // signum() returns either 1.0 or -1.0
             let sign = if c.signum() == 1.0 { "+" } else { "" };
             if i == 0 {
                 s.push_str(&format!("{}", c));

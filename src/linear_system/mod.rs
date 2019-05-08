@@ -128,7 +128,7 @@ pub fn leverrier(A: &DMatrix<f64>) -> (Poly, PolyMatrix) {
         B.insert(0, Bk.clone());
 
         let ABk = A * &Bk;
-        ak = -f64::from(k as u32).recip() * &ABk.trace();
+        ak = -f64::from(k as u32).recip() * ABk.trace();
         a.insert(0, ak);
     }
     (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
