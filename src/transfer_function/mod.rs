@@ -31,13 +31,13 @@ impl Tf {
     }
 
     /// Extract transfer function numerator
-    pub fn num(&self) -> Poly {
-        self.num.clone()
+    pub fn num(&self) -> &Poly {
+        &self.num
     }
 
     /// Extract transfer function denominator
-    pub fn den(&self) -> Poly {
-        self.den.clone()
+    pub fn den(&self) -> &Poly {
+        &self.den
     }
 
     /// Calculate the poles of the transfer function
@@ -97,8 +97,11 @@ impl TfMatrix {
     ///
     /// * `num` - Polynomial matrix
     /// * `den` - Characteristic polynomial of the system
-    pub fn new(num: PolyMatrix, den: Poly) -> Self {
-        Self { num, den }
+    pub fn new(num: &PolyMatrix, den: Poly) -> Self {
+        Self {
+            num: num.clone(),
+            den,
+        }
     }
 }
 
@@ -144,9 +147,9 @@ impl From<Ss> for TfMatrix {
     fn from(ss: Ss) -> Self {
         let (pc, a_inv) = linear_system::leverrier(ss.a());
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
-        let rest = pc.clone() * ss.d().clone();
+        let rest = &pc * ss.d();
         let tf = g + rest;
-        Self::new(tf, pc.clone())
+        Self::new(&tf, pc)
     }
 }
 

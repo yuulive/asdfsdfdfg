@@ -267,13 +267,13 @@ impl Mul<Poly> for f64 {
     }
 }
 
-impl Mul<DMatrix<f64>> for Poly {
+impl Mul<&DMatrix<f64>> for &Poly {
     type Output = PolyMatrix;
 
-    fn mul(self, rhs: DMatrix<f64>) -> PolyMatrix {
+    fn mul(self, rhs: &DMatrix<f64>) -> PolyMatrix {
         // It's the polynomial matrix whose coefficients are the coefficients
         // of the polynomial times the matrix
-        let res: Vec<_> = self.coeffs.iter().map(|&c| c * &rhs).collect();
+        let res: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
         PolyMatrix::new_from_coeffs(&res)
     }
 }
