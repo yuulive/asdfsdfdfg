@@ -28,7 +28,7 @@ impl Ss {
     /// # Panics
     ///
     /// Panics if matrix dimensions do not match
-    pub fn new(a: DMatrix<f64>, b: DMatrix<f64>, c: DMatrix<f64>, d: DMatrix<f64>) -> Self {
+    pub fn new(a: &DMatrix<f64>, b: &DMatrix<f64>, c: &DMatrix<f64>, d: &DMatrix<f64>) -> Self {
         assert!(a.is_square(), "A matrix must be square");
         assert_eq!(
             b.nrows(),
@@ -50,7 +50,12 @@ impl Ss {
             d.ncols(),
             "The number of columns of matrices B and D must be equal (input variables)."
         );
-        Ss { a, b, c, d }
+        Ss {
+            a: a.clone(),
+            b: b.clone(),
+            c: c.clone(),
+            d: d.clone(),
+        }
     }
 
     /// Get the A matrix

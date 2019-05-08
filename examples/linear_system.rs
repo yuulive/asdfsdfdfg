@@ -11,7 +11,7 @@ fn main() {
     let c = DMatrix::from_row_slice(2, 2, &[0., 1., -1., 1.]);
     let d = DMatrix::from_row_slice(2, 1, &[0., 1.]);
 
-    let sys = Ss::new(a.clone(), b.clone(), c.clone(), d.clone());
+    let sys = Ss::new(&a, &b, &c, &d);
     let poles = sys.poles();
 
     println!("{}", &sys);
