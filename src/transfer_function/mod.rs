@@ -1,4 +1,5 @@
 use crate::{
+    linear_system::{self, Ss},
     polynomial::{Poly, PolyMatrix},
     Eval,
 };
@@ -125,12 +126,27 @@ impl Eval<DVector<Complex64>> for TfMatrix {
         let num_matr = self.num.eval(s_matr);
 
         let pc_matr = s.map(|si| self.den.eval(si)).transpose();
-        let mut den_matr = DMatrix::zeros(rows,cols);
+        let mut den_matr = DMatrix::zeros(rows, cols);
         for r in 0..rows {
             den_matr.set_row(r, &pc_matr);
         }
 
         num_matr.component_div(&den_matr).column_sum()
+    }
+}
+
+impl From<Ss> for TfMatrix {
+    /// Convert a state-space representation into a matrix of transfer functions
+    ///
+    /// # Arguments
+    ///
+    /// `ss` - state space linear system
+    fn from(ss: Ss) -> Self {
+        let (pc, a_inv) = linear_system::leverrier(ss.a());
+        let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
+        let rest = pc.clone() * ss.d().clone();
+        let tf = g + rest;
+        Self::new(tf, pc.clone())
     }
 }
 

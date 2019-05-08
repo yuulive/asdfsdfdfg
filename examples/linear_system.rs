@@ -1,6 +1,6 @@
 extern crate automatica;
 
-use automatica::linear_system::{self, Ss};
+use automatica::linear_system::Ss;
 use automatica::transfer_function::TfMatrix;
 use automatica::Eval;
 use nalgebra::{Complex, DMatrix, DVector};
@@ -21,17 +21,12 @@ fn main() {
     let eq = sys.equilibrium(&[0.]);
     println!("{}", eq.unwrap());
 
-    let (pc, a_inv) = linear_system::leverrier(&a);
-    let g = a_inv.left_mul(&c).right_mul(&b);
-    let rest = pc.clone() * d;
-    println!("pc: {}\n(sI-A)^-1: {}\n", &pc, &a_inv);
-    let G = g + rest;
-    println!("G:{}", G);
+    println!("Transform linear system into a transfer function");
+    let tf_matrix = TfMatrix::from(sys);
+    println!("Tf:{}", tf_matrix);
 
-    let tf_vec = TfMatrix::new(G, pc.clone());
-    println!("Tf:{}", tf_vec);
-
+    println!("\nEvaluate transfer function in ω = 0.9");
     let u = DVector::from_element(1, Complex::new(0.0, 0.9));
-    let ynum = tf_vec.eval(u.clone());
+    let ynum = tf_matrix.eval(u.clone());
     println!("u:{}\ny:{}", &u, &ynum);
 }

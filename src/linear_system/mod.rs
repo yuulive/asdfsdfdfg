@@ -54,23 +54,23 @@ impl Ss {
     }
 
     /// Get the A matrix
-    pub fn a(&self) -> DMatrix<f64> {
-        self.a.clone()
+    pub fn a(&self) -> &DMatrix<f64> {
+        &self.a
     }
 
     /// Get the C matrix
-    pub fn b(&self) -> DMatrix<f64> {
-        self.b.clone()
+    pub fn b(&self) -> &DMatrix<f64> {
+        &self.b
     }
 
     /// Get the C matrix
-    pub fn c(&self) -> DMatrix<f64> {
-        self.c.clone()
+    pub fn c(&self) -> &DMatrix<f64> {
+        &self.c
     }
 
     /// Get the D matrix
-    pub fn d(&self) -> DMatrix<f64> {
-        self.d.clone()
+    pub fn d(&self) -> &DMatrix<f64> {
+        &self.d
     }
 
     /// Calculate the poles of the system
