@@ -33,22 +33,22 @@ impl Ss {
         assert_eq!(
             b.nrows(),
             a.nrows(),
-            "The number of rows of matices A and B must be equal (state variables)."
+            "The number of rows of matrices A and B must be equal (state variables)."
         );
         assert_eq!(
             c.ncols(),
             a.ncols(),
-            "The number of columns of matices A and C must be equal (state variables)."
+            "The number of columns of matrices A and C must be equal (state variables)."
         );
         assert_eq!(
             c.nrows(),
             d.nrows(),
-            "The number of rows of matices C and D must be equal (output variables)."
+            "The number of rows of matrices C and D must be equal (output variables)."
         );
         assert_eq!(
             b.ncols(),
             d.ncols(),
-            "The number of columns of matices B and D must be equal (input variables)."
+            "The number of columns of matrices B and D must be equal (input variables)."
         );
         Ss { a, b, c, d }
     }

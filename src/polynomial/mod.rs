@@ -624,7 +624,7 @@ impl Eval<DMatrix<Complex64>> for PolyMatrix {
     }
 }
 
-/// Implementation of polynomial matices addition
+/// Implementation of polynomial matrices addition
 impl Add<PolyMatrix> for PolyMatrix {
     type Output = Self;
 
