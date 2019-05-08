@@ -111,7 +111,7 @@ impl Poly {
 
 /// Evaluate the polynomial at the given float number
 impl Eval<Complex64> for Poly {
-    fn eval(&self, x: Complex64) -> Complex64 {
+    fn eval(&self, x: &Complex64) -> Complex64 {
         self.coeffs
             .iter()
             .rev()
@@ -121,7 +121,7 @@ impl Eval<Complex64> for Poly {
 
 /// Evaluate the polynomial at the given complex number
 impl Eval<f64> for Poly {
-    fn eval(&self, x: f64) -> f64 {
+    fn eval(&self, x: &f64) -> f64 {
         self.coeffs.iter().rev().fold(0.0, |acc, &c| acc * x + c)
     }
 }
@@ -441,9 +441,9 @@ mod tests {
     #[test]
     fn poly_f64_eval_test() {
         let p = Poly::new_from_coeffs(&[1., 2., 3.]);
-        assert_eq!(86., p.eval(5.));
+        assert_eq!(86., p.eval(&5.));
 
-        assert_eq!(0.0, Poly::new_from_coeffs(&[]).eval(6.4));
+        assert_eq!(0.0, Poly::new_from_coeffs(&[]).eval(&6.4));
     }
 
     #[test]
@@ -451,11 +451,11 @@ mod tests {
         let p = Poly::new_from_coeffs(&[1., 1., 1.]);
         let c = Complex::new(1.0, 1.0);
         let res = Complex::new(2.0, 3.0);
-        assert_eq!(res, p.eval(c));
+        assert_eq!(res, p.eval(&c));
 
         assert_eq!(
             Complex::zero(),
-            Poly::new_from_coeffs(&[]).eval(Complex::new(2., 3.))
+            Poly::new_from_coeffs(&[]).eval(&Complex::new(2., 3.))
         );
     }
 
@@ -601,7 +601,7 @@ impl PolyMatrix {
 }
 
 impl Eval<DMatrix<Complex64>> for PolyMatrix {
-    fn eval(&self, s: DMatrix<Complex64>) -> DMatrix<Complex64> {
+    fn eval(&self, s: &DMatrix<Complex64>) -> DMatrix<Complex64> {
         // transform matr_coeffs in complex numbers matrices
         //
         // ┌     ┐ ┌       ┐ ┌       ┐ ┌     ┐
@@ -618,7 +618,7 @@ impl Eval<DMatrix<Complex64>> for PolyMatrix {
 
         for mc in self.matr_coeffs.iter().rev() {
             let mcplx = mc.map(|x| Complex64::new(x, 0.0));
-            res = res.component_mul(&s) + mcplx;
+            res = res.component_mul(s) + mcplx;
         }
         res
     }

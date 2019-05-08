@@ -27,6 +27,6 @@ fn main() {
 
     println!("\nEvaluate transfer function in ω = 0.9");
     let u = DVector::from_element(1, Complex::new(0.0, 0.9));
-    let ynum = tf_matrix.eval(u.clone());
+    let ynum = tf_matrix.eval(&u);
     println!("u:{}\ny:{}", &u, &ynum);
 }

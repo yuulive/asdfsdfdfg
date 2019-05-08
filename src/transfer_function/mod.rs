@@ -63,7 +63,7 @@ impl Tf {
 
 /// Implementation of the evaluation of a transfer function
 impl Eval<Complex64> for Tf {
-    fn eval(&self, s: Complex64) -> Complex64 {
+    fn eval(&self, s: &Complex64) -> Complex64 {
         self.num.eval(s) / self.den.eval(s)
     }
 }
@@ -103,7 +103,7 @@ impl TfMatrix {
 }
 
 impl Eval<DVector<Complex64>> for TfMatrix {
-    fn eval(&self, s: DVector<Complex64>) -> DVector<Complex64> {
+    fn eval(&self, s: &DVector<Complex64>) -> DVector<Complex64> {
         //
         // ┌  ┐ ┌┌         ┐ ┌     ┐┐┌  ┐
         // │y1│=││1/pc 1/pc│*│n1 n2│││s1│
@@ -123,9 +123,9 @@ impl Eval<DVector<Complex64>> for TfMatrix {
             s_matr.set_row(r, &s.transpose());
         }
 
-        let num_matr = self.num.eval(s_matr);
+        let num_matr = self.num.eval(&s_matr);
 
-        let pc_matr = s.map(|si| self.den.eval(si)).transpose();
+        let pc_matr = s.map(|si| self.den.eval(&si)).transpose();
         let mut den_matr = DMatrix::zeros(rows, cols);
         for r in 0..rows {
             den_matr.set_row(r, &pc_matr);
