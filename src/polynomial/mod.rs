@@ -548,7 +548,7 @@ impl PolyMatrix {
         let rows = self.matr_coeffs[0].nrows();
         let cols = self.matr_coeffs[0].ncols();
         let zero = DMatrix::zeros(rows, cols);
-        if let Some(p) = self.matr_coeffs.iter().rposition(|c| c == &zero) {
+        if let Some(p) = self.matr_coeffs.iter().rposition(|c| c != &zero) {
             self.matr_coeffs.truncate(p + 1);
         } else {
             self.matr_coeffs.resize(1, zero);
