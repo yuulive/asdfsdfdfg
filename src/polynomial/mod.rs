@@ -50,10 +50,6 @@ impl Poly {
     }
 
     /// Trim the zeros coefficients of high degree terms
-    ///
-    /// # Arguments
-    ///
-    /// * `coeffs` - slice of coefficients
     fn trim(&mut self) {
         if let Some(p) = self.coeffs.iter().rposition(|&c| c != 0.0) {
             self.coeffs.truncate(p + 1);
@@ -514,9 +510,12 @@ impl PolyMatrix {
     pub(crate) fn new_from_coeffs(matr_coeffs: &[DMatrix<f64>]) -> Self {
         let shape = matr_coeffs[0].shape();
         assert!(matr_coeffs.iter().all(|c| c.shape() == shape));
-        PolyMatrix {
+        let mut pm = PolyMatrix {
             matr_coeffs: matr_coeffs.into(),
-        }
+        };
+        pm.trim();
+        debug_assert!(!pm.matr_coeffs.is_empty());
+        pm
     }
 
     /// Degree of the polynomial matrix
@@ -542,6 +541,18 @@ impl PolyMatrix {
     pub fn left_mul(&self, lhs: &DMatrix<f64>) -> Self {
         let res: Vec<_> = self.matr_coeffs.iter().map(|r| lhs * r).collect();
         Self::new_from_coeffs(&res)
+    }
+
+    /// Trim the zeros coefficients of high degree terms
+    fn trim(&mut self) {
+        let rows = self.matr_coeffs[0].nrows();
+        let cols = self.matr_coeffs[0].ncols();
+        let zero = DMatrix::zeros(rows, cols);
+        if let Some(p) = self.matr_coeffs.iter().rposition(|c| c == &zero) {
+            self.matr_coeffs.truncate(p + 1);
+        } else {
+            self.matr_coeffs.resize(1, zero);
+        }
     }
 }
 
