@@ -169,7 +169,7 @@ impl Add<Poly> for Poly {
             }
             res
         } else {
-            zip_with(&self.coeffs, &rhs.coeffs, |l, r| l + r)
+            crate::zip_with(&self.coeffs, &rhs.coeffs, |l, r| l + r)
         };
         Poly::new_from_coeffs(&new_coeffs)
     }
@@ -267,6 +267,7 @@ impl Mul<Poly> for f64 {
     }
 }
 
+/// Implemantation of polynomial and matrix multiplication
 impl Mul<&DMatrix<f64>> for &Poly {
     type Output = PolyMatrix;
 
@@ -341,66 +342,9 @@ impl fmt::Display for Poly {
     }
 }
 
-// fn zipWith<U, C>(combo: C, left: U, right: U) -> impl Iterator
-// where
-//     U: Iterator,
-//     C: FnMut(U::Item, U::Item) -> U::Item,
-// {
-//     left.zip(right).map(move |(l, r)| combo(l, r))
-// }
-/// Zip two slices with the given function
-///
-/// # Arguments
-///
-/// * `left` - first slice to zip
-/// * `right` - second slice to zip
-/// * `f` - function used to zip the two lists
-fn zip_with<T, F>(left: &[T], right: &[T], mut f: F) -> Vec<T>
-where
-    F: FnMut(&T, &T) -> T,
-{
-    left.iter().zip(right).map(|(l, r)| f(l, r)).collect()
-}
-
-/// Evaluate rational function at x
-///
-/// # Arguments
-///
-/// * `x` - Value for the evaluation
-/// * `num` - Coefficients of the numerator polynomial. First element is the higher order coefficient
-/// * `denom` - Coefficients of the denominator polynomial. First element is the higher order coefficient
-// pub fn ratevl<T>(x: T, num: &[T], denom: &[T]) -> T
-// where
-//     T: Float,
-// {
-//     if x <= T::one() {
-//         polynom_eval(x, num) / polynom_eval(x, denom)
-//     } else {
-//         // To avoid overflow the result is the same if coefficients are
-//         // reversed and evaluated at 1/x
-//         let z = x.recip();
-//         polynom_eval_rev(z, num) / polynom_eval_rev(z, denom)
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // #[test]
-    // fn polynom_ratevl_test() {
-    //     let num = [1.0, 4.0, 3.0];
-    //     let den = [2.0, -6.5, 0.4];
-    //     let ratio1 = ratevl(3.3, &num, &den);
-    //     assert_eq!(ratio1, 37.10958904109594);
-
-    //     let num2 = [3.0, 4.0, 1.0];
-    //     let den2 = [0.4, -6.5, 2.0];
-    //     let ratio2 = ratevl(1.0 / 3.3, &num2, &den2);
-    //     assert_eq!(ratio2, 37.10958904109594);
-
-    //     assert_eq!(ratio1, ratio2);
-    // }
 
     #[test]
     fn poly_creation_coeffs_test() {
@@ -644,7 +588,7 @@ impl Add<PolyMatrix> for PolyMatrix {
             }
             res
         } else {
-            zip_with(&self.matr_coeffs, &rhs.matr_coeffs, |l, r| l + r)
+            crate::zip_with(&self.matr_coeffs, &rhs.matr_coeffs, |l, r| l + r)
         };
         PolyMatrix::new_from_coeffs(&new_coeffs)
     }

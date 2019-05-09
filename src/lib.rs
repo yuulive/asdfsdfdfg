@@ -12,6 +12,27 @@ pub trait Eval<T> {
     fn eval(&self, x: &T) -> T;
 }
 
+// fn zipWith<U, C>(combo: C, left: U, right: U) -> impl Iterator
+// where
+//     U: Iterator,
+//     C: FnMut(U::Item, U::Item) -> U::Item,
+// {
+//     left.zip(right).map(move |(l, r)| combo(l, r))
+// }
+/// Zip two slices with the given function
+///
+/// # Arguments
+///
+/// * `left` - first slice to zip
+/// * `right` - second slice to zip
+/// * `f` - function used to zip the two lists
+pub(crate) fn zip_with<T, F>(left: &[T], right: &[T], mut f: F) -> Vec<T>
+where
+    F: FnMut(&T, &T) -> T,
+{
+    left.iter().zip(right).map(|(l, r)| f(l, r)).collect()
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
