@@ -361,17 +361,17 @@ mod tests {
             Poly::new_from_roots(&[-2., -2.])
         );
 
-        assert!((DVector::from_element(2, -2.)
-            - Poly::new_from_roots(&[-2., -2.]).roots().unwrap())
-        .abs()
-        .iter()
-        .all(|&x| x < 0.000001));
+        assert!(vec![-2., -2.]
+            .iter()
+            .zip(Poly::new_from_roots(&[-2., -2.]).roots().unwrap())
+            .map(|(x, y)| (x - y).abs())
+            .all(|x| x < 0.000001));
 
-        assert!((DVector::from_column_slice(&[1., 2., 3.])
-            - Poly::new_from_roots(&[1., 2., 3.]).roots().unwrap())
-        .abs()
-        .iter()
-        .all(|&x| x < 0.000001));
+        assert!(vec![1., 2., 3.]
+            .iter()
+            .zip(Poly::new_from_roots(&[1., 2., 3.]).roots().unwrap())
+            .map(|(x, y)| (x - y).abs())
+            .all(|x| x < 0.000001));
 
         assert_eq!(
             Poly::new_from_coeffs(&[0., -2., 1., 1.]),
