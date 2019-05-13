@@ -20,6 +20,9 @@ impl Ss {
     ///
     /// # Arguments
     ///
+    /// * `states` - number of states (n)
+    /// * `inputs` - number of inputs (m)
+    /// * `outputs` - number of outputs (p)
     /// * `a` - A matrix (nxn)
     /// * `b` - B matrix (nxm)
     /// * `c` - C matrix (pxn)
@@ -28,59 +31,49 @@ impl Ss {
     /// # Panics
     ///
     /// Panics if matrix dimensions do not match
-    pub fn new(a: &DMatrix<f64>, b: &DMatrix<f64>, c: &DMatrix<f64>, d: &DMatrix<f64>) -> Self {
-        assert!(a.is_square(), "A matrix must be square");
-        assert_eq!(
-            b.nrows(),
-            a.nrows(),
-            "The number of rows of matrices A and B must be equal (state variables)."
-        );
-        assert_eq!(
-            c.ncols(),
-            a.ncols(),
-            "The number of columns of matrices A and C must be equal (state variables)."
-        );
-        assert_eq!(
-            c.nrows(),
-            d.nrows(),
-            "The number of rows of matrices C and D must be equal (output variables)."
-        );
-        assert_eq!(
-            b.ncols(),
-            d.ncols(),
-            "The number of columns of matrices B and D must be equal (input variables)."
-        );
-        Ss {
-            a: a.clone(),
-            b: b.clone(),
-            c: c.clone(),
-            d: d.clone(),
+    pub fn new_from_slice(
+        states: usize,
+        inputs: usize,
+        outputs: usize,
+        a: &[f64],
+        b: &[f64],
+        c: &[f64],
+        d: &[f64],
+    ) -> Self {
+        Self {
+            a: DMatrix::from_row_slice(states, states, a),
+            b: DMatrix::from_row_slice(states, inputs, b),
+            c: DMatrix::from_row_slice(outputs, states, c),
+            d: DMatrix::from_row_slice(outputs, inputs, d),
         }
     }
 
     /// Get the A matrix
-    pub fn a(&self) -> &DMatrix<f64> {
+    pub(crate) fn a(&self) -> &DMatrix<f64> {
         &self.a
     }
 
     /// Get the C matrix
-    pub fn b(&self) -> &DMatrix<f64> {
+    pub(crate) fn b(&self) -> &DMatrix<f64> {
         &self.b
     }
 
     /// Get the C matrix
-    pub fn c(&self) -> &DMatrix<f64> {
+    pub(crate) fn c(&self) -> &DMatrix<f64> {
         &self.c
     }
 
     /// Get the D matrix
-    pub fn d(&self) -> &DMatrix<f64> {
+    pub(crate) fn d(&self) -> &DMatrix<f64> {
         &self.d
     }
 
     /// Calculate the poles of the system
-    pub fn poles(&self) -> DVector<Complex64> {
-        Schur::new(self.a.clone()).complex_eigenvalues()
+    pub fn poles(&self) -> Vec<Complex64> {
+        Schur::new(self.a.clone())
+            .complex_eigenvalues()
+            .as_slice()
+            .to_vec()
     }
 
     /// Calculate the equilibrium point for the given input condition
@@ -90,9 +83,9 @@ impl Ss {
     /// * `u` - Input vector
     pub fn equilibrium(&self, u: &[f64]) -> Option<Equilibrium> {
         assert_eq!(u.len(), self.b.ncols(), "Wrong number of inputs.");
-        let u = DMatrix::from_row_slice(u.len(), 1, u);
+        let u = DVector::from_row_slice(u);
         let inv_a = &self.a.clone().try_inverse()?;
-        let x = inv_a * &self.b * &u;
+        let x = -inv_a * &self.b * &u;
         let y = (-&self.c * inv_a * &self.b + &self.d) * u;
         Some(Equilibrium::new(x, y))
     }
@@ -149,9 +142,9 @@ impl fmt::Display for Ss {
 #[derive(Debug)]
 pub struct Equilibrium {
     /// State equilibrium
-    x: DMatrix<f64>,
+    x: DVector<f64>,
     /// Output equilibrium
-    y: DMatrix<f64>,
+    y: DVector<f64>,
 }
 
 /// Implement methods for equilibrium
@@ -162,8 +155,18 @@ impl Equilibrium {
     ///
     /// * `x` - State equilibrium
     /// * `y` - Output equilibrium
-    pub fn new(x: DMatrix<f64>, y: DMatrix<f64>) -> Self {
+    pub(crate) fn new(x: DVector<f64>, y: DVector<f64>) -> Self {
         Equilibrium { x, y }
+    }
+
+    /// Retreive state coordinates for equilibrium
+    pub fn x(&self) -> &[f64] {
+        self.x.as_slice()
+    }
+
+    /// Retreive output coordinates for equilibrium
+    pub fn y(&self) -> &[f64] {
+        self.y.as_slice()
     }
 }
 

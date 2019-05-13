@@ -4,7 +4,7 @@ use crate::{
     Eval,
 };
 
-use nalgebra::{DMatrix, DVector};
+use nalgebra::{DMatrix, DVector, RowDVector};
 use num_complex::Complex64;
 
 use std::fmt;
@@ -105,8 +105,8 @@ impl TfMatrix {
     }
 }
 
-impl Eval<DVector<Complex64>> for TfMatrix {
-    fn eval(&self, s: &DVector<Complex64>) -> DVector<Complex64> {
+impl Eval<Vec<Complex64>> for TfMatrix {
+    fn eval(&self, s: &Vec<Complex64>) -> Vec<Complex64> {
         //
         // ┌  ┐ ┌┌         ┐ ┌     ┐┐┌  ┐
         // │y1│=││1/pc 1/pc│*│n1 n2│││s1│
@@ -122,19 +122,20 @@ impl Eval<DVector<Complex64>> for TfMatrix {
         let cols = self.num[0].ncols();
 
         let mut s_matr = DMatrix::zeros(rows, cols);
+        let s = RowDVector::from_row_slice(s);
         for r in 0..rows {
-            s_matr.set_row(r, &s.transpose());
+            s_matr.set_row(r, &s);
         }
 
         let num_matr = self.num.eval(&s_matr);
 
-        let pc_matr = s.map(|si| self.den.eval(&si)).transpose();
+        let pc_matr = s.map(|si| self.den.eval(&si));
         let mut den_matr = DMatrix::zeros(rows, cols);
         for r in 0..rows {
             den_matr.set_row(r, &pc_matr);
         }
 
-        num_matr.component_div(&den_matr).column_sum()
+        num_matr.component_div(&den_matr).column_sum().as_slice().to_vec()
     }
 }
 
