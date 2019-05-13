@@ -3,7 +3,7 @@ use crate::Eval;
 use std::fmt;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
 
-use nalgebra::{DMatrix, DVector, Schur};
+use nalgebra::{DMatrix, Schur};
 use num_complex::{Complex, Complex64};
 use num_traits::{One, Zero};
 
@@ -90,18 +90,18 @@ impl Poly {
     }
 
     /// Calculate the real roots of the polynomial
-    pub fn roots(&self) -> Option<DVector<f64>> {
+    pub fn roots(&self) -> Option<Vec<f64>> {
         // Build the companion matrix
         let comp = self.companion();
         let schur = Schur::new(comp);
-        schur.eigenvalues()
+        schur.eigenvalues().map(|e| e.as_slice().to_vec())
     }
 
     /// Calculate the complex roots of the polynomial
-    pub fn complex_roots(&self) -> DVector<Complex64> {
+    pub fn complex_roots(&self) -> Vec<Complex64> {
         let comp = self.companion();
         let schur = Schur::new(comp);
-        schur.complex_eigenvalues()
+        schur.complex_eigenvalues().as_slice().to_vec()
     }
 }
 

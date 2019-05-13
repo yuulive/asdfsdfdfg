@@ -4,7 +4,7 @@ use crate::{
     Eval,
 };
 
-use nalgebra::{DMatrix, DVector, RowDVector};
+use nalgebra::{DMatrix, RowDVector};
 use num_complex::Complex64;
 
 use std::fmt;
@@ -41,22 +41,22 @@ impl Tf {
     }
 
     /// Calculate the poles of the transfer function
-    pub fn poles(&self) -> Option<DVector<f64>> {
+    pub fn poles(&self) -> Option<Vec<f64>> {
         self.den.roots()
     }
 
     /// Calculate the poles of the transfer function
-    pub fn complex_poles(&self) -> DVector<Complex64> {
+    pub fn complex_poles(&self) -> Vec<Complex64> {
         self.den.complex_roots()
     }
 
     /// Calculate the zeros of the transfer function
-    pub fn zeros(&self) -> Option<DVector<f64>> {
+    pub fn zeros(&self) -> Option<Vec<f64>> {
         self.num.roots()
     }
 
     /// Calculate the zeros of the transfer function
-    pub fn complex_zeros(&self) -> DVector<Complex64> {
+    pub fn complex_zeros(&self) -> Vec<Complex64> {
         self.num.complex_roots()
     }
 }
