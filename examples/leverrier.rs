@@ -1,6 +1,7 @@
 extern crate automatica;
 
 use automatica::linear_system;
+use automatica::polynomial::MP;
 use nalgebra::DMatrix;
 
 fn main() {
@@ -9,4 +10,7 @@ fn main() {
     let (p, poly_matrix) = linear_system::leverrier(&t);
     println!("T: {}\np: {}\n", &t, &p);
     println!("B: {}", &poly_matrix);
+
+    let mp = MP::from(poly_matrix);
+    println!("mp {}", &mp);
 }

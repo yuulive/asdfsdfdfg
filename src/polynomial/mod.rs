@@ -497,7 +497,7 @@ mod tests {
 /// P(x) = C0 + C1*x + C2*x^2 + ...
 #[derive(Clone, Debug)]
 pub struct PolyMatrix {
-    matr_coeffs: Vec<DMatrix<f64>>,
+    pub(crate) matr_coeffs: Vec<DMatrix<f64>>,
 }
 
 /// Implementation methods for PolyMatrix struct
@@ -643,5 +643,63 @@ impl fmt::Display for PolyMatrix {
         }
 
         write!(f, "{}", s)
+    }
+}
+
+use ndarray;
+
+#[derive(Debug)]
+pub struct MP {
+    matrix: ndarray::Array2<Poly>,
+}
+
+impl MP {
+    fn new(rows: usize, cols: usize, data: Vec<Poly>) -> Self {
+        Self {
+            matrix: ndarray::Array::from_shape_vec((rows, cols), data).unwrap(),
+        }
+    }
+}
+
+impl From<PolyMatrix> for MP {
+    fn from(pm: PolyMatrix) -> Self {
+        let coeffs = pm.matr_coeffs; // vector of matrices
+        let rows = coeffs[0].nrows();
+        let cols = coeffs[0].ncols();
+        let mut tmp: Vec<Vec<f64>> = vec![vec![]; rows * cols];
+        let vectorized_coeffs: Vec<Vec<_>> = coeffs
+            .iter()
+            .map(|c| c.transpose().as_slice().to_vec())
+            .collect(); // vector of vectors
+        for order in vectorized_coeffs {
+            for (i, value) in order.into_iter().enumerate() {
+                tmp[i].push(value);
+            }
+        }
+
+        let polys: Vec<Poly> = tmp.iter().map(|p| Poly::new_from_coeffs(&p)).collect();
+        MP::new(rows, cols, polys)
+    }
+}
+
+/// Implementation of matrix of polynomials printing
+impl fmt::Display for MP {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.matrix)
+    }
+}
+
+#[cfg(test)]
+mod tests2 {
+    use super::*;
+
+    #[test]
+    fn mp_creation_test() {
+        let c = [4.3, 5.32];
+        let p = Poly::new_from_coeffs(&c);
+        let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
+        let mp = MP::new(2, 2, v);
+        let expected = "[[4.3 +5.32*s, 4.3 +5.32*s],\n [4.3 +5.32*s, 4.3 +5.32*s]]";
+        assert_eq!(expected, format!("{}", &mp));
     }
 }
