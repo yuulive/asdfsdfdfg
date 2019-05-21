@@ -4,6 +4,7 @@ use std::fmt;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
 
 use nalgebra::{DMatrix, Schur};
+use ndarray::{Array, Array2};
 use num_complex::{Complex, Complex64};
 use num_traits::{One, Zero};
 
@@ -646,31 +647,56 @@ impl fmt::Display for PolyMatrix {
     }
 }
 
-use ndarray;
-
+/// Polynomial matrix object
+///
+/// Contains the matrix of polynomials
+///
+/// P(x) = [[P1, P2], [P3, P4]]
 #[derive(Debug)]
 pub struct MP {
-    matrix: ndarray::Array2<Poly>,
+    matrix: Array2<Poly>,
 }
 
+/// Implementation methods for MP struct
 impl MP {
+    /// Create a new polynomial matrix given a vector of polynomials.
+    ///
+    /// # Arguments
+    ///
+    /// * `rows` - number of rows of the matrix
+    /// * `cols` - number of colums of the matrix
+    /// * `data` - vector of polynomials in row major order
+    ///
+    /// # Panics
+    ///
+    /// Panics if the matrix cannot be build from given arguments.
     fn new(rows: usize, cols: usize, data: Vec<Poly>) -> Self {
         Self {
-            matrix: ndarray::Array::from_shape_vec((rows, cols), data).unwrap(),
+            matrix: Array::from_shape_vec((rows, cols), data)
+                .expect("Input data do not allow to create the matrix"),
         }
     }
 }
 
+/// Implement conversion between different representations.
 impl From<PolyMatrix> for MP {
     fn from(pm: PolyMatrix) -> Self {
         let coeffs = pm.matr_coeffs; // vector of matrices
         let rows = coeffs[0].nrows();
         let cols = coeffs[0].ncols();
-        let mut tmp: Vec<Vec<f64>> = vec![vec![]; rows * cols];
+
+        // Each vector contains the corresponding matrix in coeffs,
+        // so each vector contains the coefficients of the polynomial
+        // with the same order (increasing).
         let vectorized_coeffs: Vec<Vec<_>> = coeffs
             .iter()
             .map(|c| c.transpose().as_slice().to_vec())
-            .collect(); // vector of vectors
+            .collect();
+
+        // Crate a vecor containing the vector of coefficients a single
+        // polynomial in row major mode with respect to the initial
+        // vector of matrices.
+        let mut tmp: Vec<Vec<f64>> = vec![vec![]; rows * cols];
         for order in vectorized_coeffs {
             for (i, value) in order.into_iter().enumerate() {
                 tmp[i].push(value);
