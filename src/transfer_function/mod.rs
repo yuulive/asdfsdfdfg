@@ -1,12 +1,13 @@
 use crate::{
     linear_system::{self, Ss},
-    polynomial::{Poly, PolyMatrix},
+    polynomial::{Poly, PolyMatrix, MP},
     Eval,
 };
 
 use nalgebra::{DMatrix, RowDVector};
 use num_complex::Complex64;
 
+use std::convert::TryFrom;
 use std::fmt;
 
 /// Transfer function representation of a linear system
@@ -58,6 +59,29 @@ impl Tf {
     /// Calculate the zeros of the transfer function
     pub fn complex_zeros(&self) -> Vec<Complex64> {
         self.num.complex_roots()
+    }
+}
+
+impl TryFrom<Ss> for Tf {
+    type Error = &'static str;
+
+    /// Convert a state-space representation into transfer functions.
+    /// Conversion is available for Single Input Single Output system.
+    /// If fails if the system is not SISO
+    ///
+    /// # Arguments
+    ///
+    /// `ss` - state space linear system
+    fn try_from(ss: Ss) -> Result<Self, Self::Error> {
+        let (pc, a_inv) = linear_system::leverrier(ss.a());
+        let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
+        let rest = &pc * ss.d();
+        let tf = g + rest;
+        if let Some(num) = MP::from(tf).siso() {
+            Ok(Self::new(num.clone(), pc))
+        } else {
+            Err("Linar system is not Single Input Single Output")
+        }
     }
 }
 

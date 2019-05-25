@@ -676,6 +676,16 @@ impl MP {
                 .expect("Input data do not allow to create the matrix"),
         }
     }
+
+    /// Extract the transfer function from the matrix if is the only one.
+    /// Use to get Single Input Single Output transfer function.
+    pub fn siso(&self) -> Option<&Poly> {
+        if self.matrix.shape() == [1, 1] {
+            self.matrix.first()
+        } else {
+            None
+        }
+    }
 }
 
 /// Implement conversion between different representations.
