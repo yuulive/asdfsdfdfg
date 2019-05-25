@@ -135,7 +135,11 @@ impl Eval<Vec<Complex64>> for TfMatrix {
             den_matr.set_row(r, &pc_matr);
         }
 
-        num_matr.component_div(&den_matr).column_sum().as_slice().to_vec()
+        num_matr
+            .component_div(&den_matr)
+            .column_sum()
+            .as_slice()
+            .to_vec()
     }
 }
 
