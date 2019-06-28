@@ -119,7 +119,10 @@ impl Eval<Complex64> for Poly {
 /// Evaluate the polynomial at the given complex number
 impl Eval<f64> for Poly {
     fn eval(&self, x: &f64) -> f64 {
-        self.coeffs.iter().rev().fold(0.0, |acc, &c| acc * x + c)
+        self.coeffs
+            .iter()
+            .rev()
+            .fold(0.0, |acc, &c| acc.mul_add(*x, c))
     }
 }
 
