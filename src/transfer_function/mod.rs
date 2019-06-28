@@ -4,7 +4,7 @@ use crate::{
     Eval,
 };
 
-use ndarray::{Array, Array2, Axis, Zip};
+use ndarray::{Array2, Axis, Zip};
 use num_complex::Complex64;
 
 use std::convert::TryFrom;
@@ -143,9 +143,6 @@ impl Eval<Vec<Complex64>> for TfMatrix {
         // Create a matrix to contain the result of the evalutation.
         let mut res = Array2::from_elem(self.num.matrix.dim(), Complex64::new(0.0, 0.0));
 
-        // Evaluate the characteristic polynomial for each input returning a vector.
-        let pc_vector = Array::from_vec(s.iter().map(|si| self.den.eval(si)).collect());
-
         // Zip the result and the numerator matrix row by row.
         Zip::from(res.genrows_mut())
             .and(self.num.matrix.genrows())
@@ -154,8 +151,7 @@ impl Eval<Vec<Complex64>> for TfMatrix {
                 Zip::from(&mut res_row)
                     .and(s) // The vectror of the input.
                     .and(matrix_row) // The row of the numerator matrix.
-                    .and(&pc_vector) // The characteristic polynomial.
-                    .apply(|r, s, n, p| *r = n.eval(s) / p);
+                    .apply(|r, s, n| *r = n.eval(s) / self.den.eval(s));
             });
 
         res.sum_axis(Axis(1)).to_vec()
