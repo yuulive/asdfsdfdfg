@@ -151,7 +151,7 @@ impl Eval<Vec<Complex64>> for TfMatrix {
                 Zip::from(&mut res_row)
                     .and(s) // The vectror of the input.
                     .and(matrix_row) // The row of the numerator matrix.
-                    .apply(|r, s, n| *r = n.eval(s) / self.den.eval(s));
+                    .apply(|r, s, n| *r = n.eval(s).fdiv(self.den.eval(s)));
             });
 
         res.sum_axis(Axis(1)).to_vec()
