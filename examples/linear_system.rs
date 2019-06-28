@@ -29,6 +29,11 @@ fn main() {
 
     println!("\nEvaluate transfer function in ω = 0.9");
     let u = vec![Complex::new(0.0, 0.9)];
-    let ynum = tf_matrix.eval(&u);
-    println!("u:{:?}\ny:{:?}", &u, &ynum);
+    let y = tf_matrix.eval(&u);
+    println!("u:{:?}\ny:{:?}", &u, &y);
+
+    println!(
+        "y:{:?}",
+        &y.iter().map(|x| (x.norm(),x.arg().to_degrees())).collect::<Vec<_>>()
+    );
 }

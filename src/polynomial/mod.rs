@@ -81,7 +81,7 @@ impl Poly {
         let hi_coeff = self.coeffs[length];
         DMatrix::from_fn(length, length, |i, j| {
             if j == length - 1 {
-                -self.coeffs[i] / hi_coeff
+                -self.coeffs[i] / hi_coeff // monic polynomial
             } else if i == j + 1 {
                 1.
             } else {
@@ -654,7 +654,7 @@ impl fmt::Display for PolyMatrix {
 /// P(x) = [[P1, P2], [P3, P4]]
 #[derive(Debug)]
 pub struct MP {
-    matrix: Array2<Poly>,
+    pub(crate) matrix: Array2<Poly>,
 }
 
 /// Implementation methods for MP struct

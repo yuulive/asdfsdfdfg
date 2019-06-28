@@ -1,10 +1,10 @@
 use crate::{
     linear_system::{self, Ss},
-    polynomial::{Poly, PolyMatrix, MP},
+    polynomial::{Poly, MP},
     Eval,
 };
 
-use nalgebra::{DMatrix, RowDVector};
+use ndarray::{Array, Array2, Axis, Zip};
 use num_complex::Complex64;
 
 use std::convert::TryFrom;
@@ -108,7 +108,7 @@ impl fmt::Display for Tf {
 /// Matrix of transfer functions
 pub struct TfMatrix {
     /// Polynomial matrix of the numerators
-    num: PolyMatrix,
+    num: MP,
     /// Common polynomial denominator
     den: Poly,
 }
@@ -121,11 +121,8 @@ impl TfMatrix {
     ///
     /// * `num` - Polynomial matrix
     /// * `den` - Characteristic polynomial of the system
-    pub fn new(num: &PolyMatrix, den: Poly) -> Self {
-        Self {
-            num: num.clone(),
-            den,
-        }
+    pub fn new(num: MP, den: Poly) -> Self {
+        Self { num, den }
     }
 }
 
@@ -141,29 +138,27 @@ impl Eval<Vec<Complex64>> for TfMatrix {
         // │y1 y2│=││1/pc 1/pc│.│s1 s2││*││n1 n2│.│s1 s2││
         // │y3 y4│ ││1/pc 1/pc│ │s1 s2││ ││n3 n4│ │s1 s2││
         // └     ┘ └└         ┘ └     ┘┘ └└     ┘ └     ┘┘
-        // `.` means 'evaluated in'
-        let rows = self.num[0].nrows();
-        let cols = self.num[0].ncols();
+        // `.` means 'evaluated at'
 
-        let mut s_matr = DMatrix::zeros(rows, cols);
-        let s = RowDVector::from_row_slice(s);
-        for r in 0..rows {
-            s_matr.set_row(r, &s);
-        }
+        // Create a matrix to contain the result of the evalutation.
+        let mut res = Array2::from_elem(self.num.matrix.dim(), Complex64::new(0.0, 0.0));
 
-        let num_matr = self.num.eval(&s_matr);
+        // Evaluate the characteristic polynomial for each input returning a vector.
+        let pc_vector = Array::from_vec(s.iter().map(|si| self.den.eval(si)).collect());
 
-        let pc_matr = s.map(|si| self.den.eval(&si));
-        let mut den_matr = DMatrix::zeros(rows, cols);
-        for r in 0..rows {
-            den_matr.set_row(r, &pc_matr);
-        }
+        // Zip the result and the numerator matrix row by row.
+        Zip::from(res.genrows_mut())
+            .and(self.num.matrix.genrows())
+            .apply(|mut res_row, matrix_row| {
+                // Zip the row of the result matrix.
+                Zip::from(&mut res_row)
+                    .and(s) // The vectror of the input.
+                    .and(matrix_row) // The row of the numerator matrix.
+                    .and(&pc_vector) // The characteristic polynomial.
+                    .apply(|r, s, n, p| *r = n.eval(s) / p);
+            });
 
-        num_matr
-            .component_div(&den_matr)
-            .column_sum()
-            .as_slice()
-            .to_vec()
+        res.sum_axis(Axis(1)).to_vec()
     }
 }
 
@@ -178,7 +173,7 @@ impl From<Ss> for TfMatrix {
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
         let rest = &pc * ss.d();
         let tf = g + rest;
-        Self::new(&tf, pc)
+        Self::new(MP::from(tf), pc)
     }
 }
 
