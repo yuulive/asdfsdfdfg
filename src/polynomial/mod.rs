@@ -76,7 +76,8 @@ impl Poly {
     /// Build the companion matrix of the polynomial.
     ///
     /// Subdiagonal terms are 1., rightmost column contains the coefficients
-    pub fn companion(&self) -> DMatrix<f64> {
+    /// of the monic polynomial.
+    fn companion(&self) -> DMatrix<f64> {
         let length = self.degree();
         let hi_coeff = self.coeffs[length];
         DMatrix::from_fn(length, length, |i, j| {
