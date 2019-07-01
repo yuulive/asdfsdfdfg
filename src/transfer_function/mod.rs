@@ -1,6 +1,6 @@
 use crate::{
     linear_system::{self, Ss},
-    polynomial::{Poly, MP},
+    polynomial::{MatrixOfPoly, Poly},
     Eval,
 };
 
@@ -77,7 +77,7 @@ impl TryFrom<Ss> for Tf {
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
         let rest = &pc * ss.d();
         let tf = g + rest;
-        if let Some(num) = MP::from(tf).siso() {
+        if let Some(num) = MatrixOfPoly::from(tf).siso() {
             Ok(Self::new(num.clone(), pc))
         } else {
             Err("Linar system is not Single Input Single Output")
@@ -108,7 +108,7 @@ impl fmt::Display for Tf {
 /// Matrix of transfer functions
 pub struct TfMatrix {
     /// Polynomial matrix of the numerators
-    num: MP,
+    num: MatrixOfPoly,
     /// Common polynomial denominator
     den: Poly,
 }
@@ -121,7 +121,7 @@ impl TfMatrix {
     ///
     /// * `num` - Polynomial matrix
     /// * `den` - Characteristic polynomial of the system
-    pub fn new(num: MP, den: Poly) -> Self {
+    pub fn new(num: MatrixOfPoly, den: Poly) -> Self {
         Self { num, den }
     }
 }
@@ -169,7 +169,7 @@ impl From<Ss> for TfMatrix {
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
         let rest = &pc * ss.d();
         let tf = g + rest;
-        Self::new(MP::from(tf), pc)
+        Self::new(MatrixOfPoly::from(tf), pc)
     }
 }
 

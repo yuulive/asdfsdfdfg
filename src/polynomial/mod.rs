@@ -657,12 +657,12 @@ impl fmt::Display for PolyMatrix {
 ///
 /// P(x) = [[P1, P2], [P3, P4]]
 #[derive(Debug)]
-pub struct MP {
+pub struct MatrixOfPoly {
     pub(crate) matrix: Array2<Poly>,
 }
 
 /// Implementation methods for MP struct
-impl MP {
+impl MatrixOfPoly {
     /// Create a new polynomial matrix given a vector of polynomials.
     ///
     /// # Arguments
@@ -693,7 +693,7 @@ impl MP {
 }
 
 /// Implement conversion between different representations.
-impl From<PolyMatrix> for MP {
+impl From<PolyMatrix> for MatrixOfPoly {
     fn from(pm: PolyMatrix) -> Self {
         let coeffs = pm.matr_coeffs; // vector of matrices
         let rows = coeffs[0].nrows();
@@ -718,11 +718,11 @@ impl From<PolyMatrix> for MP {
         }
 
         let polys: Vec<Poly> = tmp.iter().map(|p| Poly::new_from_coeffs(&p)).collect();
-        MP::new(rows, cols, polys)
+        MatrixOfPoly::new(rows, cols, polys)
     }
 }
 
-impl Eval<Array2<Complex64>> for MP {
+impl Eval<Array2<Complex64>> for MatrixOfPoly {
     fn eval(&self, s: &Array2<Complex64>) -> Array2<Complex64> {
         // transform matr_coeffs in complex numbers matrices
         //
@@ -741,7 +741,7 @@ impl Eval<Array2<Complex64>> for MP {
 }
 
 /// Implementation of matrix of polynomials printing
-impl fmt::Display for MP {
+impl fmt::Display for MatrixOfPoly {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.matrix)
     }
@@ -756,7 +756,7 @@ mod tests2 {
         let c = [4.3, 5.32];
         let p = Poly::new_from_coeffs(&c);
         let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
-        let mp = MP::new(2, 2, v);
+        let mp = MatrixOfPoly::new(2, 2, v);
         let expected = "[[4.3 +5.32*s, 4.3 +5.32*s],\n [4.3 +5.32*s, 4.3 +5.32*s]]";
         assert_eq!(expected, format!("{}", &mp));
     }
