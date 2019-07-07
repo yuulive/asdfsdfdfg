@@ -4,7 +4,7 @@ use std::fmt;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
 
 use nalgebra::{DMatrix, Schur};
-use ndarray::{Array, Array2, Zip};
+use ndarray::{Array, Array2};
 use num_complex::{Complex, Complex64};
 use num_traits::{One, Zero};
 
@@ -715,24 +715,6 @@ impl From<PolyMatrix> for MatrixOfPoly {
 
         let polys: Vec<Poly> = tmp.iter().map(|p| Poly::new_from_coeffs(&p)).collect();
         MatrixOfPoly::new(rows, cols, polys)
-    }
-}
-
-impl Eval<Array2<Complex64>> for MatrixOfPoly {
-    fn eval(&self, s: &Array2<Complex64>) -> Array2<Complex64> {
-        // transform matr_coeffs in complex numbers matrices
-        //
-        // ┌     ┐ ┌     ┐ ┌     ┐
-        // │c1 c2│=│P1 P2│*│s1 s2│
-        // │c3 c4│ │P3 P4│ │s1 s2│
-        // └     ┘ └     ┘ └     ┘
-        // `*` is the element by element evaluation
-        let mut res = Array2::from_elem(self.matrix.dim(), Complex::new(0.0, 0.0));
-        Zip::from(&mut res)
-            .and(&self.matrix)
-            .and(s)
-            .apply(|ci, pi, &si| *ci = pi.eval(&si));
-        res
     }
 }
 
