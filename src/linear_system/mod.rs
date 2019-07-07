@@ -102,7 +102,7 @@ impl Ss {
 /// a1 = -trace(A); ak = -1/k * trace(A*Bk)
 /// Bk = a_(k-1)*I + A*B_(k-1)
 #[allow(non_snake_case)]
-pub fn leverrier(A: &DMatrix<f64>) -> (Poly, PolyMatrix) {
+pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly, PolyMatrix) {
     let size = A.nrows(); // A is a square matrix.
     let mut a = vec![1.0];
     let a1 = -A.trace();
@@ -174,5 +174,42 @@ impl Equilibrium {
 impl fmt::Display for Equilibrium {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "x: {}\ny: {}", self.x, self.y)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_leverrier() {
+        use crate::polynomial::MatrixOfPoly;
+        use nalgebra::DMatrix;
+
+        // Example of LeVerrier algorithm (Wikipedia)");
+        let t = DMatrix::from_row_slice(3, 3, &[3., 1., 5., 3., 3., 1., 4., 6., 4.]);
+        let expected_pc = Poly::new_from_coeffs(&[-40., 4., -10., 1.]);
+        let expected_degree0 =
+            DMatrix::from_row_slice(3, 3, &[6., 26., -14., -8., -8., 12., 6., -14., 6.]);
+        let expected_degree1 =
+            DMatrix::from_row_slice(3, 3, &[-7., 1., 5., 3., -7., 1., 4., 6., -6.]);
+        let expected_degree2 = DMatrix::from_row_slice(3, 3, &[1., 0., 0., 0., 1., 0., 0., 0., 1.]);
+
+        let (p, poly_matrix) = leverrier(&t);
+
+        println!("T: {}\np: {}\n", &t, &p);
+        println!("B: {}", &poly_matrix);
+
+        assert_eq!(expected_pc, p);
+        assert_eq!(expected_degree0, poly_matrix[0]);
+        assert_eq!(expected_degree1, poly_matrix[1]);
+        assert_eq!(expected_degree2, poly_matrix[2]);
+
+        let mp = MatrixOfPoly::from(poly_matrix);
+        println!("mp {}", &mp);
+        let expected_result = "[[6 -7*s +1*s^2, 26 +1*s, -14 +5*s],\n \
+                               [-8 +3*s, -8 -7*s +1*s^2, 12 +1*s],\n \
+                               [6 +4*s, -14 +6*s, 6 -6*s +1*s^2]]";
+        assert_eq!(expected_result, format!("{}", &mp));
     }
 }

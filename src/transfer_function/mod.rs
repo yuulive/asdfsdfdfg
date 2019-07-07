@@ -76,7 +76,7 @@ impl TryFrom<Ss> for Tf {
     fn try_from(ss: Ss) -> Result<Self, Self::Error> {
         let (pc, a_inv) = linear_system::leverrier(ss.a());
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
-        let rest = &pc * ss.d();
+        let rest = pc.mul(ss.d());
         let tf = g + rest;
         if let Some(num) = MatrixOfPoly::from(tf).siso() {
             Ok(Self::new(num.clone(), pc))
@@ -168,7 +168,7 @@ impl From<Ss> for TfMatrix {
     fn from(ss: Ss) -> Self {
         let (pc, a_inv) = linear_system::leverrier(ss.a());
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
-        let rest = &pc * ss.d();
+        let rest = pc.mul(ss.d());
         let tf = g + rest;
         Self::new(MatrixOfPoly::from(tf), pc)
     }

@@ -105,6 +105,14 @@ impl Poly {
         let schur = Schur::new(comp);
         schur.complex_eigenvalues().as_slice().to_vec()
     }
+
+    /// Implemantation of polynomial and matrix multiplication
+    pub(crate) fn mul(&self, rhs: &DMatrix<f64>) -> PolyMatrix {
+        // It's the polynomial matrix whose coefficients are the coefficients
+        // of the polynomial times the matrix
+        let res: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
+        PolyMatrix::new_from_coeffs(&res)
+    }
 }
 
 /// Evaluate the polynomial at the given float number
@@ -265,18 +273,6 @@ impl Mul<Poly> for f64 {
 
     fn mul(self, rhs: Poly) -> Poly {
         rhs * self
-    }
-}
-
-/// Implemantation of polynomial and matrix multiplication
-impl Mul<&DMatrix<f64>> for &Poly {
-    type Output = PolyMatrix;
-
-    fn mul(self, rhs: &DMatrix<f64>) -> PolyMatrix {
-        // It's the polynomial matrix whose coefficients are the coefficients
-        // of the polynomial times the matrix
-        let res: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
-        PolyMatrix::new_from_coeffs(&res)
     }
 }
 
@@ -501,7 +497,7 @@ mod tests {
 ///
 /// P(x) = C0 + C1*x + C2*x^2 + ...
 #[derive(Clone, Debug)]
-pub struct PolyMatrix {
+pub(crate) struct PolyMatrix {
     pub(crate) matr_coeffs: Vec<DMatrix<f64>>,
 }
 
