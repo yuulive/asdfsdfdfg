@@ -9,6 +9,7 @@ use num_complex::Complex64;
 
 use std::convert::TryFrom;
 use std::fmt;
+use std::ops::{Index, IndexMut};
 
 /// Transfer function representation of a linear system
 #[derive(Debug)]
@@ -170,6 +171,30 @@ impl From<Ss> for TfMatrix {
         let rest = &pc * ss.d();
         let tf = g + rest;
         Self::new(MatrixOfPoly::from(tf), pc)
+    }
+}
+
+/// Implement read only indexing of transfer function matrix.
+///
+/// # Panics
+///
+/// Panics for out of bounds access.
+impl Index<[usize; 2]> for TfMatrix {
+    type Output = Poly;
+
+    fn index(&self, i: [usize; 2]) -> &Poly {
+        &self.num.matrix[i]
+    }
+}
+
+/// Implement mutable indexing of polynomial returning its coefficients.
+///
+/// # Panics
+///
+/// Panics for out of bounds access.
+impl IndexMut<[usize; 2]> for TfMatrix {
+    fn index_mut(&mut self, i: [usize; 2]) -> &mut Poly {
+        &mut self.num.matrix[i]
     }
 }
 
