@@ -1,3 +1,4 @@
+pub mod bode;
 pub mod linear_system;
 pub mod polynomial;
 pub mod transfer_function;
