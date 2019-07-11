@@ -1,4 +1,4 @@
-use crate::{transfer_function::Tf, Eval};
+use crate::{transfer_function::Tf, Decibel, Eval};
 use num_complex::Complex64;
 
 /// Struct for the calculation of Bode plots
@@ -47,6 +47,11 @@ impl Bode {
             index: 0.0,
         }
     }
+
+    /// Convert Bode iterator into decibels and degrees
+    pub fn into_db_deg(self) -> impl Iterator<Item = (f64, f64)> {
+        self.map(|g| (g.0.to_db(), g.1.to_degrees()))
+    }
 }
 
 /// Implementation of the Iterator trait for Bode struct
@@ -54,7 +59,7 @@ impl Iterator for Bode {
     type Item = (f64, f64);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index > self.stop {
+        if self.index > self.intervals {
             None
         } else {
             let freq_exponent = self.step.mul_add(self.index, self.base_freq);

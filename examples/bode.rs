@@ -15,7 +15,7 @@ fn main() {
     println!("{}\n{}dB, {}°", c, c.norm().to_db(), c.arg().to_degrees());
 
     let b = Bode::new(tf, 0.1, 10.0, 0.1);
-    for (m, f) in b {
-        println!("m: {:.3} dB, f: {:.1} °", m.to_db(), f.to_degrees());
+    for (m, f) in b.into_db_deg() {
+        println!("m: {:.3} dB, f: {:.1} °", m, f);
     }
 }
