@@ -6,12 +6,14 @@ use num_complex::Complex64;
 pub struct Bode {
     /// Transfer function
     tf: Tf,
-    /// End of the plot
-    stop: f64,
+    /// Number of intervals of the plot
+    intervals: f64,
     /// Step between frequencies
     step: f64,
-    /// Current frequency
-    freq: f64,
+    /// Start frequency
+    base_freq: f64,
+    /// Current data index
+    index: f64,
 }
 
 impl Bode {
@@ -28,14 +30,21 @@ impl Bode {
     ///
     /// # Panics
     ///
-    /// Panics if the step is not strictly positive
+    /// Panics if the step is not strictly positive of the minimum frequency
+    /// is not lower than the maximum frequency
     pub fn new(tf: Tf, min_freq: f64, max_freq: f64, step: f64) -> Bode {
         assert!(step > 0.0);
+        assert!(min_freq < max_freq);
+
+        let min = min_freq.log10();
+        let max = max_freq.log10();
+        let intervals = ((max - min) / step).floor();
         Bode {
             tf,
-            stop: max_freq.log10(),
+            intervals,
             step,
-            freq: min_freq.log10(),
+            base_freq: min,
+            index: 0.0,
         }
     }
 }
@@ -45,12 +54,13 @@ impl Iterator for Bode {
     type Item = (f64, f64);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.freq > self.stop {
+        if self.index > self.stop {
             None
         } else {
-            let omega = Complex64::new(0.0, 10f64.powf(self.freq));
+            let freq_exponent = self.step.mul_add(self.index, self.base_freq);
+            let omega = Complex64::new(0.0, 10f64.powf(freq_exponent));
             let g = self.tf.eval(&omega);
-            self.freq += self.step;
+            self.index += 1.;
             Some((g.norm(), g.arg()))
         }
     }
