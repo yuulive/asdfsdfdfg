@@ -1,4 +1,4 @@
-pub mod bode;
+pub mod plots;
 pub mod linear_system;
 pub mod polynomial;
 pub mod transfer_function;

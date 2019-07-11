@@ -1,6 +1,6 @@
 extern crate automatica;
 
-use automatica::bode::Bode;
+use automatica::plots::bode::Bode;
 use automatica::transfer_function::Tf;
 use automatica::{polynomial::Poly, Decibel, Eval};
 
