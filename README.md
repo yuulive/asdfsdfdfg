@@ -22,6 +22,12 @@ Evaluation of the matrix at the given vector of inputs.
 
 State-space -> transfer function
 
+## Plots
+
+## Bode
+
+Calculate the magnitude and phase for a single transfer function in an interval of frequencies.
+
 ## Polynomials
 
 Polynomial creation from coefficients or roots.
