@@ -1,6 +1,6 @@
 extern crate automatica;
 
-use automatica::plots::bode::Bode;
+use automatica::plots::bode::BodePlot;
 use automatica::transfer_function::Tf;
 use automatica::{polynomial::Poly, Decibel, Eval};
 
@@ -14,8 +14,13 @@ fn main() {
     let c = tf.eval(&Complex::new(0., 1.));
     println!("{}\n{}dB, {}°", c, c.norm().to_db(), c.arg().to_degrees());
 
-    let b = Bode::new(tf, 0.1, 10.0, 0.1);
-    for (m, f) in b.into_db_deg() {
-        println!("m: {:.3} dB, f: {:.1} °", m, f);
+    let b = tf.bode(0.1, 10.0, 0.1);
+    for g in b.into_db_deg() {
+        println!(
+            "f: {:.3} rad, m: {:.3} dB, f: {:.1} °",
+            g.angular_frequency(),
+            g.magnitude(),
+            g.phase()
+        );
     }
 }

@@ -1,5 +1,6 @@
 use crate::{
     linear_system::{self, Ss},
+    plots::bode::{Bode, BodePlot},
     polynomial::{MatrixOfPoly, Poly},
     Eval,
 };
@@ -90,6 +91,13 @@ impl TryFrom<Ss> for Tf {
 impl Eval<Complex64> for Tf {
     fn eval(&self, s: &Complex64) -> Complex64 {
         self.num.eval(s) / self.den.eval(s)
+    }
+}
+
+/// Implementation of the Bode plot for a transfer function
+impl BodePlot for Tf {
+    fn bode(self, min_freq: f64, max_freq: f64, step: f64) -> Bode {
+        Bode::new(self, min_freq, max_freq, step)
     }
 }
 
