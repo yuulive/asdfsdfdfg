@@ -3,7 +3,7 @@ use num_complex::Complex64;
 
 /// Struct for the calculation of Bode plots
 #[derive(Debug)]
-pub struct Bode {
+pub struct BodeIterator {
     /// Transfer function
     tf: Tf,
     /// Number of intervals of the plot
@@ -16,8 +16,8 @@ pub struct Bode {
     index: f64,
 }
 
-impl Bode {
-    /// Create a Bode struct
+impl BodeIterator {
+    /// Create a BodeIterator struct
     ///
     /// # Arguments
     ///
@@ -32,14 +32,14 @@ impl Bode {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    pub(crate) fn new(tf: Tf, min_freq: f64, max_freq: f64, step: f64) -> Bode {
+    pub(crate) fn new(tf: Tf, min_freq: f64, max_freq: f64, step: f64) -> BodeIterator {
         assert!(step > 0.0);
         assert!(min_freq < max_freq);
 
         let min = min_freq.log10();
         let max = max_freq.log10();
         let intervals = ((max - min) / step).floor();
-        Bode {
+        BodeIterator {
             tf,
             intervals,
             step,
@@ -48,9 +48,9 @@ impl Bode {
         }
     }
 
-    /// Convert Bode iterator into decibels and degrees
-    pub fn into_db_deg(self) -> impl Iterator<Item = BodeDataRad> {
-        self.map(|g| BodeDataRad {
+    /// Convert BodeIterator into decibels and degrees
+    pub fn into_db_deg(self) -> impl Iterator<Item = Bode> {
+        self.map(|g| Bode {
             magnitude: g.magnitude.to_db(),
             phase: g.phase.to_degrees(),
             ..g
@@ -59,7 +59,7 @@ impl Bode {
 }
 
 /// Struct to hold the data returned by the Bode iterator
-pub struct BodeDataRad {
+pub struct Bode {
     /// Angular frequency (rad)
     angular_frequency: f64,
     /// Magnitude (absolute value or dB)
@@ -68,8 +68,8 @@ pub struct BodeDataRad {
     phase: f64,
 }
 
-/// Implementation of BodeDataRad methods
-impl BodeDataRad {
+/// Implementation of Bode methods
+impl Bode {
     /// Get the angular frequency
     pub fn angular_frequency(&self) -> f64 {
         self.angular_frequency
@@ -86,9 +86,9 @@ impl BodeDataRad {
     }
 }
 
-/// Implementation of the Iterator trait for Bode struct
-impl Iterator for Bode {
-    type Item = BodeDataRad;
+/// Implementation of the Iterator trait for BodeIterator struct
+impl Iterator for BodeIterator {
+    type Item = Bode;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.intervals {
@@ -99,7 +99,7 @@ impl Iterator for Bode {
             let jomega = Complex64::new(0.0, omega);
             let g = self.tf.eval(&jomega);
             self.index += 1.;
-            Some(BodeDataRad {
+            Some(Bode {
                 angular_frequency: omega,
                 magnitude: g.norm(),
                 phase: g.arg(),
@@ -110,7 +110,7 @@ impl Iterator for Bode {
 
 /// Trait for the implementation of Bode plot for a linear system.
 pub trait BodePlot {
-    /// Create a Bode struct
+    /// Create a BodeIterator struct
     ///
     /// # Arguments
     ///
@@ -124,9 +124,9 @@ pub trait BodePlot {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    fn bode(self, min_freq: f64, max_freq: f64, step: f64) -> Bode;
+    fn bode(self, min_freq: f64, max_freq: f64, step: f64) -> BodeIterator;
 
-    /// Create a Bode struct
+    /// Create a BodeIterator struct
     ///
     /// # Arguments
     ///
@@ -140,7 +140,7 @@ pub trait BodePlot {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    fn bode_hz(self, min_freq: f64, max_freq: f64, step: f64) -> Bode
+    fn bode_hz(self, min_freq: f64, max_freq: f64, step: f64) -> BodeIterator
     where
         Self: std::marker::Sized,
     {
