@@ -75,6 +75,11 @@ impl Bode {
         self.angular_frequency
     }
 
+    /// Get the frequency
+    pub fn frequency(&self) -> f64 {
+        self.angular_frequency / 2. / std::f64::consts::PI
+    }
+
     /// Get the magnitude
     pub fn magnitude(&self) -> f64 {
         self.magnitude
