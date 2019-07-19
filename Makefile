@@ -1,13 +1,13 @@
 RUNEXAMPLE = cargo run --example
 
-.PHONY : doc examples bode linear_system oscillation poly transfer_function
+.PHONY : doc examples bode linear_system oscillation polar poly transfer_function
 
 # Create documentation without dependencies.
 doc:
 	cargo doc --no-deps
 
 # Run all examples
-examples: bode linear_system oscillation poly transfer_function
+examples: bode linear_system oscillation polar poly transfer_function
 
 bode:
 	$(RUNEXAMPLE) bode
@@ -17,6 +17,9 @@ linear_system:
 
 oscillation:
 	$(RUNEXAMPLE) oscillation
+
+polar:
+	$(RUNEXAMPLE) polar
 
 poly:
 	$(RUNEXAMPLE) poly
