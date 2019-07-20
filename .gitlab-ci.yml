@@ -1,0 +1,34 @@
+image: 'rust:latest'
+
+stages:
+  - test
+  - doc
+  - build
+
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/cargo
+
+test:
+  stage: test
+  script:
+    - rustc --version
+    - cargo --version
+    - cargo test --verbose
+    - make all_examples
+
+pages:
+  stage: doc
+  script:
+    - cargo doc --no-deps
+    - cp -R target/doc public
+    - echo '<meta http-equiv="refresh" content="0; url=automatica/index.html">' > public/index.html
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
+
+cache:
+  paths:
+    - $CARGO_HOME
+    - target/
