@@ -1,5 +1,6 @@
-pub mod plots;
+pub mod controller;
 pub mod linear_system;
+pub mod plots;
 pub mod polynomial;
 pub mod transfer_function;
 
