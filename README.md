@@ -1,5 +1,7 @@
 # Automatica - Automatic Control Systems Library
 
+[Documentation](https://daingun.gitlab.io/automatica)
+
 ## State-Space representation
 
 Creation of state-space of a linear, time indepentdent system throught the four matrices A, B, C, D.  
