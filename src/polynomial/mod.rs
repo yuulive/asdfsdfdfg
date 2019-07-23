@@ -76,8 +76,8 @@ impl Poly {
     /// Build the companion matrix of the polynomial.
     ///
     /// Subdiagonal terms are 1., rightmost column contains the coefficients
-    /// of the monic polynomial.
-    fn companion(&self) -> DMatrix<f64> {
+    /// of the monic polynomial with opposite sign.
+    pub(crate) fn companion(&self) -> DMatrix<f64> {
         let length = self.degree();
         let hi_coeff = self.coeffs[length];
         DMatrix::from_fn(length, length, |i, j| {
@@ -112,6 +112,18 @@ impl Poly {
         // of the polynomial times the matrix
         let res: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
         PolyMatrix::new_from_coeffs(&res)
+    }
+
+    /// Extend the polinomial coefficients with 0 to the given degree.
+    /// It does not truncate the polynomial.
+    ///
+    /// # Arguments
+    ///
+    /// * `degree` - Degree of the new highest coefficient.
+    pub fn extend(&mut self, degree: usize) {
+        if degree > self.degree() {
+            self.coeffs.resize(degree + 1, 0.);
+        }
     }
 }
 

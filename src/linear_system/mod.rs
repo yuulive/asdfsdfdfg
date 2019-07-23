@@ -1,8 +1,12 @@
-use crate::polynomial::{Poly, PolyMatrix};
+use crate::{
+    polynomial::{Poly, PolyMatrix},
+    transfer_function::Tf,
+};
 
 use nalgebra::{DMatrix, DVector, Schur};
 use num_complex::Complex64;
 
+use std::convert::From;
 use std::fmt;
 
 /// State-space representation of a linar system
@@ -127,6 +131,43 @@ pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly, PolyMatrix) {
     (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
 }
 
+impl From<Tf> for Ss {
+    /// Convert a transfer function representation into state space representation.
+    /// Conversion is done using the observability canonical form.
+    ///
+    /// # Arguments
+    ///
+    /// `tf` - transfer function
+    fn from(tf: Tf) -> Self {
+        // Extend the numerator coefficients with zeros to the length of the
+        // denominator polynomial.
+        let den = tf.den();
+        let order = den.degree();
+        let mut num = tf.num().clone();
+        num.extend(order);
+
+        // Calculate the observability canonical form.
+        let a = den.companion();
+
+        // Get the number of states n.
+        let states = a.nrows();
+        // Get the highest coefficient of the numerator.
+        let beta_n = num[order];
+
+        // Create a nx1 vector with b'i = bi - ai * b'n
+        let b = DMatrix::from_fn(states, 1, |i, _j| num[i] - den[i] * beta_n);
+
+        // Crate a 1xn vector with all zeros but the last that is 1.
+        let mut c = DMatrix::zeros(1, states);
+        c[states - 1] = 1.0;
+
+        // Crate a 1x1 matrix with the highest coefficient of the numerator.
+        let d = DMatrix::from_element(1, 1, beta_n);
+
+        Self { a, b, c, d }
+    }
+}
+
 /// Implementation of state-space representation
 impl fmt::Display for Ss {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -180,11 +221,11 @@ impl fmt::Display for Equilibrium {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use nalgebra::DMatrix;
 
     #[test]
     fn test_leverrier() {
         use crate::polynomial::MatrixOfPoly;
-        use nalgebra::DMatrix;
 
         // Example of LeVerrier algorithm (Wikipedia)");
         let t = DMatrix::from_row_slice(3, 3, &[3., 1., 5., 3., 3., 1., 4., 6., 4.]);
@@ -211,5 +252,35 @@ mod tests {
                                [-8 +3*s, -8 -7*s +1*s^2, 12 +1*s],\n \
                                [6 +4*s, -14 +6*s, 6 -6*s +1*s^2]]";
         assert_eq!(expected_result, format!("{}", &mp));
+    }
+
+    #[test]
+    fn convert_to_ss_1_test() {
+        let tf = Tf::new(
+            Poly::new_from_coeffs(&[1.]),
+            Poly::new_from_coeffs(&[1., 1., 1.]),
+        );
+
+        let ss = Ss::from(tf);
+
+        assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -1., 1., -1.]), *ss.a());
+        assert_eq!(DMatrix::from_row_slice(2, 1, &[1., 0.]), *ss.b());
+        assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), *ss.c());
+        assert_eq!(DMatrix::from_row_slice(1, 1, &[0.]), *ss.d());
+    }
+
+    #[test]
+    fn convert_to_ss_2_test() {
+        let tf = Tf::new(
+            Poly::new_from_coeffs(&[1., 0., 1.]),
+            Poly::new_from_coeffs(&[3., 4., 1.]),
+        );
+
+        let ss = Ss::from(tf);
+
+        assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -3., 1., -4.]), *ss.a());
+        assert_eq!(DMatrix::from_row_slice(2, 1, &[-2., -4.]), *ss.b());
+        assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), *ss.c());
+        assert_eq!(DMatrix::from_row_slice(1, 1, &[1.]), *ss.d());
     }
 }
