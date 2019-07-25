@@ -135,6 +135,25 @@ impl From<Tf> for Ss {
     /// Convert a transfer function representation into state space representation.
     /// Conversion is done using the observability canonical form.
     ///
+    /// ```text
+    ///        b_n*s^n + b_(n-1)*s^(n-1) + ... + b_1*s + b_0
+    /// G(s) = ---------------------------------------------
+    ///          s^n + a_(n-1)*s^(n-1) + ... + a_1*s + a_0
+    ///     ┌                   ┐        ┌         ┐
+    ///     │ 0 0 0 . 0 -a_0    │        │ b'_0    │
+    ///     │ 1 0 0 . 0 -a_1    │        │ b'_1    │
+    /// A = │ 0 1 0 . 0 -a_2    │,   B = │ b'_2    │
+    ///     │ . . . . . .       │        │ .       │
+    ///     │ 0 0 0 . 1 -a_(n-1)│        │ b'_(n-1)│
+    ///     └                   ┘        └         ┘
+    ///     ┌           ┐                ┌    ┐
+    /// C = │0 0 0 . 0 1│,           D = │b'_n│
+    ///     └           ┘                └    ┘
+    ///
+    /// b'_n = b_n,   b'_i = b_i - a_i*b'_n,   i = 0, ..., n-1
+    /// ```
+    /// A is the companion matrix of the transfer function denominator.
+    ///
     /// # Arguments
     ///
     /// `tf` - transfer function
@@ -152,17 +171,17 @@ impl From<Tf> for Ss {
         // Get the number of states n.
         let states = a.nrows();
         // Get the highest coefficient of the numerator.
-        let beta_n = num[order];
+        let b_n = num[order];
 
         // Create a nx1 vector with b'i = bi - ai * b'n
-        let b = DMatrix::from_fn(states, 1, |i, _j| num[i] - den[i] * beta_n);
+        let b = DMatrix::from_fn(states, 1, |i, _j| num[i] - den[i] * b_n);
 
         // Crate a 1xn vector with all zeros but the last that is 1.
         let mut c = DMatrix::zeros(1, states);
         c[states - 1] = 1.0;
 
         // Crate a 1x1 matrix with the highest coefficient of the numerator.
-        let d = DMatrix::from_element(1, 1, beta_n);
+        let d = DMatrix::from_element(1, 1, b_n);
 
         Self { a, b, c, d }
     }
