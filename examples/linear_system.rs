@@ -18,6 +18,11 @@ fn main() {
     println!("{}", &sys);
     println!("poles:\n{:?}", poles);
 
+    let (xi, yi) = sys.rk2(&[1.], &[0., 0.], 0.1, 150);
+    println!("\nStep response:");
+    println!("state stationary values: {:?}", xi.last().unwrap());
+    println!("output stationary values: {:?}", yi.last().unwrap());
+
     let u = 0.0;
     println!("\nEquilibrium for u={}", u);
     let eq = sys.equilibrium(&[u]).unwrap();
@@ -34,6 +39,8 @@ fn main() {
 
     println!(
         "y:\n{:?}",
-        &y.iter().map(|x| (x.norm(),x.arg().to_degrees())).collect::<Vec<_>>()
+        &y.iter()
+            .map(|x| (x.norm(), x.arg().to_degrees()))
+            .collect::<Vec<_>>()
     );
 }

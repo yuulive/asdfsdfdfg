@@ -93,6 +93,44 @@ impl Ss {
         let y = (-&self.c * inv_a * &self.b + &self.d) * u;
         Some(Equilibrium::new(x, y))
     }
+
+    /// Response to step function, using Runge-Kutta second order method
+    ///
+    /// # Arguments
+    ///
+    /// * `u` - input vector (colum mayor)
+    /// * `x0` - initial state (colum mayor)
+    /// * `h` - integration time interval
+    /// * `n` - integration steps
+    pub fn rk2(&self, u: &[f64], x0: &[f64], h: f64, n: usize) -> (Vec<Vec<f64>>, Vec<Vec<f64>>) {
+        let u = DVector::from_column_slice(u);
+        let mut state = Vec::with_capacity(n + 1);
+        let mut output = Vec::with_capacity(n + 1);
+        let mut xn = DVector::from_column_slice(x0);
+
+        // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
+        // k1 = h*f(x_n, y_n)
+        // k2 = h*f(x_n + h, y_n + k1)
+        //
+        // x_n (time) does not explicitly appear for a linear system with
+        // input a step function
+
+        // State and input at time 0.
+        state.push(xn.as_slice().to_vec());
+        let y0 = &self.c * &xn + &self.d * &u;
+        output.push(y0.as_slice().to_vec());
+
+        for _ in 0..n {
+            let k1 = h * (&self.a * &xn + &self.b * &u);
+            let k2 = h * (&self.a * (&xn + &k1) + &self.b * &u);
+            let xn1 = &xn + 0.5 * (k1 + k2);
+            state.push(xn1.as_slice().to_vec());
+            xn = xn1;
+            let yn1 = &self.c * &xn + &self.d * &u;
+            output.push(yn1.as_slice().to_vec());
+        }
+        (state, output)
+    }
 }
 
 /// Faddeev–LeVerrier algorithm
