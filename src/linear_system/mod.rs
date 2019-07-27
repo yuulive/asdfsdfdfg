@@ -1,7 +1,7 @@
 pub mod solver;
 
 use crate::{
-    linear_system::solver::Rk2Iterator,
+    linear_system::solver::{Rk2Iterator, Rkf45Iterator},
     polynomial::{Poly, PolyMatrix},
     transfer_function::Tf,
 };
@@ -109,84 +109,18 @@ impl Ss {
         Rk2Iterator::new(self, u, x0, h, n)
     }
 
-    /// Runge-Kutta 45 with adaptive step
-    pub fn rk45(
-        &self,
-        u: &[f64],
-        x0: &[f64],
-        h: f64,
-        n: usize,
-    ) -> (Vec<f64>, Vec<Vec<f64>>, Vec<Vec<f64>>) {
-        let u = DVector::from_column_slice(u);
-        let mut state = Vec::with_capacity(n + 1);
-        let mut output = Vec::with_capacity(n + 1);
-        let mut steps = Vec::with_capacity(n + 1);
-        let mut xn = DVector::from_column_slice(x0);
-
-        // State and input at time 0.
-        state.push(xn.as_slice().to_vec());
-        let du = &self.d * &u;
-        let y0 = &self.c * &xn + &du;
-        output.push(y0.as_slice().to_vec());
-
-        let bu = &self.b * &u;
-        let mut h = h;
-        for _ in 0..n {
-            let tol = 10e-5;
-            let mut error = 0.;
-            loop {
-                let k1 = h * (&self.a * &xn + &bu);
-                let k2 = h * (&self.a * (&xn + B21 * &k1) + &bu);
-                let k3 = h * (&self.a * (&xn + B3[0] * &k1 + B3[1] * &k2) + &bu);
-                let k4 = h * (&self.a * (&xn + B4[0] * &k1 + B4[1] * &k2 + B4[2] * &k3) + &bu);
-                let k5 = h
-                    * (&self.a * (&xn + B5[0] * &k1 + B5[1] * &k2 + B5[2] * &k3 + B5[3] * &k4)
-                        + &bu);
-                let k6 = h
-                    * (&self.a
-                        * (&xn
-                            + B6[0] * &k1
-                            + B6[1] * &k2
-                            + B6[2] * &k3
-                            + B6[3] * &k4
-                            + B6[4] * &k5)
-                        + &bu);
-
-                let xn1 = &xn + C[0] * &k1 + C[1] * &k3 + C[2] * &k4 + C[3] * &k5;
-                let xn1_ = &xn + D[0] * &k1 + D[1] * &k3 + D[2] * &k4 + D[3] * &k5 + D[4] * &k6;
-
-                error = (&xn1 - &xn1_).abs().max();
-                let delta = tol / error;
-                if error < tol {
-                    steps.push(h);
-                    h = 0.95 * h * delta.powf(0.25);
-                    state.push(xn1.as_slice().to_vec());
-                    xn = xn1;
-                    break;
-                }
-                h = 0.95 * h * delta.powf(0.2);
-            }
-            let yn1 = &self.c * &xn + &du;
-            output.push(yn1.as_slice().to_vec());
-        }
-        (steps, state, output)
+    /// Runge-Kutta-Fehlberg 45 with adaptive step
+    ///
+    /// # Arguments
+    ///
+    /// * `u` - input vector (colum mayor)
+    /// * `x0` - initial state (colum mayor)
+    /// * `h` - integration time interval
+    /// * `n` - integration steps
+    pub fn rkf45_iter(&self, u: &[f64], x0: &[f64], h: f64, n: usize) -> Rkf45Iterator {
+        Rkf45Iterator::new(self, u, x0, h, n)
     }
 }
-
-const B21: f64 = 1. / 4.;
-const B3: [f64; 2] = [3. / 32., 9. / 32.];
-const B4: [f64; 3] = [1932. / 2197., -7200. / 2197., 7296. / 2197.];
-const B5: [f64; 4] = [439. / 216., -8., 3680. / 513., -845. / 4104.];
-const B6: [f64; 5] = [-8. / 27., 2., -3544. / 2565., 1859. / 4104., -11. / 40.];
-
-const C: [f64; 4] = [25. / 216., 1408. / 2564., 2197. / 4101., -1. / 5.];
-const D: [f64; 5] = [
-    16. / 135.,
-    6656. / 12_825.,
-    28_561. / 56_430.,
-    -9. / 50.,
-    2. / 55.,
-];
 
 /// Faddeev–LeVerrier algorithm
 ///
