@@ -23,6 +23,22 @@ fn main() {
     println!("state stationary values: {:?}", xi.last().unwrap());
     println!("output stationary values: {:?}", yi.last().unwrap());
 
+    let (hi, xi, yi) = sys.rk45(&[1.], &[0., 0.], 0.1, 40);
+    let time: Vec<f64> = hi
+        .iter()
+        .scan(0., |acc, &x| {
+            *acc = *acc + x;
+            Some(*acc)
+        })
+        .collect();
+    println!("{:?}:{:?}", time, yi);
+    for t in time {
+        println!("{}", t);
+    }
+    for y in yi {
+        println!("{};{}", y[0], y[1]);
+    }
+
     let u = 0.0;
     println!("\nEquilibrium for u={}", u);
     let eq = sys.equilibrium(&[u]).unwrap();
