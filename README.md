@@ -8,6 +8,11 @@ Creation of state-space of a linear, time indepentdent system throught the four 
 Calculate the poles of the system.  
 Calculate the equiliblium point (both state and output) of the system from the given input.
 
+### System time evolution
+
+Step response with Runge-Kutta order 2 method with fixed step.  
+Step response with Runge-Kutta-Fehlberg order 4 5 method with adaptive step.
+
 ## Transfer function representation
 
 ### Sigle Input Single Output (SISO)
