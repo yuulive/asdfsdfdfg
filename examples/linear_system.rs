@@ -18,10 +18,20 @@ fn main() {
     println!("{}", &sys);
     println!("poles:\n{:?}", poles);
 
-    let (xi, yi) = sys.rk2(&[1.], &[0., 0.], 0.1, 150);
     println!("\nStep response:");
-    println!("state stationary values: {:?}", xi.last().unwrap());
-    println!("output stationary values: {:?}", yi.last().unwrap());
+    let iter = sys.rk2_iter(&[1.], &[0., 0.], 0.1, 150);
+    println!("stationary values: {:?}", iter.last().unwrap());
+    // Uncomment to print the result.
+    // for i in sys.rk2_iter(&[1.], &[0., 0.], 0.1, 150) {
+    //     println!(
+    //         "{};{};{};{};{}",
+    //         i.time(),
+    //         i.state()[0],
+    //         i.state()[1],
+    //         i.output()[0],
+    //         i.output()[1]
+    //     );
+    // }
 
     let (hi, xi, yi) = sys.rk45(&[1.], &[0., 0.], 0.1, 40);
     let time: Vec<f64> = hi
