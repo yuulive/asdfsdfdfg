@@ -45,6 +45,28 @@ impl<'a> Rk2Iterator<'a> {
             index: 0,
         }
     }
+
+    /// Runge-Kutta order 2 method
+    fn rk2(&mut self) -> Option<Rk2> {
+        // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
+        // k1 = h*f(x_n, y_n)
+        // k2 = h*f(x_n + h, y_n + k1)
+        //
+        // x_n (time) does not explicitly appear for a linear system with
+        // input a step function
+        let bu = &self.sys.b * &self.input;
+        let k1 = self.h * (&self.sys.a * &self.state + &bu);
+        let k2 = self.h * (&self.sys.a * (&self.state + &k1) + &bu);
+        self.state += 0.5 * (k1 + k2);
+        self.output = &self.sys.c * &self.state + &self.sys.d * &self.input;
+
+        self.index += 1;
+        Some(Rk2 {
+            time: self.index as f64 * self.h,
+            state: self.state.as_slice().to_vec(),
+            output: self.output.as_slice().to_vec(),
+        })
+    }
 }
 
 /// Implementation of the Iterator trait for the Rk2Iterator struct
@@ -63,24 +85,7 @@ impl<'a> Iterator for Rk2Iterator<'a> {
                 output: self.output.as_slice().to_vec(),
             })
         } else {
-            // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
-            // k1 = h*f(x_n, y_n)
-            // k2 = h*f(x_n + h, y_n + k1)
-            //
-            // x_n (time) does not explicitly appear for a linear system with
-            // input a step function
-            let bu = &self.sys.b * &self.input;
-            let k1 = self.h * (&self.sys.a * &self.state + &bu);
-            let k2 = self.h * (&self.sys.a * (&self.state + &k1) + &bu);
-            self.state += 0.5 * (k1 + k2);
-            self.output = &self.sys.c * &self.state + &self.sys.d * &self.input;
-
-            self.index += 1;
-            Some(Rk2 {
-                time: self.index as f64 * self.h,
-                state: self.state.as_slice().to_vec(),
-                output: self.output.as_slice().to_vec(),
-            })
+            self.rk2()
         }
     }
 }
@@ -156,6 +161,54 @@ impl<'a> Rkf45Iterator<'a> {
             index: 0,
         }
     }
+
+    /// Runge-Kutta-Fehlberg order 4 and 5 method with adaptive step size
+    fn rkf45(&mut self) -> Option<Rkf45> {
+        let bu = &self.sys.b * &self.input;
+        let tol = 1e-4;
+        let mut error;
+        loop {
+            let k1 = self.h * (&self.sys.a * &self.state + &bu);
+            let k2 = self.h * (&self.sys.a * (&self.state + B21 * &k1) + &bu);
+            let k3 = self.h * (&self.sys.a * (&self.state + B3[0] * &k1 + B3[1] * &k2) + &bu);
+            let k4 = self.h
+                * (&self.sys.a * (&self.state + B4[0] * &k1 + B4[1] * &k2 + B4[2] * &k3) + &bu);
+            let k5 = self.h
+                * (&self.sys.a
+                    * (&self.state + B5[0] * &k1 + B5[1] * &k2 + B5[2] * &k3 + B5[3] * &k4)
+                    + &bu);
+            let k6 = self.h
+                * (&self.sys.a
+                    * (&self.state
+                        + B6[0] * &k1
+                        + B6[1] * &k2
+                        + B6[2] * &k3
+                        + B6[3] * &k4
+                        + B6[4] * &k5)
+                    + &bu);
+
+            let xn1 = &self.state + C[0] * &k1 + C[1] * &k3 + C[2] * &k4 + C[3] * &k5;
+            let xn1_ = &self.state + D[0] * &k1 + D[1] * &k3 + D[2] * &k4 + D[3] * &k5 + D[4] * &k6;
+
+            error = (&xn1 - &xn1_).abs().max();
+            let error_ratio = tol / error;
+            if error < tol {
+                self.h = 0.95 * self.h * error_ratio.powf(0.25);
+                self.state = xn1;
+                break;
+            }
+            self.h = 0.95 * self.h * error_ratio.powf(0.2);
+        }
+        self.output = &self.sys.c * &self.state + &self.sys.d * &self.input;
+
+        self.index += 1;
+        Some(Rkf45 {
+            time: self.h,
+            state: self.state.as_slice().to_vec(),
+            output: self.output.as_slice().to_vec(),
+            error,
+        })
+    }
 }
 
 /// Implementation of the Iterator trait for the Rkf45Iterator struct
@@ -175,51 +228,7 @@ impl<'a> Iterator for Rkf45Iterator<'a> {
                 error: 0.,
             })
         } else {
-            let bu = &self.sys.b * &self.input;
-            let tol = 1e-4;
-            let mut error;
-            loop {
-                let k1 = self.h * (&self.sys.a * &self.state + &bu);
-                let k2 = self.h * (&self.sys.a * (&self.state + B21 * &k1) + &bu);
-                let k3 = self.h * (&self.sys.a * (&self.state + B3[0] * &k1 + B3[1] * &k2) + &bu);
-                let k4 = self.h
-                    * (&self.sys.a * (&self.state + B4[0] * &k1 + B4[1] * &k2 + B4[2] * &k3) + &bu);
-                let k5 = self.h
-                    * (&self.sys.a
-                        * (&self.state + B5[0] * &k1 + B5[1] * &k2 + B5[2] * &k3 + B5[3] * &k4)
-                        + &bu);
-                let k6 = self.h
-                    * (&self.sys.a
-                        * (&self.state
-                            + B6[0] * &k1
-                            + B6[1] * &k2
-                            + B6[2] * &k3
-                            + B6[3] * &k4
-                            + B6[4] * &k5)
-                        + &bu);
-
-                let xn1 = &self.state + C[0] * &k1 + C[1] * &k3 + C[2] * &k4 + C[3] * &k5;
-                let xn1_ =
-                    &self.state + D[0] * &k1 + D[1] * &k3 + D[2] * &k4 + D[3] * &k5 + D[4] * &k6;
-
-                error = (&xn1 - &xn1_).abs().max();
-                let error_ratio = tol / error;
-                if error < tol {
-                    self.h = 0.95 * self.h * error_ratio.powf(0.25);
-                    self.state = xn1;
-                    break;
-                }
-                self.h = 0.95 * self.h * error_ratio.powf(0.2);
-            }
-            self.output = &self.sys.c * &self.state + &self.sys.d * &self.input;
-
-            self.index += 1;
-            Some(Rkf45 {
-                time: self.h,
-                state: self.state.as_slice().to_vec(),
-                output: self.output.as_slice().to_vec(),
-                error,
-            })
+            self.rkf45()
         }
     }
 }
