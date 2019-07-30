@@ -97,15 +97,15 @@ impl Ss {
         Some(Equilibrium::new(x, y))
     }
 
-    /// Response to step function, using Runge-Kutta second order method
+    /// Time evolution for the given input, using Runge-Kutta second order method
     ///
     /// # Arguments
     ///
-    /// * `u` - input vector (colum mayor)
+    /// * `u` - input function returning a vector (colum mayor)
     /// * `x0` - initial state (colum mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk2_iter(&self, u: &[f64], x0: &[f64], h: f64, n: usize) -> Rk2Iterator {
+    pub fn rk2(&self, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> Rk2Iterator {
         Rk2Iterator::new(self, u, x0, h, n)
     }
 

@@ -7,8 +7,8 @@ use nalgebra::DVector;
 pub struct Rk2Iterator<'a> {
     /// Linear system
     sys: &'a Ss,
-    /// Input vector,
-    input: DVector<f64>,
+    /// Input function
+    input: fn(f64) -> Vec<f64>,
     /// State vector.
     state: DVector<f64>,
     /// Output vector.
@@ -22,22 +22,21 @@ pub struct Rk2Iterator<'a> {
 }
 
 impl<'a> Rk2Iterator<'a> {
-    /// Response to step function, using Runge-Kutta second order method
+    /// Create the solver for a Runge-Kutta second order method
     ///
     /// # Arguments
     ///
-    /// * `u` - input vector (colum mayor)
-    /// * `x0` - initial state (colum mayor)
+    /// * `u` - input function that returns a vector (colum vector)
+    /// * `x0` - initial state (colum vector)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub(crate) fn new(sys: &'a Ss, u: &[f64], x0: &[f64], h: f64, n: usize) -> Self {
-        let input = DVector::from_column_slice(u);
+    pub(crate) fn new(sys: &'a Ss, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> Self {
+        let start = DVector::from_vec(u(0.0));
         let state = DVector::from_column_slice(x0);
-        // Calculate the output at time 0.
-        let output = &sys.c * &state + &sys.d * &input;
+        let output = &sys.c * &state + &sys.d * &start;
         Self {
             sys,
-            input,
+            input: u,
             state,
             output,
             h,
@@ -62,20 +61,21 @@ impl<'a> Rk2Iterator<'a> {
     /// Runge-Kutta order 2 method
     fn main_iteration(&mut self) -> Option<Rk2> {
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
-        // k1 = h*f(x_n, y_n)
-        // k2 = h*f(x_n + h, y_n + k1)
-        //
-        // x_n (time) does not explicitly appear for a linear system with
-        // input a step function
-        let bu = &self.sys.b * &self.input;
+        // k1 = h*f(t_n, y_n)
+        // k2 = h*f(t_n + h, y_n + k1)
+        let time = self.index as f64 * self.h;
+        let u = DVector::from_vec((self.input)(time));
+        let uh = DVector::from_vec((self.input)(time + self.h));
+        let bu = &self.sys.b * &u;
+        let buh = &self.sys.b * &uh;
         let k1 = self.h * (&self.sys.a * &self.state + &bu);
-        let k2 = self.h * (&self.sys.a * (&self.state + &k1) + &bu);
+        let k2 = self.h * (&self.sys.a * (&self.state + &k1) + &buh);
         self.state += 0.5 * (k1 + k2);
-        self.output = &self.sys.c * &self.state + &self.sys.d * &self.input;
+        self.output = &self.sys.c * &self.state + &self.sys.d * &u;
 
         self.index += 1;
         Some(Rk2 {
-            time: self.index as f64 * self.h,
+            time,
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
         })

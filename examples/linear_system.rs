@@ -19,10 +19,10 @@ fn main() {
     println!("poles:\n{:?}", poles);
 
     println!("\nStep response:");
-    let iter = sys.rk2_iter(&[1.], &[0., 0.], 0.1, 150);
+    let iter = sys.rk2(|_| vec![1.], &[0., 0.], 0.1, 150);
     println!("rk2 stationary values: {:?}", iter.last().unwrap());
     // Uncomment to print the result.
-    // for i in sys.rk2_iter(&[1.], &[0., 0.], 0.1, 150) {
+    // for i in sys.rk2(|_| vec![1.], &[0., 0.], 0.1, 150) {
     //     println!(
     //         "{};{};{};{};{}",
     //         i.time(),
