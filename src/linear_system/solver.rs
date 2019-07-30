@@ -46,8 +46,21 @@ impl<'a> Rk2Iterator<'a> {
         }
     }
 
+    /// Intial step (time 0) of the rk2 solver.
+    /// It contains the initial state and the calculated inital output
+    /// at the constructor
+    fn initial_step(&mut self) -> Option<Rk2> {
+        self.index += 1;
+        // State and output at time 0.
+        Some(Rk2 {
+            time: 0.,
+            state: self.state.as_slice().to_vec(),
+            output: self.output.as_slice().to_vec(),
+        })
+    }
+
     /// Runge-Kutta order 2 method
-    fn rk2(&mut self) -> Option<Rk2> {
+    fn main_iteration(&mut self) -> Option<Rk2> {
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
         // k1 = h*f(x_n, y_n)
         // k2 = h*f(x_n + h, y_n + k1)
@@ -77,15 +90,9 @@ impl<'a> Iterator for Rk2Iterator<'a> {
         if self.index > self.n {
             None
         } else if self.index == 0 {
-            self.index += 1;
-            // State and output at time 0.
-            Some(Rk2 {
-                time: 0.,
-                state: self.state.as_slice().to_vec(),
-                output: self.output.as_slice().to_vec(),
-            })
+            self.initial_step()
         } else {
-            self.rk2()
+            self.main_iteration()
         }
     }
 }
@@ -162,8 +169,21 @@ impl<'a> Rkf45Iterator<'a> {
         }
     }
 
+    /// Intial step (time 0) of the rkf45 solver.
+    /// It contains the initial state and the calculated inital output
+    /// at the constructor
+    fn initial_step(&mut self) -> Option<Rkf45> {
+        self.index += 1;
+        Some(Rkf45 {
+            time: 0.,
+            state: self.state.as_slice().to_vec(),
+            output: self.output.as_slice().to_vec(),
+            error: 0.,
+        })
+    }
+
     /// Runge-Kutta-Fehlberg order 4 and 5 method with adaptive step size
-    fn rkf45(&mut self) -> Option<Rkf45> {
+    fn main_iteration(&mut self) -> Option<Rkf45> {
         let bu = &self.sys.b * &self.input;
         let tol = 1e-4;
         let mut error;
@@ -219,16 +239,9 @@ impl<'a> Iterator for Rkf45Iterator<'a> {
         if self.index > self.n {
             None
         } else if self.index == 0 {
-            self.index += 1;
-            // Sater and output at time 0.
-            Some(Rkf45 {
-                time: 0.,
-                state: self.state.as_slice().to_vec(),
-                output: self.output.as_slice().to_vec(),
-                error: 0.,
-            })
+            self.initial_step()
         } else {
-            self.rkf45()
+            self.main_iteration()
         }
     }
 }
