@@ -199,8 +199,8 @@ impl<'a> Rkf45Iterator<'a> {
     /// Runge-Kutta-Fehlberg order 4 and 5 method with adaptive step size
     fn main_iteration(&mut self) -> Option<Rkf45> {
         let mut error;
-        let u1 = DVector::from_vec((self.input)(self.time));
         loop {
+            let u1 = DVector::from_vec((self.input)(self.time));
             let u2 = DVector::from_vec((self.input)(self.time + self.h * A[0]));
             let u3 = DVector::from_vec((self.input)(self.time + self.h * A[1]));
             let u4 = DVector::from_vec((self.input)(self.time + self.h * A[2]));
@@ -231,18 +231,25 @@ impl<'a> Rkf45Iterator<'a> {
             let xn1 = &self.state + C[0] * &k1 + C[1] * &k3 + C[2] * &k4 + C[3] * &k5;
             let xn1_ = &self.state + D[0] * &k1 + D[1] * &k3 + D[2] * &k4 + D[3] * &k5 + D[4] * &k6;
 
+            // Take the maximum absolute error between the states of the system.
             error = (&xn1 - &xn1_).abs().max();
             let error_ratio = self.tol / error;
+            // Safety factor to avoid too small step changes.
+            let safety_factor = 0.95;
             if error < self.tol {
-                self.h = 0.95 * self.h * error_ratio.powf(0.25);
+                self.h = safety_factor * self.h * error_ratio.powf(0.25);
                 self.state = xn1;
                 break;
             }
-            self.h = 0.95 * self.h * error_ratio.powf(0.2);
+            self.h = safety_factor * self.h * error_ratio.powf(0.2);
         }
-        self.output = &self.sys.c * &self.state + &self.sys.d * &u1;
 
+        // Update time before calculate the output.
         self.time += self.h;
+
+        let u = DVector::from_vec((self.input)(self.time));
+        self.output = &self.sys.c * &self.state + &self.sys.d * &u;
+
         Some(Rkf45 {
             time: self.time,
             state: self.state.as_slice().to_vec(),
