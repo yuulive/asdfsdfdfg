@@ -144,6 +144,8 @@ pub struct Rkf45Iterator<'a> {
     index: usize,
     /// Time
     time: f64,
+    /// Tollerance
+    tol: f64,
 }
 
 impl<'a> Rkf45Iterator<'a> {
@@ -155,7 +157,15 @@ impl<'a> Rkf45Iterator<'a> {
     /// * `x0` - initial state (colum vector)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub(crate) fn new(sys: &'a Ss, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> Self {
+    /// * `tol` - error tollerance
+    pub(crate) fn new(
+        sys: &'a Ss,
+        u: fn(f64) -> Vec<f64>,
+        x0: &[f64],
+        h: f64,
+        n: usize,
+        tol: f64,
+    ) -> Self {
         let start = DVector::from_vec(u(0.0));
         let state = DVector::from_column_slice(x0);
         // Calculate the output at time 0.
@@ -169,6 +179,7 @@ impl<'a> Rkf45Iterator<'a> {
             n,
             index: 0,
             time: 0.,
+            tol,
         }
     }
 
@@ -187,7 +198,6 @@ impl<'a> Rkf45Iterator<'a> {
 
     /// Runge-Kutta-Fehlberg order 4 and 5 method with adaptive step size
     fn main_iteration(&mut self) -> Option<Rkf45> {
-        let tol = 1e-4;
         let mut error;
         let u1 = DVector::from_vec((self.input)(self.time));
         loop {
@@ -222,8 +232,8 @@ impl<'a> Rkf45Iterator<'a> {
             let xn1_ = &self.state + D[0] * &k1 + D[1] * &k3 + D[2] * &k4 + D[3] * &k5 + D[4] * &k6;
 
             error = (&xn1 - &xn1_).abs().max();
-            let error_ratio = tol / error;
-            if error < tol {
+            let error_ratio = self.tol / error;
+            if error < self.tol {
                 self.h = 0.95 * self.h * error_ratio.powf(0.25);
                 self.state = xn1;
                 break;

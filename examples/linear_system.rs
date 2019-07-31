@@ -35,11 +35,11 @@ fn main() {
         }
     }
 
-    let rkf45 = sys.rkf45(|_| vec![1.], &[0., 0.], 0.1, 30);
+    let rkf45 = sys.rkf45(|_| vec![1.], &[0., 0.], 0.1, 30, 1e-4);
     println!("rkf45 stationary values: {:?}", rkf45.last().unwrap());
     // Change to 'true' to print the result
     if false {
-        for i in sys.rkf45(|_| vec![1.], &[0., 0.], 0.1, 30) {
+        for i in sys.rkf45(|_| vec![1.], &[0., 0.], 0.1, 30, 1e-4) {
             println!(
                 "{};{};{};{};{};{}",
                 i.time(),
