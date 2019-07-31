@@ -21,32 +21,36 @@ fn main() {
     println!("\nStep response:");
     let iter = sys.rk2(|_| vec![1.], &[0., 0.], 0.1, 150);
     println!("rk2 stationary values: {:?}", iter.last().unwrap());
-    // Uncomment to print the result.
-    // for i in sys.rk2(|_| vec![1.], &[0., 0.], 0.1, 150) {
-    //     println!(
-    //         "{};{};{};{};{}",
-    //         i.time(),
-    //         i.state()[0],
-    //         i.state()[1],
-    //         i.output()[0],
-    //         i.output()[1]
-    //     );
-    // }
+    // Change to 'true' to print the result
+    if false {
+        for i in sys.rk2(|_| vec![1.], &[0., 0.], 0.1, 150) {
+            println!(
+                "{};{};{};{};{}",
+                i.time(),
+                i.state()[0],
+                i.state()[1],
+                i.output()[0],
+                i.output()[1]
+            );
+        }
+    }
 
-    let rkf45 = sys.rkf45_iter(&[1.], &[0., 0.], 0.1, 30);
+    let rkf45 = sys.rkf45(|_| vec![1.], &[0., 0.], 0.1, 30);
     println!("rkf45 stationary values: {:?}", rkf45.last().unwrap());
-    // for i in sys.rkf45_iter(&[1.], &[0., 0.], 0.1, 30) {
-    //     println!(
-    //         "{};{};{};{};{};{}",
-    //         i.time(),
-    //         i.state()[0],
-    //         i.state()[1],
-    //         i.output()[0],
-    //         i.output()[1],
-    //         i.error()
-    //     );
-    // }
-
+    // Change to 'true' to print the result
+    if false {
+        for i in sys.rkf45(|_| vec![1.], &[0., 0.], 0.1, 30) {
+            println!(
+                "{};{};{};{};{};{}",
+                i.time(),
+                i.state()[0],
+                i.state()[1],
+                i.output()[0],
+                i.output()[1],
+                i.error()
+            );
+        }
+    }
     let u = 0.0;
     println!("\nEquilibrium for u={}", u);
     let eq = sys.equilibrium(&[u]).unwrap();

@@ -113,11 +113,11 @@ impl Ss {
     ///
     /// # Arguments
     ///
-    /// * `u` - input vector (colum mayor)
-    /// * `x0` - initial state (colum mayor)
+    /// * `u` - input function returning a vector (colum vector)
+    /// * `x0` - initial state (colum vector)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rkf45_iter(&self, u: &[f64], x0: &[f64], h: f64, n: usize) -> Rkf45Iterator {
+    pub fn rkf45(&self, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> Rkf45Iterator {
         Rkf45Iterator::new(self, u, x0, h, n)
     }
 }

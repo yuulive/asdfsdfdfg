@@ -130,8 +130,8 @@ impl Rk2 {
 pub struct Rkf45Iterator<'a> {
     /// Linear system
     sys: &'a Ss,
-    /// Input vector,
-    input: DVector<f64>,
+    /// Input function
+    input: fn(f64) -> Vec<f64>,
     /// State vector.
     state: DVector<f64>,
     /// Output vector.
@@ -142,30 +142,33 @@ pub struct Rkf45Iterator<'a> {
     n: usize,
     /// Index.
     index: usize,
+    /// Time
+    time: f64,
 }
 
 impl<'a> Rkf45Iterator<'a> {
-    /// Response to step function, using Runge-Kutta-Fehlberg method
+    /// Create a solver using Runge-Kutta-Fehlberg method
     ///
     /// # Arguments
     ///
-    /// * `u` - input vector (colum mayor)
-    /// * `x0` - initial state (colum mayor)
+    /// * `u` - input function (colum vector)
+    /// * `x0` - initial state (colum vector)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub(crate) fn new(sys: &'a Ss, u: &[f64], x0: &[f64], h: f64, n: usize) -> Self {
-        let input = DVector::from_column_slice(u);
+    pub(crate) fn new(sys: &'a Ss, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> Self {
+        let start = DVector::from_vec(u(0.0));
         let state = DVector::from_column_slice(x0);
         // Calculate the output at time 0.
-        let output = &sys.c * &state + &sys.d * &input;
+        let output = &sys.c * &state + &sys.d * &start;
         Self {
             sys,
-            input,
+            input: u,
             state,
             output,
             h,
             n,
             index: 0,
+            time: 0.,
         }
     }
 
@@ -184,19 +187,27 @@ impl<'a> Rkf45Iterator<'a> {
 
     /// Runge-Kutta-Fehlberg order 4 and 5 method with adaptive step size
     fn main_iteration(&mut self) -> Option<Rkf45> {
-        let bu = &self.sys.b * &self.input;
         let tol = 1e-4;
         let mut error;
+        let u1 = DVector::from_vec((self.input)(self.time));
         loop {
-            let k1 = self.h * (&self.sys.a * &self.state + &bu);
-            let k2 = self.h * (&self.sys.a * (&self.state + B21 * &k1) + &bu);
-            let k3 = self.h * (&self.sys.a * (&self.state + B3[0] * &k1 + B3[1] * &k2) + &bu);
+            let u2 = DVector::from_vec((self.input)(self.time + self.h * A[0]));
+            let u3 = DVector::from_vec((self.input)(self.time + self.h * A[1]));
+            let u4 = DVector::from_vec((self.input)(self.time + self.h * A[2]));
+            let u5 = DVector::from_vec((self.input)(self.time + self.h));
+            let u6 = DVector::from_vec((self.input)(self.time + self.h * A[3]));
+
+            let k1 = self.h * (&self.sys.a * &self.state + &self.sys.b * &u1);
+            let k2 = self.h * (&self.sys.a * (&self.state + B21 * &k1) + &self.sys.b * &u2);
+            let k3 = self.h
+                * (&self.sys.a * (&self.state + B3[0] * &k1 + B3[1] * &k2) + &self.sys.b * &u3);
             let k4 = self.h
-                * (&self.sys.a * (&self.state + B4[0] * &k1 + B4[1] * &k2 + B4[2] * &k3) + &bu);
+                * (&self.sys.a * (&self.state + B4[0] * &k1 + B4[1] * &k2 + B4[2] * &k3)
+                    + &self.sys.b * &u4);
             let k5 = self.h
                 * (&self.sys.a
                     * (&self.state + B5[0] * &k1 + B5[1] * &k2 + B5[2] * &k3 + B5[3] * &k4)
-                    + &bu);
+                    + &self.sys.b * &u5);
             let k6 = self.h
                 * (&self.sys.a
                     * (&self.state
@@ -205,7 +216,7 @@ impl<'a> Rkf45Iterator<'a> {
                         + B6[2] * &k3
                         + B6[3] * &k4
                         + B6[4] * &k5)
-                    + &bu);
+                    + &self.sys.b * &u6);
 
             let xn1 = &self.state + C[0] * &k1 + C[1] * &k3 + C[2] * &k4 + C[3] * &k5;
             let xn1_ = &self.state + D[0] * &k1 + D[1] * &k3 + D[2] * &k4 + D[3] * &k5 + D[4] * &k6;
@@ -219,11 +230,12 @@ impl<'a> Rkf45Iterator<'a> {
             }
             self.h = 0.95 * self.h * error_ratio.powf(0.2);
         }
-        self.output = &self.sys.c * &self.state + &self.sys.d * &self.input;
+        self.output = &self.sys.c * &self.state + &self.sys.d * &u1;
 
         self.index += 1;
+        self.time += self.h;
         Some(Rkf45 {
-            time: self.h,
+            time: self.time,
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
             error,
@@ -247,6 +259,7 @@ impl<'a> Iterator for Rkf45Iterator<'a> {
 }
 
 // Coefficients of th Butcher table of rkf45 method.
+const A: [f64; 4] = [1. / 4., 3. / 8., 12. / 13., 1. / 2.];
 const B21: f64 = 1. / 4.;
 const B3: [f64; 2] = [3. / 32., 9. / 32.];
 const B4: [f64; 3] = [1932. / 2197., -7200. / 2197., 7296. / 2197.];
