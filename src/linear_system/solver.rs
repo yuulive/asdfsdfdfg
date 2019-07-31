@@ -138,14 +138,14 @@ pub struct Rkf45Iterator<'a> {
     output: DVector<f64>,
     /// Interval.
     h: f64,
-    /// Number of steps.
-    n: usize,
-    /// Index.
-    index: usize,
+    /// Time limit of the evaluation
+    limit: f64,
     /// Time
     time: f64,
     /// Tollerance
     tol: f64,
+    /// Is initial step
+    initial_step: bool,
 }
 
 impl<'a> Rkf45Iterator<'a> {
@@ -156,14 +156,14 @@ impl<'a> Rkf45Iterator<'a> {
     /// * `u` - input function (colum vector)
     /// * `x0` - initial state (colum vector)
     /// * `h` - integration time interval
-    /// * `n` - integration steps
+    /// * `limit` - time limit of the evaluation
     /// * `tol` - error tollerance
     pub(crate) fn new(
         sys: &'a Ss,
         u: fn(f64) -> Vec<f64>,
         x0: &[f64],
         h: f64,
-        n: usize,
+        limit: f64,
         tol: f64,
     ) -> Self {
         let start = DVector::from_vec(u(0.0));
@@ -176,10 +176,10 @@ impl<'a> Rkf45Iterator<'a> {
             state,
             output,
             h,
-            n,
-            index: 0,
+            limit,
             time: 0.,
             tol,
+            initial_step: true,
         }
     }
 
@@ -187,7 +187,7 @@ impl<'a> Rkf45Iterator<'a> {
     /// It contains the initial state and the calculated inital output
     /// at the constructor
     fn initial_step(&mut self) -> Option<Rkf45> {
-        self.index += 1;
+        self.initial_step = false;
         Some(Rkf45 {
             time: 0.,
             state: self.state.as_slice().to_vec(),
@@ -242,7 +242,6 @@ impl<'a> Rkf45Iterator<'a> {
         }
         self.output = &self.sys.c * &self.state + &self.sys.d * &u1;
 
-        self.index += 1;
         self.time += self.h;
         Some(Rkf45 {
             time: self.time,
@@ -258,9 +257,9 @@ impl<'a> Iterator for Rkf45Iterator<'a> {
     type Item = Rkf45;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index > self.n {
+        if self.time > self.limit {
             None
-        } else if self.index == 0 {
+        } else if self.initial_step {
             self.initial_step()
         } else {
             self.main_iteration()
