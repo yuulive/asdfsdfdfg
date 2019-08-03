@@ -392,6 +392,7 @@ impl<'a> RadauIterator<'a> {
     }
 
     fn main_iteration(&mut self) -> Option<Radau> {
+        let time = self.index as f64 * self.h;
         let rows = self.sys.a.nrows();
         // k = [k1; k2]
         let mut k = DVector::<f64>::zeros(2 * rows);
@@ -399,17 +400,21 @@ impl<'a> RadauIterator<'a> {
         k.slice_mut((0, 0), (rows, 1)).copy_from(&self.state);
         k.slice_mut((rows, 0), (rows, 1)).copy_from(&self.state);
 
+        let u1 = DVector::from_vec((self.input)(time + RADAU_C[0] * self.h));
+        let bu1 = &self.sys.b * &u1;
+        let u2 = DVector::from_vec((self.input)(time + RADAU_C[1] * self.h));
+        let bu2 = &self.sys.b * &u2;
         // Max 10 iterations.
         for _ in 0..10 {
             let k1 = k.slice((0, 0), (rows, 1));
             let k2 = k.slice((rows, 0), (rows, 1));
 
             let f1 = &self.sys.a * (&self.state + self.h * (RADAU_A[0] * &k1 + RADAU_A[1] * &k2))
-                + &self.sys.b * 1.0
-                - &k1; // fix u
+                + &bu1
+                - &k1;
             let f2 = &self.sys.a * (&self.state + self.h * (RADAU_A[2] * &k1 + RADAU_A[3] * &k2))
-                + &self.sys.b * 1.0
-                - &k2; // fix u
+                + &bu2
+                - &k2;
             let mut f = DVector::<f64>::zeros(2 * rows);
             f.slice_mut((0, 0), (rows, 1)).copy_from(&f1);
             f.slice_mut((rows, 0), (rows, 1)).copy_from(&f2);
@@ -432,7 +437,7 @@ impl<'a> RadauIterator<'a> {
 
         self.index += 1;
         Some(Radau {
-            time: (self.index - 1) as f64 * self.h,
+            time,
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
         })
