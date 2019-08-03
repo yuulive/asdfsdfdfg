@@ -51,6 +51,24 @@ fn main() {
             );
         }
     }
+
+    let radau = sys.radau(|_| vec![1.], &[0., 0.], 0.1, 150, 1e-4);
+    //dbg!(radau);
+    //radau.last().unwrap();
+    // Change to 'true' to print the result
+    if true {
+        for i in sys.radau(|_| vec![1.], &[0., 0.], 0.1, 150, 1e-4) {
+            println!(
+                "{:.1};{:.6};{:.6};{};{}",
+                i.time(),
+                i.state()[0],
+                i.state()[1],
+                i.output()[0],
+                i.output()[1]
+            );
+        }
+    }
+
     let u = 0.0;
     println!("\nEquilibrium for u={}", u);
     let eq = sys.equilibrium(&[u]).unwrap();

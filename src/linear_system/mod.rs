@@ -1,7 +1,7 @@
 pub mod solver;
 
 use crate::{
-    linear_system::solver::{Rk2Iterator, Rkf45Iterator},
+    linear_system::solver::{RadauIterator, Rk2Iterator, Rkf45Iterator},
     polynomial::{Poly, PolyMatrix},
     transfer_function::Tf,
 };
@@ -127,6 +127,17 @@ impl Ss {
         tol: f64,
     ) -> Rkf45Iterator {
         Rkf45Iterator::new(self, u, x0, h, limit, tol)
+    }
+
+    pub fn radau(
+        &self,
+        u: fn(f64) -> Vec<f64>,
+        x0: &[f64],
+        h: f64,
+        n: usize,
+        tol: f64,
+    ) -> RadauIterator {
+        RadauIterator::new(self, u, x0, h, n, tol)
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::linear_system::Ss;
 
-use nalgebra::DVector;
+use nalgebra::{DMatrix, DVector};
 
 /// Struct for the time evolution of a linear system
 #[derive(Debug)]
@@ -323,5 +323,160 @@ impl Rkf45 {
     /// Get the current maximum absolute error
     pub fn error(&self) -> f64 {
         self.error
+    }
+}
+
+#[derive(Debug)]
+pub struct RadauIterator<'a> {
+    sys: &'a Ss,
+    input: fn(f64) -> Vec<f64>,
+    state: DVector<f64>,
+    output: DVector<f64>,
+    h: f64,
+    n: usize,
+    index: usize,
+    tol: f64,
+    /// Store the inverted jacobian
+    inv_jacobian: DMatrix<f64>,
+}
+
+impl<'a> RadauIterator<'a> {
+    pub(crate) fn new(
+        sys: &'a Ss,
+        u: fn(f64) -> Vec<f64>,
+        x0: &[f64],
+        h: f64,
+        n: usize,
+        tol: f64,
+    ) -> Self {
+        let start = DVector::from_vec(u(0.0));
+        let state = DVector::from_column_slice(x0);
+        let output = &sys.c * &state + &sys.d * &start;
+        // Jacobian matrix can be precomputed since it is constant for the
+        // given system.
+        let g = &sys.a * h;
+        let rows = &sys.a.nrows(); // A is a square matrix.
+        let i = DMatrix::<f64>::identity(*rows, *rows);
+        let j11 = &g * RADAU_A[0] - &i;
+        let j12 = &g * RADAU_A[1];
+        let j21 = &g * RADAU_A[2];
+        let j22 = &g * RADAU_A[3] - &i;
+        let mut j = DMatrix::zeros(2 * *rows, 2 * *rows);
+        // Copy the sub matrices into the the Jacobian.
+        let sub_matrix_size = (*rows, *rows);
+        j.slice_mut((0, 0), sub_matrix_size).copy_from(&j11);
+        j.slice_mut((0, *rows), sub_matrix_size).copy_from(&j12);
+        j.slice_mut((*rows, 0), sub_matrix_size).copy_from(&j21);
+        j.slice_mut((*rows, *rows), sub_matrix_size).copy_from(&j22);
+
+        Self {
+            sys,
+            input: u,
+            state,
+            output,
+            h,
+            n,
+            index: 0,
+            tol,
+            inv_jacobian: j.try_inverse().unwrap(),
+        }
+    }
+
+    fn initial_step(&mut self) -> Option<Radau> {
+        self.index += 1;
+        Some(Radau {
+            time: 0.,
+            state: self.state.as_slice().to_vec(),
+            output: self.output.as_slice().to_vec(),
+        })
+    }
+
+    fn main_iteration(&mut self) -> Option<Radau> {
+        let rows = self.sys.a.nrows();
+        // k = [k1; k2]
+        let mut k = DVector::<f64>::zeros(2 * rows);
+        // Use as first guess for k1 and k2 the current state.
+        k.slice_mut((0, 0), (rows, 1)).copy_from(&self.state);
+        k.slice_mut((rows, 0), (rows, 1)).copy_from(&self.state);
+
+        // Max 10 iterations.
+        for _ in 0..10 {
+            let k1 = k.slice((0, 0), (rows, 1));
+            let k2 = k.slice((rows, 0), (rows, 1));
+
+            let f1 = &self.sys.a * (&self.state + self.h * (RADAU_A[0] * &k1 + RADAU_A[1] * &k2))
+                + &self.sys.b * 1.0
+                - &k1; // fix u
+            let f2 = &self.sys.a * (&self.state + self.h * (RADAU_A[2] * &k1 + RADAU_A[3] * &k2))
+                + &self.sys.b * 1.0
+                - &k2; // fix u
+            let mut f = DVector::<f64>::zeros(2 * rows);
+            f.slice_mut((0, 0), (rows, 1)).copy_from(&f1);
+            f.slice_mut((rows, 0), (rows, 1)).copy_from(&f2);
+
+            let dk = -&self.inv_jacobian * &f;
+
+            let knew = &k + &dk;
+
+            let eq = &knew.relative_eq(&k, self.tol, 0.001);
+            if *eq {
+                k = knew;
+                break;
+            }
+
+            k = knew;
+        }
+        self.state += self.h
+            * (RADAU_B[0] * &k.slice((0, 0), (rows, 1))
+                + RADAU_B[1] * k.slice((rows, 0), (rows, 1)));
+
+        self.index += 1;
+        Some(Radau {
+            time: (self.index - 1) as f64 * self.h,
+            state: self.state.as_slice().to_vec(),
+            output: self.output.as_slice().to_vec(),
+        })
+    }
+}
+
+const RADAU_A: [f64; 4] = [5. / 12., -1. / 12., 3. / 4., 1. / 4.];
+const RADAU_B: [f64; 2] = [3. / 4., 1. / 4.];
+const RADAU_C: [f64; 2] = [1. / 3., 1.];
+
+impl<'a> Iterator for RadauIterator<'a> {
+    type Item = Radau;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index > self.n {
+            None
+        } else if self.index == 0 {
+            self.initial_step()
+        } else {
+            self.main_iteration()
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Radau {
+    time: f64,
+    state: Vec<f64>,
+    output: Vec<f64>,
+}
+
+impl Radau {
+    /// Get the time of the current step
+    pub fn time(&self) -> f64 {
+        self.time
+    }
+
+    /// Get the current state of the system
+    pub fn state(&self) -> &Vec<f64> {
+        &self.state
+    }
+
+    /// Get the current output of the system
+    pub fn output(&self) -> &Vec<f64> {
+        &self.output
     }
 }
