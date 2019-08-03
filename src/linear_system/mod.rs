@@ -13,11 +13,20 @@ use std::convert::From;
 use std::fmt;
 
 /// State-space representation of a linar system
+///
+/// ```text
+/// xdot(t) = A * x(t) + B * u(t)
+/// y(t)    = C * x(t) + D * u(t)
+/// ```
 #[derive(Debug)]
 pub struct Ss {
+    /// A matrix
     a: DMatrix<f64>,
+    /// B matrix
     b: DMatrix<f64>,
+    /// C matrix
     c: DMatrix<f64>,
+    /// D matrix
     d: DMatrix<f64>,
 }
 
@@ -109,7 +118,7 @@ impl Ss {
         Rk2Iterator::new(self, u, x0, h, n)
     }
 
-    /// Runge-Kutta-Fehlberg 45 with adaptive step
+    /// Runge-Kutta-Fehlberg 45 with adaptive step for time evolution.
     ///
     /// # Arguments
     ///
@@ -129,6 +138,15 @@ impl Ss {
         Rkf45Iterator::new(self, u, x0, h, limit, tol)
     }
 
+    /// Radau of order 3 with 2 steps method for time evolution.
+    ///
+    /// # Arguments
+    ///
+    /// * `u` - input function returning a vector (colum vector)
+    /// * `x0` - initial state (colum vector)
+    /// * `h` - integration time interval
+    /// * `n` - integration steps
+    /// * `tol` - error tollerance
     pub fn radau(
         &self,
         u: fn(f64) -> Vec<f64>,

@@ -26,6 +26,7 @@ impl<'a> Rk2Iterator<'a> {
     ///
     /// # Arguments
     ///
+    /// * `sys` - linear system
     /// * `u` - input function that returns a vector (colum vector)
     /// * `x0` - initial state (colum vector)
     /// * `h` - integration time interval
@@ -47,7 +48,7 @@ impl<'a> Rk2Iterator<'a> {
 
     /// Intial step (time 0) of the rk2 solver.
     /// It contains the initial state and the calculated inital output
-    /// at the constructor
+    /// at the constructor.
     fn initial_step(&mut self) -> Option<Rk2> {
         self.index += 1;
         // State and output at time 0.
@@ -58,7 +59,7 @@ impl<'a> Rk2Iterator<'a> {
         })
     }
 
-    /// Runge-Kutta order 2 method
+    /// Runge-Kutta order 2 method.
     fn main_iteration(&mut self) -> Option<Rk2> {
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
         // k1 = h*f(t_n, y_n)
@@ -154,6 +155,7 @@ impl<'a> Rkf45Iterator<'a> {
     ///
     /// # Arguments
     ///
+    /// * `sys` - linar system
     /// * `u` - input function (colum vector)
     /// * `x0` - initial state (colum vector)
     /// * `h` - integration time interval
@@ -327,21 +329,41 @@ impl Rkf45 {
     }
 }
 
+/// Struct for the time evolution of the linear system using the implicit
+/// Radau method of order 3 with 2 steps
 #[derive(Debug)]
 pub struct RadauIterator<'a> {
+    /// Linear system
     sys: &'a Ss,
+    /// Input functon
     input: fn(f64) -> Vec<f64>,
+    /// State vector
     state: DVector<f64>,
+    /// Output vector
     output: DVector<f64>,
+    /// Interval
     h: f64,
+    /// Number of steps
     n: usize,
+    /// Index
     index: usize,
+    /// Tollerance
     tol: f64,
     /// Store the inverted jacobian
     inv_jacobian: DMatrix<f64>,
 }
 
 impl<'a> RadauIterator<'a> {
+    /// Create the solver for a Radau order 3 with 2 steps method.
+    ///
+    /// # Arguments
+    ///
+    /// * `sys` - linear system
+    /// * `u` - input function that returns a vector (colum vector)
+    /// * `x0` - initial state (colum vector)
+    /// * `h` - integration time interval
+    /// * `n` - integration steps
+    /// * `tol` - tollerance of implicit solution finding
     pub(crate) fn new(
         sys: &'a Ss,
         u: fn(f64) -> Vec<f64>,
@@ -384,6 +406,9 @@ impl<'a> RadauIterator<'a> {
         }
     }
 
+    /// Initial step (time 0) of the radau solver.
+    /// It contains the initial state and the calculated inital output
+    /// at the constructor.
     fn initial_step(&mut self) -> Option<Radau> {
         self.index += 1;
         Some(Radau {
@@ -393,10 +418,11 @@ impl<'a> RadauIterator<'a> {
         })
     }
 
+    /// Radau order 3 with 2 step implicit method.
     fn main_iteration(&mut self) -> Option<Radau> {
         let time = (self.index - 1) as f64 * self.h;
         let rows = self.sys.a.nrows();
-        // k = [k1; k2]
+        // k = [k1; k2] (colum vector)
         let mut k = DVector::<f64>::zeros(2 * rows);
         // k sub-vectors (or block vectors) are have size (rows x 1).
         let sub_vec_size = (rows, 1);
@@ -451,10 +477,13 @@ impl<'a> RadauIterator<'a> {
     }
 }
 
+// Constants for Radau method.
 const RADAU_A: [f64; 4] = [5. / 12., -1. / 12., 3. / 4., 1. / 4.];
 const RADAU_B: [f64; 2] = [3. / 4., 1. / 4.];
 const RADAU_C: [f64; 2] = [1. / 3., 1.];
+//////
 
+/// Implementation of the Iterator trait for the RadauIterator struct.
 impl<'a> Iterator for RadauIterator<'a> {
     type Item = Radau;
 
@@ -469,10 +498,14 @@ impl<'a> Iterator for RadauIterator<'a> {
     }
 }
 
+/// Struct to hold the data of the linar system time evolution.
 #[derive(Debug)]
 pub struct Radau {
+    /// Time of the current step
     time: f64,
+    /// Current state
     state: Vec<f64>,
+    /// Current output
     output: Vec<f64>,
 }
 
