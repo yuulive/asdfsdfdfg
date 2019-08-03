@@ -63,19 +63,20 @@ impl<'a> Rk2Iterator<'a> {
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
         // k1 = h*f(t_n, y_n)
         // k2 = h*f(t_n + h, y_n + k1)
-        let time = self.index as f64 * self.h;
-        let u = DVector::from_vec((self.input)(time));
-        let uh = DVector::from_vec((self.input)(time + self.h));
+        let init_time = (self.index - 1) as f64 * self.h;
+        let end_time = self.index as f64 * self.h;
+        let u = DVector::from_vec((self.input)(init_time));
+        let uh = DVector::from_vec((self.input)(end_time));
         let bu = &self.sys.b * &u;
         let buh = &self.sys.b * &uh;
         let k1 = self.h * (&self.sys.a * &self.state + &bu);
         let k2 = self.h * (&self.sys.a * (&self.state + &k1) + &buh);
         self.state += 0.5 * (k1 + k2);
-        self.output = &self.sys.c * &self.state + &self.sys.d * &u;
+        self.output = &self.sys.c * &self.state + &self.sys.d * &uh;
 
         self.index += 1;
         Some(Rk2 {
-            time,
+            time: end_time,
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
         })
@@ -392,7 +393,7 @@ impl<'a> RadauIterator<'a> {
     }
 
     fn main_iteration(&mut self) -> Option<Radau> {
-        let time = self.index as f64 * self.h;
+        let time = (self.index - 1) as f64 * self.h;
         let rows = self.sys.a.nrows();
         // k = [k1; k2]
         let mut k = DVector::<f64>::zeros(2 * rows);
@@ -434,12 +435,13 @@ impl<'a> RadauIterator<'a> {
             * (RADAU_B[0] * &k.slice((0, 0), (rows, 1))
                 + RADAU_B[1] * k.slice((rows, 0), (rows, 1)));
 
-        let u = DVector::from_vec((self.input)(time + self.h));
+        let end_time = self.index as f64 * self.h;
+        let u = DVector::from_vec((self.input)(end_time));
         self.output = &self.sys.c * &self.state + &self.sys.d * &u;
 
         self.index += 1;
         Some(Radau {
-            time,
+            time: end_time,
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
         })
