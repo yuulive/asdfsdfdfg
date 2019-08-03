@@ -420,7 +420,6 @@ impl<'a> RadauIterator<'a> {
             f.slice_mut((rows, 0), (rows, 1)).copy_from(&f2);
 
             let dk = -&self.inv_jacobian * &f;
-
             let knew = &k + &dk;
 
             let eq = &knew.relative_eq(&k, self.tol, 0.001);
@@ -434,6 +433,9 @@ impl<'a> RadauIterator<'a> {
         self.state += self.h
             * (RADAU_B[0] * &k.slice((0, 0), (rows, 1))
                 + RADAU_B[1] * k.slice((rows, 0), (rows, 1)));
+
+        let u = DVector::from_vec((self.input)(time + self.h));
+        self.output = &self.sys.c * &self.state + &self.sys.d * &u;
 
         self.index += 1;
         Some(Radau {
