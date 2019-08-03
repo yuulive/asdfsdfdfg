@@ -357,18 +357,19 @@ impl<'a> RadauIterator<'a> {
         // given system.
         let g = &sys.a * h;
         let rows = &sys.a.nrows(); // A is a square matrix.
-        let i = DMatrix::<f64>::identity(*rows, *rows);
-        let j11 = &g * RADAU_A[0] - &i;
+        let identity = DMatrix::<f64>::identity(*rows, *rows);
+        let j11 = &g * RADAU_A[0] - &identity;
         let j12 = &g * RADAU_A[1];
         let j21 = &g * RADAU_A[2];
-        let j22 = &g * RADAU_A[3] - &i;
-        let mut j = DMatrix::zeros(2 * *rows, 2 * *rows);
+        let j22 = &g * RADAU_A[3] - &identity;
+        let mut jac = DMatrix::zeros(2 * *rows, 2 * *rows);
         // Copy the sub matrices into the the Jacobian.
         let sub_matrix_size = (*rows, *rows);
-        j.slice_mut((0, 0), sub_matrix_size).copy_from(&j11);
-        j.slice_mut((0, *rows), sub_matrix_size).copy_from(&j12);
-        j.slice_mut((*rows, 0), sub_matrix_size).copy_from(&j21);
-        j.slice_mut((*rows, *rows), sub_matrix_size).copy_from(&j22);
+        jac.slice_mut((0, 0), sub_matrix_size).copy_from(&j11);
+        jac.slice_mut((0, *rows), sub_matrix_size).copy_from(&j12);
+        jac.slice_mut((*rows, 0), sub_matrix_size).copy_from(&j21);
+        jac.slice_mut((*rows, *rows), sub_matrix_size)
+            .copy_from(&j22);
 
         Self {
             sys,
@@ -379,7 +380,7 @@ impl<'a> RadauIterator<'a> {
             n,
             index: 0,
             tol,
-            inv_jacobian: j.try_inverse().unwrap(),
+            inv_jacobian: jac.try_inverse().unwrap(),
         }
     }
 
@@ -397,9 +398,11 @@ impl<'a> RadauIterator<'a> {
         let rows = self.sys.a.nrows();
         // k = [k1; k2]
         let mut k = DVector::<f64>::zeros(2 * rows);
+        // k sub-vectors (or block vectors) are have size (rows x 1).
+        let sub_vec_size = (rows, 1);
         // Use as first guess for k1 and k2 the current state.
-        k.slice_mut((0, 0), (rows, 1)).copy_from(&self.state);
-        k.slice_mut((rows, 0), (rows, 1)).copy_from(&self.state);
+        k.slice_mut((0, 0), sub_vec_size).copy_from(&self.state);
+        k.slice_mut((rows, 0), sub_vec_size).copy_from(&self.state);
 
         let u1 = DVector::from_vec((self.input)(time + RADAU_C[0] * self.h));
         let bu1 = &self.sys.b * &u1;
@@ -407,18 +410,18 @@ impl<'a> RadauIterator<'a> {
         let bu2 = &self.sys.b * &u2;
         // Max 10 iterations.
         for _ in 0..10 {
-            let k1 = k.slice((0, 0), (rows, 1));
-            let k2 = k.slice((rows, 0), (rows, 1));
+            let k1 = k.slice((0, 0), sub_vec_size);
+            let k2 = k.slice((rows, 0), sub_vec_size);
 
-            let f1 = &self.sys.a * (&self.state + self.h * (RADAU_A[0] * &k1 + RADAU_A[1] * &k2))
+            let f1 = &self.sys.a * (&self.state + self.h * (RADAU_A[0] * k1 + RADAU_A[1] * k2))
                 + &bu1
-                - &k1;
-            let f2 = &self.sys.a * (&self.state + self.h * (RADAU_A[2] * &k1 + RADAU_A[3] * &k2))
+                - k1;
+            let f2 = &self.sys.a * (&self.state + self.h * (RADAU_A[2] * k1 + RADAU_A[3] * k2))
                 + &bu2
-                - &k2;
+                - k2;
             let mut f = DVector::<f64>::zeros(2 * rows);
-            f.slice_mut((0, 0), (rows, 1)).copy_from(&f1);
-            f.slice_mut((rows, 0), (rows, 1)).copy_from(&f2);
+            f.slice_mut((0, 0), sub_vec_size).copy_from(&f1);
+            f.slice_mut((rows, 0), sub_vec_size).copy_from(&f2);
 
             let dk = -&self.inv_jacobian * &f;
             let knew = &k + &dk;
@@ -432,7 +435,7 @@ impl<'a> RadauIterator<'a> {
             k = knew;
         }
         self.state += self.h
-            * (RADAU_B[0] * &k.slice((0, 0), (rows, 1))
+            * (RADAU_B[0] * k.slice((0, 0), (rows, 1))
                 + RADAU_B[1] * k.slice((rows, 0), (rows, 1)));
 
         let end_time = self.index as f64 * self.h;
