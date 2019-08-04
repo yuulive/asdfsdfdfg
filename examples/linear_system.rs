@@ -53,10 +53,9 @@ fn main() {
     }
 
     let radau = sys.radau(|_| vec![1.], &[0., 0.], 0.1, 150, 1e-4);
-    //dbg!(radau);
-    //radau.last().unwrap();
+    println!("radau stationary values: {:?}", radau.last().unwrap());
     // Change to 'true' to print the result
-    if true {
+    if false {
         for i in sys.radau(|_| vec![1.], &[0., 0.], 0.1, 150, 1e-4) {
             println!(
                 "{:>4.1};{:>9.6};{:>9.6};{:>9.6};{:>9.6}",
