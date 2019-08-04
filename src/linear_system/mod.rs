@@ -1,3 +1,12 @@
+//! # Linear system
+//!
+//! This module contains the state-space representation of the linar system.
+//!
+//! It is possible to calculate the equlibrium point of the system.
+//!
+//! The time evolution of the system is defined through iterator, created by
+//! different solvers.
+
 pub mod solver;
 
 use crate::{

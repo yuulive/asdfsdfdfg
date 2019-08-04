@@ -1,3 +1,10 @@
+//! # Bode plot
+//!
+//! Bode plot returns the angular frequency, the magnitude and the phase.
+//!
+//! Functions use angular frequencies as default inputs and output, being the
+//! inverse of the poles and zeros time constants.
+
 use crate::{transfer_function::Tf, Decibel, Eval};
 use num_complex::Complex64;
 

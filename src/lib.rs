@@ -1,3 +1,39 @@
+//! Automatic Control Systems Library
+//!
+//! ## State-Space representation
+//!
+//! [State space representation](linear_system/struct.Ss.html)
+//!
+//! [Equilibrium](linear_system/struct.Equilibrium.html)
+//!
+//! ### System time evolution
+//!
+//! [Solvers](linear_system/solver/index.html)
+//!
+//! ## Transfer function representation
+//!
+//! [Transfer function](transfer_function/struct.Tf.html)
+//!
+//! [Matrix of transfer functions](transfer_function/struct.TfMatrix.html)
+//!
+//! ## Plots
+//!
+//! [Bode plot](plots/bode/index.html)
+//!
+//! [Polar plot](plots/polar/index.html)
+//!
+//! ## Controllers
+//!
+//! [Pid](controller/pid/struct.Pid.html)
+//!
+//! ## Polynomials
+//!
+//! [Polynomials](polynomial/struct.Poly.html)
+//!
+//! [Matrix of polynomials](polynomial/struct.MatrixOfPoly.html)
+
+#![warn(missing_docs)]
+
 pub mod controller;
 pub mod linear_system;
 pub mod plots;

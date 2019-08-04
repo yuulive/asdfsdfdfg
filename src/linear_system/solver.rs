@@ -1,3 +1,14 @@
+//! # Ordinary differential equations solvers
+//!
+//! `Rk2` is an explicit Runge-Kutta of order 2 with 2 steps, it is suitable for
+//! non stiff systems.
+//!
+//! `Rkf45` is an explicit Runge-Kutta-Fehlberg of order 4 and 5 with 6 steps
+//! and adaptive integration step, it is suitable for non stiff systems.
+//!
+//! `Radau` is an implicit Runge-Kutta-Radau of order 3 with 2 steps, it is
+//! suitable for stiff systems.
+
 use crate::linear_system::Ss;
 
 use nalgebra::{DMatrix, DVector};

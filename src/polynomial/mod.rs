@@ -1,3 +1,14 @@
+//! # Polynomials and matrices of polynomials
+//!
+//! `Poly` implements usual addition, subtraction and multiplication between
+//! polynomials, operations with scalars are supported also.
+//!
+//! Methods for roots finding, companion matrix and evaluation are implemented.
+//!
+//! At the moment coefficients are of type `f64`.
+//!
+//! `MatrixOfPoly` allows the definition of matrices of polynomials.
+
 use crate::Eval;
 
 use std::fmt;
