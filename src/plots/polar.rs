@@ -1,3 +1,10 @@
+//! Polar plot
+//!
+//! Polar plot returns the iterator providing the complex numbers at the given
+//! angular frequencies.
+//!
+//! Functions use angular frequencies as default inputs.
+
 use crate::{transfer_function::Tf, Eval};
 
 use num_complex::Complex64;

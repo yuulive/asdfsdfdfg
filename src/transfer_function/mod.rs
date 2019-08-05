@@ -1,3 +1,12 @@
+//! # Transfer function and matrices of transfer functions
+//!
+//! `Tf` contains the numerator and the denominator separately. Zeroes an poles
+//! can be calculated.
+//!
+//! `TfMatrix` allow the definition of a matrix of transfer functions. The
+//! numerators are stored in a matrix, while the denominator is stored once,
+//! since it is equal for every transfer function.
+
 use crate::{
     linear_system::{self, Ss},
     plots::{

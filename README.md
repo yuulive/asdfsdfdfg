@@ -10,8 +10,10 @@ Calculate the equiliblium point (both state and output) of the system from the g
 
 ### System time evolution
 
-Step response with Runge-Kutta order 2 method with fixed step.  
-Step response with Runge-Kutta-Fehlberg order 4 5 method with adaptive step.
+Time response with explicit Runge-Kutta order 2 method with fixed step.  
+Time response with explicit Runge-Kutta-Fehlberg order 4 5 method with adaptive
+step.  
+Time response with implicit Radau order 3 method with fixed step.
 
 ## Transfer function representation
 
