@@ -11,7 +11,7 @@
 
 use crate::linear_system::Ss;
 
-use nalgebra::{DMatrix, DVector};
+use nalgebra::{DMatrix, DVector, Dynamic, LU};
 
 /// Struct for the time evolution of a linear system
 #[derive(Debug)]
@@ -360,8 +360,8 @@ pub struct RadauIterator<'a> {
     index: usize,
     /// Tollerance
     tol: f64,
-    /// Store the inverted jacobian
-    inv_jacobian: DMatrix<f64>,
+    /// Store the LU decomposition of the jacobian
+    lu_jacobian: LU<f64, Dynamic, Dynamic>,
 }
 
 impl<'a> RadauIterator<'a> {
@@ -413,7 +413,7 @@ impl<'a> RadauIterator<'a> {
             n,
             index: 0,
             tol,
-            inv_jacobian: jac.try_inverse().unwrap(),
+            lu_jacobian: jac.lu(),
         }
     }
 
@@ -460,16 +460,20 @@ impl<'a> RadauIterator<'a> {
             f.slice_mut((0, 0), sub_vec_size).copy_from(&f1);
             f.slice_mut((rows, 0), sub_vec_size).copy_from(&f2);
 
-            let dk = -&self.inv_jacobian * &f;
-            let knew = &k + &dk;
+            // J * dk = f -> dk = J^-1 * f
+            let knew = if let Some(dk) = &self.lu_jacobian.solve(&f) {
+                // k(n+1) = k(n) - dk
+                &k - dk
+            } else {
+                eprintln!("Unable to solve step {} at time {}", self.index, time);
+                return None;
+            };
 
             let eq = &knew.relative_eq(&k, self.tol, 0.001);
+            k = knew;
             if *eq {
-                k = knew;
                 break;
             }
-
-            k = knew;
         }
         self.state += self.h
             * (RADAU_B[0] * k.slice((0, 0), (rows, 1))
