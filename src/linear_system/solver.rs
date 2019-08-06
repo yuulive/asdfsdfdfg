@@ -445,6 +445,7 @@ impl<'a> RadauIterator<'a> {
         let bu1 = &self.sys.b * &u1;
         let u2 = DVector::from_vec((self.input)(time + RADAU_C[1] * self.h));
         let bu2 = &self.sys.b * &u2;
+        let mut f = DVector::<f64>::zeros(2 * rows);
         // Max 10 iterations.
         for _ in 0..10 {
             let k1 = k.slice((0, 0), sub_vec_size);
@@ -456,21 +457,22 @@ impl<'a> RadauIterator<'a> {
             let f2 = &self.sys.a * (&self.state + self.h * (RADAU_A[2] * k1 + RADAU_A[3] * k2))
                 + &bu2
                 - k2;
-            let mut f = DVector::<f64>::zeros(2 * rows);
             f.slice_mut((0, 0), sub_vec_size).copy_from(&f1);
             f.slice_mut((rows, 0), sub_vec_size).copy_from(&f2);
 
             // J * dk = f -> dk = J^-1 * f
-            let knew = if let Some(dk) = &self.lu_jacobian.solve(&f) {
-                // k(n+1) = k(n) - dk
-                &k - dk
+            // Override f with dk so there is less allocations of matrices.
+            // f = J^-1 * f
+            let knew = if self.lu_jacobian.solve_mut(&mut f) {
+                // k(n+1) = k(n) - dk = k(n) - f
+                &k - &f
             } else {
                 eprintln!("Unable to solve step {} at time {}", self.index, time);
                 return None;
             };
 
             let eq = &knew.relative_eq(&k, self.tol, 0.001);
-            k = knew;
+            k = knew; // Use the latest solution calculated.
             if *eq {
                 break;
             }
