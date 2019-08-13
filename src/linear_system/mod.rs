@@ -10,7 +10,7 @@
 pub mod solver;
 
 use crate::{
-    linear_system::solver::{RadauIterator, Rk2Iterator, Rkf45Iterator},
+    linear_system::solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
     polynomial::{Poly, PolyMatrix},
     transfer_function::Tf,
 };
@@ -123,8 +123,20 @@ impl Ss {
     /// * `x0` - initial state (colum mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk2(&self, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> Rk2Iterator {
-        Rk2Iterator::new(self, u, x0, h, n)
+    pub fn rk2(&self, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> RkIterator {
+        RkIterator::new(self, u, x0, h, n, Order::Rk2)
+    }
+
+    /// Time evolution for the given input, using Runge-Kutta fourth order method
+    ///
+    /// # Arguments
+    ///
+    /// * `u` - input function returning a vector (colum mayor)
+    /// * `x0` - initial state (colum mayor)
+    /// * `h` - integration time interval
+    /// * `n` - integration steps
+    pub fn rk4(&self, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> RkIterator {
+        RkIterator::new(self, u, x0, h, n, Order::Rk4)
     }
 
     /// Runge-Kutta-Fehlberg 45 with adaptive step for time evolution.

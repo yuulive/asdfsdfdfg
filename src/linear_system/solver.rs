@@ -3,6 +3,9 @@
 //! `Rk2` is an explicit Runge-Kutta of order 2 with 2 steps, it is suitable for
 //! non stiff systems.
 //!
+//! `Rk4` is an explicit Runge-Kutta of order 4 with 4 steps, it is suitable for
+//! non stiff systems.
+//!
 //! `Rkf45` is an explicit Runge-Kutta-Fehlberg of order 4 and 5 with 6 steps
 //! and adaptive integration step, it is suitable for non stiff systems.
 //!
@@ -13,9 +16,18 @@ use crate::linear_system::Ss;
 
 use nalgebra::{DMatrix, DVector, Dynamic, LU};
 
+/// Define the order of the Runge-Kutta method.
+#[derive(Debug)]
+pub(crate) enum Order {
+    /// Runge-Kutta method of order 2.
+    Rk2,
+    /// Runge-Kutta method of order 4.
+    Rk4,
+}
+
 /// Struct for the time evolution of a linear system
 #[derive(Debug)]
-pub struct Rk2Iterator<'a> {
+pub struct RkIterator<'a> {
     /// Linear system
     sys: &'a Ss,
     /// Input function
@@ -30,10 +42,12 @@ pub struct Rk2Iterator<'a> {
     n: usize,
     /// Index.
     index: usize,
+    /// Order of the solver.
+    order: Order,
 }
 
-impl<'a> Rk2Iterator<'a> {
-    /// Create the solver for a Runge-Kutta second order method
+impl<'a> RkIterator<'a> {
+    /// Create the solver for a Runge-Kutta method.
     ///
     /// # Arguments
     ///
@@ -42,7 +56,15 @@ impl<'a> Rk2Iterator<'a> {
     /// * `x0` - initial state (colum vector)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub(crate) fn new(sys: &'a Ss, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> Self {
+    /// * `order` - order of the solver
+    pub(crate) fn new(
+        sys: &'a Ss,
+        u: fn(f64) -> Vec<f64>,
+        x0: &[f64],
+        h: f64,
+        n: usize,
+        order: Order,
+    ) -> Self {
         let start = DVector::from_vec(u(0.0));
         let state = DVector::from_column_slice(x0);
         let output = &sys.c * &state + &sys.d * &start;
@@ -54,16 +76,17 @@ impl<'a> Rk2Iterator<'a> {
             h,
             n,
             index: 0,
+            order,
         }
     }
 
-    /// Intial step (time 0) of the rk2 solver.
+    /// Intial step (time 0) of the Runge-Kutta solver.
     /// It contains the initial state and the calculated inital output
     /// at the constructor.
-    fn initial_step(&mut self) -> Option<Rk2> {
+    fn initial_step(&mut self) -> Option<Rk> {
         self.index += 1;
         // State and output at time 0.
-        Some(Rk2 {
+        Some(Rk {
             time: 0.,
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
@@ -71,7 +94,7 @@ impl<'a> Rk2Iterator<'a> {
     }
 
     /// Runge-Kutta order 2 method.
-    fn main_iteration(&mut self) -> Option<Rk2> {
+    fn main_iteration_rk2(&mut self) -> Option<Rk> {
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
         // k1 = h*f(t_n, y_n)
         // k2 = h*f(t_n + h, y_n + k1)
@@ -87,7 +110,38 @@ impl<'a> Rk2Iterator<'a> {
         self.output = &self.sys.c * &self.state + &self.sys.d * &uh;
 
         self.index += 1;
-        Some(Rk2 {
+        Some(Rk {
+            time: end_time,
+            state: self.state.as_slice().to_vec(),
+            output: self.output.as_slice().to_vec(),
+        })
+    }
+
+    /// Runge-Kutta order 4 method.
+    fn main_iteration_rk4(&mut self) -> Option<Rk> {
+        // y_n+1 = y_n + h/6(k1 + 2*k2 + 2*k3 + k4) + O(h^4)
+        // k1 = f(t_n, y_n)
+        // k2 = f(t_n + h/2, y_n + h/2 * k1)
+        // k3 = f(t_n + h/2, y_n + h/2 * k2)
+        // k2 = f(t_n + h, y_n + h*k3)
+        let init_time = (self.index - 1) as f64 * self.h;
+        let mid_time = init_time + 0.5 * self.h;
+        let end_time = self.index as f64 * self.h;
+        let u = DVector::from_vec((self.input)(init_time));
+        let umid = DVector::from_vec((self.input)(mid_time));
+        let uend = DVector::from_vec((self.input)(end_time));
+        let bu = &self.sys.b * &u;
+        let bumid = &self.sys.b * &umid;
+        let buend = &self.sys.b * &uend;
+        let k1 = &self.sys.a * &self.state + &bu;
+        let k2 = &self.sys.a * (&self.state + 0.5 * self.h * &k1) + &bumid;
+        let k3 = &self.sys.a * (&self.state + 0.5 * self.h * &k2) + &bumid;
+        let k4 = &self.sys.a * (&self.state + self.h * &k3) + &buend;
+        self.state += self.h / 6. * (k1 + 2. * k2 + 2. * k3 + k4);
+        self.output = &self.sys.c * &self.state + &self.sys.d * &uend;
+
+        self.index += 1;
+        Some(Rk {
             time: end_time,
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
@@ -95,9 +149,9 @@ impl<'a> Rk2Iterator<'a> {
     }
 }
 
-/// Implementation of the Iterator trait for the Rk2Iterator struct
-impl<'a> Iterator for Rk2Iterator<'a> {
-    type Item = Rk2;
+/// Implementation of the Iterator trait for the RkIterator struct
+impl<'a> Iterator for RkIterator<'a> {
+    type Item = Rk;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.n {
@@ -105,14 +159,17 @@ impl<'a> Iterator for Rk2Iterator<'a> {
         } else if self.index == 0 {
             self.initial_step()
         } else {
-            self.main_iteration()
+            match self.order {
+                Order::Rk2 => self.main_iteration_rk2(),
+                Order::Rk4 => self.main_iteration_rk4(),
+            }
         }
     }
 }
 
 /// Struct to hold the data of the linear system time evolution
 #[derive(Debug)]
-pub struct Rk2 {
+pub struct Rk {
     /// Time of the current step
     time: f64,
     /// Current state
@@ -121,7 +178,7 @@ pub struct Rk2 {
     output: Vec<f64>,
 }
 
-impl Rk2 {
+impl Rk {
     /// Get the time of the current step
     pub fn time(&self) -> f64 {
         self.time
