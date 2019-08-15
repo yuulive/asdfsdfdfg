@@ -7,6 +7,7 @@
 //! The time evolution of the system is defined through iterator, created by
 //! different solvers.
 
+pub mod discrete;
 pub mod solver;
 
 use crate::{
@@ -37,6 +38,8 @@ pub struct Ss {
     c: DMatrix<f64>,
     /// D matrix
     d: DMatrix<f64>,
+    /// Dimensions
+    dim: (usize, usize, usize),
 }
 
 /// Implementation of the methods for the state-space
@@ -70,6 +73,7 @@ impl Ss {
             b: DMatrix::from_row_slice(states, inputs, b),
             c: DMatrix::from_row_slice(outputs, states, c),
             d: DMatrix::from_row_slice(outputs, inputs, d),
+            dim: (states, inputs, outputs),
         }
     }
 
@@ -91,6 +95,11 @@ impl Ss {
     /// Get the D matrix
     pub(crate) fn d(&self) -> &DMatrix<f64> {
         &self.d
+    }
+
+    /// Get the dimensions of the system (states, inputs, outputs).
+    pub fn dim(&self) -> (usize, usize, usize) {
+        self.dim
     }
 
     /// Calculate the poles of the system
@@ -268,7 +277,14 @@ impl From<Tf> for Ss {
         // Crate a 1x1 matrix with the highest coefficient of the numerator.
         let d = DMatrix::from_element(1, 1, b_n);
 
-        Self { a, b, c, d }
+        // A single transfer function has only one input and one output.
+        Self {
+            a,
+            b,
+            c,
+            d,
+            dim: (states, 1, 1),
+        }
     }
 }
 
