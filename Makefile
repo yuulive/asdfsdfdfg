@@ -1,6 +1,12 @@
 RUNEXAMPLE = cargo run --example
 
-examples = bode discrete linear_system oscillation polar poly transfer_function
+examples = bode \
+		   discrete \
+		   linear_system \
+		   oscillation \
+		   polar \
+		   poly \
+		   transfer_function
 
 .PHONY : doc $(examples)
 
