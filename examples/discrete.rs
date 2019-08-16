@@ -11,7 +11,13 @@ fn main() {
     let sys = Ss::new_from_slice(3, 1, 1, &a, &b, &c, &d);
     println!("{}", &sys);
 
-    let te = sys.time_evolution(8, |_| vec![50.], &[0.,0.,0.]);
+    let input = 50.;
+    let te = sys.time_evolution(8, |_| vec![input], &[0., 0., 0.]);
 
-    println!("{:?}", te.last().unwrap());
+    let last_step = te.last().unwrap();
+    println!("{:?}", last_step);
+
+    let last_output = last_step.output()[0];
+    let gain = last_output / input;
+    println!("Gain: {:.3} / {} = {:.3}", last_output, input, gain);
 }

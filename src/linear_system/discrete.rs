@@ -161,3 +161,20 @@ where
         }
     }
 }
+
+impl DiscreteEvolution {
+    /// Get the time of the current step
+    pub fn time(&self) -> usize {
+        self.time
+    }
+
+    /// Get the current state of the system
+    pub fn state(&self) -> &Vec<f64> {
+        &self.state
+    }
+
+    /// Get the current output of the system
+    pub fn output(&self) -> &Vec<f64> {
+        &self.output
+    }
+}
