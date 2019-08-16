@@ -27,11 +27,14 @@ pub(crate) enum Order {
 
 /// Struct for the time evolution of a linear system
 #[derive(Debug)]
-pub struct RkIterator<'a> {
+pub struct RkIterator<'a, F>
+where
+    F: Fn(f64) -> Vec<f64>,
+{
     /// Linear system
     sys: &'a Ss,
     /// Input function
-    input: fn(f64) -> Vec<f64>,
+    input: F,
     /// State vector.
     state: DVector<f64>,
     /// Output vector.
@@ -46,7 +49,10 @@ pub struct RkIterator<'a> {
     order: Order,
 }
 
-impl<'a> RkIterator<'a> {
+impl<'a, F> RkIterator<'a, F>
+where
+    F: Fn(f64) -> Vec<f64>,
+{
     /// Create the solver for a Runge-Kutta method.
     ///
     /// # Arguments
@@ -57,14 +63,7 @@ impl<'a> RkIterator<'a> {
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `order` - order of the solver
-    pub(crate) fn new(
-        sys: &'a Ss,
-        u: fn(f64) -> Vec<f64>,
-        x0: &[f64],
-        h: f64,
-        n: usize,
-        order: Order,
-    ) -> Self {
+    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: f64, n: usize, order: Order) -> Self {
         let start = DVector::from_vec(u(0.0));
         let state = DVector::from_column_slice(x0);
         let output = &sys.c * &state + &sys.d * &start;
@@ -150,7 +149,10 @@ impl<'a> RkIterator<'a> {
 }
 
 /// Implementation of the Iterator trait for the RkIterator struct
-impl<'a> Iterator for RkIterator<'a> {
+impl<'a, F> Iterator for RkIterator<'a, F>
+where
+    F: Fn(f64) -> Vec<f64>,
+{
     type Item = Rk;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -197,11 +199,14 @@ impl Rk {
 
 /// Struct for the time evolution of a linear system
 #[derive(Debug)]
-pub struct Rkf45Iterator<'a> {
+pub struct Rkf45Iterator<'a, F>
+where
+    F: Fn(f64) -> Vec<f64>,
+{
     /// Linear system
     sys: &'a Ss,
     /// Input function
-    input: fn(f64) -> Vec<f64>,
+    input: F,
     /// State vector.
     state: DVector<f64>,
     /// Output vector.
@@ -218,7 +223,10 @@ pub struct Rkf45Iterator<'a> {
     initial_step: bool,
 }
 
-impl<'a> Rkf45Iterator<'a> {
+impl<'a, F> Rkf45Iterator<'a, F>
+where
+    F: Fn(f64) -> Vec<f64>,
+{
     /// Create a solver using Runge-Kutta-Fehlberg method
     ///
     /// # Arguments
@@ -229,14 +237,7 @@ impl<'a> Rkf45Iterator<'a> {
     /// * `h` - integration time interval
     /// * `limit` - time limit of the evaluation
     /// * `tol` - error tollerance
-    pub(crate) fn new(
-        sys: &'a Ss,
-        u: fn(f64) -> Vec<f64>,
-        x0: &[f64],
-        h: f64,
-        limit: f64,
-        tol: f64,
-    ) -> Self {
+    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: f64, limit: f64, tol: f64) -> Self {
         let start = DVector::from_vec(u(0.0));
         let state = DVector::from_column_slice(x0);
         // Calculate the output at time 0.
@@ -331,7 +332,10 @@ impl<'a> Rkf45Iterator<'a> {
 }
 
 /// Implementation of the Iterator trait for the Rkf45Iterator struct
-impl<'a> Iterator for Rkf45Iterator<'a> {
+impl<'a, F> Iterator for Rkf45Iterator<'a, F>
+where
+    F: Fn(f64) -> Vec<f64>,
+{
     type Item = Rkf45;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -400,11 +404,14 @@ impl Rkf45 {
 /// Struct for the time evolution of the linear system using the implicit
 /// Radau method of order 3 with 2 steps
 #[derive(Debug)]
-pub struct RadauIterator<'a> {
+pub struct RadauIterator<'a, F>
+where
+    F: Fn(f64) -> Vec<f64>,
+{
     /// Linear system
     sys: &'a Ss,
     /// Input functon
-    input: fn(f64) -> Vec<f64>,
+    input: F,
     /// State vector
     state: DVector<f64>,
     /// Output vector
@@ -421,7 +428,10 @@ pub struct RadauIterator<'a> {
     lu_jacobian: LU<f64, Dynamic, Dynamic>,
 }
 
-impl<'a> RadauIterator<'a> {
+impl<'a, F> RadauIterator<'a, F>
+where
+    F: Fn(f64) -> Vec<f64>,
+{
     /// Create the solver for a Radau order 3 with 2 steps method.
     ///
     /// # Arguments
@@ -432,14 +442,7 @@ impl<'a> RadauIterator<'a> {
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `tol` - tollerance of implicit solution finding
-    pub(crate) fn new(
-        sys: &'a Ss,
-        u: fn(f64) -> Vec<f64>,
-        x0: &[f64],
-        h: f64,
-        n: usize,
-        tol: f64,
-    ) -> Self {
+    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: f64, n: usize, tol: f64) -> Self {
         let start = DVector::from_vec(u(0.0));
         let state = DVector::from_column_slice(x0);
         let output = &sys.c * &state + &sys.d * &start;
@@ -558,7 +561,10 @@ const RADAU_C: [f64; 2] = [1. / 3., 1.];
 //////
 
 /// Implementation of the Iterator trait for the RadauIterator struct.
-impl<'a> Iterator for RadauIterator<'a> {
+impl<'a, F> Iterator for RadauIterator<'a, F>
+where
+    F: Fn(f64) -> Vec<f64>,
+{
     type Item = Radau;
 
     fn next(&mut self) -> Option<Self::Item> {

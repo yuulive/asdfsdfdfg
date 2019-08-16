@@ -132,7 +132,10 @@ impl Ss {
     /// * `x0` - initial state (colum mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk2(&self, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> RkIterator {
+    pub fn rk2<F>(&self, u: F, x0: &[f64], h: f64, n: usize) -> RkIterator<F>
+    where
+        F: Fn(f64) -> Vec<f64>,
+    {
         RkIterator::new(self, u, x0, h, n, Order::Rk2)
     }
 
@@ -144,7 +147,10 @@ impl Ss {
     /// * `x0` - initial state (colum mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk4(&self, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> RkIterator {
+    pub fn rk4<F>(&self, u: F, x0: &[f64], h: f64, n: usize) -> RkIterator<F>
+    where
+        F: Fn(f64) -> Vec<f64>,
+    {
         RkIterator::new(self, u, x0, h, n, Order::Rk4)
     }
 
@@ -157,14 +163,10 @@ impl Ss {
     /// * `h` - integration time interval
     /// * `limit` - time evaluation limit
     /// * `tol` - error tollerance
-    pub fn rkf45(
-        &self,
-        u: fn(f64) -> Vec<f64>,
-        x0: &[f64],
-        h: f64,
-        limit: f64,
-        tol: f64,
-    ) -> Rkf45Iterator {
+    pub fn rkf45<F>(&self, u: F, x0: &[f64], h: f64, limit: f64, tol: f64) -> Rkf45Iterator<F>
+    where
+        F: Fn(f64) -> Vec<f64>,
+    {
         Rkf45Iterator::new(self, u, x0, h, limit, tol)
     }
 
@@ -177,14 +179,10 @@ impl Ss {
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `tol` - error tollerance
-    pub fn radau(
-        &self,
-        u: fn(f64) -> Vec<f64>,
-        x0: &[f64],
-        h: f64,
-        n: usize,
-        tol: f64,
-    ) -> RadauIterator {
+    pub fn radau<F>(&self, u: F, x0: &[f64], h: f64, n: usize, tol: f64) -> RadauIterator<F>
+    where
+        F: Fn(f64) -> Vec<f64>,
+    {
         RadauIterator::new(self, u, x0, h, n, tol)
     }
 }

@@ -13,12 +13,14 @@ pub trait Discrete {
     /// * `step` - simulation length
     /// * `input` - input function
     /// * `x0` - initial state
-    fn time_evolution(
+    fn time_evolution<F>(
         &self,
         steps: usize,
-        input: fn(usize) -> Vec<f64>,
+        input: F,
         x0: &[f64],
-    ) -> DiscreteIterator;
+    ) -> DiscreteIterator<F>
+    where
+        F: Fn(usize) -> Vec<f64>;
 
     /// Convert a linear system into a discrete system.
     ///
@@ -39,12 +41,15 @@ pub enum Discretization {
 }
 
 impl Discrete for Ss {
-    fn time_evolution(
+    fn time_evolution<F>(
         &self,
         steps: usize,
-        input: fn(usize) -> Vec<f64>,
+        input: F,
         x0: &[f64],
-    ) -> DiscreteIterator {
+    ) -> DiscreteIterator<F>
+    where
+        F: Fn(usize) -> Vec<f64>,
+    {
         let state = DVector::from_column_slice(x0);
         let next_state = DVector::from_column_slice(x0);
         DiscreteIterator {
@@ -110,11 +115,14 @@ fn tustin(sys: &Ss, st: f64) -> Ss {
 
 /// Struct to hold the iterator for the evolution of the discrete linear system.
 #[derive(Debug)]
-pub struct DiscreteIterator<'a> {
+pub struct DiscreteIterator<'a, F>
+where
+    F: Fn(usize) -> Vec<f64>,
+{
     sys: &'a Ss,
     time: usize,
     steps: usize,
-    input: fn(usize) -> Vec<f64>,
+    input: F,
     state: DVector<f64>,
     next_state: DVector<f64>,
 }
@@ -127,7 +135,10 @@ pub struct DiscreteEvolution {
     output: Vec<f64>,
 }
 
-impl<'a> Iterator for DiscreteIterator<'a> {
+impl<'a, F> Iterator for DiscreteIterator<'a, F>
+where
+    F: Fn(usize) -> Vec<f64>,
+{
     type Item = DiscreteEvolution;
 
     fn next(&mut self) -> Option<Self::Item> {
