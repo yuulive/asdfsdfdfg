@@ -94,7 +94,7 @@ impl TryFrom<Ss> for Tf {
         if let Some(num) = MatrixOfPoly::from(tf).siso() {
             Ok(Self::new(num.clone(), pc))
         } else {
-            Err("Linar system is not Single Input Single Output")
+            Err("Linear system is not Single Input Single Output")
         }
     }
 }

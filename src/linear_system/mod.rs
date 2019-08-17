@@ -1,6 +1,6 @@
 //! # Linear system
 //!
-//! This module contains the state-space representation of the linar system.
+//! This module contains the state-space representation of the linear system.
 //!
 //! It is possible to calculate the equlibrium point of the system.
 //!
@@ -22,7 +22,7 @@ use num_complex::Complex64;
 use std::convert::From;
 use std::fmt;
 
-/// State-space representation of a linar system
+/// State-space representation of a linear system
 ///
 /// ```text
 /// xdot(t) = A * x(t) + B * u(t)

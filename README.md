@@ -15,6 +15,11 @@ Time response with explicit Runge-Kutta-Fehlberg order 4 5 method with adaptive
 step.  
 Time response with implicit Radau order 3 method with fixed step.
 
+### Discrete time system
+
+Time evolution of discrete linear system.  
+Discretization of continuous linear system using forward Euler, backward Euler and Tustin methods.
+
 ## Transfer function representation
 
 ### Sigle Input Single Output (SISO)

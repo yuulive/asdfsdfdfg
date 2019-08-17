@@ -13,12 +13,7 @@ pub trait Discrete {
     /// * `step` - simulation length
     /// * `input` - input function
     /// * `x0` - initial state
-    fn time_evolution<F>(
-        &self,
-        steps: usize,
-        input: F,
-        x0: &[f64],
-    ) -> DiscreteIterator<F>
+    fn time_evolution<F>(&self, steps: usize, input: F, x0: &[f64]) -> DiscreteIterator<F>
     where
         F: Fn(usize) -> Vec<f64>;
 
@@ -41,12 +36,7 @@ pub enum Discretization {
 }
 
 impl Discrete for Ss {
-    fn time_evolution<F>(
-        &self,
-        steps: usize,
-        input: F,
-        x0: &[f64],
-    ) -> DiscreteIterator<F>
+    fn time_evolution<F>(&self, steps: usize, input: F, x0: &[f64]) -> DiscreteIterator<F>
     where
         F: Fn(usize) -> Vec<f64>,
     {
@@ -71,6 +61,12 @@ impl Discrete for Ss {
     }
 }
 
+/// Discretization using forward Euler Method.
+///
+/// # Arguments
+///
+/// * `sys` - continuous linear system
+/// * `st` - sample time
 fn forward_euler(sys: &Ss, st: f64) -> Ss {
     let states = sys.dim.0;
     let identity = DMatrix::identity(states, states);
@@ -83,12 +79,18 @@ fn forward_euler(sys: &Ss, st: f64) -> Ss {
     }
 }
 
+/// Discretization using backward Euler Method.
+///
+/// # Arguments
+///
+/// * `sys` - continuous linear system
+/// * `st` - sample time
 fn backward_euler(sys: &Ss, st: f64) -> Ss {
     let states = sys.dim.0;
     let identity = DMatrix::identity(states, states);
     let a = (identity - st * &sys.a)
         .try_inverse()
-        .expect("Unable to discretize the system using backward euler method");
+        .expect("Unable to discretize the system using backward Euler method");
     Ss {
         b: st * &a * &sys.b,
         c: &sys.c * &a,
@@ -98,12 +100,18 @@ fn backward_euler(sys: &Ss, st: f64) -> Ss {
     }
 }
 
+/// Discretization using Tustin Method.
+///
+/// # Arguments
+///
+/// * `sys` - continuous linear system
+/// * `st` - sample time
 fn tustin(sys: &Ss, st: f64) -> Ss {
     let states = sys.dim.0;
     let identity = DMatrix::identity(states, states);
     let a = (&identity - 0.5 * st * &sys.a)
         .try_inverse()
-        .expect("Unable to discretize the system using tustin method");
+        .expect("Unable to discretize the system using Tustin method");
     Ss {
         a: (&identity + 0.5 * st * &sys.a) * &a,
         b: &a * &sys.b * st.sqrt(),

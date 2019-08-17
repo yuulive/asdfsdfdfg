@@ -231,7 +231,7 @@ where
     ///
     /// # Arguments
     ///
-    /// * `sys` - linar system
+    /// * `sys` - linear system
     /// * `u` - input function (colum vector)
     /// * `x0` - initial state (colum vector)
     /// * `h` - integration time interval
@@ -366,7 +366,7 @@ const D: [f64; 5] = [
 ];
 //////
 
-/// Struct to hold the data of the linar system time evolution
+/// Struct to hold the data of the linear system time evolution
 #[derive(Debug)]
 pub struct Rkf45 {
     /// Current step size
@@ -578,7 +578,7 @@ where
     }
 }
 
-/// Struct to hold the data of the linar system time evolution.
+/// Struct to hold the data of the linear system time evolution.
 #[derive(Debug)]
 pub struct Radau {
     /// Time of the current step
