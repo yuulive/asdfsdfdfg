@@ -2,7 +2,7 @@
 //!
 //! This module contains the state-space representation of the linear system.
 //!
-//! It is possible to calculate the equlibrium point of the system.
+//! It is possible to calculate the equilibrium point of the system.
 //!
 //! The time evolution of the system is defined through iterator, created by
 //! different solvers.
@@ -128,8 +128,8 @@ impl Ss {
     ///
     /// # Arguments
     ///
-    /// * `u` - input function returning a vector (colum mayor)
-    /// * `x0` - initial state (colum mayor)
+    /// * `u` - input function returning a vector (column mayor)
+    /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
     pub fn rk2<F>(&self, u: F, x0: &[f64], h: f64, n: usize) -> RkIterator<F>
@@ -143,8 +143,8 @@ impl Ss {
     ///
     /// # Arguments
     ///
-    /// * `u` - input function returning a vector (colum mayor)
-    /// * `x0` - initial state (colum mayor)
+    /// * `u` - input function returning a vector (column mayor)
+    /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
     pub fn rk4<F>(&self, u: F, x0: &[f64], h: f64, n: usize) -> RkIterator<F>
@@ -158,11 +158,11 @@ impl Ss {
     ///
     /// # Arguments
     ///
-    /// * `u` - input function returning a vector (colum vector)
-    /// * `x0` - initial state (colum vector)
+    /// * `u` - input function returning a vector (column vector)
+    /// * `x0` - initial state (column vector)
     /// * `h` - integration time interval
     /// * `limit` - time evaluation limit
-    /// * `tol` - error tollerance
+    /// * `tol` - error tolerance
     pub fn rkf45<F>(&self, u: F, x0: &[f64], h: f64, limit: f64, tol: f64) -> Rkf45Iterator<F>
     where
         F: Fn(f64) -> Vec<f64>,
@@ -174,11 +174,11 @@ impl Ss {
     ///
     /// # Arguments
     ///
-    /// * `u` - input function returning a vector (colum vector)
-    /// * `x0` - initial state (colum vector)
+    /// * `u` - input function returning a vector (column vector)
+    /// * `x0` - initial state (column vector)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    /// * `tol` - error tollerance
+    /// * `tol` - error tolerance
     pub fn radau<F>(&self, u: F, x0: &[f64], h: f64, n: usize, tol: f64) -> RadauIterator<F>
     where
         F: Fn(f64) -> Vec<f64>,
@@ -318,12 +318,12 @@ impl Equilibrium {
         Equilibrium { x, y }
     }
 
-    /// Retreive state coordinates for equilibrium
+    /// Retrieve state coordinates for equilibrium
     pub fn x(&self) -> &[f64] {
         self.x.as_slice()
     }
 
-    /// Retreive output coordinates for equilibrium
+    /// Retrieve output coordinates for equilibrium
     pub fn y(&self) -> &[f64] {
         self.y.as_slice()
     }

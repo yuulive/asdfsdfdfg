@@ -58,8 +58,8 @@ where
     /// # Arguments
     ///
     /// * `sys` - linear system
-    /// * `u` - input function that returns a vector (colum vector)
-    /// * `x0` - initial state (colum vector)
+    /// * `u` - input function that returns a vector (column vector)
+    /// * `x0` - initial state (column vector)
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `order` - order of the solver
@@ -79,8 +79,8 @@ where
         }
     }
 
-    /// Intial step (time 0) of the Runge-Kutta solver.
-    /// It contains the initial state and the calculated inital output
+    /// Initial step (time 0) of the Runge-Kutta solver.
+    /// It contains the initial state and the calculated initial output
     /// at the constructor.
     fn initial_step(&mut self) -> Option<Rk> {
         self.index += 1;
@@ -217,7 +217,7 @@ where
     limit: f64,
     /// Time
     time: f64,
-    /// Tollerance
+    /// Tolerance
     tol: f64,
     /// Is initial step
     initial_step: bool,
@@ -232,11 +232,11 @@ where
     /// # Arguments
     ///
     /// * `sys` - linear system
-    /// * `u` - input function (colum vector)
-    /// * `x0` - initial state (colum vector)
+    /// * `u` - input function (column vector)
+    /// * `x0` - initial state (column vector)
     /// * `h` - integration time interval
     /// * `limit` - time limit of the evaluation
-    /// * `tol` - error tollerance
+    /// * `tol` - error tolerance
     pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: f64, limit: f64, tol: f64) -> Self {
         let start = DVector::from_vec(u(0.0));
         let state = DVector::from_column_slice(x0);
@@ -255,8 +255,8 @@ where
         }
     }
 
-    /// Intial step (time 0) of the rkf45 solver.
-    /// It contains the initial state and the calculated inital output
+    /// Initial step (time 0) of the rkf45 solver.
+    /// It contains the initial state and the calculated initial output
     /// at the constructor
     fn initial_step(&mut self) -> Option<Rkf45> {
         self.initial_step = false;
@@ -349,7 +349,7 @@ where
     }
 }
 
-// Coefficients of th Butcher table of rkf45 method.
+// Coefficients of the Butcher table of rkf45 method.
 const A: [f64; 4] = [1. / 4., 3. / 8., 12. / 13., 1. / 2.];
 const B21: f64 = 1. / 4.;
 const B3: [f64; 2] = [3. / 32., 9. / 32.];
@@ -410,7 +410,7 @@ where
 {
     /// Linear system
     sys: &'a Ss,
-    /// Input functon
+    /// Input function
     input: F,
     /// State vector
     state: DVector<f64>,
@@ -422,9 +422,9 @@ where
     n: usize,
     /// Index
     index: usize,
-    /// Tollerance
+    /// Tolerance
     tol: f64,
-    /// Store the LU decomposition of the jacobian
+    /// Store the LU decomposition of the Jacobian matrix
     lu_jacobian: LU<f64, Dynamic, Dynamic>,
 }
 
@@ -437,11 +437,11 @@ where
     /// # Arguments
     ///
     /// * `sys` - linear system
-    /// * `u` - input function that returns a vector (colum vector)
-    /// * `x0` - initial state (colum vector)
+    /// * `u` - input function that returns a vector (column vector)
+    /// * `x0` - initial state (column vector)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    /// * `tol` - tollerance of implicit solution finding
+    /// * `tol` - tolerance of implicit solution finding
     pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: f64, n: usize, tol: f64) -> Self {
         let start = DVector::from_vec(u(0.0));
         let state = DVector::from_column_slice(x0);
@@ -456,7 +456,7 @@ where
         let j21 = &g * RADAU_A[2];
         let j22 = &g * RADAU_A[3] - &identity;
         let mut jac = DMatrix::zeros(2 * *rows, 2 * *rows);
-        // Copy the sub matrices into the the Jacobian.
+        // Copy the sub matrices into the Jacobian.
         let sub_matrix_size = (*rows, *rows);
         jac.slice_mut((0, 0), sub_matrix_size).copy_from(&j11);
         jac.slice_mut((0, *rows), sub_matrix_size).copy_from(&j12);
@@ -477,8 +477,8 @@ where
         }
     }
 
-    /// Initial step (time 0) of the radau solver.
-    /// It contains the initial state and the calculated inital output
+    /// Initial step (time 0) of the Radau solver.
+    /// It contains the initial state and the calculated initial output
     /// at the constructor.
     fn initial_step(&mut self) -> Option<Radau> {
         self.index += 1;
@@ -493,7 +493,7 @@ where
     fn main_iteration(&mut self) -> Option<Radau> {
         let time = (self.index - 1) as f64 * self.h;
         let rows = self.sys.a.nrows();
-        // k = [k1; k2] (colum vector)
+        // k = [k1; k2] (column vector)
         let mut k = DVector::<f64>::zeros(2 * rows);
         // k sub-vectors (or block vectors) are have size (rows x 1).
         let sub_vec_size = (rows, 1);

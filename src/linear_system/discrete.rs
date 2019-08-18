@@ -4,9 +4,9 @@ use crate::linear_system::Ss;
 
 use nalgebra::{DMatrix, DVector};
 
-/// Trait for the set of methods on descrete linear systems.
+/// Trait for the set of methods on discrete linear systems.
 pub trait Discrete {
-    /// Time evolution for a descrete linear system.
+    /// Time evolution for a discrete linear system.
     ///
     /// # Arguments
     ///
@@ -31,7 +31,7 @@ pub enum Discretization {
     ForwardEuler,
     /// Backward Euler
     BackwardEuler,
-    /// Tustin (trapezioidal rule)
+    /// Tustin (trapezoidal rule)
     Tustin,
 }
 
