@@ -11,14 +11,14 @@ Calculate the equiliblium point (both state and output) of the system from the g
 ### System time evolution
 
 Time response with explicit Runge-Kutta order 2 method with fixed step.  
-Time response with explicit Runge-Kutta-Fehlberg order 4 5 method with adaptive
-step.  
+Time response with explicit Runge-Kutta order 4 method with fixed step.  
+Time response with explicit Runge-Kutta-Fehlberg order 4 and 5 method with adaptive step.  
 Time response with implicit Radau order 3 method with fixed step.
 
 ### Discrete time system
 
-Time evolution of discrete linear system.  
-Discretization of continuous linear system using forward Euler, backward Euler and Tustin methods.
+Time evolution of a discrete linear system.  
+Discretization of a continuous linear system using forward Euler, backward Euler and Tustin methods.
 
 ## Transfer function representation
 
