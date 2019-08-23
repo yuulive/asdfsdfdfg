@@ -39,7 +39,36 @@ pub struct Ss {
     /// D matrix
     d: DMatrix<f64>,
     /// Dimensions
-    dim: (usize, usize, usize),
+    dim: Dim,
+}
+
+/// Dimensions of the linar system.
+#[derive(Debug, Clone, Copy)]
+pub struct Dim {
+    /// Number of states
+    states: usize,
+    /// Number of inputs
+    inputs: usize,
+    /// Number of outputs
+    outputs: usize,
+}
+
+/// Implementation of the methods for the Dim struct.
+impl Dim {
+    /// Get the number of states.
+    pub fn states(&self) -> usize {
+        self.states
+    }
+
+    /// Get the number of inputs.
+    pub fn inputs(&self) -> usize {
+        self.inputs
+    }
+
+    /// Get the number of outputs.
+    pub fn outputs(&self) -> usize {
+        self.outputs
+    }
 }
 
 /// Implementation of the methods for the state-space
@@ -73,7 +102,11 @@ impl Ss {
             b: DMatrix::from_row_slice(states, inputs, b),
             c: DMatrix::from_row_slice(outputs, states, c),
             d: DMatrix::from_row_slice(outputs, inputs, d),
-            dim: (states, inputs, outputs),
+            dim: Dim {
+                states,
+                inputs,
+                outputs,
+            },
         }
     }
 
@@ -98,7 +131,7 @@ impl Ss {
     }
 
     /// Get the dimensions of the system (states, inputs, outputs).
-    pub fn dim(&self) -> (usize, usize, usize) {
+    pub fn dim(&self) -> Dim {
         self.dim
     }
 
@@ -281,7 +314,11 @@ impl From<Tf> for Ss {
             b,
             c,
             d,
-            dim: (states, 1, 1),
+            dim: Dim {
+                states,
+                inputs: 1,
+                outputs: 1,
+            },
         }
     }
 }

@@ -22,7 +22,7 @@ pub trait Discrete {
     /// # Arguments
     ///
     /// * `st` - sample time
-    fn discretize(&self, st: f64, method: Discretization) -> Ss;
+    fn discretize(&self, st: f64, method: Discretization) -> Option<Ss>;
 }
 
 /// Discretization algorithm.
@@ -52,7 +52,7 @@ impl Discrete for Ss {
         }
     }
 
-    fn discretize(&self, st: f64, method: Discretization) -> Ss {
+    fn discretize(&self, st: f64, method: Discretization) -> Option<Ss> {
         match method {
             Discretization::ForwardEuler => forward_euler(&self, st),
             Discretization::BackwardEuler => backward_euler(&self, st),
@@ -67,16 +67,16 @@ impl Discrete for Ss {
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn forward_euler(sys: &Ss, st: f64) -> Ss {
-    let states = sys.dim.0;
+fn forward_euler(sys: &Ss, st: f64) -> Option<Ss> {
+    let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
-    Ss {
-        a: identity + st * sys.a.clone(),
-        b: st * sys.b.clone(),
+    Some(Ss {
+        a: identity + st * &sys.a,
+        b: st * &sys.b,
         c: sys.c.clone(),
         d: sys.d.clone(),
         dim: sys.dim,
-    }
+    })
 }
 
 /// Discretization using backward Euler Method.
@@ -85,18 +85,19 @@ fn forward_euler(sys: &Ss, st: f64) -> Ss {
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn backward_euler(sys: &Ss, st: f64) -> Ss {
-    let states = sys.dim.0;
+fn backward_euler(sys: &Ss, st: f64) -> Option<Ss> {
+    let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
-    let a = (identity - st * &sys.a)
-        .try_inverse()
-        .expect("Unable to discretize the system using backward Euler method");
-    Ss {
-        b: st * &a * &sys.b,
-        c: &sys.c * &a,
-        d: &sys.d + &sys.c * &a * &sys.b * st,
-        a,
-        dim: sys.dim,
+    if let Some(a) = (identity - st * &sys.a).try_inverse() {
+        Some(Ss {
+            b: st * &a * &sys.b,
+            c: &sys.c * &a,
+            d: &sys.d + &sys.c * &a * &sys.b * st,
+            a,
+            dim: sys.dim,
+        })
+    } else {
+        None
     }
 }
 
@@ -106,18 +107,19 @@ fn backward_euler(sys: &Ss, st: f64) -> Ss {
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn tustin(sys: &Ss, st: f64) -> Ss {
-    let states = sys.dim.0;
+fn tustin(sys: &Ss, st: f64) -> Option<Ss> {
+    let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
-    let a = (&identity - 0.5 * st * &sys.a)
-        .try_inverse()
-        .expect("Unable to discretize the system using Tustin method");
-    Ss {
-        a: (&identity + 0.5 * st * &sys.a) * &a,
-        b: &a * &sys.b * st.sqrt(),
-        c: st.sqrt() * &sys.c * &a,
-        d: &sys.d + &sys.c * &a * &sys.b * 0.5 * st,
-        dim: sys.dim,
+    if let Some(a) = (&identity - 0.5 * st * &sys.a).try_inverse() {
+        Some(Ss {
+            a: (&identity + 0.5 * st * &sys.a) * &a,
+            b: &a * &sys.b * st.sqrt(),
+            c: st.sqrt() * &sys.c * &a,
+            d: &sys.d + &sys.c * &a * &sys.b * 0.5 * st,
+            dim: sys.dim,
+        })
+    } else {
+        None
     }
 }
 
