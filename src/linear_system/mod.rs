@@ -283,15 +283,18 @@ impl From<Tf> for Ss {
     ///
     /// `tf` - transfer function
     fn from(tf: Tf) -> Self {
+        // Get the denominator in the monic form.
+        let (den_monic, den_n) = tf.den().monic();
         // Extend the numerator coefficients with zeros to the length of the
         // denominator polynomial.
-        let den = tf.den();
-        let order = den.degree();
-        let mut num = tf.num().clone();
+        let order = den_monic.degree();
+        // Divide the denominator polynomial by the highest coefficient of the
+        // numerator polinomial to mantain the original gain.
+        let mut num = tf.num().clone() / den_n;
         num.extend(order);
 
         // Calculate the observability canonical form.
-        let a = den.companion();
+        let a = den_monic.companion();
 
         // Get the number of states n.
         let states = a.nrows();
@@ -299,7 +302,7 @@ impl From<Tf> for Ss {
         let b_n = num[order];
 
         // Create a nx1 vector with b'i = bi - ai * b'n
-        let b = DMatrix::from_fn(states, 1, |i, _j| num[i] - den[i] * b_n);
+        let b = DMatrix::from_fn(states, 1, |i, _j| num[i] - den_monic[i] * b_n);
 
         // Crate a 1xn vector with all zeros but the last that is 1.
         let mut c = DMatrix::zeros(1, states);
