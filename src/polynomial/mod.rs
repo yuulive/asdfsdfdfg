@@ -136,6 +136,15 @@ impl Poly {
             self.coeffs.resize(degree + 1, 0.);
         }
     }
+
+    /// Retrun the monic polynomial and the leading coefficient.
+    pub fn monic(&self) -> (Poly, f64) {
+        let leading_coeff = *self.coeffs.last().unwrap_or(&1.);
+        let res: Vec<_> = self.coeffs.iter().map(|x| x / leading_coeff).collect();
+        let monic_poly = Poly { coeffs: res };
+
+        (monic_poly, leading_coeff)
+    }
 }
 
 /// Evaluate the polynomial at the given float number
