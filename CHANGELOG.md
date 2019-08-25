@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.4.0] - Unreleased
 ### Added
 - Implemented Runge-Kutta solver of order 4.
 - Discrete linear systems time evolution.
