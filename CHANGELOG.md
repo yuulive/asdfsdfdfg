@@ -6,8 +6,11 @@
 - Discrete linear systems time evolution.
 - Discretization of continuous linear system.
 - Allow to pass closures as input for the time evolution of a system.
+- Example for system discretization.
 ### Changed
 - Improve efficiency using LU decomposition to solve implicit system.
+### Fixed
+- Corrected the trasformation from transfer function to state-space form.
 
 ## [0.3.0] - 2019-08-05
 ### Added
