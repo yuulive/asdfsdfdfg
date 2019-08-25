@@ -26,6 +26,7 @@ pub trait Discrete {
 }
 
 /// Discretization algorithm.
+#[derive(Clone, Copy, Debug)]
 pub enum Discretization {
     /// Forward Euler
     ForwardEuler,

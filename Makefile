@@ -2,6 +2,7 @@ RUNEXAMPLE = cargo run --example
 
 examples = bode \
 		   discrete \
+		   discretization \
 		   linear_system \
 		   oscillation \
 		   polar \
