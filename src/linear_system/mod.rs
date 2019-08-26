@@ -278,12 +278,14 @@ impl From<Tf> for Ss {
     /// b'_n = b_n,   b'_i = b_i - a_i*b'_n,   i = 0, ..., n-1
     /// ```
     /// A is the companion matrix of the transfer function denominator.
+    /// The denominator is in monic form, this means that the numerator shall be
+    /// divided by the leading coefficient of the original denominator.
     ///
     /// # Arguments
     ///
     /// `tf` - transfer function
     fn from(tf: Tf) -> Self {
-        // Get the denominator in the monic form.
+        // Get the denominator in the monic form and the leading coefficient.
         let (den_monic, den_n) = tf.den().monic();
         // Extend the numerator coefficients with zeros to the length of the
         // denominator polynomial.
