@@ -1,16 +1,17 @@
 //! # Linear system
 //!
-//! This module contains the state-space representation of the linar system.
+//! This module contains the state-space representation of the linear system.
 //!
-//! It is possible to calculate the equlibrium point of the system.
+//! It is possible to calculate the equilibrium point of the system.
 //!
 //! The time evolution of the system is defined through iterator, created by
 //! different solvers.
 
+pub mod discrete;
 pub mod solver;
 
 use crate::{
-    linear_system::solver::{RadauIterator, Rk2Iterator, Rkf45Iterator},
+    linear_system::solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
     polynomial::{Poly, PolyMatrix},
     transfer_function::Tf,
 };
@@ -21,7 +22,7 @@ use num_complex::Complex64;
 use std::convert::From;
 use std::fmt;
 
-/// State-space representation of a linar system
+/// State-space representation of a linear system
 ///
 /// ```text
 /// xdot(t) = A * x(t) + B * u(t)
@@ -37,6 +38,37 @@ pub struct Ss {
     c: DMatrix<f64>,
     /// D matrix
     d: DMatrix<f64>,
+    /// Dimensions
+    dim: Dim,
+}
+
+/// Dimensions of the linar system.
+#[derive(Debug, Clone, Copy)]
+pub struct Dim {
+    /// Number of states
+    states: usize,
+    /// Number of inputs
+    inputs: usize,
+    /// Number of outputs
+    outputs: usize,
+}
+
+/// Implementation of the methods for the Dim struct.
+impl Dim {
+    /// Get the number of states.
+    pub fn states(&self) -> usize {
+        self.states
+    }
+
+    /// Get the number of inputs.
+    pub fn inputs(&self) -> usize {
+        self.inputs
+    }
+
+    /// Get the number of outputs.
+    pub fn outputs(&self) -> usize {
+        self.outputs
+    }
 }
 
 /// Implementation of the methods for the state-space
@@ -70,6 +102,11 @@ impl Ss {
             b: DMatrix::from_row_slice(states, inputs, b),
             c: DMatrix::from_row_slice(outputs, states, c),
             d: DMatrix::from_row_slice(outputs, inputs, d),
+            dim: Dim {
+                states,
+                inputs,
+                outputs,
+            },
         }
     }
 
@@ -91,6 +128,11 @@ impl Ss {
     /// Get the D matrix
     pub(crate) fn d(&self) -> &DMatrix<f64> {
         &self.d
+    }
+
+    /// Get the dimensions of the system (states, inputs, outputs).
+    pub fn dim(&self) -> Dim {
+        self.dim
     }
 
     /// Calculate the poles of the system
@@ -119,31 +161,45 @@ impl Ss {
     ///
     /// # Arguments
     ///
-    /// * `u` - input function returning a vector (colum mayor)
-    /// * `x0` - initial state (colum mayor)
+    /// * `u` - input function returning a vector (column mayor)
+    /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk2(&self, u: fn(f64) -> Vec<f64>, x0: &[f64], h: f64, n: usize) -> Rk2Iterator {
-        Rk2Iterator::new(self, u, x0, h, n)
+    pub fn rk2<F>(&self, u: F, x0: &[f64], h: f64, n: usize) -> RkIterator<F>
+    where
+        F: Fn(f64) -> Vec<f64>,
+    {
+        RkIterator::new(self, u, x0, h, n, Order::Rk2)
+    }
+
+    /// Time evolution for the given input, using Runge-Kutta fourth order method
+    ///
+    /// # Arguments
+    ///
+    /// * `u` - input function returning a vector (column mayor)
+    /// * `x0` - initial state (column mayor)
+    /// * `h` - integration time interval
+    /// * `n` - integration steps
+    pub fn rk4<F>(&self, u: F, x0: &[f64], h: f64, n: usize) -> RkIterator<F>
+    where
+        F: Fn(f64) -> Vec<f64>,
+    {
+        RkIterator::new(self, u, x0, h, n, Order::Rk4)
     }
 
     /// Runge-Kutta-Fehlberg 45 with adaptive step for time evolution.
     ///
     /// # Arguments
     ///
-    /// * `u` - input function returning a vector (colum vector)
-    /// * `x0` - initial state (colum vector)
+    /// * `u` - input function returning a vector (column vector)
+    /// * `x0` - initial state (column vector)
     /// * `h` - integration time interval
     /// * `limit` - time evaluation limit
-    /// * `tol` - error tollerance
-    pub fn rkf45(
-        &self,
-        u: fn(f64) -> Vec<f64>,
-        x0: &[f64],
-        h: f64,
-        limit: f64,
-        tol: f64,
-    ) -> Rkf45Iterator {
+    /// * `tol` - error tolerance
+    pub fn rkf45<F>(&self, u: F, x0: &[f64], h: f64, limit: f64, tol: f64) -> Rkf45Iterator<F>
+    where
+        F: Fn(f64) -> Vec<f64>,
+    {
         Rkf45Iterator::new(self, u, x0, h, limit, tol)
     }
 
@@ -151,19 +207,15 @@ impl Ss {
     ///
     /// # Arguments
     ///
-    /// * `u` - input function returning a vector (colum vector)
-    /// * `x0` - initial state (colum vector)
+    /// * `u` - input function returning a vector (column vector)
+    /// * `x0` - initial state (column vector)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    /// * `tol` - error tollerance
-    pub fn radau(
-        &self,
-        u: fn(f64) -> Vec<f64>,
-        x0: &[f64],
-        h: f64,
-        n: usize,
-        tol: f64,
-    ) -> RadauIterator {
+    /// * `tol` - error tolerance
+    pub fn radau<F>(&self, u: F, x0: &[f64], h: f64, n: usize, tol: f64) -> RadauIterator<F>
+    where
+        F: Fn(f64) -> Vec<f64>,
+    {
         RadauIterator::new(self, u, x0, h, n, tol)
     }
 }
@@ -226,20 +278,25 @@ impl From<Tf> for Ss {
     /// b'_n = b_n,   b'_i = b_i - a_i*b'_n,   i = 0, ..., n-1
     /// ```
     /// A is the companion matrix of the transfer function denominator.
+    /// The denominator is in monic form, this means that the numerator shall be
+    /// divided by the leading coefficient of the original denominator.
     ///
     /// # Arguments
     ///
     /// `tf` - transfer function
     fn from(tf: Tf) -> Self {
+        // Get the denominator in the monic form and the leading coefficient.
+        let (den_monic, den_n) = tf.den().monic();
         // Extend the numerator coefficients with zeros to the length of the
         // denominator polynomial.
-        let den = tf.den();
-        let order = den.degree();
-        let mut num = tf.num().clone();
+        let order = den_monic.degree();
+        // Divide the denominator polynomial by the highest coefficient of the
+        // numerator polinomial to mantain the original gain.
+        let mut num = tf.num().clone() / den_n;
         num.extend(order);
 
         // Calculate the observability canonical form.
-        let a = den.companion();
+        let a = den_monic.companion();
 
         // Get the number of states n.
         let states = a.nrows();
@@ -247,7 +304,7 @@ impl From<Tf> for Ss {
         let b_n = num[order];
 
         // Create a nx1 vector with b'i = bi - ai * b'n
-        let b = DMatrix::from_fn(states, 1, |i, _j| num[i] - den[i] * b_n);
+        let b = DMatrix::from_fn(states, 1, |i, _j| num[i] - den_monic[i] * b_n);
 
         // Crate a 1xn vector with all zeros but the last that is 1.
         let mut c = DMatrix::zeros(1, states);
@@ -256,7 +313,18 @@ impl From<Tf> for Ss {
         // Crate a 1x1 matrix with the highest coefficient of the numerator.
         let d = DMatrix::from_element(1, 1, b_n);
 
-        Self { a, b, c, d }
+        // A single transfer function has only one input and one output.
+        Self {
+            a,
+            b,
+            c,
+            d,
+            dim: Dim {
+                states,
+                inputs: 1,
+                outputs: 1,
+            },
+        }
     }
 }
 
@@ -292,12 +360,12 @@ impl Equilibrium {
         Equilibrium { x, y }
     }
 
-    /// Retreive state coordinates for equilibrium
+    /// Retrieve state coordinates for equilibrium
     pub fn x(&self) -> &[f64] {
         self.x.as_slice()
     }
 
-    /// Retreive output coordinates for equilibrium
+    /// Retrieve output coordinates for equilibrium
     pub fn y(&self) -> &[f64] {
         self.y.as_slice()
     }

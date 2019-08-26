@@ -94,7 +94,7 @@ impl TryFrom<Ss> for Tf {
         if let Some(num) = MatrixOfPoly::from(tf).siso() {
             Ok(Self::new(num.clone(), pc))
         } else {
-            Err("Linar system is not Single Input Single Output")
+            Err("Linear system is not Single Input Single Output")
         }
     }
 }
@@ -168,7 +168,7 @@ impl Eval<Vec<Complex64>> for TfMatrix {
         // └     ┘ └└         ┘ └     ┘┘ └└     ┘ └     ┘┘
         // `.` means 'evaluated at'
 
-        // Create a matrix to contain the result of the evalutation.
+        // Create a matrix to contain the result of the evaluation.
         let mut res = Array2::from_elem(self.num.matrix.dim(), Complex64::new(0.0, 0.0));
 
         // Zip the result and the numerator matrix row by row.
@@ -177,7 +177,7 @@ impl Eval<Vec<Complex64>> for TfMatrix {
             .apply(|mut res_row, matrix_row| {
                 // Zip the row of the result matrix.
                 Zip::from(&mut res_row)
-                    .and(s) // The vectror of the input.
+                    .and(s) // The vector of the input.
                     .and(matrix_row) // The row of the numerator matrix.
                     .apply(|r, s, n| *r = n.eval(s).fdiv(self.den.eval(s)));
             });

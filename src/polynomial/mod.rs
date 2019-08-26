@@ -117,7 +117,7 @@ impl Poly {
         schur.complex_eigenvalues().as_slice().to_vec()
     }
 
-    /// Implemantation of polynomial and matrix multiplication
+    /// Implementation of polynomial and matrix multiplication
     pub(crate) fn mul(&self, rhs: &DMatrix<f64>) -> PolyMatrix {
         // It's the polynomial matrix whose coefficients are the coefficients
         // of the polynomial times the matrix
@@ -125,7 +125,7 @@ impl Poly {
         PolyMatrix::new_from_coeffs(&res)
     }
 
-    /// Extend the polinomial coefficients with 0 to the given degree.
+    /// Extend the polynomial coefficients with 0 to the given degree.
     /// It does not truncate the polynomial.
     ///
     /// # Arguments
@@ -135,6 +135,15 @@ impl Poly {
         if degree > self.degree() {
             self.coeffs.resize(degree + 1, 0.);
         }
+    }
+
+    /// Retrun the monic polynomial and the leading coefficient.
+    pub fn monic(&self) -> (Poly, f64) {
+        let leading_coeff = *self.coeffs.last().unwrap_or(&1.);
+        let res: Vec<_> = self.coeffs.iter().map(|x| x / leading_coeff).collect();
+        let monic_poly = Poly { coeffs: res };
+
+        (monic_poly, leading_coeff)
     }
 }
 
@@ -643,7 +652,7 @@ impl Index<usize> for PolyMatrix {
     }
 }
 
-/// Implemantation of polynomial matrix printing
+/// Implementation of polynomial matrix printing
 impl fmt::Display for PolyMatrix {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.degree() == 0 {
@@ -687,7 +696,7 @@ impl MatrixOfPoly {
     /// # Arguments
     ///
     /// * `rows` - number of rows of the matrix
-    /// * `cols` - number of colums of the matrix
+    /// * `cols` - number of columns of the matrix
     /// * `data` - vector of polynomials in row major order
     ///
     /// # Panics
@@ -726,7 +735,7 @@ impl From<PolyMatrix> for MatrixOfPoly {
             .map(|c| c.transpose().as_slice().to_vec())
             .collect();
 
-        // Crate a vecor containing the vector of coefficients a single
+        // Crate a vector containing the vector of coefficients a single
         // polynomial in row major mode with respect to the initial
         // vector of matrices.
         let mut tmp: Vec<Vec<f64>> = vec![vec![]; rows * cols];
