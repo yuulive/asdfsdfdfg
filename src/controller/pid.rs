@@ -30,8 +30,8 @@ impl Pid {
     /// * `kp` - Proportional action coefficient
     /// * `ti` - Integral time
     /// * `td` - Derivative time
-    pub fn new_ideal(kp: f64, ti: f64, td: f64) -> Pid {
-        Pid {
+    pub fn new_ideal(kp: f64, ti: f64, td: f64) -> Self {
+        Self {
             kp,
             ti,
             td,
@@ -47,8 +47,8 @@ impl Pid {
     /// * `ti` - Integral time
     /// * `td` - Derivative time
     /// * `n` - Constant for additional pole
-    pub fn new(kp: f64, ti: f64, td: f64, n: f64) -> Pid {
-        Pid {
+    pub fn new(kp: f64, ti: f64, td: f64, n: f64) -> Self {
+        Self {
             kp,
             ti,
             td,

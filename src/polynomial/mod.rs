@@ -37,7 +37,7 @@ impl Poly {
     ///
     /// * `coeffs` - slice of coefficients
     pub fn new_from_coeffs(coeffs: &[f64]) -> Self {
-        let mut p = Poly {
+        let mut p = Self {
             coeffs: coeffs.into(),
         };
         p.trim();
@@ -51,8 +51,8 @@ impl Poly {
     ///
     /// * `roots` - slice of roots
     pub fn new_from_roots(roots: &[f64]) -> Self {
-        let mut p = roots.iter().fold(Poly { coeffs: vec![1.] }, |acc, &r| {
-            acc * Poly {
+        let mut p = roots.iter().fold(Self { coeffs: vec![1.] }, |acc, &r| {
+            acc * Self {
                 coeffs: vec![-r, 1.],
             }
         });
@@ -138,10 +138,10 @@ impl Poly {
     }
 
     /// Retrun the monic polynomial and the leading coefficient.
-    pub fn monic(&self) -> (Poly, f64) {
+    pub fn monic(&self) -> (Self, f64) {
         let leading_coeff = *self.coeffs.last().unwrap_or(&1.);
         let res: Vec<_> = self.coeffs.iter().map(|x| x / leading_coeff).collect();
-        let monic_poly = Poly { coeffs: res };
+        let monic_poly = Self { coeffs: res };
 
         (monic_poly, leading_coeff)
     }
@@ -212,7 +212,7 @@ impl Add<Poly> for Poly {
         } else {
             crate::zip_with(&self.coeffs, &rhs.coeffs, |l, r| l + r)
         };
-        Poly::new_from_coeffs(&new_coeffs)
+        Self::new_from_coeffs(&new_coeffs)
     }
 }
 
@@ -223,7 +223,7 @@ impl Add<f64> for Poly {
     fn add(self, rhs: f64) -> Self {
         let mut res = self.coeffs.to_owned();
         res[0] += rhs;
-        Poly::new_from_coeffs(&res)
+        Self::new_from_coeffs(&res)
     }
 }
 
@@ -243,7 +243,7 @@ impl Sub for Poly {
     fn sub(self, rhs: Self) -> Self {
         // Just multiply 'rhs' by -1 and use addition.
         let sub_p: Vec<_> = rhs.coeffs.iter().map(|&c| -c).collect();
-        self.add(Poly::new_from_coeffs(&sub_p))
+        self.add(Self::new_from_coeffs(&sub_p))
     }
 }
 
@@ -254,7 +254,7 @@ impl Sub<f64> for Poly {
     fn sub(self, rhs: f64) -> Self {
         let mut res = self.coeffs.to_owned();
         res[0] -= rhs;
-        Poly::new_from_coeffs(&res)
+        Self::new_from_coeffs(&res)
     }
 }
 
@@ -285,7 +285,7 @@ impl Mul for Poly {
                 new_coeffs[i + j] += a * b;
             }
         }
-        Poly::new_from_coeffs(&new_coeffs)
+        Self::new_from_coeffs(&new_coeffs)
     }
 }
 
@@ -295,7 +295,7 @@ impl Mul<f64> for Poly {
 
     fn mul(self, rhs: f64) -> Self {
         let res: Vec<_> = self.coeffs.iter().map(|x| x * rhs).collect();
-        Poly::new_from_coeffs(&res)
+        Self::new_from_coeffs(&res)
     }
 }
 
@@ -314,14 +314,14 @@ impl Div<f64> for Poly {
 
     fn div(self, rhs: f64) -> Self {
         let res: Vec<_> = self.coeffs.iter().map(|x| x / rhs).collect();
-        Poly::new_from_coeffs(&res)
+        Self::new_from_coeffs(&res)
     }
 }
 
 /// Implementation of the additive identity for polynomials
 impl Zero for Poly {
     fn zero() -> Self {
-        Poly { coeffs: vec![0.0] }
+        Self { coeffs: vec![0.0] }
     }
 
     fn is_zero(&self) -> bool {
@@ -332,7 +332,7 @@ impl Zero for Poly {
 /// Implementation of the multiplicative identity for polynomials
 impl One for Poly {
     fn one() -> Self {
-        Poly { coeffs: vec![1.0] }
+        Self { coeffs: vec![1.0] }
     }
 
     fn is_one(&self) -> bool {
@@ -543,7 +543,7 @@ impl PolyMatrix {
     pub(crate) fn new_from_coeffs(matr_coeffs: &[DMatrix<f64>]) -> Self {
         let shape = matr_coeffs[0].shape();
         assert!(matr_coeffs.iter().all(|c| c.shape() == shape));
-        let mut pm = PolyMatrix {
+        let mut pm = Self {
             matr_coeffs: matr_coeffs.into(),
         };
         pm.trim();
@@ -634,7 +634,7 @@ impl Add<PolyMatrix> for PolyMatrix {
         } else {
             crate::zip_with(&self.matr_coeffs, &rhs.matr_coeffs, |l, r| l + r)
         };
-        PolyMatrix::new_from_coeffs(&new_coeffs)
+        Self::new_from_coeffs(&new_coeffs)
     }
 }
 
@@ -746,7 +746,7 @@ impl From<PolyMatrix> for MatrixOfPoly {
         }
 
         let polys: Vec<Poly> = tmp.iter().map(|p| Poly::new_from_coeffs(&p)).collect();
-        MatrixOfPoly::new(rows, cols, polys)
+        Self::new(rows, cols, polys)
     }
 }
 

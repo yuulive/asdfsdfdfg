@@ -42,7 +42,7 @@ impl Tf {
     /// * `num` - Transfer function numerator
     /// * `den` - Transfer function denominator
     pub fn new(num: Poly, den: Poly) -> Self {
-        Tf { num, den }
+        Self { num, den }
     }
 
     /// Extract transfer function numerator

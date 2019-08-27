@@ -40,14 +40,14 @@ impl PolarIterator {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    pub(crate) fn new(tf: Tf, min_freq: f64, max_freq: f64, step: f64) -> PolarIterator {
+    pub(crate) fn new(tf: Tf, min_freq: f64, max_freq: f64, step: f64) -> Self {
         assert!(step > 0.0);
         assert!(min_freq < max_freq);
 
         let min = min_freq.log10();
         let max = max_freq.log10();
         let intervals = ((max - min) / step).floor();
-        PolarIterator {
+        Self {
             tf,
             intervals,
             step,

@@ -357,7 +357,7 @@ impl Equilibrium {
     /// * `x` - State equilibrium
     /// * `y` - Output equilibrium
     pub(crate) fn new(x: DVector<f64>, y: DVector<f64>) -> Self {
-        Equilibrium { x, y }
+        Self { x, y }
     }
 
     /// Retrieve state coordinates for equilibrium
