@@ -1,4 +1,7 @@
-//! Discrete linear system
+//! # Discrete linear system
+//!
+//! This module contains the methods to handle discrete systems and 
+//! discretization of continuous systems.
 
 use crate::linear_system::Ss;
 

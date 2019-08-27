@@ -10,6 +10,10 @@
 //!
 //! [Solvers](linear_system/solver/index.html)
 //!
+//! ## Discrete system
+//!
+//! [Discrete](linear_system/discrete/index.html)
+//!
 //! ## Transfer function representation
 //!
 //! [Transfer function](transfer_function/struct.Tf.html)
