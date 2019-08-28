@@ -127,7 +127,7 @@ impl fmt::Display for Tf {
         let s_den = self.den.to_string();
 
         let length = s_num.len().max(s_den.len());
-        let dash = "─".repeat(length);
+        let dash = "\u{2500}".repeat(length);
 
         write!(f, "{}\n{}\n{}", s_num, dash, s_den)
     }
@@ -232,7 +232,7 @@ impl fmt::Display for TfMatrix {
         let s_den = self.den.to_string();
 
         let length = s_den.len();
-        let dash = "─".repeat(length);
+        let dash = "\u{2500}".repeat(length);
 
         write!(f, "{}\n{}\n{}", s_num, dash, s_den)
     }
