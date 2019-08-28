@@ -533,7 +533,7 @@ pub(crate) struct PolyMatrix {
     pub(crate) matr_coeffs: Vec<DMatrix<f64>>,
 }
 
-/// Implementation methods for PolyMatrix struct
+/// Implementation methods for `PolyMatrix` struct
 impl PolyMatrix {
     /// Create a new polynomial matrix given a slice of matrix coefficients.
     ///

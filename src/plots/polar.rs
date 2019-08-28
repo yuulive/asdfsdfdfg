@@ -86,7 +86,7 @@ impl Polar {
     }
 }
 
-/// Implementation of the Iterator trait for PolarIterator struct
+/// Implementation of the Iterator trait for `PolarIterator` struct
 impl Iterator for PolarIterator {
     type Item = Polar;
 

@@ -148,7 +148,7 @@ where
     }
 }
 
-/// Implementation of the Iterator trait for the RkIterator struct
+/// Implementation of the Iterator trait for the `RkIterator` struct
 impl<'a, F> Iterator for RkIterator<'a, F>
 where
     F: Fn(f64) -> Vec<f64>,
@@ -331,7 +331,7 @@ where
     }
 }
 
-/// Implementation of the Iterator trait for the Rkf45Iterator struct
+/// Implementation of the Iterator trait for the `Rkf45Iterator` struct
 impl<'a, F> Iterator for Rkf45Iterator<'a, F>
 where
     F: Fn(f64) -> Vec<f64>,
@@ -560,7 +560,7 @@ const RADAU_B: [f64; 2] = [3. / 4., 1. / 4.];
 const RADAU_C: [f64; 2] = [1. / 3., 1.];
 //////
 
-/// Implementation of the Iterator trait for the RadauIterator struct.
+/// Implementation of the Iterator trait for the `RadauIterator` struct.
 impl<'a, F> Iterator for RadauIterator<'a, F>
 where
     F: Fn(f64) -> Vec<f64>,

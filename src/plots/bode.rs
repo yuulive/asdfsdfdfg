@@ -98,7 +98,7 @@ impl Bode {
     }
 }
 
-/// Implementation of the Iterator trait for BodeIterator struct
+/// Implementation of the Iterator trait for `BodeIterator` struct
 impl Iterator for BodeIterator {
     type Item = Bode;
 
