@@ -127,17 +127,17 @@ where
         let mid_time = init_time + 0.5 * self.h;
         let end_time = self.index as f64 * self.h;
         let u = DVector::from_vec((self.input)(init_time));
-        let umid = DVector::from_vec((self.input)(mid_time));
-        let uend = DVector::from_vec((self.input)(end_time));
+        let u_mid = DVector::from_vec((self.input)(mid_time));
+        let u_end = DVector::from_vec((self.input)(end_time));
         let bu = &self.sys.b * &u;
-        let bumid = &self.sys.b * &umid;
-        let buend = &self.sys.b * &uend;
+        let bu_mid = &self.sys.b * &u_mid;
+        let bu_end = &self.sys.b * &u_end;
         let k1 = &self.sys.a * &self.state + &bu;
-        let k2 = &self.sys.a * (&self.state + 0.5 * self.h * &k1) + &bumid;
-        let k3 = &self.sys.a * (&self.state + 0.5 * self.h * &k2) + &bumid;
-        let k4 = &self.sys.a * (&self.state + self.h * &k3) + &buend;
+        let k2 = &self.sys.a * (&self.state + 0.5 * self.h * &k1) + &bu_mid;
+        let k3 = &self.sys.a * (&self.state + 0.5 * self.h * &k2) + &bu_mid;
+        let k4 = &self.sys.a * (&self.state + self.h * &k3) + &bu_end;
         self.state += self.h / 6. * (k1 + 2. * k2 + 2. * k3 + k4);
-        self.output = &self.sys.c * &self.state + &self.sys.d * &uend;
+        self.output = &self.sys.c * &self.state + &self.sys.d * &u_end;
 
         self.index += 1;
         Some(Rk {

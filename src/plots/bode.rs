@@ -108,8 +108,8 @@ impl Iterator for BodeIterator {
         } else {
             let freq_exponent = self.step.mul_add(self.index, self.base_freq);
             let omega = 10f64.powf(freq_exponent);
-            let jomega = Complex64::new(0.0, omega);
-            let g = self.tf.eval(&jomega);
+            let j_omega = Complex64::new(0.0, omega);
+            let g = self.tf.eval(&j_omega);
             self.index += 1.;
             Some(Bode {
                 angular_frequency: omega,

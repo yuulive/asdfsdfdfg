@@ -121,8 +121,8 @@ impl Poly {
     pub(crate) fn mul(&self, rhs: &DMatrix<f64>) -> PolyMatrix {
         // It's the polynomial matrix whose coefficients are the coefficients
         // of the polynomial times the matrix
-        let res: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
-        PolyMatrix::new_from_coeffs(&res)
+        let result: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
+        PolyMatrix::new_from_coeffs(&result)
     }
 
     /// Extend the polynomial coefficients with 0 to the given degree.
@@ -140,8 +140,8 @@ impl Poly {
     /// Retrun the monic polynomial and the leading coefficient.
     pub fn monic(&self) -> (Self, f64) {
         let leading_coeff = *self.coeffs.last().unwrap_or(&1.);
-        let res: Vec<_> = self.coeffs.iter().map(|x| x / leading_coeff).collect();
-        let monic_poly = Self { coeffs: res };
+        let result: Vec<_> = self.coeffs.iter().map(|x| x / leading_coeff).collect();
+        let monic_poly = Self { coeffs: result };
 
         (monic_poly, leading_coeff)
     }
@@ -198,17 +198,17 @@ impl Add<Poly> for Poly {
     fn add(self, rhs: Self) -> Self {
         // Check which polynomial has the highest degree
         let new_coeffs = if self.degree() < rhs.degree() {
-            let mut res = rhs.coeffs.to_vec();
+            let mut result = rhs.coeffs.to_vec();
             for (i, c) in self.coeffs.iter().enumerate() {
-                res[i] += c;
+                result[i] += c;
             }
-            res
+            result
         } else if rhs.degree() < self.degree() {
-            let mut res = self.coeffs.to_owned();
+            let mut result = self.coeffs.to_owned();
             for (i, c) in rhs.coeffs.iter().enumerate() {
-                res[i] += c;
+                result[i] += c;
             }
-            res
+            result
         } else {
             crate::zip_with(&self.coeffs, &rhs.coeffs, |l, r| l + r)
         };
@@ -221,9 +221,9 @@ impl Add<f64> for Poly {
     type Output = Self;
 
     fn add(self, rhs: f64) -> Self {
-        let mut res = self.coeffs.to_owned();
-        res[0] += rhs;
-        Self::new_from_coeffs(&res)
+        let mut result = self.coeffs.to_owned();
+        result[0] += rhs;
+        Self::new_from_coeffs(&result)
     }
 }
 
@@ -252,9 +252,9 @@ impl Sub<f64> for Poly {
     type Output = Self;
 
     fn sub(self, rhs: f64) -> Self {
-        let mut res = self.coeffs.to_owned();
-        res[0] -= rhs;
-        Self::new_from_coeffs(&res)
+        let mut result = self.coeffs.to_owned();
+        result[0] -= rhs;
+        Self::new_from_coeffs(&result)
     }
 }
 
@@ -263,9 +263,9 @@ impl Sub<Poly> for f64 {
     type Output = Poly;
 
     fn sub(self, rhs: Poly) -> Poly {
-        let mut res = rhs.coeffs.to_owned();
-        res[0] -= self;
-        Poly::new_from_coeffs(&res)
+        let mut result = rhs.coeffs.to_owned();
+        result[0] -= self;
+        Poly::new_from_coeffs(&result)
     }
 }
 
@@ -294,8 +294,8 @@ impl Mul<f64> for Poly {
     type Output = Self;
 
     fn mul(self, rhs: f64) -> Self {
-        let res: Vec<_> = self.coeffs.iter().map(|x| x * rhs).collect();
-        Self::new_from_coeffs(&res)
+        let result: Vec<_> = self.coeffs.iter().map(|x| x * rhs).collect();
+        Self::new_from_coeffs(&result)
     }
 }
 
@@ -313,8 +313,8 @@ impl Div<f64> for Poly {
     type Output = Self;
 
     fn div(self, rhs: f64) -> Self {
-        let res: Vec<_> = self.coeffs.iter().map(|x| x / rhs).collect();
-        Self::new_from_coeffs(&res)
+        let result: Vec<_> = self.coeffs.iter().map(|x| x / rhs).collect();
+        Self::new_from_coeffs(&result)
     }
 }
 
@@ -564,8 +564,8 @@ impl PolyMatrix {
     ///
     /// PolyMatrix * DMatrix
     pub(crate) fn right_mul(&self, rhs: &DMatrix<f64>) -> Self {
-        let res: Vec<_> = self.matr_coeffs.iter().map(|x| x * rhs).collect();
-        Self::new_from_coeffs(&res)
+        let result: Vec<_> = self.matr_coeffs.iter().map(|x| x * rhs).collect();
+        Self::new_from_coeffs(&result)
     }
 
     /// Implementation of matrix and polynomial matrix multiplication
@@ -603,13 +603,13 @@ impl Eval<DMatrix<Complex64>> for PolyMatrix {
         let rows = self.matr_coeffs[0].nrows();
         let cols = self.matr_coeffs[0].ncols();
 
-        let mut res = DMatrix::from_element(rows, cols, Complex64::zero());
+        let mut result = DMatrix::from_element(rows, cols, Complex64::zero());
 
         for mc in self.matr_coeffs.iter().rev() {
             let mcplx = mc.map(|x| Complex64::new(x, 0.0));
-            res = res.component_mul(s) + mcplx;
+            result = result.component_mul(s) + mcplx;
         }
-        res
+        result
     }
 }
 
@@ -620,17 +620,17 @@ impl Add<PolyMatrix> for PolyMatrix {
     fn add(self, rhs: Self) -> Self {
         // Check which polynomial matrix has the highest degree
         let new_coeffs = if self.degree() < rhs.degree() {
-            let mut res = rhs.matr_coeffs.to_vec();
+            let mut result = rhs.matr_coeffs.to_vec();
             for (i, c) in self.matr_coeffs.iter().enumerate() {
-                res[i] += c;
+                result[i] += c;
             }
-            res
+            result
         } else if rhs.degree() < self.degree() {
-            let mut res = self.matr_coeffs.to_owned();
+            let mut result = self.matr_coeffs.to_owned();
             for (i, c) in rhs.matr_coeffs.iter().enumerate() {
-                res[i] += c;
+                result[i] += c;
             }
-            res
+            result
         } else {
             crate::zip_with(&self.matr_coeffs, &rhs.matr_coeffs, |l, r| l + r)
         };

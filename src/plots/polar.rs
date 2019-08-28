@@ -96,10 +96,10 @@ impl Iterator for PolarIterator {
         } else {
             let freq_exponent = self.step.mul_add(self.index, self.base_freq);
             let omega = 10f64.powf(freq_exponent);
-            let jomega = Complex64::new(0.0, omega);
+            let j_omega = Complex64::new(0.0, omega);
             self.index += 1.;
             Some(Polar {
-                output: self.tf.eval(&jomega),
+                output: self.tf.eval(&j_omega),
             })
         }
     }
