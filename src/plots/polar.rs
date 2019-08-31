@@ -95,7 +95,7 @@ impl Iterator for PolarIterator {
             None
         } else {
             let freq_exponent = self.step.mul_add(self.index, self.base_freq);
-            let omega = 10f64.powf(freq_exponent);
+            let omega = 10_f64.powf(freq_exponent);
             let j_omega = Complex64::new(0.0, omega);
             self.index += 1.;
             Some(Polar {
