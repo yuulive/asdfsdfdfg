@@ -230,7 +230,7 @@ impl Ss {
 /// with B1 = I = eye(n,n)
 /// a1 = -trace(A); ak = -1/k * trace(A*Bk)
 /// Bk = a_(k-1)*I + A*B_(k-1)
-#[allow(non_snake_case)]
+#[allow(non_snake_case, clippy::cast_precision_loss)]
 pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly, PolyMatrix) {
     let size = A.nrows(); // A is a square matrix.
     let mut a = vec![1.0];
@@ -250,7 +250,10 @@ pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly, PolyMatrix) {
         B.insert(0, Bk.clone());
 
         let ABk = A * &Bk;
-        ak = -f64::from(k as u32).recip() * ABk.trace();
+        // Casting usize to f64 causes a loss of precision on targets with
+        // 64-bit wide pointers (usize is 64 bits wide, but f64's mantissa is
+        // only 52 bits wide)
+        ak = -(k as f64).recip() * ABk.trace();
         a.insert(0, ak);
     }
     (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))

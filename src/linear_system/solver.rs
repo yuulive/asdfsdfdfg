@@ -93,6 +93,7 @@ where
     }
 
     /// Runge-Kutta order 2 method.
+    #[allow(clippy::cast_precision_loss)]
     fn main_iteration_rk2(&mut self) -> Option<Rk> {
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
         // k1 = h*f(t_n, y_n)
@@ -117,6 +118,7 @@ where
     }
 
     /// Runge-Kutta order 4 method.
+    #[allow(clippy::cast_precision_loss)]
     fn main_iteration_rk4(&mut self) -> Option<Rk> {
         // y_n+1 = y_n + h/6(k1 + 2*k2 + 2*k3 + k4) + O(h^4)
         // k1 = f(t_n, y_n)
@@ -490,6 +492,7 @@ where
     }
 
     /// Radau order 3 with 2 step implicit method.
+    #[allow(clippy::cast_precision_loss)]
     fn main_iteration(&mut self) -> Option<Radau> {
         let time = (self.index - 1) as f64 * self.h;
         let rows = self.sys.a.nrows();
