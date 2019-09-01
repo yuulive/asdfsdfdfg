@@ -39,14 +39,14 @@ impl BodeIterator {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    pub(crate) fn new(tf: Tf, min_freq: f64, max_freq: f64, step: f64) -> BodeIterator {
+    pub(crate) fn new(tf: Tf, min_freq: f64, max_freq: f64, step: f64) -> Self {
         assert!(step > 0.0);
         assert!(min_freq < max_freq);
 
         let min = min_freq.log10();
         let max = max_freq.log10();
         let intervals = ((max - min) / step).floor();
-        BodeIterator {
+        Self {
             tf,
             intervals,
             step,
@@ -98,7 +98,7 @@ impl Bode {
     }
 }
 
-/// Implementation of the Iterator trait for BodeIterator struct
+/// Implementation of the Iterator trait for `BodeIterator` struct
 impl Iterator for BodeIterator {
     type Item = Bode;
 
@@ -107,9 +107,9 @@ impl Iterator for BodeIterator {
             None
         } else {
             let freq_exponent = self.step.mul_add(self.index, self.base_freq);
-            let omega = 10f64.powf(freq_exponent);
-            let jomega = Complex64::new(0.0, omega);
-            let g = self.tf.eval(&jomega);
+            let omega = 10_f64.powf(freq_exponent);
+            let j_omega = Complex64::new(0.0, omega);
+            let g = self.tf.eval(&j_omega);
             self.index += 1.;
             Some(Bode {
                 angular_frequency: omega,

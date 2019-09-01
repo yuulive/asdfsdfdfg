@@ -93,6 +93,7 @@ where
     }
 
     /// Runge-Kutta order 2 method.
+    #[allow(clippy::cast_precision_loss)]
     fn main_iteration_rk2(&mut self) -> Option<Rk> {
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
         // k1 = h*f(t_n, y_n)
@@ -117,6 +118,7 @@ where
     }
 
     /// Runge-Kutta order 4 method.
+    #[allow(clippy::cast_precision_loss)]
     fn main_iteration_rk4(&mut self) -> Option<Rk> {
         // y_n+1 = y_n + h/6(k1 + 2*k2 + 2*k3 + k4) + O(h^4)
         // k1 = f(t_n, y_n)
@@ -127,17 +129,17 @@ where
         let mid_time = init_time + 0.5 * self.h;
         let end_time = self.index as f64 * self.h;
         let u = DVector::from_vec((self.input)(init_time));
-        let umid = DVector::from_vec((self.input)(mid_time));
-        let uend = DVector::from_vec((self.input)(end_time));
+        let u_mid = DVector::from_vec((self.input)(mid_time));
+        let u_end = DVector::from_vec((self.input)(end_time));
         let bu = &self.sys.b * &u;
-        let bumid = &self.sys.b * &umid;
-        let buend = &self.sys.b * &uend;
+        let bu_mid = &self.sys.b * &u_mid;
+        let bu_end = &self.sys.b * &u_end;
         let k1 = &self.sys.a * &self.state + &bu;
-        let k2 = &self.sys.a * (&self.state + 0.5 * self.h * &k1) + &bumid;
-        let k3 = &self.sys.a * (&self.state + 0.5 * self.h * &k2) + &bumid;
-        let k4 = &self.sys.a * (&self.state + self.h * &k3) + &buend;
+        let k2 = &self.sys.a * (&self.state + 0.5 * self.h * &k1) + &bu_mid;
+        let k3 = &self.sys.a * (&self.state + 0.5 * self.h * &k2) + &bu_mid;
+        let k4 = &self.sys.a * (&self.state + self.h * &k3) + &bu_end;
         self.state += self.h / 6. * (k1 + 2. * k2 + 2. * k3 + k4);
-        self.output = &self.sys.c * &self.state + &self.sys.d * &uend;
+        self.output = &self.sys.c * &self.state + &self.sys.d * &u_end;
 
         self.index += 1;
         Some(Rk {
@@ -148,7 +150,7 @@ where
     }
 }
 
-/// Implementation of the Iterator trait for the RkIterator struct
+/// Implementation of the Iterator trait for the `RkIterator` struct
 impl<'a, F> Iterator for RkIterator<'a, F>
 where
     F: Fn(f64) -> Vec<f64>,
@@ -331,7 +333,7 @@ where
     }
 }
 
-/// Implementation of the Iterator trait for the Rkf45Iterator struct
+/// Implementation of the Iterator trait for the `Rkf45Iterator` struct
 impl<'a, F> Iterator for Rkf45Iterator<'a, F>
 where
     F: Fn(f64) -> Vec<f64>,
@@ -490,6 +492,7 @@ where
     }
 
     /// Radau order 3 with 2 step implicit method.
+    #[allow(clippy::cast_precision_loss)]
     fn main_iteration(&mut self) -> Option<Radau> {
         let time = (self.index - 1) as f64 * self.h;
         let rows = self.sys.a.nrows();
@@ -560,7 +563,7 @@ const RADAU_B: [f64; 2] = [3. / 4., 1. / 4.];
 const RADAU_C: [f64; 2] = [1. / 3., 1.];
 //////
 
-/// Implementation of the Iterator trait for the RadauIterator struct.
+/// Implementation of the Iterator trait for the `RadauIterator` struct.
 impl<'a, F> Iterator for RadauIterator<'a, F>
 where
     F: Fn(f64) -> Vec<f64>,

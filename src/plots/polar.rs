@@ -40,14 +40,14 @@ impl PolarIterator {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    pub(crate) fn new(tf: Tf, min_freq: f64, max_freq: f64, step: f64) -> PolarIterator {
+    pub(crate) fn new(tf: Tf, min_freq: f64, max_freq: f64, step: f64) -> Self {
         assert!(step > 0.0);
         assert!(min_freq < max_freq);
 
         let min = min_freq.log10();
         let max = max_freq.log10();
         let intervals = ((max - min) / step).floor();
-        PolarIterator {
+        Self {
             tf,
             intervals,
             step,
@@ -86,7 +86,7 @@ impl Polar {
     }
 }
 
-/// Implementation of the Iterator trait for PolarIterator struct
+/// Implementation of the Iterator trait for `PolarIterator` struct
 impl Iterator for PolarIterator {
     type Item = Polar;
 
@@ -95,11 +95,11 @@ impl Iterator for PolarIterator {
             None
         } else {
             let freq_exponent = self.step.mul_add(self.index, self.base_freq);
-            let omega = 10f64.powf(freq_exponent);
-            let jomega = Complex64::new(0.0, omega);
+            let omega = 10_f64.powf(freq_exponent);
+            let j_omega = Complex64::new(0.0, omega);
             self.index += 1.;
             Some(Polar {
-                output: self.tf.eval(&jomega),
+                output: self.tf.eval(&j_omega),
             })
         }
     }

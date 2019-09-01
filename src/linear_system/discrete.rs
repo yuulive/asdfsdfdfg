@@ -1,4 +1,7 @@
-//! Discrete linear system
+//! # Discrete linear system
+//!
+//! This module contains the methods to handle discrete systems and
+//! discretization of continuous systems.
 
 use crate::linear_system::Ss;
 
@@ -140,7 +143,7 @@ where
 
 /// Struct to hold the result of the discrete linear system evolution.
 #[derive(Debug)]
-pub struct DiscreteEvolution {
+pub struct TimeEvolution {
     time: usize,
     state: Vec<f64>,
     output: Vec<f64>,
@@ -150,7 +153,7 @@ impl<'a, F> Iterator for DiscreteIterator<'a, F>
 where
     F: Fn(usize) -> Vec<f64>,
 {
-    type Item = DiscreteEvolution;
+    type Item = TimeEvolution;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.time > self.steps {
@@ -164,7 +167,7 @@ where
             self.next_state = &self.sys.a * &self.state + &self.sys.b * &u;
             let output = &self.sys.c * &self.state + &self.sys.d * &u;
             self.time += 1;
-            Some(DiscreteEvolution {
+            Some(TimeEvolution {
                 time: current_time,
                 state: self.state.as_slice().to_vec(),
                 output: output.as_slice().to_vec(),
@@ -173,7 +176,7 @@ where
     }
 }
 
-impl DiscreteEvolution {
+impl TimeEvolution {
     /// Get the time of the current step
     pub fn time(&self) -> usize {
         self.time

@@ -10,6 +10,10 @@
 //!
 //! [Solvers](linear_system/solver/index.html)
 //!
+//! ## Discrete system
+//!
+//! [Discrete](linear_system/discrete/index.html)
+//!
 //! ## Transfer function representation
 //!
 //! [Transfer function](transfer_function/struct.Tf.html)
@@ -80,7 +84,7 @@ pub trait Decibel<T> {
 /// Implementation of the Decibels for f64
 impl Decibel<f64> for f64 {
     /// Convert f64 to decibels
-    fn to_db(&self) -> f64 {
+    fn to_db(&self) -> Self {
         20. * self.log10()
     }
 }
