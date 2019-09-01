@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## [0.4.1] - 2019-09-01
+### Added
+- Documentation links for discrete system.
+### Changed
+- Applied clippy pedantic suggestions.
+
 ## [0.4.0] - 2019-08-26
 ### Added
 - Implemented Runge-Kutta solver of order 4.
