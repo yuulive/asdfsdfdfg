@@ -7,6 +7,8 @@
 //! numerators are stored in a matrix, while the denominator is stored once,
 //! since it is equal for every transfer function.
 
+pub mod discrete_tf;
+
 use crate::{
     linear_system::{self, Ss},
     plots::{
