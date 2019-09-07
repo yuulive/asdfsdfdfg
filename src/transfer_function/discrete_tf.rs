@@ -2,7 +2,7 @@
 //!
 //! The discretization can be performed with Euler or Tustin methods.
 
-use crate::{linear_system::discrete::Discretization, transfer_function::Tf, Eval};
+use crate::{linear_system::discrete::Discretization, transfer_function::Tf, Eval, Seconds};
 
 use num_complex::Complex64;
 
@@ -11,9 +11,9 @@ pub struct Tfz {
     /// Transfer function
     tf: Tf,
     /// Sampling period
-    ts: f64,
+    ts: Seconds,
     /// Discretization function
-    conversion: fn(Complex64, f64) -> Complex64,
+    conversion: fn(Complex64, Seconds) -> Complex64,
 }
 
 /// Implementation of `Tfz` struct.
@@ -24,7 +24,7 @@ impl Tfz {
     /// * `tf` - Continuous transfer function
     /// * `ts` - Sampling period
     /// * `conversion` - Conversion function
-    fn new_from_cont(tf: Tf, ts: f64, conversion: fn(Complex64, f64) -> Complex64) -> Self {
+    fn new_from_cont(tf: Tf, ts: Seconds, conversion: fn(Complex64, Seconds) -> Complex64) -> Self {
         Self { tf, ts, conversion }
     }
 
@@ -34,7 +34,7 @@ impl Tfz {
     /// * `tf` - Continuous transfer function
     /// * `ts` - Sampling period
     /// * `method` - Discretization method
-    pub fn discretize(tf: Tf, ts: f64, method: Discretization) -> Self {
+    pub fn discretize(tf: Tf, ts: Seconds, method: Discretization) -> Self {
         let conv = match method {
             Discretization::ForwardEuler => fe,
             Discretization::BackwardEuler => fb,
@@ -49,8 +49,8 @@ impl Tfz {
 /// # Arguments
 /// * `z` - Discrete evaluation point
 /// * `ts` - Sampling period
-fn fe(z: Complex64, ts: f64) -> Complex64 {
-    (z - 1.) / ts
+fn fe(z: Complex64, ts: Seconds) -> Complex64 {
+    (z - 1.) / ts.0
 }
 
 /// Backward Euler transformation
@@ -58,8 +58,8 @@ fn fe(z: Complex64, ts: f64) -> Complex64 {
 /// # Arguments
 /// * `z` - Discrete evaluation point
 /// * `ts` - Sampling period
-fn fb(z: Complex64, ts: f64) -> Complex64 {
-    (z - 1.) / (ts * z)
+fn fb(z: Complex64, ts: Seconds) -> Complex64 {
+    (z - 1.) / (ts.0 * z)
 }
 
 /// Tustin transformation
@@ -67,8 +67,8 @@ fn fb(z: Complex64, ts: f64) -> Complex64 {
 /// # Arguments
 /// * `z` - Discrete evaluation point
 /// * `ts` - Sampling period
-fn tu(z: Complex64, ts: f64) -> Complex64 {
-    2. / ts * (z - 1.) / (z + 1.)
+fn tu(z: Complex64, ts: Seconds) -> Complex64 {
+    2. / ts.0 * (z - 1.) / (z + 1.)
 }
 
 /// Implementation of the evaluation of a transfer function
@@ -93,7 +93,7 @@ mod tests {
                 Poly::new_from_coeffs(&[0., 1.]),
                 Poly::new_from_coeffs(&[1., 1., 1.]),
             ),
-            ts: 0.1,
+            ts: Seconds(0.1),
             conversion: |_z, _ts| 1.0 * Complex64::i(),
         };
     }
@@ -101,18 +101,25 @@ mod tests {
     #[test]
     fn eval() {
         let tf = Tf::new(
-            Poly::new_from_coeffs(&[0.2, -0.4]),
-            Poly::new_from_coeffs(&[0., 1., 0.2, 0.01]),
+            Poly::new_from_coeffs(&[2., 20.]),
+            Poly::new_from_coeffs(&[1., 0.1]),
         );
-        let tfz = Tfz::discretize(tf, 1., Discretization::BackwardEuler);
         let z = 0.5 * Complex64::i();
-        let s = (tfz.conversion)(z, 1.);
-        assert_eq!(Complex64::new(1., 2.), s);
-
-        let g = tfz.eval(&z);
+        let g = tf.eval(&z);
         assert_eq!(
-            (-10.602811176458955, 171.91911477161943),
+            (20.159489580065607, 75.82766229986805),
             (g.norm().to_db(), g.arg().to_degrees())
+        );
+
+        let ts = Seconds(1.);
+        let tfz = Tfz::discretize(tf, ts, Discretization::Tustin);
+        let s = (tfz.conversion)(z, ts);
+        assert_eq!(Complex64::new(-1.2, 1.6), s);
+
+        let gz = tfz.eval(&z);
+        assert_eq!(
+            (32.75311354541812, 114.20367651890237),
+            (gz.norm().to_db(), gz.arg().to_degrees())
         );
     }
 }

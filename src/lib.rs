@@ -89,6 +89,10 @@ impl Decibel<f64> for f64 {
     }
 }
 
+/// Unit of measure: seconds
+#[derive(Clone, Copy)]
+pub struct Seconds(f64);
+
 #[cfg(test)]
 mod tests {
     use super::*;
