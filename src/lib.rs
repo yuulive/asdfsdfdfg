@@ -44,6 +44,9 @@ pub mod plots;
 pub mod polynomial;
 pub mod transfer_function;
 
+use std::convert::From;
+const TAU: f64 = 2. * std::f64::consts::PI;
+
 /// Trait for the implementation of object evaluation
 pub trait Eval<T> {
     /// Evaluate the polynomial at the value x
@@ -89,9 +92,29 @@ impl Decibel<f64> for f64 {
     }
 }
 
-/// Unit of measure: seconds
-#[derive(Clone, Copy)]
-pub struct Seconds(f64);
+/// Unit of measure: seconds [s]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+pub struct Seconds(pub f64);
+
+/// Unit of measure: Herz [Hz]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+pub struct Herz(pub f64);
+
+/// Unit of measure: Radiants per seconds [rad/s]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+pub struct RadiantsPerSecond(pub f64);
+
+impl From<Herz> for RadiantsPerSecond {
+    fn from(hz: Herz) -> Self {
+        RadiantsPerSecond(TAU * hz.0)
+    }
+}
+
+impl From<RadiantsPerSecond> for Herz {
+    fn from(rps: RadiantsPerSecond) -> Self {
+        Herz(rps.0 / TAU)
+    }
+}
 
 #[cfg(test)]
 mod tests {
