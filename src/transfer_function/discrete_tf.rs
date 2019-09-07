@@ -7,23 +7,16 @@ use crate::{linear_system::discrete::Discretization, transfer_function::Tf, Eval
 use num_complex::Complex64;
 
 /// Discrete transfer function.
-// pub struct Tfz<F>
-// where
-//     F: Fn(usize) -> f64,
 pub struct Tfz {
     /// Transfer function
     tf: Tf,
     /// Sampling period
     ts: f64,
     /// Discretization function
-    //conversion: F,
     conversion: fn(Complex64, f64) -> Complex64,
 }
 
 /// Implementation of `Tfz` struct.
-// impl<F> Tfz<F>
-// where
-//     F: Fn(usize) -> f64,
 impl Tfz {
     /// Create a new discrete transfer function from a continuous one.
     ///
@@ -31,7 +24,6 @@ impl Tfz {
     /// * `tf` - Continuous transfer function
     /// * `ts` - Sampling period
     /// * `conversion` - Conversion function
-    //pub(crate) fn new_from_cont(tf: Tf, conversion: F) -> Self {
     fn new_from_cont(tf: Tf, ts: f64, conversion: fn(Complex64, f64) -> Complex64) -> Self {
         Self { tf, ts, conversion }
     }
@@ -43,11 +35,7 @@ impl Tfz {
     /// * `ts` - Sampling period
     /// * `method` - Discretization method
     pub fn discretize(tf: Tf, ts: f64, method: Discretization) -> Self {
-        //let ts = 1.;
         let conv = match method {
-            // Discretization::ForwardEuler => |z| ((z - 1) as f64) / ts,
-            // Discretization::BackwardEuler => |z| ((z - 1) as f64) / (ts * z as f64),
-            // Discretization::Tustin => |z| 2. / ts * ((z - 1) as f64) / ((z + 1) as f64),
             Discretization::ForwardEuler => fe,
             Discretization::BackwardEuler => fb,
             Discretization::Tustin => tu,
