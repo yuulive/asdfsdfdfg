@@ -99,7 +99,7 @@ mod tests {
     use num_traits::ops::inv::Inv;
 
     #[test]
-    fn decibel_test() {
+    fn decibel() {
         assert_eq!(40., 100_f64.to_db());
         assert_eq!(-3.0102999566398116, 2_f64.inv().sqrt().to_db());
     }

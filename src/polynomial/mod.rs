@@ -376,7 +376,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn poly_creation_coeffs_test() {
+    fn poly_creation_coeffs() {
         let c = [4.3, 5.32];
         assert_eq!(c, Poly::new_from_coeffs(&c).coeffs.as_slice());
 
@@ -388,7 +388,7 @@ mod tests {
     }
 
     #[test]
-    fn poly_creation_roots_test() {
+    fn poly_creation_roots() {
         assert_eq!(
             Poly::new_from_coeffs(&[4., 4., 1.]),
             Poly::new_from_roots(&[-2., -2.])
@@ -413,7 +413,7 @@ mod tests {
     }
 
     #[test]
-    fn poly_f64_eval_test() {
+    fn poly_f64_eval() {
         let p = Poly::new_from_coeffs(&[1., 2., 3.]);
         assert_eq!(86., p.eval(&5.));
 
@@ -421,7 +421,7 @@ mod tests {
     }
 
     #[test]
-    fn poly_cmplx_eval_test() {
+    fn poly_cmplx_eval() {
         let p = Poly::new_from_coeffs(&[1., 1., 1.]);
         let c = Complex::new(1.0, 1.0);
         let res = Complex::new(2.0, 3.0);
@@ -434,7 +434,7 @@ mod tests {
     }
 
     #[test]
-    fn poly_add_test() {
+    fn poly_add() {
         assert_eq!(
             Poly::new_from_coeffs(&[4., 4., 4.]),
             Poly::new_from_coeffs(&[1., 2., 3.,]) + Poly::new_from_coeffs(&[3., 2., 1.])
@@ -457,7 +457,7 @@ mod tests {
     }
 
     #[test]
-    fn poly_sub_test() {
+    fn poly_sub() {
         assert_eq!(
             Poly::new_from_coeffs(&[-2., 0., 2.]),
             Poly::new_from_coeffs(&[1., 2., 3.,]) - Poly::new_from_coeffs(&[3., 2., 1.])
@@ -485,7 +485,7 @@ mod tests {
     }
 
     #[test]
-    fn poly_mul_test() {
+    fn poly_mul() {
         assert_eq!(
             Poly::new_from_coeffs(&[0., 0., -1., 0., -1.]),
             Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::new_from_coeffs(&[0., 0., -1.])
@@ -508,7 +508,7 @@ mod tests {
     }
 
     #[test]
-    fn indexing_test() {
+    fn indexing() {
         assert_eq!(3., Poly::new_from_coeffs(&[1., 3.])[1]);
 
         let mut p = Poly::new_from_roots(&[1., 4., 5.]);
@@ -517,7 +517,7 @@ mod tests {
     }
 
     #[test]
-    fn identities_test() {
+    fn identities() {
         assert!(Poly::zero().is_zero());
         assert!(Poly::one().is_one());
     }
@@ -762,7 +762,7 @@ mod tests2 {
     use super::*;
 
     #[test]
-    fn mp_creation_test() {
+    fn mp_creation() {
         let c = [4.3, 5.32];
         let p = Poly::new_from_coeffs(&c);
         let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];

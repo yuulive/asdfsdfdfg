@@ -387,7 +387,7 @@ mod tests {
     use nalgebra::DMatrix;
 
     #[test]
-    fn test_leverrier() {
+    fn leverrier_algorythm() {
         use crate::polynomial::MatrixOfPoly;
 
         // Example of LeVerrier algorithm (Wikipedia)");
@@ -418,7 +418,7 @@ mod tests {
     }
 
     #[test]
-    fn convert_to_ss_1_test() {
+    fn convert_to_ss_1() {
         let tf = Tf::new(
             Poly::new_from_coeffs(&[1.]),
             Poly::new_from_coeffs(&[1., 1., 1.]),
@@ -433,7 +433,7 @@ mod tests {
     }
 
     #[test]
-    fn convert_to_ss_2_test() {
+    fn convert_to_ss_2() {
         let tf = Tf::new(
             Poly::new_from_coeffs(&[1., 0., 1.]),
             Poly::new_from_coeffs(&[3., 4., 1.]),
