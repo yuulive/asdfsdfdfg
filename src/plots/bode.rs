@@ -5,7 +5,7 @@
 //! Functions use angular frequencies as default inputs and output, being the
 //! inverse of the poles and zeros time constants.
 
-use crate::{transfer_function::Tf, Decibel, Eval, Herz, RadiantsPerSecond};
+use crate::{transfer_function::Tf, Decibel, Eval, Hertz, RadiantsPerSecond};
 use num_complex::Complex64;
 
 /// Struct for the calculation of Bode plots
@@ -88,7 +88,7 @@ impl Bode {
     }
 
     /// Get the frequency
-    pub fn frequency(&self) -> Herz {
+    pub fn frequency(&self) -> Hertz {
         self.angular_frequency.into()
     }
 
@@ -162,7 +162,7 @@ pub trait BodePlot {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    fn bode_hz(self, min_freq: Herz, max_freq: Herz, step: f64) -> BodeIterator
+    fn bode_hz(self, min_freq: Hertz, max_freq: Hertz, step: f64) -> BodeIterator
     where
         Self: std::marker::Sized,
     {

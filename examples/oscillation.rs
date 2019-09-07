@@ -1,7 +1,6 @@
 extern crate automatica;
 
-use automatica::linear_system::Ss;
-use automatica::transfer_function::Tf;
+use automatica::{linear_system::Ss, transfer_function::Tf, Seconds};
 
 use std::convert::TryFrom;
 
@@ -39,13 +38,17 @@ fn main() {
     );
 
     // Free movement.
-    let null_input = |_: f64| vec![0.];
+    let null_input = |_: Seconds| vec![0.];
     let x0 = &[1., 0.];
 
     // Solvers.
-    let rk2: Vec<_> = stiff_sys.rk2(null_input, x0, 0.1, 5).collect();
-    let rkf45: Vec<_> = stiff_sys.rkf45(null_input, x0, 0.1, 5., 1e-3).collect();
-    let radau: Vec<_> = stiff_sys.radau(null_input, x0, 0.1, 70, 1e-3).collect();
+    let rk2: Vec<_> = stiff_sys.rk2(null_input, x0, Seconds(0.1), 5).collect();
+    let rkf45: Vec<_> = stiff_sys
+        .rkf45(null_input, x0, Seconds(0.1), Seconds(5.), 1e-3)
+        .collect();
+    let radau: Vec<_> = stiff_sys
+        .radau(null_input, x0, Seconds(0.1), 70, 1e-3)
+        .collect();
 
     println!(
         "Rk2 number of steps before diverging: {}",

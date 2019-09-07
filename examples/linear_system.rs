@@ -1,8 +1,6 @@
 extern crate automatica;
 
-use automatica::linear_system::Ss;
-use automatica::transfer_function::TfMatrix;
-use automatica::Eval;
+use automatica::{linear_system::Ss, transfer_function::TfMatrix, Eval, Seconds};
 
 use num_complex::Complex;
 
@@ -21,14 +19,14 @@ fn main() {
     println!("\nStep response:");
     let step = |_| vec![1.0];
 
-    let rk2 = sys.rk2(step, &[0., 0.], 0.1, 150);
+    let rk2 = sys.rk2(step, &[0., 0.], Seconds(0.1), 150);
     println!("rk2 stationary values: {:?}", rk2.last().unwrap());
     // Change to 'true' to print the result
     if false {
-        for i in sys.rk2(step, &[0., 0.], 0.1, 150) {
+        for i in sys.rk2(step, &[0., 0.], Seconds(0.1), 150) {
             println!(
                 "{};{};{};{};{}",
-                i.time(),
+                i.time().0,
                 i.state()[0],
                 i.state()[1],
                 i.output()[0],
@@ -37,14 +35,14 @@ fn main() {
         }
     }
 
-    let rk4 = sys.rk4(step, &[0., 0.], 0.1, 150);
+    let rk4 = sys.rk4(step, &[0., 0.], Seconds(0.1), 150);
     println!("rk4 stationary values: {:?}", rk4.last().unwrap());
     // Change to 'true' to print the result
     if false {
-        for i in sys.rk4(step, &[0., 0.], 0.1, 150) {
+        for i in sys.rk4(step, &[0., 0.], Seconds(0.1), 150) {
             println!(
                 "{};{};{};{};{}",
-                i.time(),
+                i.time().0,
                 i.state()[0],
                 i.state()[1],
                 i.output()[0],
@@ -53,14 +51,14 @@ fn main() {
         }
     }
 
-    let rkf45 = sys.rkf45(step, &[0., 0.], 0.1, 16., 1e-4);
+    let rkf45 = sys.rkf45(step, &[0., 0.], Seconds(0.1), Seconds(16.), 1e-4);
     println!("rkf45 stationary values: {:?}", rkf45.last().unwrap());
     // Change to 'true' to print the result
     if false {
-        for i in sys.rkf45(step, &[0., 0.], 0.1, 16., 1e-4) {
+        for i in sys.rkf45(step, &[0., 0.], Seconds(0.1), Seconds(16.), 1e-4) {
             println!(
                 "{};{};{};{};{};{}",
-                i.time(),
+                i.time().0,
                 i.state()[0],
                 i.state()[1],
                 i.output()[0],
@@ -70,14 +68,14 @@ fn main() {
         }
     }
 
-    let radau = sys.radau(step, &[0., 0.], 0.1, 150, 1e-4);
+    let radau = sys.radau(step, &[0., 0.], Seconds(0.1), 150, 1e-4);
     println!("radau stationary values: {:?}", radau.last().unwrap());
     // Change to 'true' to print the result
     if false {
-        for i in sys.radau(step, &[0., 0.], 0.1, 150, 1e-4) {
+        for i in sys.radau(step, &[0., 0.], Seconds(0.1), 150, 1e-4) {
             println!(
                 "{:>4.1};{:>9.6};{:>9.6};{:>9.6};{:>9.6}",
-                i.time(),
+                i.time().0,
                 i.state()[0],
                 i.state()[1],
                 i.output()[0],

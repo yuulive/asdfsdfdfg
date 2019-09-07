@@ -96,23 +96,23 @@ impl Decibel<f64> for f64 {
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Seconds(pub f64);
 
-/// Unit of measure: Herz [Hz]
+/// Unit of measure: Hertz [Hz] = [1/s]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub struct Herz(pub f64);
+pub struct Hertz(pub f64);
 
 /// Unit of measure: Radiants per seconds [rad/s]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct RadiantsPerSecond(pub f64);
 
-impl From<Herz> for RadiantsPerSecond {
-    fn from(hz: Herz) -> Self {
-        RadiantsPerSecond(TAU * hz.0)
+impl From<Hertz> for RadiantsPerSecond {
+    fn from(hz: Hertz) -> Self {
+        Self(TAU * hz.0)
     }
 }
 
-impl From<RadiantsPerSecond> for Herz {
+impl From<RadiantsPerSecond> for Hertz {
     fn from(rps: RadiantsPerSecond) -> Self {
-        Herz(rps.0 / TAU)
+        Self(rps.0 / TAU)
     }
 }
 
@@ -125,5 +125,16 @@ mod tests {
     fn decibel() {
         assert_eq!(40., 100_f64.to_db());
         assert_eq!(-3.0102999566398116, 2_f64.inv().sqrt().to_db());
+    }
+
+    #[test]
+    fn conversion() {
+        assert_eq!(RadiantsPerSecond(TAU), RadiantsPerSecond::from(Hertz(1.0)));
+
+        let hz = Hertz(2.0);
+        assert_eq!(hz, Hertz::from(RadiantsPerSecond::from(hz)));
+
+        let rps = RadiantsPerSecond(2.0);
+        assert_eq!(rps, RadiantsPerSecond::from(Hertz::from(rps)));
     }
 }

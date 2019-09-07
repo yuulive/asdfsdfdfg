@@ -7,6 +7,7 @@ use automatica::{
     },
     polynomial::Poly,
     transfer_function::Tf,
+    Seconds,
 };
 
 fn main() {
@@ -15,17 +16,17 @@ fn main() {
     let g = Tf::new(num, den);
     println!("{}", g);
 
-    let step1 = |_: f64| vec![1.];
+    let step1 = |_: Seconds| vec![1.];
     let step2 = |_: usize| vec![1.];
 
     let sys = Ss::from(g);
     println!("{}", &sys);
     let x0 = [0., 0.];
     let steps = 250;
-    let it = sys.rk2(step1, &x0, 0.1, steps);
+    let it = sys.rk2(step1, &x0, Seconds(0.1), steps);
     if false {
         for i in it {
-            println!("{:.1};{:.5}", i.time(), i.output()[0],);
+            println!("{:.1};{:.5}", i.time().0, i.output()[0],);
         }
     }
 
