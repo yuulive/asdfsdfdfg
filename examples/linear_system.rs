@@ -26,7 +26,7 @@ fn main() {
         for i in sys.rk2(step, &[0., 0.], Seconds(0.1), 150) {
             println!(
                 "{};{};{};{};{}",
-                i.time().0,
+                i.time(),
                 i.state()[0],
                 i.state()[1],
                 i.output()[0],
@@ -42,7 +42,7 @@ fn main() {
         for i in sys.rk4(step, &[0., 0.], Seconds(0.1), 150) {
             println!(
                 "{};{};{};{};{}",
-                i.time().0,
+                i.time(),
                 i.state()[0],
                 i.state()[1],
                 i.output()[0],
@@ -58,7 +58,7 @@ fn main() {
         for i in sys.rkf45(step, &[0., 0.], Seconds(0.1), Seconds(16.), 1e-4) {
             println!(
                 "{};{};{};{};{};{}",
-                i.time().0,
+                i.time(),
                 i.state()[0],
                 i.state()[1],
                 i.output()[0],
@@ -75,7 +75,7 @@ fn main() {
         for i in sys.radau(step, &[0., 0.], Seconds(0.1), 150, 1e-4) {
             println!(
                 "{:>4.1};{:>9.6};{:>9.6};{:>9.6};{:>9.6}",
-                i.time().0,
+                i.time(),
                 i.state()[0],
                 i.state()[1],
                 i.output()[0],

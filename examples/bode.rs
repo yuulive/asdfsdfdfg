@@ -22,7 +22,7 @@ fn main() {
     for g in b.into_db_deg() {
         println!(
             "f: {:.3} rad/s, m: {:.3} dB, f: {:.1} °",
-            g.angular_frequency().0,
+            g.angular_frequency(),
             g.magnitude(),
             g.phase()
         );

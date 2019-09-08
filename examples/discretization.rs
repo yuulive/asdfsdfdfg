@@ -26,7 +26,7 @@ fn main() {
     let it = sys.rk2(step1, &x0, Seconds(0.1), steps);
     if false {
         for i in it {
-            println!("{:.1};{:.5}", i.time().0, i.output()[0],);
+            println!("{:.1};{:.5}", i.time(), i.output()[0],);
         }
     }
 
