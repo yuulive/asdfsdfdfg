@@ -18,7 +18,8 @@ Time response with implicit Radau order 3 method with fixed step.
 ### Discrete time system
 
 Time evolution of a discrete linear system.  
-Discretization of a continuous linear system using forward Euler, backward Euler and Tustin methods.
+Discretization of a continuous linear system using forward Euler, backward Euler and Tustin methods.  
+Discretization of transfer functions using forward Euler, backward Euler and Tustin methods.
 
 ## Transfer function representation
 

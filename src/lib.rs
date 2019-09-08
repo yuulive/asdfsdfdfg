@@ -1,4 +1,4 @@
-//! Automatic Control Systems Library
+//! # Automatic Control Systems Library
 //!
 //! ## State-Space representation
 //!
@@ -13,6 +13,8 @@
 //! ## Discrete system
 //!
 //! [Discrete](linear_system/discrete/index.html)
+//!
+//! [Transfer function discretization](transfer_function/discrete_tf/index.html)
 //!
 //! ## Transfer function representation
 //!
