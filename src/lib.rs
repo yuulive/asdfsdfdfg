@@ -45,9 +45,7 @@ pub mod linear_system;
 pub mod plots;
 pub mod polynomial;
 pub mod transfer_function;
-
-use std::convert::From;
-const TAU: f64 = 2. * std::f64::consts::PI;
+pub mod units;
 
 /// Trait for the implementation of object evaluation
 pub trait Eval<T> {
@@ -78,65 +76,4 @@ where
     F: FnMut(&T, &T) -> T,
 {
     left.iter().zip(right).map(|(l, r)| f(l, r)).collect()
-}
-
-/// Trait for the conversion to decibels.
-pub trait Decibel<T> {
-    /// Convert to decibels
-    fn to_db(&self) -> T;
-}
-
-/// Implementation of the Decibels for f64
-impl Decibel<f64> for f64 {
-    /// Convert f64 to decibels
-    fn to_db(&self) -> Self {
-        20. * self.log10()
-    }
-}
-
-/// Unit of measure: seconds [s]
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub struct Seconds(pub f64);
-
-/// Unit of measure: Hertz [Hz] = [1/s]
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub struct Hertz(pub f64);
-
-/// Unit of measure: Radiants per seconds [rad/s]
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub struct RadiantsPerSecond(pub f64);
-
-impl From<Hertz> for RadiantsPerSecond {
-    fn from(hz: Hertz) -> Self {
-        Self(TAU * hz.0)
-    }
-}
-
-impl From<RadiantsPerSecond> for Hertz {
-    fn from(rps: RadiantsPerSecond) -> Self {
-        Self(rps.0 / TAU)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use num_traits::ops::inv::Inv;
-
-    #[test]
-    fn decibel() {
-        assert_eq!(40., 100_f64.to_db());
-        assert_eq!(-3.0102999566398116, 2_f64.inv().sqrt().to_db());
-    }
-
-    #[test]
-    fn conversion() {
-        assert_eq!(RadiantsPerSecond(TAU), RadiantsPerSecond::from(Hertz(1.0)));
-
-        let hz = Hertz(2.0);
-        assert_eq!(hz, Hertz::from(RadiantsPerSecond::from(hz)));
-
-        let rps = RadiantsPerSecond(2.0);
-        assert_eq!(rps, RadiantsPerSecond::from(Hertz::from(rps)));
-    }
 }

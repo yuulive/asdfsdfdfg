@@ -7,7 +7,7 @@ use automatica::{
     },
     polynomial::Poly,
     transfer_function::Tf,
-    Seconds,
+    units::Seconds,
 };
 
 fn main() {

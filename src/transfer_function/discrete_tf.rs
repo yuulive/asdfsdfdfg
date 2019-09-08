@@ -2,7 +2,7 @@
 //!
 //! The discretization can be performed with Euler or Tustin methods.
 
-use crate::{linear_system::discrete::Discretization, transfer_function::Tf, Eval, Seconds};
+use crate::{linear_system::discrete::Discretization, transfer_function::Tf, units::Seconds, Eval};
 
 use num_complex::Complex64;
 
@@ -83,7 +83,7 @@ impl Eval<Complex64> for Tfz {
 mod tests {
     use super::*;
     use crate::polynomial::Poly;
-    use crate::{Decibel, Eval};
+    use crate::{units::Decibel, Eval};
     use num_complex::Complex64;
 
     #[test]

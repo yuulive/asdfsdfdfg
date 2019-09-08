@@ -5,7 +5,7 @@
 //!
 //! Functions use angular frequencies as default inputs.
 
-use crate::{transfer_function::Tf, Eval, RadiantsPerSecond};
+use crate::{transfer_function::Tf, units::RadiantsPerSecond, Eval};
 
 use num_complex::Complex64;
 

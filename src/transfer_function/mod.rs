@@ -16,7 +16,8 @@ use crate::{
         polar::{PolarIterator, PolarPlot},
     },
     polynomial::{MatrixOfPoly, Poly},
-    Eval, RadiantsPerSecond,
+    units::RadiantsPerSecond,
+    Eval,
 };
 
 use ndarray::{Array2, Axis, Zip};

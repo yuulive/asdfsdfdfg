@@ -14,7 +14,7 @@ use crate::{
     linear_system::solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
     polynomial::{Poly, PolyMatrix},
     transfer_function::Tf,
-    Seconds,
+    units::Seconds,
 };
 
 use nalgebra::{DMatrix, DVector, Schur};

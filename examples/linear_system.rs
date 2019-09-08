@@ -1,6 +1,6 @@
 extern crate automatica;
 
-use automatica::{linear_system::Ss, transfer_function::TfMatrix, Eval, Seconds};
+use automatica::{linear_system::Ss, transfer_function::TfMatrix, units::Seconds, Eval};
 
 use num_complex::Complex;
 

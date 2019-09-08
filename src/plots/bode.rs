@@ -5,7 +5,11 @@
 //! Functions use angular frequencies as default inputs and output, being the
 //! inverse of the poles and zeros time constants.
 
-use crate::{transfer_function::Tf, Decibel, Eval, Hertz, RadiantsPerSecond};
+use crate::{
+    transfer_function::Tf,
+    units::{Decibel, Hertz, RadiantsPerSecond},
+    Eval,
+};
 use num_complex::Complex64;
 
 /// Struct for the calculation of Bode plots

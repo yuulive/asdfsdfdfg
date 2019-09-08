@@ -2,7 +2,11 @@ extern crate automatica;
 
 use automatica::plots::bode::BodePlot;
 use automatica::transfer_function::Tf;
-use automatica::{polynomial::Poly, Decibel, Eval, RadiantsPerSecond};
+use automatica::{
+    polynomial::Poly,
+    units::{Decibel, RadiantsPerSecond},
+    Eval,
+};
 
 use num_complex::Complex;
 

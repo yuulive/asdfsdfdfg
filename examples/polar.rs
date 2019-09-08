@@ -1,7 +1,7 @@
 extern crate automatica;
 
 use automatica::{
-    plots::polar::PolarPlot, polynomial::Poly, transfer_function::Tf, RadiantsPerSecond,
+    plots::polar::PolarPlot, polynomial::Poly, transfer_function::Tf, units::RadiantsPerSecond,
 };
 
 fn main() {
