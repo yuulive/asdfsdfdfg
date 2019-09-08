@@ -1,10 +1,13 @@
 # Changelog
 
 ## Unreleased
+
+## [0.5.0] - 2019-09-08
 ### Added
 - Discretization of transfer functions
+- Units of measurement
 ### Changed
-- Use typed unit of measure instead of primitive types
+- Use typed unit of measurement instead of primitive types
 
 ## [0.4.1] - 2019-09-01
 ### Added
