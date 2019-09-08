@@ -5,7 +5,11 @@
 //! Functions use angular frequencies as default inputs and output, being the
 //! inverse of the poles and zeros time constants.
 
-use crate::{transfer_function::Tf, Decibel, Eval};
+use crate::{
+    transfer_function::Tf,
+    units::{Decibel, Hertz, RadiantsPerSecond},
+    Eval,
+};
 use num_complex::Complex64;
 
 /// Struct for the calculation of Bode plots
@@ -18,7 +22,7 @@ pub struct BodeIterator {
     /// Step between frequencies
     step: f64,
     /// Start frequency
-    base_freq: f64,
+    base_freq: RadiantsPerSecond,
     /// Current data index
     index: f64,
 }
@@ -39,18 +43,23 @@ impl BodeIterator {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    pub(crate) fn new(tf: Tf, min_freq: f64, max_freq: f64, step: f64) -> Self {
+    pub(crate) fn new(
+        tf: Tf,
+        min_freq: RadiantsPerSecond,
+        max_freq: RadiantsPerSecond,
+        step: f64,
+    ) -> Self {
         assert!(step > 0.0);
         assert!(min_freq < max_freq);
 
-        let min = min_freq.log10();
-        let max = max_freq.log10();
+        let min = min_freq.0.log10();
+        let max = max_freq.0.log10();
         let intervals = ((max - min) / step).floor();
         Self {
             tf,
             intervals,
             step,
-            base_freq: min,
+            base_freq: RadiantsPerSecond(min),
             index: 0.0,
         }
     }
@@ -68,7 +77,7 @@ impl BodeIterator {
 /// Struct to hold the data returned by the Bode iterator
 pub struct Bode {
     /// Angular frequency (rad)
-    angular_frequency: f64,
+    angular_frequency: RadiantsPerSecond,
     /// Magnitude (absolute value or dB)
     magnitude: f64,
     /// Phase (rad or degrees)
@@ -78,13 +87,13 @@ pub struct Bode {
 /// Implementation of Bode methods
 impl Bode {
     /// Get the angular frequency
-    pub fn angular_frequency(&self) -> f64 {
+    pub fn angular_frequency(&self) -> RadiantsPerSecond {
         self.angular_frequency
     }
 
     /// Get the frequency
-    pub fn frequency(&self) -> f64 {
-        self.angular_frequency / 2. / std::f64::consts::PI
+    pub fn frequency(&self) -> Hertz {
+        self.angular_frequency.into()
     }
 
     /// Get the magnitude
@@ -106,13 +115,13 @@ impl Iterator for BodeIterator {
         if self.index > self.intervals {
             None
         } else {
-            let freq_exponent = self.step.mul_add(self.index, self.base_freq);
+            let freq_exponent = self.step.mul_add(self.index, self.base_freq.0);
             let omega = 10_f64.powf(freq_exponent);
             let j_omega = Complex64::new(0.0, omega);
             let g = self.tf.eval(&j_omega);
             self.index += 1.;
             Some(Bode {
-                angular_frequency: omega,
+                angular_frequency: RadiantsPerSecond(omega),
                 magnitude: g.norm(),
                 phase: g.arg(),
             })
@@ -136,7 +145,12 @@ pub trait BodePlot {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    fn bode(self, min_freq: f64, max_freq: f64, step: f64) -> BodeIterator;
+    fn bode(
+        self,
+        min_freq: RadiantsPerSecond,
+        max_freq: RadiantsPerSecond,
+        step: f64,
+    ) -> BodeIterator;
 
     /// Create a BodeIterator struct
     ///
@@ -152,11 +166,10 @@ pub trait BodePlot {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    fn bode_hz(self, min_freq: f64, max_freq: f64, step: f64) -> BodeIterator
+    fn bode_hz(self, min_freq: Hertz, max_freq: Hertz, step: f64) -> BodeIterator
     where
         Self: std::marker::Sized,
     {
-        let tau = 2. * std::f64::consts::PI;
-        self.bode(tau * min_freq, tau * max_freq, step)
+        self.bode(min_freq.into(), max_freq.into(), step)
     }
 }

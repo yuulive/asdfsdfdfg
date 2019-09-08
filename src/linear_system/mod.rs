@@ -14,6 +14,7 @@ use crate::{
     linear_system::solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
     polynomial::{Poly, PolyMatrix},
     transfer_function::Tf,
+    units::Seconds,
 };
 
 use nalgebra::{DMatrix, DVector, Schur};
@@ -165,9 +166,9 @@ impl Ss {
     /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk2<F>(&self, u: F, x0: &[f64], h: f64, n: usize) -> RkIterator<F>
+    pub fn rk2<F>(&self, u: F, x0: &[f64], h: Seconds, n: usize) -> RkIterator<F>
     where
-        F: Fn(f64) -> Vec<f64>,
+        F: Fn(Seconds) -> Vec<f64>,
     {
         RkIterator::new(self, u, x0, h, n, Order::Rk2)
     }
@@ -180,9 +181,9 @@ impl Ss {
     /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk4<F>(&self, u: F, x0: &[f64], h: f64, n: usize) -> RkIterator<F>
+    pub fn rk4<F>(&self, u: F, x0: &[f64], h: Seconds, n: usize) -> RkIterator<F>
     where
-        F: Fn(f64) -> Vec<f64>,
+        F: Fn(Seconds) -> Vec<f64>,
     {
         RkIterator::new(self, u, x0, h, n, Order::Rk4)
     }
@@ -196,9 +197,16 @@ impl Ss {
     /// * `h` - integration time interval
     /// * `limit` - time evaluation limit
     /// * `tol` - error tolerance
-    pub fn rkf45<F>(&self, u: F, x0: &[f64], h: f64, limit: f64, tol: f64) -> Rkf45Iterator<F>
+    pub fn rkf45<F>(
+        &self,
+        u: F,
+        x0: &[f64],
+        h: Seconds,
+        limit: Seconds,
+        tol: f64,
+    ) -> Rkf45Iterator<F>
     where
-        F: Fn(f64) -> Vec<f64>,
+        F: Fn(Seconds) -> Vec<f64>,
     {
         Rkf45Iterator::new(self, u, x0, h, limit, tol)
     }
@@ -212,9 +220,9 @@ impl Ss {
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `tol` - error tolerance
-    pub fn radau<F>(&self, u: F, x0: &[f64], h: f64, n: usize, tol: f64) -> RadauIterator<F>
+    pub fn radau<F>(&self, u: F, x0: &[f64], h: Seconds, n: usize, tol: f64) -> RadauIterator<F>
     where
-        F: Fn(f64) -> Vec<f64>,
+        F: Fn(Seconds) -> Vec<f64>,
     {
         RadauIterator::new(self, u, x0, h, n, tol)
     }
@@ -387,7 +395,7 @@ mod tests {
     use nalgebra::DMatrix;
 
     #[test]
-    fn test_leverrier() {
+    fn leverrier_algorythm() {
         use crate::polynomial::MatrixOfPoly;
 
         // Example of LeVerrier algorithm (Wikipedia)");
@@ -418,7 +426,7 @@ mod tests {
     }
 
     #[test]
-    fn convert_to_ss_1_test() {
+    fn convert_to_ss_1() {
         let tf = Tf::new(
             Poly::new_from_coeffs(&[1.]),
             Poly::new_from_coeffs(&[1., 1., 1.]),
@@ -433,7 +441,7 @@ mod tests {
     }
 
     #[test]
-    fn convert_to_ss_2_test() {
+    fn convert_to_ss_2() {
         let tf = Tf::new(
             Poly::new_from_coeffs(&[1., 0., 1.]),
             Poly::new_from_coeffs(&[3., 4., 1.]),

@@ -12,7 +12,7 @@
 //! `Radau` is an implicit Runge-Kutta-Radau of order 3 with 2 steps, it is
 //! suitable for stiff systems.
 
-use crate::linear_system::Ss;
+use crate::{linear_system::Ss, units::Seconds};
 
 use nalgebra::{DMatrix, DVector, Dynamic, LU};
 
@@ -29,7 +29,7 @@ pub(crate) enum Order {
 #[derive(Debug)]
 pub struct RkIterator<'a, F>
 where
-    F: Fn(f64) -> Vec<f64>,
+    F: Fn(Seconds) -> Vec<f64>,
 {
     /// Linear system
     sys: &'a Ss,
@@ -40,7 +40,7 @@ where
     /// Output vector.
     output: DVector<f64>,
     /// Interval.
-    h: f64,
+    h: Seconds,
     /// Number of steps.
     n: usize,
     /// Index.
@@ -51,7 +51,7 @@ where
 
 impl<'a, F> RkIterator<'a, F>
 where
-    F: Fn(f64) -> Vec<f64>,
+    F: Fn(Seconds) -> Vec<f64>,
 {
     /// Create the solver for a Runge-Kutta method.
     ///
@@ -63,8 +63,8 @@ where
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `order` - order of the solver
-    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: f64, n: usize, order: Order) -> Self {
-        let start = DVector::from_vec(u(0.0));
+    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: Seconds, n: usize, order: Order) -> Self {
+        let start = DVector::from_vec(u(Seconds(0.)));
         let state = DVector::from_column_slice(x0);
         let output = &sys.c * &state + &sys.d * &start;
         Self {
@@ -86,7 +86,7 @@ where
         self.index += 1;
         // State and output at time 0.
         Some(Rk {
-            time: 0.,
+            time: Seconds(0.),
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
         })
@@ -98,14 +98,14 @@ where
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
         // k1 = h*f(t_n, y_n)
         // k2 = h*f(t_n + h, y_n + k1)
-        let init_time = (self.index - 1) as f64 * self.h;
-        let end_time = self.index as f64 * self.h;
+        let init_time = Seconds((self.index - 1) as f64 * self.h.0);
+        let end_time = Seconds(self.index as f64 * self.h.0);
         let u = DVector::from_vec((self.input)(init_time));
         let uh = DVector::from_vec((self.input)(end_time));
         let bu = &self.sys.b * &u;
         let buh = &self.sys.b * &uh;
-        let k1 = self.h * (&self.sys.a * &self.state + &bu);
-        let k2 = self.h * (&self.sys.a * (&self.state + &k1) + &buh);
+        let k1 = self.h.0 * (&self.sys.a * &self.state + &bu);
+        let k2 = self.h.0 * (&self.sys.a * (&self.state + &k1) + &buh);
         self.state += 0.5 * (k1 + k2);
         self.output = &self.sys.c * &self.state + &self.sys.d * &uh;
 
@@ -125,9 +125,9 @@ where
         // k2 = f(t_n + h/2, y_n + h/2 * k1)
         // k3 = f(t_n + h/2, y_n + h/2 * k2)
         // k2 = f(t_n + h, y_n + h*k3)
-        let init_time = (self.index - 1) as f64 * self.h;
-        let mid_time = init_time + 0.5 * self.h;
-        let end_time = self.index as f64 * self.h;
+        let init_time = Seconds((self.index - 1) as f64 * self.h.0);
+        let mid_time = Seconds(init_time.0 + 0.5 * self.h.0);
+        let end_time = Seconds(self.index as f64 * self.h.0);
         let u = DVector::from_vec((self.input)(init_time));
         let u_mid = DVector::from_vec((self.input)(mid_time));
         let u_end = DVector::from_vec((self.input)(end_time));
@@ -135,10 +135,10 @@ where
         let bu_mid = &self.sys.b * &u_mid;
         let bu_end = &self.sys.b * &u_end;
         let k1 = &self.sys.a * &self.state + &bu;
-        let k2 = &self.sys.a * (&self.state + 0.5 * self.h * &k1) + &bu_mid;
-        let k3 = &self.sys.a * (&self.state + 0.5 * self.h * &k2) + &bu_mid;
-        let k4 = &self.sys.a * (&self.state + self.h * &k3) + &bu_end;
-        self.state += self.h / 6. * (k1 + 2. * k2 + 2. * k3 + k4);
+        let k2 = &self.sys.a * (&self.state + 0.5 * self.h.0 * &k1) + &bu_mid;
+        let k3 = &self.sys.a * (&self.state + 0.5 * self.h.0 * &k2) + &bu_mid;
+        let k4 = &self.sys.a * (&self.state + self.h.0 * &k3) + &bu_end;
+        self.state += self.h.0 / 6. * (k1 + 2. * k2 + 2. * k3 + k4);
         self.output = &self.sys.c * &self.state + &self.sys.d * &u_end;
 
         self.index += 1;
@@ -153,7 +153,7 @@ where
 /// Implementation of the Iterator trait for the `RkIterator` struct
 impl<'a, F> Iterator for RkIterator<'a, F>
 where
-    F: Fn(f64) -> Vec<f64>,
+    F: Fn(Seconds) -> Vec<f64>,
 {
     type Item = Rk;
 
@@ -175,7 +175,7 @@ where
 #[derive(Debug)]
 pub struct Rk {
     /// Time of the current step
-    time: f64,
+    time: Seconds,
     /// Current state
     state: Vec<f64>,
     /// Current output
@@ -184,7 +184,7 @@ pub struct Rk {
 
 impl Rk {
     /// Get the time of the current step
-    pub fn time(&self) -> f64 {
+    pub fn time(&self) -> Seconds {
         self.time
     }
 
@@ -203,7 +203,7 @@ impl Rk {
 #[derive(Debug)]
 pub struct Rkf45Iterator<'a, F>
 where
-    F: Fn(f64) -> Vec<f64>,
+    F: Fn(Seconds) -> Vec<f64>,
 {
     /// Linear system
     sys: &'a Ss,
@@ -214,11 +214,11 @@ where
     /// Output vector.
     output: DVector<f64>,
     /// Interval.
-    h: f64,
+    h: Seconds,
     /// Time limit of the evaluation
-    limit: f64,
+    limit: Seconds,
     /// Time
-    time: f64,
+    time: Seconds,
     /// Tolerance
     tol: f64,
     /// Is initial step
@@ -227,7 +227,7 @@ where
 
 impl<'a, F> Rkf45Iterator<'a, F>
 where
-    F: Fn(f64) -> Vec<f64>,
+    F: Fn(Seconds) -> Vec<f64>,
 {
     /// Create a solver using Runge-Kutta-Fehlberg method
     ///
@@ -239,8 +239,8 @@ where
     /// * `h` - integration time interval
     /// * `limit` - time limit of the evaluation
     /// * `tol` - error tolerance
-    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: f64, limit: f64, tol: f64) -> Self {
-        let start = DVector::from_vec(u(0.0));
+    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: Seconds, limit: Seconds, tol: f64) -> Self {
+        let start = DVector::from_vec(u(Seconds(0.)));
         let state = DVector::from_column_slice(x0);
         // Calculate the output at time 0.
         let output = &sys.c * &state + &sys.d * &start;
@@ -251,7 +251,7 @@ where
             output,
             h,
             limit,
-            time: 0.,
+            time: Seconds(0.),
             tol,
             initial_step: true,
         }
@@ -263,7 +263,7 @@ where
     fn initial_step(&mut self) -> Option<Rkf45> {
         self.initial_step = false;
         Some(Rkf45 {
-            time: 0.,
+            time: Seconds(0.),
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
             error: 0.,
@@ -275,24 +275,24 @@ where
         let mut error;
         loop {
             let u1 = DVector::from_vec((self.input)(self.time));
-            let u2 = DVector::from_vec((self.input)(self.time + self.h * A[0]));
-            let u3 = DVector::from_vec((self.input)(self.time + self.h * A[1]));
-            let u4 = DVector::from_vec((self.input)(self.time + self.h * A[2]));
-            let u5 = DVector::from_vec((self.input)(self.time + self.h));
-            let u6 = DVector::from_vec((self.input)(self.time + self.h * A[3]));
+            let u2 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * A[0])));
+            let u3 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * A[1])));
+            let u4 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * A[2])));
+            let u5 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0)));
+            let u6 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * A[3])));
 
-            let k1 = self.h * (&self.sys.a * &self.state + &self.sys.b * &u1);
-            let k2 = self.h * (&self.sys.a * (&self.state + B21 * &k1) + &self.sys.b * &u2);
-            let k3 = self.h
+            let k1 = self.h.0 * (&self.sys.a * &self.state + &self.sys.b * &u1);
+            let k2 = self.h.0 * (&self.sys.a * (&self.state + B21 * &k1) + &self.sys.b * &u2);
+            let k3 = self.h.0
                 * (&self.sys.a * (&self.state + B3[0] * &k1 + B3[1] * &k2) + &self.sys.b * &u3);
-            let k4 = self.h
+            let k4 = self.h.0
                 * (&self.sys.a * (&self.state + B4[0] * &k1 + B4[1] * &k2 + B4[2] * &k3)
                     + &self.sys.b * &u4);
-            let k5 = self.h
+            let k5 = self.h.0
                 * (&self.sys.a
                     * (&self.state + B5[0] * &k1 + B5[1] * &k2 + B5[2] * &k3 + B5[3] * &k4)
                     + &self.sys.b * &u5);
-            let k6 = self.h
+            let k6 = self.h.0
                 * (&self.sys.a
                     * (&self.state
                         + B6[0] * &k1
@@ -311,15 +311,15 @@ where
             // Safety factor to avoid too small step changes.
             let safety_factor = 0.95;
             if error < self.tol {
-                self.h = safety_factor * self.h * error_ratio.powf(0.25);
+                self.h.0 = safety_factor * self.h.0 * error_ratio.powf(0.25);
                 self.state = xn1;
                 break;
             }
-            self.h = safety_factor * self.h * error_ratio.powf(0.2);
+            self.h.0 = safety_factor * self.h.0 * error_ratio.powf(0.2);
         }
 
         // Update time before calculate the output.
-        self.time += self.h;
+        self.time.0 += self.h.0;
 
         let u = DVector::from_vec((self.input)(self.time));
         self.output = &self.sys.c * &self.state + &self.sys.d * &u;
@@ -336,7 +336,7 @@ where
 /// Implementation of the Iterator trait for the `Rkf45Iterator` struct
 impl<'a, F> Iterator for Rkf45Iterator<'a, F>
 where
-    F: Fn(f64) -> Vec<f64>,
+    F: Fn(Seconds) -> Vec<f64>,
 {
     type Item = Rkf45;
 
@@ -372,7 +372,7 @@ const D: [f64; 5] = [
 #[derive(Debug)]
 pub struct Rkf45 {
     /// Current step size
-    time: f64,
+    time: Seconds,
     /// Current state
     state: Vec<f64>,
     /// Current output
@@ -383,7 +383,7 @@ pub struct Rkf45 {
 
 impl Rkf45 {
     /// Get the time of the current step
-    pub fn time(&self) -> f64 {
+    pub fn time(&self) -> Seconds {
         self.time
     }
 
@@ -408,7 +408,7 @@ impl Rkf45 {
 #[derive(Debug)]
 pub struct RadauIterator<'a, F>
 where
-    F: Fn(f64) -> Vec<f64>,
+    F: Fn(Seconds) -> Vec<f64>,
 {
     /// Linear system
     sys: &'a Ss,
@@ -419,7 +419,7 @@ where
     /// Output vector
     output: DVector<f64>,
     /// Interval
-    h: f64,
+    h: Seconds,
     /// Number of steps
     n: usize,
     /// Index
@@ -432,7 +432,7 @@ where
 
 impl<'a, F> RadauIterator<'a, F>
 where
-    F: Fn(f64) -> Vec<f64>,
+    F: Fn(Seconds) -> Vec<f64>,
 {
     /// Create the solver for a Radau order 3 with 2 steps method.
     ///
@@ -444,13 +444,13 @@ where
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `tol` - tolerance of implicit solution finding
-    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: f64, n: usize, tol: f64) -> Self {
-        let start = DVector::from_vec(u(0.0));
+    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: Seconds, n: usize, tol: f64) -> Self {
+        let start = DVector::from_vec(u(Seconds(0.)));
         let state = DVector::from_column_slice(x0);
         let output = &sys.c * &state + &sys.d * &start;
         // Jacobian matrix can be precomputed since it is constant for the
         // given system.
-        let g = &sys.a * h;
+        let g = &sys.a * h.0;
         let rows = &sys.a.nrows(); // A is a square matrix.
         let identity = DMatrix::<f64>::identity(*rows, *rows);
         let j11 = &g * RADAU_A[0] - &identity;
@@ -485,7 +485,7 @@ where
     fn initial_step(&mut self) -> Option<Radau> {
         self.index += 1;
         Some(Radau {
-            time: 0.,
+            time: Seconds(0.),
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
         })
@@ -494,7 +494,7 @@ where
     /// Radau order 3 with 2 step implicit method.
     #[allow(clippy::cast_precision_loss)]
     fn main_iteration(&mut self) -> Option<Radau> {
-        let time = (self.index - 1) as f64 * self.h;
+        let time = (self.index - 1) as f64 * self.h.0;
         let rows = self.sys.a.nrows();
         // k = [k1; k2] (column vector)
         let mut k = DVector::<f64>::zeros(2 * rows);
@@ -504,9 +504,9 @@ where
         k.slice_mut((0, 0), sub_vec_size).copy_from(&self.state);
         k.slice_mut((rows, 0), sub_vec_size).copy_from(&self.state);
 
-        let u1 = DVector::from_vec((self.input)(time + RADAU_C[0] * self.h));
+        let u1 = DVector::from_vec((self.input)(Seconds(time + RADAU_C[0] * self.h.0)));
         let bu1 = &self.sys.b * &u1;
-        let u2 = DVector::from_vec((self.input)(time + RADAU_C[1] * self.h));
+        let u2 = DVector::from_vec((self.input)(Seconds(time + RADAU_C[1] * self.h.0)));
         let bu2 = &self.sys.b * &u2;
         let mut f = DVector::<f64>::zeros(2 * rows);
         // Max 10 iterations.
@@ -514,10 +514,10 @@ where
             let k1 = k.slice((0, 0), sub_vec_size);
             let k2 = k.slice((rows, 0), sub_vec_size);
 
-            let f1 = &self.sys.a * (&self.state + self.h * (RADAU_A[0] * k1 + RADAU_A[1] * k2))
+            let f1 = &self.sys.a * (&self.state + self.h.0 * (RADAU_A[0] * k1 + RADAU_A[1] * k2))
                 + &bu1
                 - k1;
-            let f2 = &self.sys.a * (&self.state + self.h * (RADAU_A[2] * k1 + RADAU_A[3] * k2))
+            let f2 = &self.sys.a * (&self.state + self.h.0 * (RADAU_A[2] * k1 + RADAU_A[3] * k2))
                 + &bu2
                 - k2;
             f.slice_mut((0, 0), sub_vec_size).copy_from(&f1);
@@ -540,11 +540,11 @@ where
                 break;
             }
         }
-        self.state += self.h
+        self.state += self.h.0
             * (RADAU_B[0] * k.slice((0, 0), (rows, 1))
                 + RADAU_B[1] * k.slice((rows, 0), (rows, 1)));
 
-        let end_time = self.index as f64 * self.h;
+        let end_time = Seconds(self.index as f64 * self.h.0);
         let u = DVector::from_vec((self.input)(end_time));
         self.output = &self.sys.c * &self.state + &self.sys.d * &u;
 
@@ -566,7 +566,7 @@ const RADAU_C: [f64; 2] = [1. / 3., 1.];
 /// Implementation of the Iterator trait for the `RadauIterator` struct.
 impl<'a, F> Iterator for RadauIterator<'a, F>
 where
-    F: Fn(f64) -> Vec<f64>,
+    F: Fn(Seconds) -> Vec<f64>,
 {
     type Item = Radau;
 
@@ -585,7 +585,7 @@ where
 #[derive(Debug)]
 pub struct Radau {
     /// Time of the current step
-    time: f64,
+    time: Seconds,
     /// Current state
     state: Vec<f64>,
     /// Current output
@@ -594,7 +594,7 @@ pub struct Radau {
 
 impl Radau {
     /// Get the time of the current step
-    pub fn time(&self) -> f64 {
+    pub fn time(&self) -> Seconds {
         self.time
     }
 

@@ -7,6 +7,8 @@
 //! numerators are stored in a matrix, while the denominator is stored once,
 //! since it is equal for every transfer function.
 
+pub mod discrete_tf;
+
 use crate::{
     linear_system::{self, Ss},
     plots::{
@@ -14,6 +16,7 @@ use crate::{
         polar::{PolarIterator, PolarPlot},
     },
     polynomial::{MatrixOfPoly, Poly},
+    units::RadiantsPerSecond,
     Eval,
 };
 
@@ -108,14 +111,24 @@ impl Eval<Complex64> for Tf {
 
 /// Implementation of the Bode plot for a transfer function
 impl BodePlot for Tf {
-    fn bode(self, min_freq: f64, max_freq: f64, step: f64) -> BodeIterator {
+    fn bode(
+        self,
+        min_freq: RadiantsPerSecond,
+        max_freq: RadiantsPerSecond,
+        step: f64,
+    ) -> BodeIterator {
         BodeIterator::new(self, min_freq, max_freq, step)
     }
 }
 
 /// Implementation of the polar plot for a transfer function
 impl PolarPlot for Tf {
-    fn polar(self, min_freq: f64, max_freq: f64, step: f64) -> PolarIterator {
+    fn polar(
+        self,
+        min_freq: RadiantsPerSecond,
+        max_freq: RadiantsPerSecond,
+        step: f64,
+    ) -> PolarIterator {
         PolarIterator::new(self, min_freq, max_freq, step)
     }
 }

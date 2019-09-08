@@ -5,7 +5,7 @@
 //!
 //! Functions use angular frequencies as default inputs.
 
-use crate::{transfer_function::Tf, Eval};
+use crate::{transfer_function::Tf, units::RadiantsPerSecond, Eval};
 
 use num_complex::Complex64;
 
@@ -19,7 +19,7 @@ pub struct PolarIterator {
     /// Step between frequencies
     step: f64,
     /// Start frequency
-    base_freq: f64,
+    base_freq: RadiantsPerSecond,
     /// Current data index
     index: f64,
 }
@@ -40,18 +40,23 @@ impl PolarIterator {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    pub(crate) fn new(tf: Tf, min_freq: f64, max_freq: f64, step: f64) -> Self {
+    pub(crate) fn new(
+        tf: Tf,
+        min_freq: RadiantsPerSecond,
+        max_freq: RadiantsPerSecond,
+        step: f64,
+    ) -> Self {
         assert!(step > 0.0);
         assert!(min_freq < max_freq);
 
-        let min = min_freq.log10();
-        let max = max_freq.log10();
+        let min = min_freq.0.log10();
+        let max = max_freq.0.log10();
         let intervals = ((max - min) / step).floor();
         Self {
             tf,
             intervals,
             step,
-            base_freq: min,
+            base_freq: RadiantsPerSecond(min),
             index: 0.0,
         }
     }
@@ -94,7 +99,7 @@ impl Iterator for PolarIterator {
         if self.index > self.intervals {
             None
         } else {
-            let freq_exponent = self.step.mul_add(self.index, self.base_freq);
+            let freq_exponent = self.step.mul_add(self.index, self.base_freq.0);
             let omega = 10_f64.powf(freq_exponent);
             let j_omega = Complex64::new(0.0, omega);
             self.index += 1.;
@@ -121,5 +126,10 @@ pub trait PolarPlot {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    fn polar(self, min_freq: f64, max_freq: f64, step: f64) -> PolarIterator;
+    fn polar(
+        self,
+        min_freq: RadiantsPerSecond,
+        max_freq: RadiantsPerSecond,
+        step: f64,
+    ) -> PolarIterator;
 }

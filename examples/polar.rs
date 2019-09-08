@@ -1,8 +1,8 @@
 extern crate automatica;
 
-use automatica::plots::polar::PolarPlot;
-use automatica::polynomial::Poly;
-use automatica::transfer_function::Tf;
+use automatica::{
+    plots::polar::PolarPlot, polynomial::Poly, transfer_function::Tf, units::RadiantsPerSecond,
+};
 
 fn main() {
     let tf = Tf::new(
@@ -12,7 +12,7 @@ fn main() {
 
     println!("T:\n{}", tf);
 
-    let p = tf.polar(0.1, 10.0, 0.1);
+    let p = tf.polar(RadiantsPerSecond(0.1), RadiantsPerSecond(10.0), 0.1);
     for g in p {
         println!(
             "r: {:.3}, i: {:.3}, f: {:.3}, m: {:.3}",

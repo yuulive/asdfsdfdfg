@@ -1,4 +1,4 @@
-//! Automatic Control Systems Library
+//! # Automatic Control Systems Library
 //!
 //! ## State-Space representation
 //!
@@ -13,6 +13,8 @@
 //! ## Discrete system
 //!
 //! [Discrete](linear_system/discrete/index.html)
+//!
+//! [Transfer function discretization](transfer_function/discrete_tf/index.html)
 //!
 //! ## Transfer function representation
 //!
@@ -43,6 +45,7 @@ pub mod linear_system;
 pub mod plots;
 pub mod polynomial;
 pub mod transfer_function;
+pub mod units;
 
 /// Trait for the implementation of object evaluation
 pub trait Eval<T> {
@@ -73,30 +76,4 @@ where
     F: FnMut(&T, &T) -> T,
 {
     left.iter().zip(right).map(|(l, r)| f(l, r)).collect()
-}
-
-/// Trait for the conversion to decibels.
-pub trait Decibel<T> {
-    /// Convert to decibels
-    fn to_db(&self) -> T;
-}
-
-/// Implementation of the Decibels for f64
-impl Decibel<f64> for f64 {
-    /// Convert f64 to decibels
-    fn to_db(&self) -> Self {
-        20. * self.log10()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use num_traits::ops::inv::Inv;
-
-    #[test]
-    fn decibel_test() {
-        assert_eq!(40., 100_f64.to_db());
-        assert_eq!(-3.0102999566398116, 2_f64.inv().sqrt().to_db());
-    }
 }
