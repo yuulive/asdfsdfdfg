@@ -61,10 +61,26 @@ impl Poly {
         p
     }
 
-    /// Trim the zeros coefficients of high degree terms
+    /// Trim the zeros coefficients of high degree terms.
+    /// It uses f64::EPSILON as both absolute and relative difference for
+    /// zero equality check.
     fn trim(&mut self) {
-        if let Some(p) = self.coeffs.iter().rposition(|&c| c != 0.0) {
-            self.coeffs.truncate(p + 1);
+        self.trim_complete(std::f64::EPSILON, std::f64::EPSILON);
+    }
+
+    /// Trim the zeros coefficients of high degree terms
+    ///
+    /// # Arguments
+    /// * `epsilon` - absolute difference for zero equality check
+    /// * `max_relative` - maximum relative difference for zero equality check
+    fn trim_complete(&mut self, epsilon: f64, max_relative: f64) {
+        if let Some(p) = self
+            .coeffs
+            .iter()
+            .rposition(|&c| relative_ne!(c, 0.0, epsilon = epsilon, max_relative = max_relative))
+        {
+            let new_length = p + 1;
+            self.coeffs.truncate(new_length);
         } else {
             self.coeffs.resize(1, 0.0);
         }

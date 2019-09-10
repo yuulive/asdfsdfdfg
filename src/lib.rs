@@ -40,6 +40,9 @@
 
 #![warn(missing_docs)]
 
+#[macro_use]
+extern crate approx;
+
 pub mod controller;
 pub mod linear_system;
 pub mod plots;

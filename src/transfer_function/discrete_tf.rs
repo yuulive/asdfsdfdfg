@@ -106,10 +106,8 @@ mod tests {
         );
         let z = 0.5 * Complex64::i();
         let g = tf.eval(&z);
-        assert_eq!(
-            (20.159489580065607, 75.82766229986805),
-            (g.norm().to_db(), g.arg().to_degrees())
-        );
+        assert_relative_eq!(20.159, g.norm().to_db(), max_relative = 1e-4);
+        assert_relative_eq!(75.828, g.arg().to_degrees(), max_relative = 1e-4);
 
         let ts = Seconds(1.);
         let tfz = Tfz::discretize(tf, ts, Discretization::Tustin);
@@ -117,9 +115,7 @@ mod tests {
         assert_eq!(Complex64::new(-1.2, 1.6), s);
 
         let gz = tfz.eval(&z);
-        assert_eq!(
-            (32.75311354541812, 114.20367651890237),
-            (gz.norm().to_db(), gz.arg().to_degrees())
-        );
+        assert_relative_eq!(32.753, gz.norm().to_db(), max_relative = 1e-4);
+        assert_relative_eq!(114.20, gz.arg().to_degrees(), max_relative = 1e-4);
     }
 }
