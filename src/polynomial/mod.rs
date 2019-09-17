@@ -367,7 +367,7 @@ impl fmt::Display for Poly {
         let mut s = String::new();
         let mut sep = "";
         for (i, c) in self.coeffs.iter().enumerate() {
-            if *c == 0.0 {
+            if relative_eq!(*c, 0.0) {
                 continue;
             }
             s.push_str(sep);
@@ -677,7 +677,7 @@ impl fmt::Display for PolyMatrix {
         let mut s = String::new();
         let mut sep = "";
         for (i, c) in self.matr_coeffs.iter().enumerate() {
-            if c.iter().all(|&x| x == 0.0) {
+            if c.iter().all(|&x| relative_eq!(x, 0.0)) {
                 continue;
             }
             s.push_str(sep);
