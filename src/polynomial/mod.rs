@@ -12,12 +12,12 @@
 use crate::Eval;
 
 use std::fmt;
-use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
+use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Sub, SubAssign};
 
 use nalgebra::{DMatrix, Schur};
 use ndarray::{Array, Array2};
-use num_complex::{Complex, Complex64};
-use num_traits::{One, Zero};
+use num_complex::Complex64;
+use num_traits::{Float, FromPrimitive, MulAdd, One, ToPrimitive, Zero};
 
 /// Polynomial object
 ///
@@ -163,23 +163,25 @@ impl Poly {
     }
 }
 
-/// Evaluate the polynomial at the given float number
-impl Eval<Complex64> for Poly {
-    fn eval(&self, x: &Complex64) -> Complex64 {
-        self.coeffs
-            .iter()
-            .rev()
-            .fold(Complex::zero(), |acc, &c| acc * x + c)
-    }
-}
-
-/// Evaluate the polynomial at the given complex number
-impl Eval<f64> for Poly {
-    fn eval(&self, x: &f64) -> f64 {
-        self.coeffs
-            .iter()
-            .rev()
-            .fold(0.0, |acc, &c| acc.mul_add(*x, c))
+/// Evaluate the polynomial at the given real or complex number
+impl<N> Eval<N> for Poly
+where
+    N: Copy + FromPrimitive + MulAdd<Output = N> + Zero,
+{
+    /// Evaluate the polynomial using Horner's method. The evaluation is safe
+    /// is the polynomial coefficient can be casted the type `N`.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - Value at which the polynomial is evaluated.
+    ///
+    /// # Panics
+    ///
+    /// The method panics if the conversion from f64 to type `N` fails.
+    fn eval(&self, x: &N) -> N {
+        self.coeffs.iter().rev().fold(N::zero(), |acc, &c| {
+            acc.mul_add(*x, N::from_f64(c).unwrap())
+        })
     }
 }
 
@@ -233,18 +235,27 @@ impl Add<Poly> for Poly {
 }
 
 /// Implementation of polynomial and float addition
-impl Add<f64> for Poly {
+impl<F: Float + AddAssign<F>> Add<F> for Poly {
     type Output = Self;
 
-    fn add(self, rhs: f64) -> Self {
+    fn add(self, rhs: F) -> Self {
         let mut result = self.coeffs.to_owned();
-        result[0] += rhs;
+        result[0] += rhs.to_f64().unwrap();
         Self::new_from_coeffs(&result)
     }
 }
 
-/// Implementation of float and polynomial addition
+/// Implementation of f64 and polynomial addition
 impl Add<Poly> for f64 {
+    type Output = Poly;
+
+    fn add(self, rhs: Poly) -> Poly {
+        rhs + self
+    }
+}
+
+/// Implementation of f32 and polynomial addition
+impl Add<Poly> for f32 {
     type Output = Poly;
 
     fn add(self, rhs: Poly) -> Poly {
@@ -264,23 +275,23 @@ impl Sub for Poly {
 }
 
 /// Implementation of polynomial and float subtraction
-impl Sub<f64> for Poly {
+impl<F: Float + SubAssign<F>> Sub<F> for Poly {
     type Output = Self;
 
-    fn sub(self, rhs: f64) -> Self {
+    fn sub(self, rhs: F) -> Self {
         let mut result = self.coeffs.to_owned();
-        result[0] -= rhs;
+        result[0] -= rhs.to_f64().unwrap();
         Self::new_from_coeffs(&result)
     }
 }
 
-/// Implementation of float and polynomial subtraction
+/// Implementation of f64 and polynomial subtraction
 impl Sub<Poly> for f64 {
     type Output = Poly;
 
     fn sub(self, rhs: Poly) -> Poly {
         let mut result = rhs.coeffs.to_owned();
-        result[0] -= self;
+        result[0] = self - result[0];
         Poly::new_from_coeffs(&result)
     }
 }
@@ -306,16 +317,20 @@ impl Mul for Poly {
 }
 
 /// Implementation of polynomial and float multiplication
-impl Mul<f64> for Poly {
+impl<F: Float + ToPrimitive> Mul<F> for Poly {
     type Output = Self;
 
-    fn mul(self, rhs: f64) -> Self {
-        let result: Vec<_> = self.coeffs.iter().map(|x| x * rhs).collect();
+    fn mul(self, rhs: F) -> Self {
+        let result: Vec<_> = self
+            .coeffs
+            .iter()
+            .map(|x| x * rhs.to_f64().unwrap())
+            .collect();
         Self::new_from_coeffs(&result)
     }
 }
 
-/// Implementation of float and polynomial multiplication
+/// Implementation of f64 and polynomial multiplication
 impl Mul<Poly> for f64 {
     type Output = Poly;
 
@@ -324,12 +339,25 @@ impl Mul<Poly> for f64 {
     }
 }
 
+/// Implementation of f32 and polynomial multiplication
+impl Mul<Poly> for f32 {
+    type Output = Poly;
+
+    fn mul(self, rhs: Poly) -> Poly {
+        rhs * self
+    }
+}
+
 /// Implementation of polynomial and float division
-impl Div<f64> for Poly {
+impl<F: Float + ToPrimitive> Div<F> for Poly {
     type Output = Self;
 
-    fn div(self, rhs: f64) -> Self {
-        let result: Vec<_> = self.coeffs.iter().map(|x| x / rhs).collect();
+    fn div(self, rhs: F) -> Self {
+        let result: Vec<_> = self
+            .coeffs
+            .iter()
+            .map(|x| x / rhs.to_f64().unwrap())
+            .collect();
         Self::new_from_coeffs(&result)
     }
 }
@@ -390,6 +418,7 @@ impl fmt::Display for Poly {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use num_complex::Complex;
 
     #[test]
     fn poly_creation_coeffs() {
@@ -434,6 +463,19 @@ mod tests {
         assert_eq!(86., p.eval(&5.));
 
         assert_eq!(0.0, Poly::new_from_coeffs(&[]).eval(&6.4));
+    }
+
+    #[test]
+    #[should_panic]
+    fn poly_f64_eval_panic() {
+        let p = Poly::new_from_coeffs(&[1.0e200, 2., 3.]);
+        p.eval(&5.0_f32);
+    }
+
+    #[test]
+    fn poly_i32_eval() {
+        let p = Poly::new_from_coeffs(&[1.5, 2., 3.]);
+        assert_eq!(86, p.eval(&5));
     }
 
     #[test]
@@ -497,6 +539,16 @@ mod tests {
         assert_eq!(
             Poly::new_from_coeffs(&[]),
             Poly::new_from_coeffs(&[1., 1.]) - Poly::new_from_coeffs(&[1., 1.])
+        );
+
+        assert_eq!(
+            Poly::new_from_coeffs(&[-10., 1.]),
+            Poly::new_from_coeffs(&[2., 1.]) - 12.
+        );
+
+        assert_eq!(
+            Poly::new_from_coeffs(&[-1., 1.]),
+            1. - Poly::new_from_coeffs(&[2., 1.])
         );
     }
 
