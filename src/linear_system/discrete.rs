@@ -5,7 +5,10 @@
 
 use crate::linear_system::Ss;
 
+use std::ops::Mul;
+
 use nalgebra::{DMatrix, DVector};
+use num_traits::{Float, ToPrimitive};
 
 /// Trait for the set of methods on discrete linear systems.
 pub trait Discrete {
@@ -25,7 +28,9 @@ pub trait Discrete {
     /// # Arguments
     ///
     /// * `st` - sample time
-    fn discretize(&self, st: f64, method: Discretization) -> Option<Ss>;
+    fn discretize<F>(&self, st: F, method: Discretization) -> Option<Ss>
+    where
+        F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>> + ToPrimitive;
 }
 
 /// Discretization algorithm.
@@ -56,7 +61,10 @@ impl Discrete for Ss {
         }
     }
 
-    fn discretize(&self, st: f64, method: Discretization) -> Option<Ss> {
+    fn discretize<F>(&self, st: F, method: Discretization) -> Option<Ss>
+    where
+        F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>> + ToPrimitive,
+    {
         match method {
             Discretization::ForwardEuler => forward_euler(&self, st),
             Discretization::BackwardEuler => backward_euler(&self, st),
@@ -71,9 +79,13 @@ impl Discrete for Ss {
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn forward_euler(sys: &Ss, st: f64) -> Option<Ss> {
+fn forward_euler<F>(sys: &Ss, st: F) -> Option<Ss>
+where
+    F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>> + ToPrimitive,
+{
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
+    let st = st.to_f64().unwrap();
     Some(Ss {
         a: identity + st * &sys.a,
         b: st * &sys.b,
@@ -89,9 +101,13 @@ fn forward_euler(sys: &Ss, st: f64) -> Option<Ss> {
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn backward_euler(sys: &Ss, st: f64) -> Option<Ss> {
+fn backward_euler<F>(sys: &Ss, st: F) -> Option<Ss>
+where
+    F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>> + ToPrimitive,
+{
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
+    let st = st.to_f64().unwrap();
     if let Some(a) = (identity - st * &sys.a).try_inverse() {
         Some(Ss {
             b: st * &a * &sys.b,
@@ -111,9 +127,13 @@ fn backward_euler(sys: &Ss, st: f64) -> Option<Ss> {
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn tustin(sys: &Ss, st: f64) -> Option<Ss> {
+fn tustin<F>(sys: &Ss, st: F) -> Option<Ss>
+where
+    F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>> + ToPrimitive,
+{
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
+    let st = st.to_f64().unwrap();
     if let Some(a) = (&identity - 0.5 * st * &sys.a).try_inverse() {
         Some(Ss {
             a: (&identity + 0.5 * st * &sys.a) * &a,
