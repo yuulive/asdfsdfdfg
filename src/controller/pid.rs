@@ -9,20 +9,22 @@
 
 use crate::{polynomial::Poly, transfer_function::Tf};
 
+use num_traits::Float;
+
 /// Proportional-Integral-Derivative controller
-pub struct Pid {
+pub struct Pid<F: Float> {
     /// Proportional action coefficient
-    kp: f64,
+    kp: F,
     /// Integral time
-    ti: f64,
+    ti: F,
     /// Derivative time
-    td: f64,
+    td: F,
     /// Constant for additional pole
-    n: Option<f64>,
+    n: Option<F>,
 }
 
 /// Implementation of Pid methods
-impl Pid {
+impl<F: Float> Pid<F> {
     /// Create a new ideal PID controller
     ///
     /// # Arguments
@@ -30,7 +32,7 @@ impl Pid {
     /// * `kp` - Proportional action coefficient
     /// * `ti` - Integral time
     /// * `td` - Derivative time
-    pub fn new_ideal(kp: f64, ti: f64, td: f64) -> Self {
+    pub fn new_ideal(kp: F, ti: F, td: F) -> Self {
         Self {
             kp,
             ti,
@@ -47,7 +49,7 @@ impl Pid {
     /// * `ti` - Integral time
     /// * `td` - Derivative time
     /// * `n` - Constant for additional pole
-    pub fn new(kp: f64, ti: f64, td: f64, n: f64) -> Self {
+    pub fn new(kp: F, ti: F, td: F, n: F) -> Self {
         Self {
             kp,
             ti,
@@ -79,18 +81,24 @@ impl Pid {
         if let Some(n) = self.n {
             let a0 = self.kp * n;
             let a1 = self.kp * (self.ti * n + self.td);
-            let a2 = self.kp * self.ti * self.td * (1. + n);
+            let a2 = self.kp * self.ti * self.td * (F::one() + n);
             let b0 = 0.;
             let b1 = self.ti * n;
             let b2 = self.ti * self.td;
             Tf::new(
-                Poly::new_from_coeffs(&[a0, a1, a2]),
-                Poly::new_from_coeffs(&[b0, b1, b2]),
+                Poly::new_from_coeffs(&[
+                    a0.to_f64().unwrap(),
+                    a1.to_f64().unwrap(),
+                    a2.to_f64().unwrap(),
+                ]),
+                Poly::new_from_coeffs(&[b0, b1.to_f64().unwrap(), b2.to_f64().unwrap()]),
             )
         } else {
+            let ti = self.ti.to_f64().unwrap();
+            let kp = self.kp.to_f64().unwrap();
             Tf::new(
-                Poly::new_from_coeffs(&[1., self.kp * self.ti, self.kp * self.ti * self.td]),
-                Poly::new_from_coeffs(&[0., self.ti]),
+                Poly::new_from_coeffs(&[1., kp * ti, kp * ti * self.td.to_f64().unwrap()]),
+                Poly::new_from_coeffs(&[0., ti]),
             )
         }
     }
