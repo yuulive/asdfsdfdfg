@@ -8,7 +8,7 @@ use crate::linear_system::Ss;
 use std::ops::Mul;
 
 use nalgebra::{DMatrix, DVector};
-use num_traits::{Float, ToPrimitive};
+use num_traits::Float;
 
 /// Trait for the set of methods on discrete linear systems.
 pub trait Discrete {
@@ -30,7 +30,7 @@ pub trait Discrete {
     /// * `st` - sample time
     fn discretize<F>(&self, st: F, method: Discretization) -> Option<Ss>
     where
-        F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>> + ToPrimitive;
+        F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>;
 }
 
 /// Discretization algorithm.
@@ -63,7 +63,7 @@ impl Discrete for Ss {
 
     fn discretize<F>(&self, st: F, method: Discretization) -> Option<Ss>
     where
-        F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>> + ToPrimitive,
+        F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>,
     {
         match method {
             Discretization::ForwardEuler => forward_euler(&self, st),
@@ -81,7 +81,7 @@ impl Discrete for Ss {
 /// * `st` - sample time
 fn forward_euler<F>(sys: &Ss, st: F) -> Option<Ss>
 where
-    F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>> + ToPrimitive,
+    F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>,
 {
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
@@ -103,7 +103,7 @@ where
 /// * `st` - sample time
 fn backward_euler<F>(sys: &Ss, st: F) -> Option<Ss>
 where
-    F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>> + ToPrimitive,
+    F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>,
 {
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
@@ -129,7 +129,7 @@ where
 /// * `st` - sample time
 fn tustin<F>(sys: &Ss, st: F) -> Option<Ss>
 where
-    F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>> + ToPrimitive,
+    F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>,
 {
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);

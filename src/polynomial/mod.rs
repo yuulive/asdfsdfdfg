@@ -17,7 +17,7 @@ use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Sub, SubAssign};
 use nalgebra::{DMatrix, Schur};
 use ndarray::{Array, Array2};
 use num_complex::Complex64;
-use num_traits::{Float, FromPrimitive, MulAdd, One, ToPrimitive, Zero};
+use num_traits::{Float, FromPrimitive, MulAdd, One, Zero};
 
 /// Polynomial object
 ///
@@ -317,7 +317,7 @@ impl Mul for Poly {
 }
 
 /// Implementation of polynomial and float multiplication
-impl<F: Float + ToPrimitive> Mul<F> for Poly {
+impl<F: Float> Mul<F> for Poly {
     type Output = Self;
 
     fn mul(self, rhs: F) -> Self {
@@ -349,7 +349,7 @@ impl Mul<Poly> for f32 {
 }
 
 /// Implementation of polynomial and float division
-impl<F: Float + ToPrimitive> Div<F> for Poly {
+impl<F: Float> Div<F> for Poly {
     type Output = Self;
 
     fn div(self, rhs: F) -> Self {
