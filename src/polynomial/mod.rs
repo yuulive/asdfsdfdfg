@@ -374,24 +374,28 @@ impl<F: Float> Div<F> for Poly<F> {
 }
 
 /// Implementation of the additive identity for polynomials
-impl Zero for Poly<f64> {
+impl<F: Float> Zero for Poly<F> {
     fn zero() -> Self {
-        Self { coeffs: vec![0.0] }
+        Self {
+            coeffs: vec![F::zero()],
+        }
     }
 
     fn is_zero(&self) -> bool {
-        self.coeffs == vec![0.0]
+        self.coeffs == vec![F::zero()]
     }
 }
 
 /// Implementation of the multiplicative identity for polynomials
-impl One for Poly<f64> {
+impl<F: Float + AddAssign> One for Poly<F> {
     fn one() -> Self {
-        Self { coeffs: vec![1.0] }
+        Self {
+            coeffs: vec![F::one()],
+        }
     }
 
     fn is_one(&self) -> bool {
-        self.coeffs == vec![1.0]
+        self.coeffs == vec![F::one()]
     }
 }
 
@@ -597,8 +601,11 @@ mod tests {
 
     #[test]
     fn identities() {
-        assert!(Poly::zero().is_zero());
-        assert!(Poly::one().is_one());
+        assert!(Poly::<f64>::zero().is_zero());
+        assert!(Poly::<f64>::one().is_one());
+
+        assert!(Poly::<f32>::zero().is_zero());
+        assert!(Poly::<f32>::one().is_one());
     }
 }
 
