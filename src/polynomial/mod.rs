@@ -12,7 +12,7 @@
 use crate::Eval;
 
 use std::fmt;
-use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
+use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Sub};
 
 use nalgebra::{DMatrix, Schur};
 use ndarray::{Array, Array2};
@@ -316,18 +316,18 @@ impl Sub<Poly<f32>> for f32 {
 }
 
 /// Implementation of polynomial multiplication
-impl Mul for Poly<f64> {
+impl<F: Float + AddAssign> Mul for Poly<F> {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
     fn mul(self, rhs: Self) -> Self {
         // Polynomial multiplication is implemented as discrete convolution.
         let new_degree = self.degree() + rhs.degree();
-        let mut new_coeffs: Vec<f64> = vec![0.; new_degree + 1];
+        let mut new_coeffs: Vec<F> = vec![F::zero(); new_degree + 1];
         for i in 0..=self.degree() {
             for j in 0..=rhs.degree() {
-                let a = self.coeffs.get(i).unwrap_or(&0.);
-                let b = rhs.coeffs.get(j).unwrap_or(&0.);
+                let a = *self.coeffs.get(i).unwrap_or(&F::zero());
+                let b = *rhs.coeffs.get(j).unwrap_or(&F::zero());
                 new_coeffs[i + j] += a * b;
             }
         }
@@ -336,15 +336,11 @@ impl Mul for Poly<f64> {
 }
 
 /// Implementation of polynomial and float multiplication
-impl<F: Float> Mul<F> for Poly<f64> {
+impl<F: Float> Mul<F> for Poly<F> {
     type Output = Self;
 
     fn mul(self, rhs: F) -> Self {
-        let result: Vec<_> = self
-            .coeffs
-            .iter()
-            .map(|x| x * rhs.to_f64().unwrap())
-            .collect();
+        let result: Vec<_> = self.coeffs.iter().map(|&x| x * rhs).collect();
         Self::new_from_coeffs(&result)
     }
 }
@@ -359,10 +355,10 @@ impl Mul<Poly<f64>> for f64 {
 }
 
 /// Implementation of f32 and polynomial multiplication
-impl Mul<Poly<f64>> for f32 {
-    type Output = Poly<f64>;
+impl Mul<Poly<f32>> for f32 {
+    type Output = Poly<f32>;
 
-    fn mul(self, rhs: Poly<f64>) -> Poly<f64> {
+    fn mul(self, rhs: Poly<f32>) -> Poly<f32> {
         rhs * self
     }
 }
