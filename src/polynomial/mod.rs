@@ -400,7 +400,7 @@ impl<F: Float + AddAssign> One for Poly<F> {
 }
 
 /// Implement printing of polynomial
-impl fmt::Display for Poly<f64> {
+impl<F: Float + fmt::Display> fmt::Display for Poly<F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.coeffs.is_empty() {
             return write!(f, "0");
@@ -410,12 +410,14 @@ impl fmt::Display for Poly<f64> {
         let mut s = String::new();
         let mut sep = "";
         for (i, c) in self.coeffs.iter().enumerate() {
-            if relative_eq!(*c, 0.0) {
+            // TODO use approx crate
+            //if relative_eq!(*c, 0.0) {
+            if *c == F::zero() {
                 continue;
             }
             s.push_str(sep);
             #[allow(clippy::float_cmp)] // signum() returns either 1.0 or -1.0
-            let sign = if c.signum() == 1.0 { "+" } else { "" };
+            let sign = if c.signum() == F::one() { "+" } else { "" };
             if i == 0 {
                 s.push_str(&format!("{}", c));
             } else if i == 1 {
