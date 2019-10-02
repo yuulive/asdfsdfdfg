@@ -277,13 +277,15 @@ impl Sub for Poly<f64> {
 }
 
 /// Implementation of polynomial and float subtraction
-impl<F: Float + SubAssign<F>> Sub<F> for Poly<f64> {
+impl<F: Float + SubAssign<F>> Sub<F> for Poly<F> {
     type Output = Self;
 
     fn sub(self, rhs: F) -> Self {
-        let mut result = self.coeffs.to_owned();
-        result[0] -= rhs.to_f64().unwrap();
-        Self::new_from_coeffs(&result)
+        let mut result = self.clone();
+        result[0] -= rhs;
+        // Non need for trimming since the addition of a float doesn't
+        // modify the coefficients of order higher than zero.
+        result
     }
 }
 
@@ -292,9 +294,24 @@ impl Sub<Poly<f64>> for f64 {
     type Output = Poly<f64>;
 
     fn sub(self, rhs: Poly<f64>) -> Poly<f64> {
-        let mut result = rhs.coeffs.to_owned();
+        let mut result = rhs.clone();
+        // Non need for trimming since the addition of a float doesn't
+        // modify the coefficients of order higher than zero.
         result[0] = self - result[0];
-        Poly::new_from_coeffs(&result)
+        result
+    }
+}
+
+/// Implementation of f32 and polynomial subtraction
+impl Sub<Poly<f32>> for f32 {
+    type Output = Poly<f32>;
+
+    fn sub(self, rhs: Poly<f32>) -> Poly<f32> {
+        let mut result = rhs.clone();
+        // Non need for trimming since the addition of a float doesn't
+        // modify the coefficients of order higher than zero.
+        result[0] = self - result[0];
+        result
     }
 }
 
