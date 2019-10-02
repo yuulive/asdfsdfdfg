@@ -364,15 +364,11 @@ impl Mul<Poly<f32>> for f32 {
 }
 
 /// Implementation of polynomial and float division
-impl<F: Float> Div<F> for Poly<f64> {
+impl<F: Float> Div<F> for Poly<F> {
     type Output = Self;
 
     fn div(self, rhs: F) -> Self {
-        let result: Vec<_> = self
-            .coeffs
-            .iter()
-            .map(|x| x / rhs.to_f64().unwrap())
-            .collect();
+        let result: Vec<_> = self.coeffs.iter().map(|&x| x / rhs).collect();
         Self::new_from_coeffs(&result)
     }
 }
