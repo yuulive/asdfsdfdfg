@@ -12,7 +12,7 @@
 use crate::Eval;
 
 use std::fmt;
-use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Sub, SubAssign};
+use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
 
 use nalgebra::{DMatrix, Schur};
 use ndarray::{Array, Array2};
@@ -210,7 +210,7 @@ impl<F: Float> IndexMut<usize> for Poly<F> {
 }
 
 /// Implementation of polynomial addition
-impl Add<Poly<f64>> for Poly<f64> {
+impl<F: Float> Add<Poly<F>> for Poly<F> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -218,29 +218,29 @@ impl Add<Poly<f64>> for Poly<f64> {
         let new_coeffs = if self.degree() < rhs.degree() {
             let mut result = rhs.coeffs.to_vec();
             for (i, c) in self.coeffs.iter().enumerate() {
-                result[i] += c;
+                result[i] = result[i] + *c;
             }
             result
         } else if rhs.degree() < self.degree() {
             let mut result = self.coeffs.to_owned();
             for (i, c) in rhs.coeffs.iter().enumerate() {
-                result[i] += c;
+                result[i] = result[i] + *c;
             }
             result
         } else {
-            crate::zip_with(&self.coeffs, &rhs.coeffs, |l, r| l + r)
+            crate::zip_with(&self.coeffs, &rhs.coeffs, |&l, &r| l + r)
         };
         Self::new_from_coeffs(&new_coeffs)
     }
 }
 
 /// Implementation of polynomial and float addition
-impl<F: Float + AddAssign<F>> Add<F> for Poly<F> {
+impl<F: Float> Add<F> for Poly<F> {
     type Output = Self;
 
     fn add(self, rhs: F) -> Self {
         let mut result = self.clone();
-        result[0] += rhs;
+        result[0] = result[0] + rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
         result
@@ -266,7 +266,7 @@ impl Add<Poly<f32>> for f32 {
 }
 
 /// Implementation of polynomial subtraction
-impl Sub for Poly<f64> {
+impl<F: Float> Sub for Poly<F> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
@@ -277,12 +277,12 @@ impl Sub for Poly<f64> {
 }
 
 /// Implementation of polynomial and float subtraction
-impl<F: Float + SubAssign<F>> Sub<F> for Poly<F> {
+impl<F: Float> Sub<F> for Poly<F> {
     type Output = Self;
 
     fn sub(self, rhs: F) -> Self {
         let mut result = self.clone();
-        result[0] -= rhs;
+        result[0] = result[0] - rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
         result
