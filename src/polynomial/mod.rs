@@ -17,7 +17,7 @@ use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Sub};
 use nalgebra::{DMatrix, Schur};
 use ndarray::{Array, Array2};
 use num_complex::Complex64;
-use num_traits::{Float, FromPrimitive, MulAdd, One, Zero};
+use num_traits::{Float, MulAdd, NumCast, One, Zero};
 
 /// Polynomial object
 ///
@@ -164,9 +164,10 @@ impl Poly<f64> {
 }
 
 /// Evaluate the polynomial at the given real or complex number
-impl<N> Eval<N> for Poly<f64>
+impl<N, F> Eval<N> for Poly<F>
 where
-    N: Copy + FromPrimitive + MulAdd<Output = N> + Zero,
+    N: Copy + MulAdd<Output = N> + NumCast + Zero,
+    F: Float,
 {
     /// Evaluate the polynomial using Horner's method. The evaluation is safe
     /// is the polynomial coefficient can be casted the type `N`.
@@ -177,11 +178,12 @@ where
     ///
     /// # Panics
     ///
-    /// The method panics if the conversion from f64 to type `N` fails.
+    /// The method panics if the conversion from `F` to type `N` fails.
     fn eval(&self, x: &N) -> N {
-        self.coeffs.iter().rev().fold(N::zero(), |acc, &c| {
-            acc.mul_add(*x, N::from_f64(c).unwrap())
-        })
+        self.coeffs
+            .iter()
+            .rev()
+            .fold(N::zero(), |acc, &c| acc.mul_add(*x, N::from(c).unwrap()))
     }
 }
 
@@ -479,7 +481,7 @@ mod tests {
         let p = Poly::new_from_coeffs(&[1., 2., 3.]);
         assert_eq!(86., p.eval(&5.));
 
-        assert_eq!(0.0, Poly::new_from_coeffs(&[]).eval(&6.4));
+        assert_eq!(0.0, Poly::<f64>::new_from_coeffs(&[]).eval(&6.4));
     }
 
     #[test]
@@ -504,7 +506,7 @@ mod tests {
 
         assert_eq!(
             Complex::zero(),
-            Poly::new_from_coeffs(&[]).eval(&Complex::new(2., 3.))
+            Poly::<f64>::new_from_coeffs(&[]).eval(&Complex::new(2., 3.))
         );
     }
 
