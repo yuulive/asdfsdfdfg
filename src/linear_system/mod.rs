@@ -239,7 +239,7 @@ impl Ss {
 /// a1 = -trace(A); ak = -1/k * trace(A*Bk)
 /// Bk = a_(k-1)*I + A*B_(k-1)
 #[allow(non_snake_case, clippy::cast_precision_loss)]
-pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly, PolyMatrix) {
+pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix) {
     let size = A.nrows(); // A is a square matrix.
     let mut a = vec![1.0];
     let a1 = -A.trace();

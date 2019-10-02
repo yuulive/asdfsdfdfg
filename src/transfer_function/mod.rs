@@ -31,9 +31,9 @@ use std::ops::{Index, IndexMut};
 #[derive(Debug)]
 pub struct Tf {
     /// Transfer function numerator
-    num: Poly,
+    num: Poly<f64>,
     /// Transfer function denominator
-    den: Poly,
+    den: Poly<f64>,
 }
 
 /// Implementation of transfer function methods
@@ -44,17 +44,17 @@ impl Tf {
     ///
     /// * `num` - Transfer function numerator
     /// * `den` - Transfer function denominator
-    pub fn new(num: Poly, den: Poly) -> Self {
+    pub fn new(num: Poly<f64>, den: Poly<f64>) -> Self {
         Self { num, den }
     }
 
     /// Extract transfer function numerator
-    pub fn num(&self) -> &Poly {
+    pub fn num(&self) -> &Poly<f64> {
         &self.num
     }
 
     /// Extract transfer function denominator
-    pub fn den(&self) -> &Poly {
+    pub fn den(&self) -> &Poly<f64> {
         &self.den
     }
 
@@ -151,7 +151,7 @@ pub struct TfMatrix {
     /// Polynomial matrix of the numerators
     num: MatrixOfPoly,
     /// Common polynomial denominator
-    den: Poly,
+    den: Poly<f64>,
 }
 
 /// Implementation of transfer function matrix
@@ -162,7 +162,7 @@ impl TfMatrix {
     ///
     /// * `num` - Polynomial matrix
     /// * `den` - Characteristic polynomial of the system
-    pub fn new(num: MatrixOfPoly, den: Poly) -> Self {
+    pub fn new(num: MatrixOfPoly, den: Poly<f64>) -> Self {
         Self { num, den }
     }
 }
@@ -220,9 +220,9 @@ impl From<Ss> for TfMatrix {
 ///
 /// Panics for out of bounds access.
 impl Index<[usize; 2]> for TfMatrix {
-    type Output = Poly;
+    type Output = Poly<f64>;
 
-    fn index(&self, i: [usize; 2]) -> &Poly {
+    fn index(&self, i: [usize; 2]) -> &Poly<f64> {
         &self.num.matrix[i]
     }
 }
@@ -233,7 +233,7 @@ impl Index<[usize; 2]> for TfMatrix {
 ///
 /// Panics for out of bounds access.
 impl IndexMut<[usize; 2]> for TfMatrix {
-    fn index_mut(&mut self, i: [usize; 2]) -> &mut Poly {
+    fn index_mut(&mut self, i: [usize; 2]) -> &mut Poly<f64> {
         &mut self.num.matrix[i]
     }
 }

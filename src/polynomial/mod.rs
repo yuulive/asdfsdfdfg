@@ -25,12 +25,12 @@ use num_traits::{Float, FromPrimitive, MulAdd, One, Zero};
 ///
 /// p(x) = c0 + c1*x + c2*x^2 + ...
 #[derive(Debug, PartialEq, Clone)]
-pub struct Poly {
-    coeffs: Vec<f64>,
+pub struct Poly<F: Float> {
+    coeffs: Vec<F>,
 }
 
 /// Implementation methods for Poly struct
-impl Poly {
+impl Poly<f64> {
     /// Create a new polynomial given a slice of real coefficients.
     ///
     /// # Arguments
@@ -164,7 +164,7 @@ impl Poly {
 }
 
 /// Evaluate the polynomial at the given real or complex number
-impl<N> Eval<N> for Poly
+impl<N> Eval<N> for Poly<f64>
 where
     N: Copy + FromPrimitive + MulAdd<Output = N> + Zero,
 {
@@ -190,7 +190,7 @@ where
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl Index<usize> for Poly {
+impl Index<usize> for Poly<f64> {
     type Output = f64;
 
     fn index(&self, i: usize) -> &f64 {
@@ -203,14 +203,14 @@ impl Index<usize> for Poly {
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl IndexMut<usize> for Poly {
+impl IndexMut<usize> for Poly<f64> {
     fn index_mut(&mut self, i: usize) -> &mut f64 {
         &mut self.coeffs[i]
     }
 }
 
 /// Implementation of polynomial addition
-impl Add<Poly> for Poly {
+impl Add<Poly<f64>> for Poly<f64> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -235,7 +235,7 @@ impl Add<Poly> for Poly {
 }
 
 /// Implementation of polynomial and float addition
-impl<F: Float + AddAssign<F>> Add<F> for Poly {
+impl<F: Float + AddAssign<F>> Add<F> for Poly<f64> {
     type Output = Self;
 
     fn add(self, rhs: F) -> Self {
@@ -246,25 +246,25 @@ impl<F: Float + AddAssign<F>> Add<F> for Poly {
 }
 
 /// Implementation of f64 and polynomial addition
-impl Add<Poly> for f64 {
-    type Output = Poly;
+impl Add<Poly<f64>> for f64 {
+    type Output = Poly<f64>;
 
-    fn add(self, rhs: Poly) -> Poly {
+    fn add(self, rhs: Poly<f64>) -> Poly<f64> {
         rhs + self
     }
 }
 
-/// Implementation of f32 and polynomial addition
-impl Add<Poly> for f32 {
-    type Output = Poly;
+// /// Implementation of f32 and polynomial addition
+// impl Add<Poly<f32>> for f32 {
+//     type Output = Poly<f32>;
 
-    fn add(self, rhs: Poly) -> Poly {
-        rhs + self
-    }
-}
+//     fn add(self, rhs: Poly<f32>) -> Poly<f32> {
+//         rhs + self
+//     }
+// }
 
 /// Implementation of polynomial subtraction
-impl Sub for Poly {
+impl Sub for Poly<f64> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
@@ -275,7 +275,7 @@ impl Sub for Poly {
 }
 
 /// Implementation of polynomial and float subtraction
-impl<F: Float + SubAssign<F>> Sub<F> for Poly {
+impl<F: Float + SubAssign<F>> Sub<F> for Poly<f64> {
     type Output = Self;
 
     fn sub(self, rhs: F) -> Self {
@@ -286,10 +286,10 @@ impl<F: Float + SubAssign<F>> Sub<F> for Poly {
 }
 
 /// Implementation of f64 and polynomial subtraction
-impl Sub<Poly> for f64 {
-    type Output = Poly;
+impl Sub<Poly<f64>> for f64 {
+    type Output = Poly<f64>;
 
-    fn sub(self, rhs: Poly) -> Poly {
+    fn sub(self, rhs: Poly<f64>) -> Poly<f64> {
         let mut result = rhs.coeffs.to_owned();
         result[0] = self - result[0];
         Poly::new_from_coeffs(&result)
@@ -297,7 +297,7 @@ impl Sub<Poly> for f64 {
 }
 
 /// Implementation of polynomial multiplication
-impl Mul for Poly {
+impl Mul for Poly<f64> {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
@@ -317,7 +317,7 @@ impl Mul for Poly {
 }
 
 /// Implementation of polynomial and float multiplication
-impl<F: Float> Mul<F> for Poly {
+impl<F: Float> Mul<F> for Poly<f64> {
     type Output = Self;
 
     fn mul(self, rhs: F) -> Self {
@@ -331,25 +331,25 @@ impl<F: Float> Mul<F> for Poly {
 }
 
 /// Implementation of f64 and polynomial multiplication
-impl Mul<Poly> for f64 {
-    type Output = Poly;
+impl Mul<Poly<f64>> for f64 {
+    type Output = Poly<f64>;
 
-    fn mul(self, rhs: Poly) -> Poly {
+    fn mul(self, rhs: Poly<f64>) -> Poly<f64> {
         rhs * self
     }
 }
 
 /// Implementation of f32 and polynomial multiplication
-impl Mul<Poly> for f32 {
-    type Output = Poly;
+impl Mul<Poly<f64>> for f32 {
+    type Output = Poly<f64>;
 
-    fn mul(self, rhs: Poly) -> Poly {
+    fn mul(self, rhs: Poly<f64>) -> Poly<f64> {
         rhs * self
     }
 }
 
 /// Implementation of polynomial and float division
-impl<F: Float> Div<F> for Poly {
+impl<F: Float> Div<F> for Poly<f64> {
     type Output = Self;
 
     fn div(self, rhs: F) -> Self {
@@ -363,7 +363,7 @@ impl<F: Float> Div<F> for Poly {
 }
 
 /// Implementation of the additive identity for polynomials
-impl Zero for Poly {
+impl Zero for Poly<f64> {
     fn zero() -> Self {
         Self { coeffs: vec![0.0] }
     }
@@ -374,7 +374,7 @@ impl Zero for Poly {
 }
 
 /// Implementation of the multiplicative identity for polynomials
-impl One for Poly {
+impl One for Poly<f64> {
     fn one() -> Self {
         Self { coeffs: vec![1.0] }
     }
@@ -385,7 +385,7 @@ impl One for Poly {
 }
 
 /// Implement printing of polynomial
-impl fmt::Display for Poly {
+impl fmt::Display for Poly<f64> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.coeffs.is_empty() {
             return write!(f, "0");
@@ -754,7 +754,7 @@ impl fmt::Display for PolyMatrix {
 /// P(x) = [[P1, P2], [P3, P4]]
 #[derive(Debug)]
 pub struct MatrixOfPoly {
-    pub(crate) matrix: Array2<Poly>,
+    pub(crate) matrix: Array2<Poly<f64>>,
 }
 
 /// Implementation methods for MP struct
@@ -770,7 +770,7 @@ impl MatrixOfPoly {
     /// # Panics
     ///
     /// Panics if the matrix cannot be build from given arguments.
-    fn new(rows: usize, cols: usize, data: Vec<Poly>) -> Self {
+    fn new(rows: usize, cols: usize, data: Vec<Poly<f64>>) -> Self {
         Self {
             matrix: Array::from_shape_vec((rows, cols), data)
                 .expect("Input data do not allow to create the matrix"),
@@ -779,7 +779,7 @@ impl MatrixOfPoly {
 
     /// Extract the transfer function from the matrix if is the only one.
     /// Use to get Single Input Single Output transfer function.
-    pub fn siso(&self) -> Option<&Poly> {
+    pub fn siso(&self) -> Option<&Poly<f64>> {
         if self.matrix.shape() == [1, 1] {
             self.matrix.first()
         } else {
@@ -813,7 +813,7 @@ impl From<PolyMatrix> for MatrixOfPoly {
             }
         }
 
-        let polys: Vec<Poly> = tmp.iter().map(|p| Poly::new_from_coeffs(&p)).collect();
+        let polys: Vec<Poly<f64>> = tmp.iter().map(|p| Poly::new_from_coeffs(&p)).collect();
         Self::new(rows, cols, polys)
     }
 }
