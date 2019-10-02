@@ -30,13 +30,13 @@ pub struct Poly<F: Float> {
 }
 
 /// Implementation methods for Poly struct
-impl Poly<f64> {
+impl<F: Float> Poly<F> {
     /// Create a new polynomial given a slice of real coefficients.
     ///
     /// # Arguments
     ///
     /// * `coeffs` - slice of coefficients
-    pub fn new_from_coeffs(coeffs: &[f64]) -> Self {
+    pub fn new_from_coeffs(coeffs: &[F]) -> Self {
         let mut p = Self {
             coeffs: coeffs.into(),
         };
@@ -44,7 +44,67 @@ impl Poly<f64> {
         debug_assert!(!p.coeffs.is_empty());
         p
     }
+    /// Trim the zeros coefficients of high degree terms.
+    /// It uses f64::EPSILON as both absolute and relative difference for
+    /// zero equality check.
+    fn trim(&mut self) {
+        self.trim_complete(F::epsilon(), F::epsilon());
+    }
 
+    /// Trim the zeros coefficients of high degree terms
+    ///
+    /// # Arguments
+    /// * `epsilon` - absolute difference for zero equality check
+    /// * `max_relative` - maximum relative difference for zero equality check
+    fn trim_complete(&mut self, _epsilon: F, _max_relative: F) {
+        // TODO try to use assert macro.
+        //.rposition(|&c| relative_ne!(c, 0.0, epsilon = epsilon, max_relative = max_relative))
+        if let Some(p) = self.coeffs.iter().rposition(|&c| c != F::zero()) {
+            let new_length = p + 1;
+            self.coeffs.truncate(new_length);
+        } else {
+            self.coeffs.resize(1, F::zero());
+        }
+    }
+
+    /// Degree of the polynomial
+    pub fn degree(&self) -> usize {
+        assert!(
+            !self.coeffs.is_empty(),
+            "Degree is not defined on empty polynomial"
+        );
+        self.coeffs.len() - 1
+    }
+
+    /// Vector of the polynomial's coefficients
+    pub fn coeffs(&self) -> Vec<F> {
+        self.coeffs.clone()
+    }
+
+    /// Extend the polynomial coefficients with 0 to the given degree.
+    /// It does not truncate the polynomial.
+    ///
+    /// # Arguments
+    ///
+    /// * `degree` - Degree of the new highest coefficient.
+    pub fn extend(&mut self, degree: usize) {
+        if degree > self.degree() {
+            self.coeffs.resize(degree + 1, F::zero());
+        }
+    }
+
+    /// Retrun the monic polynomial and the leading coefficient.
+    pub fn monic(&self) -> (Self, F) {
+        let leading_coeff = *self.coeffs.last().unwrap_or(&F::one());
+        let result: Vec<_> = self.coeffs.iter().map(|&x| x / leading_coeff).collect();
+        let monic_poly = Self { coeffs: result };
+
+        (monic_poly, leading_coeff)
+    }
+}
+
+/// Implementation methods for Poly struct
+impl Poly<f64> {
     /// Create a new polynomial given a slice of real roots
     ///
     /// # Arguments
@@ -59,45 +119,6 @@ impl Poly<f64> {
         p.trim();
         debug_assert!(!p.coeffs.is_empty());
         p
-    }
-
-    /// Trim the zeros coefficients of high degree terms.
-    /// It uses f64::EPSILON as both absolute and relative difference for
-    /// zero equality check.
-    fn trim(&mut self) {
-        self.trim_complete(std::f64::EPSILON, std::f64::EPSILON);
-    }
-
-    /// Trim the zeros coefficients of high degree terms
-    ///
-    /// # Arguments
-    /// * `epsilon` - absolute difference for zero equality check
-    /// * `max_relative` - maximum relative difference for zero equality check
-    fn trim_complete(&mut self, epsilon: f64, max_relative: f64) {
-        if let Some(p) = self
-            .coeffs
-            .iter()
-            .rposition(|&c| relative_ne!(c, 0.0, epsilon = epsilon, max_relative = max_relative))
-        {
-            let new_length = p + 1;
-            self.coeffs.truncate(new_length);
-        } else {
-            self.coeffs.resize(1, 0.0);
-        }
-    }
-
-    /// Degree of the polynomial
-    pub fn degree(&self) -> usize {
-        assert!(
-            !self.coeffs.is_empty(),
-            "Degree is not defined on empty polynomial"
-        );
-        self.coeffs.len() - 1
-    }
-
-    /// Vector of the polynomial's coefficients
-    pub fn coeffs(&self) -> Vec<f64> {
-        self.coeffs.clone()
     }
 
     /// Build the companion matrix of the polynomial.
@@ -139,27 +160,6 @@ impl Poly<f64> {
         // of the polynomial times the matrix
         let result: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
         PolyMatrix::new_from_coeffs(&result)
-    }
-
-    /// Extend the polynomial coefficients with 0 to the given degree.
-    /// It does not truncate the polynomial.
-    ///
-    /// # Arguments
-    ///
-    /// * `degree` - Degree of the new highest coefficient.
-    pub fn extend(&mut self, degree: usize) {
-        if degree > self.degree() {
-            self.coeffs.resize(degree + 1, 0.);
-        }
-    }
-
-    /// Retrun the monic polynomial and the leading coefficient.
-    pub fn monic(&self) -> (Self, f64) {
-        let leading_coeff = *self.coeffs.last().unwrap_or(&1.);
-        let result: Vec<_> = self.coeffs.iter().map(|x| x / leading_coeff).collect();
-        let monic_poly = Self { coeffs: result };
-
-        (monic_poly, leading_coeff)
     }
 }
 
