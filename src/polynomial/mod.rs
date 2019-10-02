@@ -190,10 +190,10 @@ where
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl Index<usize> for Poly<f64> {
-    type Output = f64;
+impl<F: Float> Index<usize> for Poly<F> {
+    type Output = F;
 
-    fn index(&self, i: usize) -> &f64 {
+    fn index(&self, i: usize) -> &F {
         &self.coeffs[i]
     }
 }
@@ -203,8 +203,8 @@ impl Index<usize> for Poly<f64> {
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl IndexMut<usize> for Poly<f64> {
-    fn index_mut(&mut self, i: usize) -> &mut f64 {
+impl<F: Float> IndexMut<usize> for Poly<F> {
+    fn index_mut(&mut self, i: usize) -> &mut F {
         &mut self.coeffs[i]
     }
 }
