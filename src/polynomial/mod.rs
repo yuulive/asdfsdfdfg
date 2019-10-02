@@ -235,13 +235,15 @@ impl Add<Poly<f64>> for Poly<f64> {
 }
 
 /// Implementation of polynomial and float addition
-impl<F: Float + AddAssign<F>> Add<F> for Poly<f64> {
+impl<F: Float + AddAssign<F>> Add<F> for Poly<F> {
     type Output = Self;
 
     fn add(self, rhs: F) -> Self {
-        let mut result = self.coeffs.to_owned();
-        result[0] += rhs.to_f64().unwrap();
-        Self::new_from_coeffs(&result)
+        let mut result = self.clone();
+        result[0] += rhs;
+        // Non need for trimming since the addition of a float doesn't
+        // modify the coefficients of order higher than zero.
+        result
     }
 }
 
@@ -254,14 +256,14 @@ impl Add<Poly<f64>> for f64 {
     }
 }
 
-// /// Implementation of f32 and polynomial addition
-// impl Add<Poly<f32>> for f32 {
-//     type Output = Poly<f32>;
+/// Implementation of f32 and polynomial addition
+impl Add<Poly<f32>> for f32 {
+    type Output = Poly<f32>;
 
-//     fn add(self, rhs: Poly<f32>) -> Poly<f32> {
-//         rhs + self
-//     }
-// }
+    fn add(self, rhs: Poly<f32>) -> Poly<f32> {
+        rhs + self
+    }
+}
 
 /// Implementation of polynomial subtraction
 impl Sub for Poly<f64> {
