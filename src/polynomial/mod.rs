@@ -25,8 +25,8 @@ use num_traits::{Float, MulAdd, NumCast, One, Zero};
 ///
 /// p(x) = c0 + c1*x + c2*x^2 + ...
 #[derive(Debug, PartialEq, Clone)]
-pub struct Poly<F: Float> {
-    coeffs: Vec<F>,
+pub struct Poly<T> {
+    coeffs: Vec<T>,
 }
 
 /// Implementation methods for Poly struct
@@ -44,6 +44,7 @@ impl<F: Float> Poly<F> {
         debug_assert!(!p.coeffs.is_empty());
         p
     }
+
     /// Trim the zeros coefficients of high degree terms.
     /// It uses f64::EPSILON as both absolute and relative difference for
     /// zero equality check.
