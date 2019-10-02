@@ -249,18 +249,18 @@ impl<F: Float> Add<F> for Poly<F> {
 
 /// Implementation of f64 and polynomial addition
 impl Add<Poly<f64>> for f64 {
-    type Output = Poly<f64>;
+    type Output = Poly<Self>;
 
-    fn add(self, rhs: Poly<f64>) -> Poly<f64> {
+    fn add(self, rhs: Poly<Self>) -> Poly<Self> {
         rhs + self
     }
 }
 
 /// Implementation of f32 and polynomial addition
 impl Add<Poly<f32>> for f32 {
-    type Output = Poly<f32>;
+    type Output = Poly<Self>;
 
-    fn add(self, rhs: Poly<f32>) -> Poly<f32> {
+    fn add(self, rhs: Poly<Self>) -> Poly<Self> {
         rhs + self
     }
 }
@@ -291,9 +291,9 @@ impl<F: Float> Sub<F> for Poly<F> {
 
 /// Implementation of f64 and polynomial subtraction
 impl Sub<Poly<f64>> for f64 {
-    type Output = Poly<f64>;
+    type Output = Poly<Self>;
 
-    fn sub(self, rhs: Poly<f64>) -> Poly<f64> {
+    fn sub(self, rhs: Poly<Self>) -> Poly<Self> {
         let mut result = rhs.clone();
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
@@ -304,9 +304,9 @@ impl Sub<Poly<f64>> for f64 {
 
 /// Implementation of f32 and polynomial subtraction
 impl Sub<Poly<f32>> for f32 {
-    type Output = Poly<f32>;
+    type Output = Poly<Self>;
 
-    fn sub(self, rhs: Poly<f32>) -> Poly<f32> {
+    fn sub(self, rhs: Poly<Self>) -> Poly<Self> {
         let mut result = rhs.clone();
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
@@ -347,18 +347,18 @@ impl<F: Float> Mul<F> for Poly<F> {
 
 /// Implementation of f64 and polynomial multiplication
 impl Mul<Poly<f64>> for f64 {
-    type Output = Poly<f64>;
+    type Output = Poly<Self>;
 
-    fn mul(self, rhs: Poly<f64>) -> Poly<f64> {
+    fn mul(self, rhs: Poly<Self>) -> Poly<Self> {
         rhs * self
     }
 }
 
 /// Implementation of f32 and polynomial multiplication
 impl Mul<Poly<f32>> for f32 {
-    type Output = Poly<f32>;
+    type Output = Poly<Self>;
 
-    fn mul(self, rhs: Poly<f32>) -> Poly<f32> {
+    fn mul(self, rhs: Poly<Self>) -> Poly<Self> {
         rhs * self
     }
 }
