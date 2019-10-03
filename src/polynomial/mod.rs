@@ -259,23 +259,31 @@ impl<F: Float> Add<F> for Poly<F> {
     }
 }
 
-/// Implementation of f64 and polynomial addition
-impl Add<Poly<f64>> for f64 {
-    type Output = Poly<Self>;
+macro_rules! impl_add_for_poly {
+    (
+        $(#[$meta:meta])*
+            $f:ty
+    ) => {
+        $(#[$meta])*
+        impl Add<Poly<$f>> for $f {
+            type Output = Poly<Self>;
 
-    fn add(self, rhs: Poly<Self>) -> Poly<Self> {
-        rhs + self
-    }
+            fn add(self, rhs: Poly<Self>) -> Poly<Self> {
+                rhs + self
+            }
+        }
+    };
 }
 
-/// Implementation of f32 and polynomial addition
-impl Add<Poly<f32>> for f32 {
-    type Output = Poly<Self>;
+impl_add_for_poly!(
+    /// Implementation of f64 and polynomial addition
+    f64
+);
 
-    fn add(self, rhs: Poly<Self>) -> Poly<Self> {
-        rhs + self
-    }
-}
+impl_add_for_poly!(
+    /// Implementation of f32 and polynomial addition
+    f32
+);
 
 /// Implementation of polynomial subtraction
 impl<F: Float> Sub for Poly<F> {
@@ -301,31 +309,35 @@ impl<F: Float> Sub<F> for Poly<F> {
     }
 }
 
-/// Implementation of f64 and polynomial subtraction
-impl Sub<Poly<f64>> for f64 {
-    type Output = Poly<Self>;
+macro_rules! impl_sub_for_poly {
+    (
+        $(#[$meta:meta])*
+            $f:ty
+    ) => {
+        $(#[$meta])*
+        impl Sub<Poly<$f>> for $f {
+            type Output = Poly<Self>;
 
-    fn sub(self, rhs: Poly<Self>) -> Poly<Self> {
-        let mut result = rhs.clone();
-        // Non need for trimming since the addition of a float doesn't
-        // modify the coefficients of order higher than zero.
-        result[0] = self - result[0];
-        result
-    }
+            fn sub(self, rhs: Poly<Self>) -> Poly<Self> {
+                let mut result = rhs.clone();
+                // Non need for trimming since the addition of a float doesn't
+                // modify the coefficients of order higher than zero.
+                result[0] = self - result[0];
+                result
+            }
+        }
+    };
 }
 
-/// Implementation of f32 and polynomial subtraction
-impl Sub<Poly<f32>> for f32 {
-    type Output = Poly<Self>;
+impl_sub_for_poly!(
+    /// Implementation of f64 and polynomial subtraction
+    f64
+);
 
-    fn sub(self, rhs: Poly<Self>) -> Poly<Self> {
-        let mut result = rhs.clone();
-        // Non need for trimming since the addition of a float doesn't
-        // modify the coefficients of order higher than zero.
-        result[0] = self - result[0];
-        result
-    }
-}
+impl_sub_for_poly!(
+    /// Implementation of f32 and polynomial subtraction
+    f32
+);
 
 /// Implementation of polynomial multiplication
 impl<F: Float + AddAssign> Mul for Poly<F> {
@@ -357,23 +369,31 @@ impl<F: Float> Mul<F> for Poly<F> {
     }
 }
 
-/// Implementation of f64 and polynomial multiplication
-impl Mul<Poly<f64>> for f64 {
-    type Output = Poly<Self>;
+macro_rules! impl_mul_for_poly {
+    (
+        $(#[$meta:meta])*
+            $f:ty
+    ) => {
+        $(#[$meta])*
+        impl Mul<Poly<$f>> for $f {
+            type Output = Poly<Self>;
 
-    fn mul(self, rhs: Poly<Self>) -> Poly<Self> {
-        rhs * self
-    }
+            fn mul(self, rhs: Poly<Self>) -> Poly<Self> {
+                rhs * self
+            }
+        }
+    };
 }
 
-/// Implementation of f32 and polynomial multiplication
-impl Mul<Poly<f32>> for f32 {
-    type Output = Poly<Self>;
+impl_mul_for_poly!(
+    /// Implementation of f64 and polynomial multiplication
+    f64
+);
 
-    fn mul(self, rhs: Poly<Self>) -> Poly<Self> {
-        rhs * self
-    }
-}
+impl_mul_for_poly!(
+    /// Implementation of f32 and polynomial multiplication
+    f32
+);
 
 /// Implementation of polynomial and float division
 impl<F: Float> Div<F> for Poly<F> {
