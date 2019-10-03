@@ -11,12 +11,15 @@
 
 use crate::Eval;
 
-use std::fmt;
 use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Sub};
+use std::{
+    fmt,
+    fmt::{Debug, Display, Formatter},
+};
 
-use nalgebra::{DMatrix, Schur};
+use nalgebra::{ComplexField, DMatrix, RealField, Scalar, Schur};
 use ndarray::{Array, Array2};
-use num_complex::Complex64;
+use num_complex::{Complex, Complex64};
 use num_traits::{Float, MulAdd, NumCast, One, Zero};
 
 /// Polynomial object
@@ -124,27 +127,27 @@ impl<F: Float + AddAssign> Poly<F> {
 }
 
 /// Implementation methods for Poly struct
-impl Poly<f64> {
+impl<F: Scalar + ComplexField + RealField + Float + Debug> Poly<F> {
     /// Build the companion matrix of the polynomial.
     ///
     /// Subdiagonal terms are 1., rightmost column contains the coefficients
     /// of the monic polynomial with opposite sign.
-    pub(crate) fn companion(&self) -> DMatrix<f64> {
+    pub(crate) fn companion(&self) -> DMatrix<F> {
         let length = self.degree();
         let hi_coeff = self.coeffs[length];
         DMatrix::from_fn(length, length, |i, j| {
             if j == length - 1 {
                 -self.coeffs[i] / hi_coeff // monic polynomial
             } else if i == j + 1 {
-                1.
+                F::one()
             } else {
-                0.
+                F::zero()
             }
         })
     }
 
     /// Calculate the real roots of the polynomial
-    pub fn roots(&self) -> Option<Vec<f64>> {
+    pub fn roots(&self) -> Option<Vec<F>> {
         // Build the companion matrix
         let comp = self.companion();
         let schur = Schur::new(comp);
@@ -152,12 +155,15 @@ impl Poly<f64> {
     }
 
     /// Calculate the complex roots of the polynomial
-    pub fn complex_roots(&self) -> Vec<Complex64> {
+    pub fn complex_roots(&self) -> Vec<Complex<F>> {
         let comp = self.companion();
         let schur = Schur::new(comp);
         schur.complex_eigenvalues().as_slice().to_vec()
     }
+}
 
+/// Implementation methods for Poly struct
+impl Poly<f64> {
     /// Implementation of polynomial and matrix multiplication
     pub(crate) fn mul(&self, rhs: &DMatrix<f64>) -> PolyMatrix {
         // It's the polynomial matrix whose coefficients are the coefficients
@@ -406,8 +412,8 @@ impl<F: Float + AddAssign> One for Poly<F> {
 }
 
 /// Implement printing of polynomial
-impl<F: Float + fmt::Display> fmt::Display for Poly<F> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl<F: Float + Display> Display for Poly<F> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.coeffs.is_empty() {
             return write!(f, "0");
         } else if self.degree() == 0 {
@@ -464,14 +470,14 @@ mod tests {
 
         assert!(vec![-2., -2.]
             .iter()
-            .zip(Poly::new_from_roots(&[-2., -2.]).roots().unwrap())
-            .map(|(x, y)| (x - y).abs())
+            .zip(Poly::new_from_roots(&[-2., -2.]).roots().unwrap().iter())
+            .map(|(x, y): (&f64, &f64)| (x - y).abs())
             .all(|x| x < 0.000001));
 
         assert!(vec![1., 2., 3.]
             .iter()
-            .zip(Poly::new_from_roots(&[1., 2., 3.]).roots().unwrap())
-            .map(|(x, y)| (x - y).abs())
+            .zip(Poly::new_from_roots(&[1., 2., 3.]).roots().unwrap().iter())
+            .map(|(x, y): (&f64, &f64)| (x - y).abs())
             .all(|x| x < 0.000001));
 
         assert_eq!(
@@ -747,8 +753,8 @@ impl Index<usize> for PolyMatrix {
 }
 
 /// Implementation of polynomial matrix printing
-impl fmt::Display for PolyMatrix {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Display for PolyMatrix {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.degree() == 0 {
             return write!(f, "{}", self.matr_coeffs[0]);
         }
@@ -845,8 +851,8 @@ impl From<PolyMatrix> for MatrixOfPoly {
 }
 
 /// Implementation of matrix of polynomials printing
-impl fmt::Display for MatrixOfPoly {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Display for MatrixOfPoly {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", self.matrix)
     }
 }
