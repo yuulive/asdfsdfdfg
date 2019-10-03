@@ -105,23 +105,26 @@ impl<F: Float> Poly<F> {
 }
 
 /// Implementation methods for Poly struct
-impl Poly<f64> {
+impl<F: Float + AddAssign> Poly<F> {
     /// Create a new polynomial given a slice of real roots
     ///
     /// # Arguments
     ///
     /// * `roots` - slice of roots
-    pub fn new_from_roots(roots: &[f64]) -> Self {
-        let mut p = roots.iter().fold(Self { coeffs: vec![1.] }, |acc, &r| {
+    pub fn new_from_roots(roots: &[F]) -> Self {
+        let mut p = roots.iter().fold(Self::one(), |acc, &r| {
             acc * Self {
-                coeffs: vec![-r, 1.],
+                coeffs: vec![-r, F::one()],
             }
         });
         p.trim();
         debug_assert!(!p.coeffs.is_empty());
         p
     }
+}
 
+/// Implementation methods for Poly struct
+impl Poly<f64> {
     /// Build the companion matrix of the polynomial.
     ///
     /// Subdiagonal terms are 1., rightmost column contains the coefficients
