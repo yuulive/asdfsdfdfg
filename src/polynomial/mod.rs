@@ -20,7 +20,7 @@ use std::{
 use nalgebra::{ComplexField, DMatrix, RealField, Scalar, Schur};
 use ndarray::{Array, Array2};
 use num_complex::{Complex, Complex64};
-use num_traits::{Float, MulAdd, NumCast, One, Zero};
+use num_traits::{Float, MulAdd, NumCast, One, Signed, Zero};
 
 /// Polynomial object
 ///
@@ -33,13 +33,59 @@ pub struct Poly<T> {
 }
 
 /// Implementation methods for Poly struct
-impl<F: Float> Poly<F> {
+impl<T> Poly<T> {
+    /// Degree of the polynomial
+    pub fn degree(&self) -> usize {
+        assert!(
+            !self.coeffs.is_empty(),
+            "Degree is not defined on empty polynomial"
+        );
+        self.coeffs.len() - 1
+    }
+}
+
+impl<T: Copy> Poly<T> {
+    /// Vector of the polynomial's coefficients
+    pub fn coeffs(&self) -> Vec<T> {
+        self.coeffs.clone()
+    }
+}
+
+/// Implementation methods for Poly struct
+impl<T: Copy + Zero> Poly<T> {
+    /// Extend the polynomial coefficients with 0 to the given degree.
+    /// It does not truncate the polynomial.
+    ///
+    /// # Arguments
+    ///
+    /// * `degree` - Degree of the new highest coefficient.
+    pub fn extend(&mut self, degree: usize) {
+        if degree > self.degree() {
+            self.coeffs.resize(degree + 1, T::zero());
+        }
+    }
+}
+
+/// Implementation methods for Poly struct
+impl<T: Copy + Div<Output = T> + One> Poly<T> {
+    /// Retrun the monic polynomial and the leading coefficient.
+    pub fn monic(&self) -> (Self, T) {
+        let leading_coeff = *self.coeffs.last().unwrap_or(&T::one());
+        let result: Vec<_> = self.coeffs.iter().map(|&x| x / leading_coeff).collect();
+        let monic_poly = Self { coeffs: result };
+
+        (monic_poly, leading_coeff)
+    }
+}
+
+/// Implementation methods for Poly struct
+impl<T: Copy + PartialEq + Zero> Poly<T> {
     /// Create a new polynomial given a slice of real coefficients.
     ///
     /// # Arguments
     ///
     /// * `coeffs` - slice of coefficients
-    pub fn new_from_coeffs(coeffs: &[F]) -> Self {
+    pub fn new_from_coeffs(coeffs: &[T]) -> Self {
         let mut p = Self {
             coeffs: coeffs.into(),
         };
@@ -49,75 +95,29 @@ impl<F: Float> Poly<F> {
     }
 
     /// Trim the zeros coefficients of high degree terms.
-    /// It uses f64::EPSILON as both absolute and relative difference for
-    /// zero equality check.
     fn trim(&mut self) {
-        self.trim_complete(F::epsilon(), F::epsilon());
-    }
-
-    /// Trim the zeros coefficients of high degree terms
-    ///
-    /// # Arguments
-    /// * `epsilon` - absolute difference for zero equality check
-    /// * `max_relative` - maximum relative difference for zero equality check
-    fn trim_complete(&mut self, _epsilon: F, _max_relative: F) {
         // TODO try to use assert macro.
         //.rposition(|&c| relative_ne!(c, 0.0, epsilon = epsilon, max_relative = max_relative))
-        if let Some(p) = self.coeffs.iter().rposition(|&c| c != F::zero()) {
+        if let Some(p) = self.coeffs.iter().rposition(|&c| c != T::zero()) {
             let new_length = p + 1;
             self.coeffs.truncate(new_length);
         } else {
-            self.coeffs.resize(1, F::zero());
+            self.coeffs.resize(1, T::zero());
         }
-    }
-
-    /// Degree of the polynomial
-    pub fn degree(&self) -> usize {
-        assert!(
-            !self.coeffs.is_empty(),
-            "Degree is not defined on empty polynomial"
-        );
-        self.coeffs.len() - 1
-    }
-
-    /// Vector of the polynomial's coefficients
-    pub fn coeffs(&self) -> Vec<F> {
-        self.coeffs.clone()
-    }
-
-    /// Extend the polynomial coefficients with 0 to the given degree.
-    /// It does not truncate the polynomial.
-    ///
-    /// # Arguments
-    ///
-    /// * `degree` - Degree of the new highest coefficient.
-    pub fn extend(&mut self, degree: usize) {
-        if degree > self.degree() {
-            self.coeffs.resize(degree + 1, F::zero());
-        }
-    }
-
-    /// Retrun the monic polynomial and the leading coefficient.
-    pub fn monic(&self) -> (Self, F) {
-        let leading_coeff = *self.coeffs.last().unwrap_or(&F::one());
-        let result: Vec<_> = self.coeffs.iter().map(|&x| x / leading_coeff).collect();
-        let monic_poly = Self { coeffs: result };
-
-        (monic_poly, leading_coeff)
     }
 }
 
 /// Implementation methods for Poly struct
-impl<F: Float + AddAssign> Poly<F> {
+impl<T: Float + AddAssign> Poly<T> {
     /// Create a new polynomial given a slice of real roots
     ///
     /// # Arguments
     ///
     /// * `roots` - slice of roots
-    pub fn new_from_roots(roots: &[F]) -> Self {
+    pub fn new_from_roots(roots: &[T]) -> Self {
         let mut p = roots.iter().fold(Self::one(), |acc, &r| {
             acc * Self {
-                coeffs: vec![-r, F::one()],
+                coeffs: vec![-r, T::one()],
             }
         });
         p.trim();
@@ -127,27 +127,27 @@ impl<F: Float + AddAssign> Poly<F> {
 }
 
 /// Implementation methods for Poly struct
-impl<F: Scalar + ComplexField + RealField + Float + Debug> Poly<F> {
+impl<T: Scalar + ComplexField + RealField + Debug> Poly<T> {
     /// Build the companion matrix of the polynomial.
     ///
     /// Subdiagonal terms are 1., rightmost column contains the coefficients
     /// of the monic polynomial with opposite sign.
-    pub(crate) fn companion(&self) -> DMatrix<F> {
+    pub(crate) fn companion(&self) -> DMatrix<T> {
         let length = self.degree();
         let hi_coeff = self.coeffs[length];
         DMatrix::from_fn(length, length, |i, j| {
             if j == length - 1 {
                 -self.coeffs[i] / hi_coeff // monic polynomial
             } else if i == j + 1 {
-                F::one()
+                T::one()
             } else {
-                F::zero()
+                T::zero()
             }
         })
     }
 
     /// Calculate the real roots of the polynomial
-    pub fn roots(&self) -> Option<Vec<F>> {
+    pub fn roots(&self) -> Option<Vec<T>> {
         // Build the companion matrix
         let comp = self.companion();
         let schur = Schur::new(comp);
@@ -155,7 +155,7 @@ impl<F: Scalar + ComplexField + RealField + Float + Debug> Poly<F> {
     }
 
     /// Calculate the complex roots of the polynomial
-    pub fn complex_roots(&self) -> Vec<Complex<F>> {
+    pub fn complex_roots(&self) -> Vec<Complex<T>> {
         let comp = self.companion();
         let schur = Schur::new(comp);
         schur.complex_eigenvalues().as_slice().to_vec()
@@ -174,10 +174,10 @@ impl Poly<f64> {
 }
 
 /// Evaluate the polynomial at the given real or complex number
-impl<N, F> Eval<N> for Poly<F>
+impl<N, T> Eval<N> for Poly<T>
 where
     N: Copy + MulAdd<Output = N> + NumCast + Zero,
-    F: Float,
+    T: Float,
 {
     /// Evaluate the polynomial using Horner's method. The evaluation is safe
     /// is the polynomial coefficient can be casted the type `N`.
@@ -188,7 +188,7 @@ where
     ///
     /// # Panics
     ///
-    /// The method panics if the conversion from `F` to type `N` fails.
+    /// The method panics if the conversion from `T` to type `N` fails.
     fn eval(&self, x: &N) -> N {
         self.coeffs
             .iter()
@@ -202,10 +202,10 @@ where
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl<F: Float> Index<usize> for Poly<F> {
-    type Output = F;
+impl<T> Index<usize> for Poly<T> {
+    type Output = T;
 
-    fn index(&self, i: usize) -> &F {
+    fn index(&self, i: usize) -> &T {
         &self.coeffs[i]
     }
 }
@@ -215,14 +215,14 @@ impl<F: Float> Index<usize> for Poly<F> {
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl<F: Float> IndexMut<usize> for Poly<F> {
-    fn index_mut(&mut self, i: usize) -> &mut F {
+impl<T> IndexMut<usize> for Poly<T> {
+    fn index_mut(&mut self, i: usize) -> &mut T {
         &mut self.coeffs[i]
     }
 }
 
 /// Implementation of polynomial addition
-impl<F: Float> Add<Poly<F>> for Poly<F> {
+impl<T: Float> Add<Poly<T>> for Poly<T> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -247,10 +247,10 @@ impl<F: Float> Add<Poly<F>> for Poly<F> {
 }
 
 /// Implementation of polynomial and float addition
-impl<F: Float> Add<F> for Poly<F> {
+impl<T: Add<Output = T> + Copy> Add<T> for Poly<T> {
     type Output = Self;
 
-    fn add(self, rhs: F) -> Self {
+    fn add(self, rhs: T) -> Self {
         let mut result = self.clone();
         result[0] = result[0] + rhs;
         // Non need for trimming since the addition of a float doesn't
@@ -286,21 +286,24 @@ impl_add_for_poly!(
 );
 
 /// Implementation of polynomial subtraction
-impl<F: Float> Sub for Poly<F> {
+impl<T: Float> Sub for Poly<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        // Just multiply 'rhs' by -1 and use addition.
-        let sub_p: Vec<_> = rhs.coeffs.iter().map(|&c| -c).collect();
-        self.add(Self::new_from_coeffs(&sub_p))
+        // Just negate 'rhs' and use addition.
+        let mut neg = rhs.clone();
+        for c in &mut neg.coeffs {
+            *c = -*c;
+        }
+        self.add(neg)
     }
 }
 
 /// Implementation of polynomial and float subtraction
-impl<F: Float> Sub<F> for Poly<F> {
+impl<T: Copy + Sub<Output = T>> Sub<T> for Poly<T> {
     type Output = Self;
 
-    fn sub(self, rhs: F) -> Self {
+    fn sub(self, rhs: T) -> Self {
         let mut result = self.clone();
         result[0] = result[0] - rhs;
         // Non need for trimming since the addition of a float doesn't
@@ -340,18 +343,18 @@ impl_sub_for_poly!(
 );
 
 /// Implementation of polynomial multiplication
-impl<F: Float + AddAssign> Mul for Poly<F> {
+impl<T: Float + AddAssign> Mul for Poly<T> {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
     fn mul(self, rhs: Self) -> Self {
         // Polynomial multiplication is implemented as discrete convolution.
         let new_degree = self.degree() + rhs.degree();
-        let mut new_coeffs: Vec<F> = vec![F::zero(); new_degree + 1];
+        let mut new_coeffs: Vec<T> = vec![T::zero(); new_degree + 1];
         for i in 0..=self.degree() {
             for j in 0..=rhs.degree() {
-                let a = *self.coeffs.get(i).unwrap_or(&F::zero());
-                let b = *rhs.coeffs.get(j).unwrap_or(&F::zero());
+                let a = *self.coeffs.get(i).unwrap_or(&T::zero());
+                let b = *rhs.coeffs.get(j).unwrap_or(&T::zero());
                 new_coeffs[i + j] += a * b;
             }
         }
@@ -360,12 +363,19 @@ impl<F: Float + AddAssign> Mul for Poly<F> {
 }
 
 /// Implementation of polynomial and float multiplication
-impl<F: Float> Mul<F> for Poly<F> {
+impl<T: Float> Mul<T> for Poly<T> {
     type Output = Self;
 
-    fn mul(self, rhs: F) -> Self {
-        let result: Vec<_> = self.coeffs.iter().map(|&x| x * rhs).collect();
-        Self::new_from_coeffs(&result)
+    fn mul(self, rhs: T) -> Self {
+        if rhs.is_zero() {
+            Self::zero()
+        } else {
+            let mut result = self.clone();
+            for c in &mut result.coeffs {
+                *c = *c * rhs;
+            }
+            result
+        }
     }
 }
 
@@ -396,43 +406,50 @@ impl_mul_for_poly!(
 );
 
 /// Implementation of polynomial and float division
-impl<F: Float> Div<F> for Poly<F> {
+impl<T: Float> Div<T> for Poly<T> {
     type Output = Self;
 
-    fn div(self, rhs: F) -> Self {
-        let result: Vec<_> = self.coeffs.iter().map(|&x| x / rhs).collect();
-        Self::new_from_coeffs(&result)
+    fn div(self, rhs: T) -> Self {
+        if rhs.is_infinite() {
+            Self::zero()
+        } else {
+            let mut result = self.clone();
+            for c in &mut result.coeffs {
+                *c = *c / rhs;
+            }
+            result
+        }
     }
 }
 
 /// Implementation of the additive identity for polynomials
-impl<F: Float> Zero for Poly<F> {
+impl<T: Float + Zero> Zero for Poly<T> {
     fn zero() -> Self {
         Self {
-            coeffs: vec![F::zero()],
+            coeffs: vec![T::zero()],
         }
     }
 
     fn is_zero(&self) -> bool {
-        self.coeffs == vec![F::zero()]
+        self.coeffs == vec![T::zero()]
     }
 }
 
 /// Implementation of the multiplicative identity for polynomials
-impl<F: Float + AddAssign> One for Poly<F> {
+impl<T: Float + AddAssign> One for Poly<T> {
     fn one() -> Self {
         Self {
-            coeffs: vec![F::one()],
+            coeffs: vec![T::one()],
         }
     }
 
     fn is_one(&self) -> bool {
-        self.coeffs == vec![F::one()]
+        self.coeffs == vec![T::one()]
     }
 }
 
 /// Implement printing of polynomial
-impl<F: Float + Display> Display for Poly<F> {
+impl<T: Display + One + PartialEq + Signed + Zero> Display for Poly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.coeffs.is_empty() {
             return write!(f, "0");
@@ -444,12 +461,12 @@ impl<F: Float + Display> Display for Poly<F> {
         for (i, c) in self.coeffs.iter().enumerate() {
             // TODO use approx crate
             //if relative_eq!(*c, 0.0) {
-            if *c == F::zero() {
+            if *c == T::zero() {
                 continue;
             }
             s.push_str(sep);
             #[allow(clippy::float_cmp)] // signum() returns either 1.0 or -1.0
-            let sign = if c.signum() == F::one() { "+" } else { "" };
+            let sign = if c.signum() == T::one() { "+" } else { "" };
             if i == 0 {
                 s.push_str(&format!("{}", c));
             } else if i == 1 {
