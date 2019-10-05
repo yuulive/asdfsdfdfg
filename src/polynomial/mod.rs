@@ -598,6 +598,11 @@ mod tests {
             Poly::new_from_roots(&[-2., -2.])
         );
 
+        assert_eq!(
+            Poly::new_from_coeffs(&[4, 4, 1]),
+            Poly::new_from_roots(&[-2, -2])
+        );
+
         assert!(vec![-2., -2.]
             .iter()
             .zip(Poly::new_from_roots(&[-2., -2.]).roots().unwrap().iter())
@@ -617,11 +622,14 @@ mod tests {
     }
 
     #[test]
-    fn poly_f64_eval() {
+    fn poly_eval() {
         let p = Poly::new_from_coeffs(&[1., 2., 3.]);
         assert_eq!(86., p.eval(&5.));
 
-        assert_eq!(0.0, Poly::<f64>::new_from_coeffs(&[]).eval(&6.4));
+        assert_eq!(0.0, Poly::<f64>::zero().eval(&6.4));
+
+        let p2 = Poly::new_from_coeffs(&[3, 4, 1]);
+        assert_eq!(143, p2.eval(&10));
     }
 
     #[test]
@@ -678,6 +686,11 @@ mod tests {
         );
 
         assert_eq!(
+            Poly::new_from_coeffs(&[-2, 2, 3]),
+            Poly::new_from_coeffs(&[1, 2, 3]) + -3
+        );
+
+        assert_eq!(
             Poly::new_from_coeffs(&[9.0_f32, 2., 3.]),
             3. + Poly::new_from_coeffs(&[1.0_f32, 2., 3.]) + 5.
         );
@@ -719,6 +732,11 @@ mod tests {
             Poly::new_from_coeffs(&[-1., 1.]),
             1. - Poly::new_from_coeffs(&[2., 1.])
         );
+
+        assert_eq!(
+            Poly::new_from_coeffs(&[-10, 1]),
+            Poly::new_from_coeffs(&[2, 1]) - 12
+        );
     }
 
     #[test]
@@ -749,6 +767,8 @@ mod tests {
         );
 
         assert_eq!(Poly::zero(), 0. * Poly::new_from_coeffs(&[1., 0., 1.]));
+
+        assert_eq!(Poly::zero(), Poly::new_from_coeffs(&[1, 0, 1]) * 0);
     }
 
     #[test]
@@ -756,6 +776,11 @@ mod tests {
         assert_eq!(
             Poly::new_from_coeffs(&[0.5, 0., 0.5]),
             Poly::new_from_coeffs(&[1., 0., 1.]) / 2.0
+        );
+
+        assert_eq!(
+            Poly::new_from_coeffs(&[4, 0, 5]),
+            Poly::new_from_coeffs(&[8, 1, 11]) / 2
         );
 
         let inf = std::f32::INFINITY;
@@ -783,6 +808,42 @@ mod tests {
 
         assert!(Poly::<f32>::zero().is_zero());
         assert!(Poly::<f32>::one().is_one());
+
+        assert!(Poly::<i8>::zero().is_zero());
+        assert!(Poly::<i8>::one().is_one());
+
+        assert!(Poly::<u8>::zero().is_zero());
+        assert!(Poly::<u8>::one().is_one());
+
+        assert!(Poly::<i16>::zero().is_zero());
+        assert!(Poly::<i16>::one().is_one());
+
+        assert!(Poly::<u16>::zero().is_zero());
+        assert!(Poly::<u16>::one().is_one());
+
+        assert!(Poly::<i32>::zero().is_zero());
+        assert!(Poly::<i32>::one().is_one());
+
+        assert!(Poly::<u32>::zero().is_zero());
+        assert!(Poly::<u32>::one().is_one());
+
+        assert!(Poly::<i64>::zero().is_zero());
+        assert!(Poly::<i64>::one().is_one());
+
+        assert!(Poly::<u64>::zero().is_zero());
+        assert!(Poly::<u64>::one().is_one());
+
+        assert!(Poly::<i128>::zero().is_zero());
+        assert!(Poly::<i128>::one().is_one());
+
+        assert!(Poly::<u128>::zero().is_zero());
+        assert!(Poly::<u128>::one().is_one());
+
+        assert!(Poly::<isize>::zero().is_zero());
+        assert!(Poly::<isize>::one().is_one());
+
+        assert!(Poly::<usize>::zero().is_zero());
+        assert!(Poly::<usize>::one().is_one());
     }
 }
 
