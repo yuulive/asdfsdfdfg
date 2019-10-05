@@ -13,7 +13,7 @@ use num_complex::Complex64;
 #[derive(Debug)]
 pub struct PolarIterator {
     /// Transfer function
-    tf: Tf,
+    tf: Tf<f64>,
     /// Number of intervals of the plot
     intervals: f64,
     /// Step between frequencies
@@ -41,7 +41,7 @@ impl PolarIterator {
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
     pub(crate) fn new(
-        tf: Tf,
+        tf: Tf<f64>,
         min_freq: RadiantsPerSecond,
         max_freq: RadiantsPerSecond,
         step: f64,

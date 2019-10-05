@@ -267,7 +267,7 @@ pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix) {
     (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
 }
 
-impl From<Tf> for Ss {
+impl From<Tf<f64>> for Ss {
     /// Convert a transfer function representation into state space representation.
     /// Conversion is done using the observability canonical form.
     ///
@@ -295,7 +295,7 @@ impl From<Tf> for Ss {
     /// # Arguments
     ///
     /// `tf` - transfer function
-    fn from(tf: Tf) -> Self {
+    fn from(tf: Tf<f64>) -> Self {
         // Get the denominator in the monic form and the leading coefficient.
         let (den_monic, den_n) = tf.den().monic();
         // Extend the numerator coefficients with zeros to the length of the

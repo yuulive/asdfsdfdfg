@@ -3,7 +3,7 @@ extern crate automatica;
 use automatica::transfer_function::Tf;
 use automatica::{polynomial::Poly, Eval};
 
-use num_complex::Complex;
+use num_complex::Complex64;
 
 fn main() {
     let tf = Tf::new(
@@ -13,7 +13,7 @@ fn main() {
 
     println!("T:\n{}", tf);
 
-    let c = tf.eval(&Complex::new(0., 0.9));
+    let c = tf.eval(&Complex64::new(0., 0.9));
     println!(
         "{}\n{}dB, {}°",
         c,

@@ -20,66 +20,73 @@ use crate::{
     Eval,
 };
 
+use nalgebra::{ComplexField, RealField, Scalar};
 use ndarray::{Array2, Axis, Zip};
-use num_complex::Complex64;
+use num_complex::{Complex, Complex64};
+use num_traits::{Float, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
-use std::fmt;
 use std::ops::{Index, IndexMut};
+use std::{
+    fmt,
+    fmt::{Debug, Display, Formatter},
+};
 
 /// Transfer function representation of a linear system
 #[derive(Debug)]
-pub struct Tf {
+pub struct Tf<T> {
     /// Transfer function numerator
-    num: Poly<f64>,
+    num: Poly<T>,
     /// Transfer function denominator
-    den: Poly<f64>,
+    den: Poly<T>,
 }
 
 /// Implementation of transfer function methods
-impl Tf {
+impl<T: Float> Tf<T> {
     /// Create a new transfer function given its numerator and denominator
     ///
     /// # Arguments
     ///
     /// * `num` - Transfer function numerator
     /// * `den` - Transfer function denominator
-    pub fn new(num: Poly<f64>, den: Poly<f64>) -> Self {
+    pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
         Self { num, den }
     }
 
     /// Extract transfer function numerator
-    pub fn num(&self) -> &Poly<f64> {
+    pub fn num(&self) -> &Poly<T> {
         &self.num
     }
 
     /// Extract transfer function denominator
-    pub fn den(&self) -> &Poly<f64> {
+    pub fn den(&self) -> &Poly<T> {
         &self.den
     }
+}
 
+impl<T: Scalar + ComplexField + RealField + Debug> Tf<T> {
     /// Calculate the poles of the transfer function
-    pub fn poles(&self) -> Option<Vec<f64>> {
+    pub fn poles(&self) -> Option<Vec<T>> {
         self.den.roots()
     }
 
     /// Calculate the poles of the transfer function
-    pub fn complex_poles(&self) -> Vec<Complex64> {
+    pub fn complex_poles(&self) -> Vec<Complex<T>> {
         self.den.complex_roots()
     }
 
     /// Calculate the zeros of the transfer function
-    pub fn zeros(&self) -> Option<Vec<f64>> {
+    pub fn zeros(&self) -> Option<Vec<T>> {
         self.num.roots()
     }
 
     /// Calculate the zeros of the transfer function
-    pub fn complex_zeros(&self) -> Vec<Complex64> {
+    pub fn complex_zeros(&self) -> Vec<Complex<T>> {
         self.num.complex_roots()
     }
 }
 
-impl TryFrom<Ss> for Tf {
+impl TryFrom<Ss> for Tf<f64> {
     type Error = &'static str;
 
     /// Convert a state-space representation into transfer functions.
@@ -103,14 +110,14 @@ impl TryFrom<Ss> for Tf {
 }
 
 /// Implementation of the evaluation of a transfer function
-impl Eval<Complex64> for Tf {
-    fn eval(&self, s: &Complex64) -> Complex64 {
+impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for Tf<T> {
+    fn eval(&self, s: &Complex<T>) -> Complex<T> {
         self.num.eval(s) / self.den.eval(s)
     }
 }
 
 /// Implementation of the Bode plot for a transfer function
-impl BodePlot for Tf {
+impl BodePlot for Tf<f64> {
     fn bode(
         self,
         min_freq: RadiantsPerSecond,
@@ -122,7 +129,7 @@ impl BodePlot for Tf {
 }
 
 /// Implementation of the polar plot for a transfer function
-impl PolarPlot for Tf {
+impl PolarPlot for Tf<f64> {
     fn polar(
         self,
         min_freq: RadiantsPerSecond,
@@ -134,8 +141,8 @@ impl PolarPlot for Tf {
 }
 
 /// Implementation of transfer function printing
-impl fmt::Display for Tf {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl<T: Display + One + PartialEq + Signed + Zero> Display for Tf<T> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let s_num = self.num.to_string();
         let s_den = self.den.to_string();
 

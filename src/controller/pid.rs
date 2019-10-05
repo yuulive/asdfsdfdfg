@@ -77,7 +77,7 @@ impl<F: Float> Pid<F> {
     /// Kp --------------------
     ///           Ti*s
     /// ```
-    pub fn tf(&self) -> Tf {
+    pub fn tf(&self) -> Tf<f64> {
         if let Some(n) = self.n {
             let a0 = self.kp * n;
             let a1 = self.kp * (self.ti * n + self.td);

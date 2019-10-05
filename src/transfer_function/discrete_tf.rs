@@ -9,7 +9,7 @@ use num_complex::Complex64;
 /// Discrete transfer function.
 pub struct Tfz {
     /// Transfer function
-    tf: Tf,
+    tf: Tf<f64>,
     /// Sampling period
     ts: Seconds,
     /// Discretization function
@@ -24,7 +24,7 @@ impl Tfz {
     /// * `tf` - Continuous transfer function
     /// * `ts` - Sampling period
     /// * `conversion` - Conversion function
-    fn new_from_cont(tf: Tf, ts: Seconds, conversion: fn(Complex64, Seconds) -> Complex64) -> Self {
+    fn new_from_cont(tf: Tf<f64>, ts: Seconds, conversion: fn(Complex64, Seconds) -> Complex64) -> Self {
         Self { tf, ts, conversion }
     }
 
@@ -34,7 +34,7 @@ impl Tfz {
     /// * `tf` - Continuous transfer function
     /// * `ts` - Sampling period
     /// * `method` - Discretization method
-    pub fn discretize(tf: Tf, ts: Seconds, method: Discretization) -> Self {
+    pub fn discretize(tf: Tf<f64>, ts: Seconds, method: Discretization) -> Self {
         let conv = match method {
             Discretization::ForwardEuler => fe,
             Discretization::BackwardEuler => fb,
