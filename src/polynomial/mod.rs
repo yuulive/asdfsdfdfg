@@ -424,16 +424,38 @@ impl_add_for_poly!(
 );
 
 /// Implementation of polynomial subtraction
-impl<T: Copy + Neg<Output = T> + Num> Sub for Poly<T> {
+impl<T: Copy + PartialEq + Sub<Output = T> + Zero> Sub for Poly<T> {
     type Output = Self;
 
-    fn sub(self, rhs: Self) -> Self {
-        // Just negate 'rhs' and use addition.
-        let mut neg = rhs.clone();
-        for c in &mut neg.coeffs {
-            *c = -*c;
-        }
-        self.add(neg)
+    fn sub(mut self, mut rhs: Self) -> Self {
+        // Check which polynomial has the highest degree.
+        // Mutate the arguments since are passed as values.
+        let mut result = if self.degree() < rhs.degree() {
+            // iterate on rhs and do the subtraction until self has values,
+            // then invert the coefficients of rhs
+            for i in 0..=rhs.degree() {
+                rhs[i] = *self.coeffs.get(i).unwrap_or(&T::zero()) - rhs[i];
+            }
+            rhs
+        } else {
+            for (i, c) in rhs.coeffs.iter().enumerate() {
+                self[i] = self[i] - *c;
+            }
+            self
+        };
+        result.trim();
+        result
+    }
+}
+
+/// Implementation of polynomial subtraction
+impl<T: Copy + PartialEq + Sub<Output = T> + Zero> Sub for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn sub(self, rhs: Self) -> Poly<T> {
+        let new_coeffs =
+            crate::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), |x, y| x - y);
+        Poly::new_from_coeffs(&new_coeffs)
     }
 }
 
@@ -872,10 +894,8 @@ mod tests {
             Poly::new_from_coeffs(&[1., 2., 3.]) - Poly::new_from_coeffs(&[3., 2., -3.])
         );
 
-        assert_eq!(
-            Poly::zero(),
-            Poly::new_from_coeffs(&[1., 1.]) - Poly::new_from_coeffs(&[1., 1.])
-        );
+        let p = Poly::new_from_coeffs(&[1., 1.]);
+        assert_eq!(Poly::zero(), &p - &p);
 
         assert_eq!(
             Poly::new_from_coeffs(&[-10., 1.]),
@@ -888,9 +908,20 @@ mod tests {
         );
 
         assert_eq!(
+            Poly::new_from_coeffs(&[-1i8, 1]),
+            1i8 - Poly::new_from_coeffs(&[2, 1])
+        );
+
+        assert_eq!(
             Poly::new_from_coeffs(&[-10, 1]),
             Poly::new_from_coeffs(&[2, 1]) - 12
         );
+    }
+
+    #[test]
+    #[should_panic]
+    fn poly_sub_panic() {
+        let _ = Poly::new_from_coeffs(&[1, 2, 3]) - 3u32;
     }
 
     #[test]
