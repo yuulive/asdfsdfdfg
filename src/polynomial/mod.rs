@@ -534,13 +534,60 @@ macro_rules! impl_mul_for_poly {
 }
 
 impl_mul_for_poly!(
+    /// Implementation of f32 and polynomial multiplication
+    f32
+);
+impl_mul_for_poly!(
     /// Implementation of f64 and polynomial multiplication
     f64
 );
-
 impl_mul_for_poly!(
-    /// Implementation of f32 and polynomial multiplication
-    f32
+    /// Implementation of i8 and polynomial multiplication
+    i8
+);
+impl_mul_for_poly!(
+    /// Implementation of u8 and polynomial multiplication
+    u8
+);
+impl_mul_for_poly!(
+    /// Implementation of i16 and polynomial multiplication
+    i16
+);
+impl_mul_for_poly!(
+    /// Implementation of u16 and polynomial multiplication
+    u16
+);
+impl_mul_for_poly!(
+    /// Implementation of i32 and polynomial multiplication
+    i32
+);
+impl_mul_for_poly!(
+    /// Implementation of u32 and polynomial multiplication
+    u32
+);
+impl_mul_for_poly!(
+    /// Implementation of i64 and polynomial multiplication
+    i64
+);
+impl_mul_for_poly!(
+    /// Implementation of u64 and polynomial multiplication
+    u64
+);
+impl_mul_for_poly!(
+    /// Implementation of i128 and polynomial multiplication
+    i128
+);
+impl_mul_for_poly!(
+    /// Implementation of u128 and polynomial multiplication
+    u128
+);
+impl_mul_for_poly!(
+    /// Implementation of isize and polynomial multiplication
+    isize
+);
+impl_mul_for_poly!(
+    /// Implementation of usize and polynomial multiplication
+    usize
 );
 
 /// Implementation of polynomial and float division
