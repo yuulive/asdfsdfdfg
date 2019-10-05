@@ -35,6 +35,13 @@ pub struct Poly<T> {
 /// Implementation methods for Poly struct
 impl<T> Poly<T> {
     /// Degree of the polynomial
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
+    /// assert_eq!(2, p.degree());
+    /// ```
     pub fn degree(&self) -> usize {
         assert!(
             !self.coeffs.is_empty(),
@@ -46,6 +53,13 @@ impl<T> Poly<T> {
 
 impl<T: Copy> Poly<T> {
     /// Vector of the polynomial's coefficients
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
+    /// assert_eq!(vec![1., 2., 3.], p.coeffs());
+    /// ```
     pub fn coeffs(&self) -> Vec<T> {
         self.coeffs.clone()
     }
@@ -59,6 +73,14 @@ impl<T: Copy + Zero> Poly<T> {
     /// # Arguments
     ///
     /// * `degree` - Degree of the new highest coefficient.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let mut p = Poly::new_from_coeffs(&[1, 2, 3]);
+    /// p.extend(5);
+    /// assert_eq!(vec![1, 2, 3, 0, 0, 0], p.coeffs());
+    /// ```
     pub fn extend(&mut self, degree: usize) {
         if degree > self.degree() {
             self.coeffs.resize(degree + 1, T::zero());
@@ -69,6 +91,15 @@ impl<T: Copy + Zero> Poly<T> {
 /// Implementation methods for Poly struct
 impl<T: Copy + Div<Output = T> + One> Poly<T> {
     /// Retrun the monic polynomial and the leading coefficient.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 2., 10.]);
+    /// let (p2, c) = p.monic();
+    /// assert_eq!(Poly::new_from_coeffs(&[0.1, 0.2, 1.]), p2);
+    /// assert_eq!(10., c);
+    /// ```
     pub fn monic(&self) -> (Self, T) {
         let leading_coeff = *self.coeffs.last().unwrap_or(&T::one());
         let result: Vec<_> = self.coeffs.iter().map(|&x| x / leading_coeff).collect();
@@ -81,10 +112,17 @@ impl<T: Copy + Div<Output = T> + One> Poly<T> {
 /// Implementation methods for Poly struct
 impl<T: Copy + PartialEq + Zero> Poly<T> {
     /// Create a new polynomial given a slice of real coefficients.
+    /// It trims any leading zeros in the high order coefficients.
     ///
     /// # Arguments
     ///
     /// * `coeffs` - slice of coefficients
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
+    /// ```
     pub fn new_from_coeffs(coeffs: &[T]) -> Self {
         let mut p = Self {
             coeffs: coeffs.into(),
@@ -110,10 +148,17 @@ impl<T: Copy + PartialEq + Zero> Poly<T> {
 /// Implementation methods for Poly struct
 impl<T: Float + AddAssign> Poly<T> {
     /// Create a new polynomial given a slice of real roots
+    /// It trims any leading zeros in the high order coefficients.
     ///
     /// # Arguments
     ///
     /// * `roots` - slice of roots
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_roots(&[1., 2., 3.]);
+    /// ```
     pub fn new_from_roots(roots: &[T]) -> Self {
         let mut p = roots.iter().fold(Self::one(), |acc, &r| {
             acc * Self {
@@ -147,6 +192,14 @@ impl<T: Scalar + ComplexField + RealField + Debug> Poly<T> {
     }
 
     /// Calculate the real roots of the polynomial
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let roots = &[0., -1., 1.];
+    /// let p = Poly::new_from_roots(roots);
+    /// assert_eq!(roots, p.roots().unwrap().as_slice());
+    /// ```
     pub fn roots(&self) -> Option<Vec<T>> {
         // Build the companion matrix
         let comp = self.companion();
@@ -155,6 +208,14 @@ impl<T: Scalar + ComplexField + RealField + Debug> Poly<T> {
     }
 
     /// Calculate the complex roots of the polynomial
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
+    /// let i = num_complex::Complex::i();
+    /// assert_eq!(vec![i, -i], p.complex_roots());
+    /// ```
     pub fn complex_roots(&self) -> Vec<Complex<T>> {
         let comp = self.companion();
         let schur = Schur::new(comp);
@@ -189,6 +250,15 @@ where
     /// # Panics
     ///
     /// The method panics if the conversion from `T` to type `N` fails.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{Eval, polynomial::Poly};
+    /// use num_complex::Complex;
+    /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
+    /// assert_eq!(18., p.eval(&3.));
+    /// assert_eq!(Complex::new(-18., 0.), p.eval(&Complex::new(0., 3.)));
+    /// ```
     fn eval(&self, x: &N) -> N {
         self.coeffs
             .iter()
@@ -202,6 +272,13 @@ where
 /// # Panics
 ///
 /// Panics for out of bounds access.
+///
+/// # Example
+/// ```
+/// use automatica::polynomial::Poly;
+/// let p = Poly::new_from_coeffs(&[0, 1, 2, 3]);
+/// assert_eq!(2, p[2]);
+/// ```
 impl<T> Index<usize> for Poly<T> {
     type Output = T;
 
@@ -215,6 +292,14 @@ impl<T> Index<usize> for Poly<T> {
 /// # Panics
 ///
 /// Panics for out of bounds access.
+///
+/// # Example
+/// ```
+/// use automatica::polynomial::Poly;
+/// let mut p = Poly::new_from_coeffs(&[0, 1, 2, 3]);
+/// p[2] = 4;
+/// assert_eq!(4, p[2]);
+/// ```
 impl<T> IndexMut<usize> for Poly<T> {
     fn index_mut(&mut self, i: usize) -> &mut T {
         &mut self.coeffs[i]
@@ -449,6 +534,13 @@ impl<T: Float + AddAssign> One for Poly<T> {
 }
 
 /// Implement printing of polynomial
+///
+/// # Example
+/// ```
+/// use automatica::polynomial::Poly;
+/// let p = Poly::new_from_coeffs(&[0, 1, 2, 3]);
+/// assert_eq!("+1*s +2*s^2 +3*s^3", format!("{}", p));
+/// ```
 impl<T: Display + One + PartialEq + Signed + Zero> Display for Poly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.coeffs.is_empty() {
@@ -496,6 +588,12 @@ mod tests {
 
         let zero: [f64; 1] = [0.];
         assert_eq!(zero, Poly::new_from_coeffs(&[0., 0.]).coeffs.as_slice());
+
+        let int = [1, 2, 3, 4, 5];
+        assert_eq!(int, Poly::new_from_coeffs(&int).coeffs.as_slice());
+
+        let float = [0.1_f32, 0.34, 3.43];
+        assert_eq!(float, Poly::new_from_coeffs(&float).coeffs.as_slice());
     }
 
     #[test]
@@ -511,11 +609,11 @@ mod tests {
             .map(|(x, y): (&f64, &f64)| (x - y).abs())
             .all(|x| x < 0.000001));
 
-        assert!(vec![1., 2., 3.]
+        assert!(vec![1.0_f32, 2., 3.]
             .iter()
             .zip(Poly::new_from_roots(&[1., 2., 3.]).roots().unwrap().iter())
-            .map(|(x, y): (&f64, &f64)| (x - y).abs())
-            .all(|x| x < 0.000001));
+            .map(|(x, y): (&f32, &f32)| (x - y).abs())
+            .all(|x| x < 0.00001));
 
         assert_eq!(
             Poly::new_from_coeffs(&[0., -2., 1., 1.]),
@@ -561,22 +659,32 @@ mod tests {
     fn poly_add() {
         assert_eq!(
             Poly::new_from_coeffs(&[4., 4., 4.]),
-            Poly::new_from_coeffs(&[1., 2., 3.,]) + Poly::new_from_coeffs(&[3., 2., 1.])
+            Poly::new_from_coeffs(&[1., 2., 3.]) + Poly::new_from_coeffs(&[3., 2., 1.])
         );
 
         assert_eq!(
             Poly::new_from_coeffs(&[4., 4., 3.]),
-            Poly::new_from_coeffs(&[1., 2., 3.,]) + Poly::new_from_coeffs(&[3., 2.])
+            Poly::new_from_coeffs(&[1., 2., 3.]) + Poly::new_from_coeffs(&[3., 2.])
         );
 
         assert_eq!(
             Poly::new_from_coeffs(&[4., 4., 1.]),
-            Poly::new_from_coeffs(&[1., 2.,]) + Poly::new_from_coeffs(&[3., 2., 1.])
+            Poly::new_from_coeffs(&[1., 2.]) + Poly::new_from_coeffs(&[3., 2., 1.])
         );
 
         assert_eq!(
             Poly::new_from_coeffs(&[4., 4.]),
-            Poly::new_from_coeffs(&[1., 2., 3.,]) + Poly::new_from_coeffs(&[3., 2., -3.])
+            Poly::new_from_coeffs(&[1., 2., 3.]) + Poly::new_from_coeffs(&[3., 2., -3.])
+        );
+
+        assert_eq!(
+            Poly::new_from_coeffs(&[-2., 2., 3.]),
+            Poly::new_from_coeffs(&[1., 2., 3.]) + -3.
+        );
+
+        assert_eq!(
+            Poly::new_from_coeffs(&[9.0_f32, 2., 3.]),
+            3. + Poly::new_from_coeffs(&[1.0_f32, 2., 3.]) + 5.
         );
     }
 
@@ -584,26 +692,26 @@ mod tests {
     fn poly_sub() {
         assert_eq!(
             Poly::new_from_coeffs(&[-2., 0., 2.]),
-            Poly::new_from_coeffs(&[1., 2., 3.,]) - Poly::new_from_coeffs(&[3., 2., 1.])
+            Poly::new_from_coeffs(&[1., 2., 3.]) - Poly::new_from_coeffs(&[3., 2., 1.])
         );
 
         assert_eq!(
             Poly::new_from_coeffs(&[-2., 0., 3.]),
-            Poly::new_from_coeffs(&[1., 2., 3.,]) - Poly::new_from_coeffs(&[3., 2.])
+            Poly::new_from_coeffs(&[1., 2., 3.]) - Poly::new_from_coeffs(&[3., 2.])
         );
 
         assert_eq!(
             Poly::new_from_coeffs(&[-2., 0., -1.]),
-            Poly::new_from_coeffs(&[1., 2.,]) - Poly::new_from_coeffs(&[3., 2., 1.])
+            Poly::new_from_coeffs(&[1., 2.]) - Poly::new_from_coeffs(&[3., 2., 1.])
         );
 
         assert_eq!(
             Poly::new_from_coeffs(&[-2., 0., 6.]),
-            Poly::new_from_coeffs(&[1., 2., 3.,]) - Poly::new_from_coeffs(&[3., 2., -3.])
+            Poly::new_from_coeffs(&[1., 2., 3.]) - Poly::new_from_coeffs(&[3., 2., -3.])
         );
 
         assert_eq!(
-            Poly::new_from_coeffs(&[]),
+            Poly::zero(),
             Poly::new_from_coeffs(&[1., 1.]) - Poly::new_from_coeffs(&[1., 1.])
         );
 
@@ -638,6 +746,29 @@ mod tests {
         assert_eq!(
             Poly::new_from_coeffs(&[-3., 0., -3.]),
             Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::new_from_coeffs(&[-3.])
+        );
+
+        assert_eq!(
+            Poly::new_from_coeffs(&[-266.07_f32, 0., -266.07]),
+            4.9 * Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * -54.3
+        );
+
+        assert_eq!(Poly::zero(), 0. * Poly::new_from_coeffs(&[1., 0., 1.]));
+    }
+
+    #[test]
+    fn poly_div() {
+        assert_eq!(
+            Poly::new_from_coeffs(&[0.5, 0., 0.5]),
+            Poly::new_from_coeffs(&[1., 0., 1.]) / 2.0
+        );
+
+        let inf = std::f32::INFINITY;
+        assert_eq!(Poly::zero(), Poly::new_from_coeffs(&[1., 0., 1.]) / inf);
+
+        assert_eq!(
+            Poly::new_from_coeffs(&[inf, -inf, inf]),
+            Poly::new_from_coeffs(&[1., -2.3, 1.]) / 0.
         );
     }
 
