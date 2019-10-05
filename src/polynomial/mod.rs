@@ -5,13 +5,11 @@
 //!
 //! Methods for roots finding, companion matrix and evaluation are implemented.
 //!
-//! At the moment coefficients are of type `f64`.
-//!
 //! `MatrixOfPoly` allows the definition of matrices of polynomials.
 
 use crate::Eval;
 
-use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Sub};
+use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Neg, Sub};
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
@@ -20,7 +18,7 @@ use std::{
 use nalgebra::{ComplexField, DMatrix, RealField, Scalar, Schur};
 use ndarray::{Array, Array2};
 use num_complex::{Complex, Complex64};
-use num_traits::{Float, MulAdd, NumCast, One, Signed, Zero};
+use num_traits::{MulAdd, Num, NumCast, One, Signed, Zero};
 
 /// Polynomial object
 ///
@@ -146,7 +144,7 @@ impl<T: Copy + PartialEq + Zero> Poly<T> {
 }
 
 /// Implementation methods for Poly struct
-impl<T: Float + AddAssign> Poly<T> {
+impl<T: AddAssign + Copy + Num + Neg<Output = T>> Poly<T> {
     /// Create a new polynomial given a slice of real roots
     /// It trims any leading zeros in the high order coefficients.
     ///
@@ -238,7 +236,7 @@ impl Poly<f64> {
 impl<N, T> Eval<N> for Poly<T>
 where
     N: Copy + MulAdd<Output = N> + NumCast + Zero,
-    T: Float,
+    T: Copy + NumCast,
 {
     /// Evaluate the polynomial using Horner's method. The evaluation is safe
     /// is the polynomial coefficient can be casted the type `N`.
@@ -307,7 +305,7 @@ impl<T> IndexMut<usize> for Poly<T> {
 }
 
 /// Implementation of polynomial addition
-impl<T: Float> Add<Poly<T>> for Poly<T> {
+impl<T: Copy + Num> Add<Poly<T>> for Poly<T> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -371,7 +369,7 @@ impl_add_for_poly!(
 );
 
 /// Implementation of polynomial subtraction
-impl<T: Float> Sub for Poly<T> {
+impl<T: Copy + Neg<Output = T> + Num> Sub for Poly<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
@@ -428,7 +426,7 @@ impl_sub_for_poly!(
 );
 
 /// Implementation of polynomial multiplication
-impl<T: Float + AddAssign> Mul for Poly<T> {
+impl<T: AddAssign + Copy + Num> Mul for Poly<T> {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
@@ -448,7 +446,7 @@ impl<T: Float + AddAssign> Mul for Poly<T> {
 }
 
 /// Implementation of polynomial and float multiplication
-impl<T: Float> Mul<T> for Poly<T> {
+impl<T: Copy + Num> Mul<T> for Poly<T> {
     type Output = Self;
 
     fn mul(self, rhs: T) -> Self {
@@ -491,24 +489,21 @@ impl_mul_for_poly!(
 );
 
 /// Implementation of polynomial and float division
-impl<T: Float> Div<T> for Poly<T> {
+impl<T: Copy + Num> Div<T> for Poly<T> {
     type Output = Self;
 
     fn div(self, rhs: T) -> Self {
-        if rhs.is_infinite() {
-            Self::zero()
-        } else {
-            let mut result = self.clone();
-            for c in &mut result.coeffs {
-                *c = *c / rhs;
-            }
-            result
+        let mut result = self.clone();
+        for c in &mut result.coeffs {
+            *c = *c / rhs;
         }
+        result.trim();
+        result
     }
 }
 
 /// Implementation of the additive identity for polynomials
-impl<T: Float + Zero> Zero for Poly<T> {
+impl<T: Copy + Num + Zero> Zero for Poly<T> {
     fn zero() -> Self {
         Self {
             coeffs: vec![T::zero()],
@@ -521,7 +516,7 @@ impl<T: Float + Zero> Zero for Poly<T> {
 }
 
 /// Implementation of the multiplicative identity for polynomials
-impl<T: Float + AddAssign> One for Poly<T> {
+impl<T: AddAssign + Copy + Num> One for Poly<T> {
     fn one() -> Self {
         Self {
             coeffs: vec![T::one()],
