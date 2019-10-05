@@ -550,22 +550,33 @@ impl_sub_for_poly!(
 );
 
 /// Implementation of polynomial multiplication
-impl<T: AddAssign + Copy + Num> Mul for Poly<T> {
-    type Output = Self;
+impl<T: Copy + Mul<Output = T> + PartialEq + Zero> Mul for &Poly<T> {
+    type Output = Poly<T>;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
-    fn mul(self, rhs: Self) -> Self {
+    fn mul(self, rhs: Self) -> Poly<T> {
         // Polynomial multiplication is implemented as discrete convolution.
         let new_degree = self.degree() + rhs.degree();
-        let mut new_coeffs: Vec<T> = vec![T::zero(); new_degree + 1];
+        let new_length = new_degree + 1;
+        let mut new_coeffs: Vec<T> = vec![T::zero(); new_length];
         for i in 0..=self.degree() {
             for j in 0..=rhs.degree() {
                 let a = *self.coeffs.get(i).unwrap_or(&T::zero());
                 let b = *rhs.coeffs.get(j).unwrap_or(&T::zero());
-                new_coeffs[i + j] += a * b;
+                let index = i + j;
+                new_coeffs[index] = new_coeffs[index] + a * b;
             }
         }
-        Self::new_from_coeffs(&new_coeffs)
+        Poly::new_from_coeffs(&new_coeffs)
+    }
+}
+
+/// Implementation of polynomial multiplication
+impl<T: Copy + Mul<Output = T> + PartialEq + Zero> Mul for Poly<T> {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self {
+        Mul::mul(&self, &rhs)
     }
 }
 
@@ -573,15 +584,14 @@ impl<T: AddAssign + Copy + Num> Mul for Poly<T> {
 impl<T: Copy + Num> Mul<T> for Poly<T> {
     type Output = Self;
 
-    fn mul(self, rhs: T) -> Self {
+    fn mul(mut self, rhs: T) -> Self {
         if rhs.is_zero() {
             Self::zero()
         } else {
-            let mut result = self.clone();
-            for c in &mut result.coeffs {
+            for c in &mut self.coeffs {
                 *c = *c * rhs;
             }
-            result
+            self
         }
     }
 }
@@ -932,19 +942,22 @@ mod tests {
         );
 
         assert_eq!(
-            Poly::new_from_coeffs(&[0.]),
-            Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::new_from_coeffs(&[0.])
+            Poly::zero(),
+            Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::zero()
         );
 
         assert_eq!(
             Poly::new_from_coeffs(&[1., 0., 1.]),
-            Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::new_from_coeffs(&[1.])
+            Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::one()
         );
 
         assert_eq!(
             Poly::new_from_coeffs(&[-3., 0., -3.]),
             Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::new_from_coeffs(&[-3.])
         );
+
+        let p = Poly::new_from_coeffs(&[-3., 0., -3.]);
+        assert_eq!(Poly::new_from_coeffs(&[9., 0., 18., 0., 9.]), &p * &p);
 
         assert_eq!(
             Poly::new_from_coeffs(&[-266.07_f32, 0., -266.07]),
