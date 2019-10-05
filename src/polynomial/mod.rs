@@ -471,13 +471,60 @@ macro_rules! impl_sub_for_poly {
 }
 
 impl_sub_for_poly!(
+    /// Implementation of f32 and polynomial subtraction
+    f32
+);
+impl_sub_for_poly!(
     /// Implementation of f64 and polynomial subtraction
     f64
 );
-
 impl_sub_for_poly!(
-    /// Implementation of f32 and polynomial subtraction
-    f32
+    /// Implementation of i8 and polynomial subtraction
+    i8
+);
+impl_sub_for_poly!(
+    /// Implementation of u8 and polynomial subtraction
+    u8
+);
+impl_sub_for_poly!(
+    /// Implementation of i16 and polynomial subtraction
+    i16
+);
+impl_sub_for_poly!(
+    /// Implementation of u16 and polynomial subtraction
+    u16
+);
+impl_sub_for_poly!(
+    /// Implementation of i32 and polynomial subtraction
+    i32
+);
+impl_sub_for_poly!(
+    /// Implementation of u32 and polynomial subtraction
+    u32
+);
+impl_sub_for_poly!(
+    /// Implementation of i64 and polynomial subtraction
+    i64
+);
+impl_sub_for_poly!(
+    /// Implementation of u64 and polynomial subtraction
+    u64
+);
+impl_sub_for_poly!(
+    /// Implementation of i128 and polynomial subtraction
+    i128
+);
+impl_sub_for_poly!(
+    /// Implementation of u128 and polynomial subtraction
+    u128
+);
+impl_sub_for_poly!(
+    /// Implementation of isize and polynomial subtraction
+    isize
+);
+impl_sub_for_poly!(
+    /// Implementation of usize and polynomial subtraction
+    usize
 );
 
 /// Implementation of polynomial multiplication
