@@ -13,4 +13,13 @@ fn main() {
     println!("{}", p3);
 
     println!("{}", 2. + p3 + 2.);
+
+    println!("\nTartaglia's triangle:\n1");
+    let m = Poly::new_from_coeffs(&[1, 1]);
+    let mut tot = m.clone();
+    println!("{}", m);
+    for _ in 0..5 {
+        tot = &tot * &m;
+        println!("{}", tot);
+    }
 }
