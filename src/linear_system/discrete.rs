@@ -28,7 +28,7 @@ pub trait Discrete {
     /// # Arguments
     ///
     /// * `st` - sample time
-    fn discretize<F>(&self, st: F, method: Discretization) -> Option<Ss>
+    fn discretize<F>(&self, st: F, method: Discretization) -> Option<Ss<f64>>
     where
         F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>;
 }
@@ -44,7 +44,7 @@ pub enum Discretization {
     Tustin,
 }
 
-impl Discrete for Ss {
+impl Discrete for Ss<f64> {
     fn time_evolution<F>(&self, steps: usize, input: F, x0: &[f64]) -> DiscreteIterator<F>
     where
         F: Fn(usize) -> Vec<f64>,
@@ -61,7 +61,7 @@ impl Discrete for Ss {
         }
     }
 
-    fn discretize<F>(&self, st: F, method: Discretization) -> Option<Ss>
+    fn discretize<F>(&self, st: F, method: Discretization) -> Option<Ss<f64>>
     where
         F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>,
     {
@@ -79,7 +79,7 @@ impl Discrete for Ss {
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn forward_euler<F>(sys: &Ss, st: F) -> Option<Ss>
+fn forward_euler<F>(sys: &Ss<f64>, st: F) -> Option<Ss<f64>>
 where
     F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>,
 {
@@ -101,7 +101,7 @@ where
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn backward_euler<F>(sys: &Ss, st: F) -> Option<Ss>
+fn backward_euler<F>(sys: &Ss<f64>, st: F) -> Option<Ss<f64>>
 where
     F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>,
 {
@@ -127,7 +127,7 @@ where
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn tustin<F>(sys: &Ss, st: F) -> Option<Ss>
+fn tustin<F>(sys: &Ss<f64>, st: F) -> Option<Ss<f64>>
 where
     F: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>,
 {
@@ -153,7 +153,7 @@ pub struct DiscreteIterator<'a, F>
 where
     F: Fn(usize) -> Vec<f64>,
 {
-    sys: &'a Ss,
+    sys: &'a Ss<f64>,
     time: usize,
     steps: usize,
     input: F,

@@ -32,7 +32,7 @@ where
     F: Fn(Seconds) -> Vec<f64>,
 {
     /// Linear system
-    sys: &'a Ss,
+    sys: &'a Ss<f64>,
     /// Input function
     input: F,
     /// State vector.
@@ -63,7 +63,14 @@ where
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `order` - order of the solver
-    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: Seconds, n: usize, order: Order) -> Self {
+    pub(crate) fn new(
+        sys: &'a Ss<f64>,
+        u: F,
+        x0: &[f64],
+        h: Seconds,
+        n: usize,
+        order: Order,
+    ) -> Self {
         let start = DVector::from_vec(u(Seconds(0.)));
         let state = DVector::from_column_slice(x0);
         let output = &sys.c * &state + &sys.d * &start;
@@ -206,7 +213,7 @@ where
     F: Fn(Seconds) -> Vec<f64>,
 {
     /// Linear system
-    sys: &'a Ss,
+    sys: &'a Ss<f64>,
     /// Input function
     input: F,
     /// State vector.
@@ -239,7 +246,14 @@ where
     /// * `h` - integration time interval
     /// * `limit` - time limit of the evaluation
     /// * `tol` - error tolerance
-    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: Seconds, limit: Seconds, tol: f64) -> Self {
+    pub(crate) fn new(
+        sys: &'a Ss<f64>,
+        u: F,
+        x0: &[f64],
+        h: Seconds,
+        limit: Seconds,
+        tol: f64,
+    ) -> Self {
         let start = DVector::from_vec(u(Seconds(0.)));
         let state = DVector::from_column_slice(x0);
         // Calculate the output at time 0.
@@ -411,7 +425,7 @@ where
     F: Fn(Seconds) -> Vec<f64>,
 {
     /// Linear system
-    sys: &'a Ss,
+    sys: &'a Ss<f64>,
     /// Input function
     input: F,
     /// State vector
@@ -444,7 +458,7 @@ where
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `tol` - tolerance of implicit solution finding
-    pub(crate) fn new(sys: &'a Ss, u: F, x0: &[f64], h: Seconds, n: usize, tol: f64) -> Self {
+    pub(crate) fn new(sys: &'a Ss<f64>, u: F, x0: &[f64], h: Seconds, n: usize, tol: f64) -> Self {
         let start = DVector::from_vec(u(Seconds(0.)));
         let state = DVector::from_column_slice(x0);
         let output = &sys.c * &state + &sys.d * &start;

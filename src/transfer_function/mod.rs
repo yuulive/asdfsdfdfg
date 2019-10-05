@@ -86,7 +86,7 @@ impl<T: Scalar + ComplexField + RealField + Debug> Tf<T> {
     }
 }
 
-impl TryFrom<Ss> for Tf<f64> {
+impl TryFrom<Ss<f64>> for Tf<f64> {
     type Error = &'static str;
 
     /// Convert a state-space representation into transfer functions.
@@ -96,7 +96,7 @@ impl TryFrom<Ss> for Tf<f64> {
     /// # Arguments
     ///
     /// `ss` - state space linear system
-    fn try_from(ss: Ss) -> Result<Self, Self::Error> {
+    fn try_from(ss: Ss<f64>) -> Result<Self, Self::Error> {
         let (pc, a_inv) = linear_system::leverrier(ss.a());
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
         let rest = pc.mul(ss.d());
@@ -206,13 +206,13 @@ impl Eval<Vec<Complex64>> for TfMatrix {
     }
 }
 
-impl From<Ss> for TfMatrix {
+impl From<Ss<f64>> for TfMatrix {
     /// Convert a state-space representation into a matrix of transfer functions
     ///
     /// # Arguments
     ///
     /// `ss` - state space linear system
-    fn from(ss: Ss) -> Self {
+    fn from(ss: Ss<f64>) -> Self {
         let (pc, a_inv) = linear_system::leverrier(ss.a());
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
         let rest = pc.mul(ss.d());

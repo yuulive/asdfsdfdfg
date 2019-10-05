@@ -17,11 +17,11 @@ use crate::{
     units::Seconds,
 };
 
-use nalgebra::{DMatrix, DVector, Schur};
+use nalgebra::{DMatrix, DVector, Scalar, Schur};
 use num_complex::Complex64;
 
 use std::convert::From;
-use std::fmt;
+use std::{fmt, fmt::Debug};
 
 /// State-space representation of a linear system
 ///
@@ -30,15 +30,15 @@ use std::fmt;
 /// y(t)    = C * x(t) + D * u(t)
 /// ```
 #[derive(Debug)]
-pub struct Ss {
+pub struct Ss<T: Scalar + Copy + Debug + PartialEq> {
     /// A matrix
-    a: DMatrix<f64>,
+    a: DMatrix<T>,
     /// B matrix
-    b: DMatrix<f64>,
+    b: DMatrix<T>,
     /// C matrix
-    c: DMatrix<f64>,
+    c: DMatrix<T>,
     /// D matrix
-    d: DMatrix<f64>,
+    d: DMatrix<T>,
     /// Dimensions
     dim: Dim,
 }
@@ -73,7 +73,7 @@ impl Dim {
 }
 
 /// Implementation of the methods for the state-space
-impl Ss {
+impl Ss<f64> {
     /// Create a new state-space representation
     ///
     /// # Arguments
@@ -267,7 +267,7 @@ pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix) {
     (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
 }
 
-impl From<Tf<f64>> for Ss {
+impl From<Tf<f64>> for Ss<f64> {
     /// Convert a transfer function representation into state space representation.
     /// Conversion is done using the observability canonical form.
     ///
@@ -340,7 +340,7 @@ impl From<Tf<f64>> for Ss {
 }
 
 /// Implementation of state-space representation
-impl fmt::Display for Ss {
+impl fmt::Display for Ss<f64> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
