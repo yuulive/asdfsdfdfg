@@ -60,13 +60,6 @@ pub trait Eval<T> {
     fn eval(&self, x: &T) -> T;
 }
 
-// fn zipWith<U, C>(combo: C, left: U, right: U) -> impl Iterator
-// where
-//     U: Iterator,
-//     C: FnMut(U::Item, U::Item) -> U::Item,
-// {
-//     left.zip(right).map(move |(l, r)| combo(l, r))
-// }
 /// Zip two slices with the given function
 ///
 /// # Arguments
@@ -79,4 +72,72 @@ where
     F: FnMut(&T, &T) -> T,
 {
     left.iter().zip(right).map(|(l, r)| f(l, r)).collect()
+}
+
+/// Zip two iterators extending the shorter one with the provided `fill` value.
+///
+/// # Arguments
+///
+/// * `left` - first iterator
+/// * `right` - second iterator
+/// * `fill` - default value
+#[allow(dead_code)]
+pub(crate) fn zip_longest<T: Copy>(left: &[T], right: &[T], fill: T) -> Vec<(T, T)> {
+    let mut result = Vec::<(T, T)>::with_capacity(left.len().max(right.len()));
+    let mut left_iter = left.iter();
+    let mut right_iter = right.iter();
+    loop {
+        match (left_iter.next(), right_iter.next()) {
+            (Some(&l), Some(&r)) => result.push((l, r)),
+            (Some(&l), None) => result.push((l, fill)),
+            (None, Some(&r)) => result.push((fill, r)),
+            _ => break,
+        }
+    }
+    result
+}
+
+/// Zip two iterators  with the given function extending the shorter one
+/// with the provided `fill` value.
+///
+/// # Arguments
+///
+/// * `left` - first iterator
+/// * `right` - second iterator
+/// * `fill` - default value
+/// * `f` - function used to zip the two lists
+pub(crate) fn zip_longest_with<T, F>(left: &[T], right: &[T], fill: T, mut f: F) -> Vec<T>
+where
+    T: Copy,
+    F: FnMut(T, T) -> T,
+{
+    let mut result = Vec::<T>::with_capacity(left.len().max(right.len()));
+    let mut left_iter = left.iter();
+    let mut right_iter = right.iter();
+    loop {
+        match (left_iter.next(), right_iter.next()) {
+            (Some(&l), Some(&r)) => result.push(f(l, r)),
+            (Some(&l), None) => result.push(f(l, fill)),
+            (None, Some(&r)) => result.push(f(fill, r)),
+            _ => break,
+        }
+    }
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn zip_longest_iterators() {
+        let a = zip_longest(&[1, 2, 3, 4], &[6, 7], 0);
+        assert_eq!(vec![(1, 6), (2, 7), (3, 0), (4, 0)], a);
+    }
+
+    #[test]
+    fn zip_longest_with_iterators() {
+        let a = zip_longest_with(&[1, 2, 3, 4], &[6, 7], 0, |x, y| x + y);
+        assert_eq!(vec![7, 9, 3, 4], a);
+    }
 }

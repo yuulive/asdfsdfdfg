@@ -308,24 +308,32 @@ impl<T> IndexMut<usize> for Poly<T> {
 impl<T: Copy + Num> Add<Poly<T>> for Poly<T> {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self {
-        // Check which polynomial has the highest degree
-        let new_coeffs = if self.degree() < rhs.degree() {
-            let mut result = rhs.coeffs.to_vec();
+    fn add(mut self, mut rhs: Self) -> Self {
+        // Check which polynomial has the highest degree.
+        // Mutate the arguments since are passed as values.
+        let mut result = if self.degree() < rhs.degree() {
             for (i, c) in self.coeffs.iter().enumerate() {
-                result[i] = result[i] + *c;
+                rhs[i] = rhs[i] + *c;
             }
-            result
-        } else if rhs.degree() < self.degree() {
-            let mut result = self.coeffs.to_owned();
-            for (i, c) in rhs.coeffs.iter().enumerate() {
-                result[i] = result[i] + *c;
-            }
-            result
+            rhs
         } else {
-            crate::zip_with(&self.coeffs, &rhs.coeffs, |&l, &r| l + r)
+            for (i, c) in rhs.coeffs.iter().enumerate() {
+                self[i] = self[i] + *c;
+            }
+            self
         };
-        Self::new_from_coeffs(&new_coeffs)
+        result.trim();
+        result
+    }
+}
+
+/// Implementation of polynomial addition
+impl<T: Copy + Num> Add<&Poly<T>> for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn add(self, rhs: &Poly<T>) -> Poly<T> {
+        let new_coeffs = crate::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), Add::add);
+        Poly::new_from_coeffs(&new_coeffs)
     }
 }
 
@@ -359,13 +367,60 @@ macro_rules! impl_add_for_poly {
 }
 
 impl_add_for_poly!(
+    /// Implementation of f32 and polynomial addition
+    f32
+);
+impl_add_for_poly!(
     /// Implementation of f64 and polynomial addition
     f64
 );
-
 impl_add_for_poly!(
-    /// Implementation of f32 and polynomial addition
-    f32
+    /// Implementation of i8 and polynomial addition
+    i8
+);
+impl_add_for_poly!(
+    /// Implementation of u8 and polynomial addition
+    u8
+);
+impl_add_for_poly!(
+    /// Implementation of i16 and polynomial addition
+    i16
+);
+impl_add_for_poly!(
+    /// Implementation of u16 and polynomial addition
+    u16
+);
+impl_add_for_poly!(
+    /// Implementation of i32 and polynomial addition
+    i32
+);
+impl_add_for_poly!(
+    /// Implementation of u32 and polynomial addition
+    u32
+);
+impl_add_for_poly!(
+    /// Implementation of i64 and polynomial addition
+    i64
+);
+impl_add_for_poly!(
+    /// Implementation of u64 and polynomial addition
+    u64
+);
+impl_add_for_poly!(
+    /// Implementation of i128 and polynomial addition
+    i128
+);
+impl_add_for_poly!(
+    /// Implementation of u128 and polynomial addition
+    u128
+);
+impl_add_for_poly!(
+    /// Implementation of isize and polynomial addition
+    isize
+);
+impl_add_for_poly!(
+    /// Implementation of usize and polynomial addition
+    usize
 );
 
 /// Implementation of polynomial subtraction
@@ -686,14 +741,19 @@ mod tests {
         );
 
         assert_eq!(
-            Poly::new_from_coeffs(&[-2, 2, 3]),
-            Poly::new_from_coeffs(&[1, 2, 3]) + -3
+            Poly::new_from_coeffs(&[0, 2, 3]),
+            2 + Poly::new_from_coeffs(&[1, 2, 3]) + -3
         );
 
         assert_eq!(
             Poly::new_from_coeffs(&[9.0_f32, 2., 3.]),
             3. + Poly::new_from_coeffs(&[1.0_f32, 2., 3.]) + 5.
         );
+
+        let p = Poly::new_from_coeffs(&[-2, 2, 3]);
+        let p2 = &p + &p;
+        let p3 = &p2 + &p;
+        assert_eq!(Poly::new_from_coeffs(&[-6, 6, 9]), p3);
     }
 
     #[test]
