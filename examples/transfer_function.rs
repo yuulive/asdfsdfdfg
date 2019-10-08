@@ -1,15 +1,13 @@
+#[macro_use]
 extern crate automatica;
 
 use automatica::transfer_function::Tf;
-use automatica::{polynomial::Poly, Eval};
+use automatica::Eval;
 
 use num_complex::Complex64;
 
 fn main() {
-    let tf = Tf::new(
-        Poly::new_from_coeffs(&[-0.75, 0.25]),
-        Poly::new_from_coeffs(&[0.75, 0.75, 1.]),
-    );
+    let tf = Tf::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
 
     println!("T:\n{}", tf);
 

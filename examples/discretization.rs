@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate automatica;
 
 use automatica::{
@@ -5,14 +6,13 @@ use automatica::{
         discrete::{Discrete, Discretization},
         Ss,
     },
-    polynomial::Poly,
     transfer_function::Tf,
     units::Seconds,
 };
 
 fn main() {
-    let num = Poly::new_from_coeffs(&[4.]);
-    let den = Poly::new_from_coeffs(&[4., 1., 2.]);
+    let num = poly!(4.);
+    let den = poly!(4., 1., 2.);
     let g = Tf::new(num, den);
     println!("{}", g);
 

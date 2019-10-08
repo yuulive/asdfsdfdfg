@@ -9,9 +9,10 @@ use automatica::{
 };
 
 use num_complex::Complex;
+use num_traits::One;
 
 fn main() {
-    let tf = Tf::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_roots(&[-1.]));
+    let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
 
     println!("T:\n{}", tf);
 

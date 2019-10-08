@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate automatica;
 
 use automatica::{
@@ -5,10 +6,7 @@ use automatica::{
 };
 
 fn main() {
-    let tf = Tf::new(
-        Poly::new_from_coeffs(&[5.]),
-        Poly::new_from_roots(&[-1., -10.]),
-    );
+    let tf = Tf::new(poly!(5.), Poly::new_from_roots(&[-1., -10.]));
 
     println!("T:\n{}", tf);
 

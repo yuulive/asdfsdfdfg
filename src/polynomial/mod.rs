@@ -30,6 +30,21 @@ pub struct Poly<T> {
     coeffs: Vec<T>,
 }
 
+/// Macro shortcut to crate a polynomial from its coefficients.
+///
+/// # Example
+/// ```
+/// #[macro_use] extern crate automatica;
+/// let p = poly!(1., 2., 3.);
+/// assert_eq!(2, p.degree());
+/// ```
+#[macro_export]
+macro_rules! poly {
+    ($($c:expr),+ $(,)*) => {
+        $crate::polynomial::Poly::new_from_coeffs(&[$($c,)*]);
+    };
+}
+
 /// Implementation methods for Poly struct
 impl<T> Poly<T> {
     /// Degree of the polynomial
@@ -763,7 +778,7 @@ mod tests {
         assert_eq!([0., 1., 1.], Poly::new_from_coeffs(&c2).coeffs.as_slice());
 
         let zero: [f64; 1] = [0.];
-        assert_eq!(zero, Poly::new_from_coeffs(&[0., 0.]).coeffs.as_slice());
+        assert_eq!(zero, poly!(0., 0.).coeffs.as_slice());
 
         let int = [1, 2, 3, 4, 5];
         assert_eq!(int, Poly::new_from_coeffs(&int).coeffs.as_slice());
@@ -774,15 +789,9 @@ mod tests {
 
     #[test]
     fn poly_creation_roots() {
-        assert_eq!(
-            Poly::new_from_coeffs(&[4., 4., 1.]),
-            Poly::new_from_roots(&[-2., -2.])
-        );
+        assert_eq!(poly!(4., 4., 1.), Poly::new_from_roots(&[-2., -2.]));
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[4, 4, 1]),
-            Poly::new_from_roots(&[-2, -2])
-        );
+        assert_eq!(poly!(4, 4, 1), Poly::new_from_roots(&[-2, -2]));
 
         assert!(vec![-2., -2.]
             .iter()
@@ -797,38 +806,38 @@ mod tests {
             .all(|x| x < 0.00001));
 
         assert_eq!(
-            Poly::new_from_coeffs(&[0., -2., 1., 1.]),
+            poly!(0., -2., 1., 1.),
             Poly::new_from_roots(&[-0., -2., 1.])
         );
     }
 
     #[test]
     fn poly_eval() {
-        let p = Poly::new_from_coeffs(&[1., 2., 3.]);
+        let p = poly!(1., 2., 3.);
         assert_eq!(86., p.eval(&5.));
 
         assert_eq!(0.0, Poly::<f64>::zero().eval(&6.4));
 
-        let p2 = Poly::new_from_coeffs(&[3, 4, 1]);
+        let p2 = poly!(3, 4, 1);
         assert_eq!(143, p2.eval(&10));
     }
 
     #[test]
     #[should_panic]
     fn poly_f64_eval_panic() {
-        let p = Poly::new_from_coeffs(&[1.0e200, 2., 3.]);
+        let p = poly!(1.0e200, 2., 3.);
         p.eval(&5.0_f32);
     }
 
     #[test]
     fn poly_i32_eval() {
-        let p = Poly::new_from_coeffs(&[1.5, 2., 3.]);
+        let p = poly!(1.5, 2., 3.);
         assert_eq!(86, p.eval(&5));
     }
 
     #[test]
     fn poly_cmplx_eval() {
-        let p = Poly::new_from_coeffs(&[1., 1., 1.]);
+        let p = poly!(1., 1., 1.);
         let c = Complex::new(1.0, 1.0);
         let res = Complex::new(2.0, 3.0);
         assert_eq!(res, p.eval(&c));
@@ -841,162 +850,99 @@ mod tests {
 
     #[test]
     fn poly_add() {
-        assert_eq!(
-            Poly::new_from_coeffs(&[4., 4., 4.]),
-            Poly::new_from_coeffs(&[1., 2., 3.]) + Poly::new_from_coeffs(&[3., 2., 1.])
-        );
+        assert_eq!(poly!(4., 4., 4.), poly!(1., 2., 3.) + poly!(3., 2., 1.));
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[4., 4., 3.]),
-            Poly::new_from_coeffs(&[1., 2., 3.]) + Poly::new_from_coeffs(&[3., 2.])
-        );
+        assert_eq!(poly!(4., 4., 3.), poly!(1., 2., 3.) + poly!(3., 2.));
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[4., 4., 1.]),
-            Poly::new_from_coeffs(&[1., 2.]) + Poly::new_from_coeffs(&[3., 2., 1.])
-        );
+        assert_eq!(poly!(4., 4., 1.), poly!(1., 2.) + poly!(3., 2., 1.));
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[4., 4.]),
-            Poly::new_from_coeffs(&[1., 2., 3.]) + Poly::new_from_coeffs(&[3., 2., -3.])
-        );
+        assert_eq!(poly!(4., 4.), poly!(1., 2., 3.) + poly!(3., 2., -3.));
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[-2., 2., 3.]),
-            Poly::new_from_coeffs(&[1., 2., 3.]) + -3.
-        );
+        assert_eq!(poly!(-2., 2., 3.), poly!(1., 2., 3.) + -3.);
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[0, 2, 3]),
-            2 + Poly::new_from_coeffs(&[1, 2, 3]) + -3
-        );
+        assert_eq!(poly!(0, 2, 3), 2 + poly!(1, 2, 3) + -3);
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[9.0_f32, 2., 3.]),
-            3. + Poly::new_from_coeffs(&[1.0_f32, 2., 3.]) + 5.
-        );
+        assert_eq!(poly!(9.0_f32, 2., 3.), 3. + poly!(1.0_f32, 2., 3.) + 5.);
 
-        let p = Poly::new_from_coeffs(&[-2, 2, 3]);
+        let p = poly!(-2, 2, 3);
         let p2 = &p + &p;
         let p3 = &p2 + &p;
-        assert_eq!(Poly::new_from_coeffs(&[-6, 6, 9]), p3);
+        assert_eq!(poly!(-6, 6, 9), p3);
     }
 
     #[test]
     fn poly_sub() {
-        assert_eq!(
-            Poly::new_from_coeffs(&[-2., 0., 2.]),
-            Poly::new_from_coeffs(&[1., 2., 3.]) - Poly::new_from_coeffs(&[3., 2., 1.])
-        );
+        assert_eq!(poly!(-2., 0., 2.), poly!(1., 2., 3.) - poly!(3., 2., 1.));
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[-2., 0., 3.]),
-            Poly::new_from_coeffs(&[1., 2., 3.]) - Poly::new_from_coeffs(&[3., 2.])
-        );
+        assert_eq!(poly!(-2., 0., 3.), poly!(1., 2., 3.) - poly!(3., 2.));
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[-2., 0., -1.]),
-            Poly::new_from_coeffs(&[1., 2.]) - Poly::new_from_coeffs(&[3., 2., 1.])
-        );
+        assert_eq!(poly!(-2., 0., -1.), poly!(1., 2.) - poly!(3., 2., 1.));
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[-2., 0., 6.]),
-            Poly::new_from_coeffs(&[1., 2., 3.]) - Poly::new_from_coeffs(&[3., 2., -3.])
-        );
+        assert_eq!(poly!(-2., 0., 6.), poly!(1., 2., 3.) - poly!(3., 2., -3.));
 
-        let p = Poly::new_from_coeffs(&[1., 1.]);
+        let p = poly!(1., 1.);
         assert_eq!(Poly::zero(), &p - &p);
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[-10., 1.]),
-            Poly::new_from_coeffs(&[2., 1.]) - 12.
-        );
+        assert_eq!(poly!(-10., 1.), poly!(2., 1.) - 12.);
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[-1., 1.]),
-            1. - Poly::new_from_coeffs(&[2., 1.])
-        );
+        assert_eq!(poly!(-1., 1.), 1. - poly!(2., 1.));
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[-1i8, 1]),
-            1i8 - Poly::new_from_coeffs(&[2, 1])
-        );
+        assert_eq!(poly!(-1i8, 1), 1i8 - poly!(2, 1));
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[-10, 1]),
-            Poly::new_from_coeffs(&[2, 1]) - 12
-        );
+        assert_eq!(poly!(-10, 1), poly!(2, 1) - 12);
     }
 
     #[test]
     #[should_panic]
     fn poly_sub_panic() {
-        let _ = Poly::new_from_coeffs(&[1, 2, 3]) - 3u32;
+        let _ = poly!(1, 2, 3) - 3u32;
     }
 
     #[test]
     fn poly_mul() {
         assert_eq!(
-            Poly::new_from_coeffs(&[0., 0., -1., 0., -1.]),
-            Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::new_from_coeffs(&[0., 0., -1.])
+            poly!(0., 0., -1., 0., -1.),
+            poly!(1., 0., 1.) * poly!(0., 0., -1.)
         );
+
+        assert_eq!(Poly::zero(), poly!(1., 0., 1.) * Poly::zero());
+
+        assert_eq!(poly!(1., 0., 1.), poly!(1., 0., 1.) * Poly::one());
+
+        assert_eq!(poly!(-3., 0., -3.), poly!(1., 0., 1.) * poly!(-3.));
+
+        let p = poly!(-3., 0., -3.);
+        assert_eq!(poly!(9., 0., 18., 0., 9.), &p * &p);
 
         assert_eq!(
-            Poly::zero(),
-            Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::zero()
+            poly!(-266.07_f32, 0., -266.07),
+            4.9 * poly!(1.0_f32, 0., 1.) * -54.3
         );
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[1., 0., 1.]),
-            Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::one()
-        );
+        assert_eq!(Poly::zero(), 0. * poly!(1., 0., 1.));
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[-3., 0., -3.]),
-            Poly::new_from_coeffs(&[1., 0., 1.]) * Poly::new_from_coeffs(&[-3.])
-        );
-
-        let p = Poly::new_from_coeffs(&[-3., 0., -3.]);
-        assert_eq!(Poly::new_from_coeffs(&[9., 0., 18., 0., 9.]), &p * &p);
-
-        assert_eq!(
-            Poly::new_from_coeffs(&[-266.07_f32, 0., -266.07]),
-            4.9 * Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * -54.3
-        );
-
-        assert_eq!(Poly::zero(), 0. * Poly::new_from_coeffs(&[1., 0., 1.]));
-
-        assert_eq!(Poly::zero(), Poly::new_from_coeffs(&[1, 0, 1]) * 0);
+        assert_eq!(Poly::zero(), poly!(1, 0, 1) * 0);
     }
 
     #[test]
     fn poly_div() {
-        assert_eq!(
-            Poly::new_from_coeffs(&[0.5, 0., 0.5]),
-            Poly::new_from_coeffs(&[1., 0., 1.]) / 2.0
-        );
+        assert_eq!(poly!(0.5, 0., 0.5), poly!(1., 0., 1.) / 2.0);
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[4, 0, 5]),
-            Poly::new_from_coeffs(&[8, 1, 11]) / 2
-        );
+        assert_eq!(poly!(4, 0, 5), poly!(8, 1, 11) / 2);
 
         let inf = std::f32::INFINITY;
-        assert_eq!(Poly::zero(), Poly::new_from_coeffs(&[1., 0., 1.]) / inf);
+        assert_eq!(Poly::zero(), poly!(1., 0., 1.) / inf);
 
-        assert_eq!(
-            Poly::new_from_coeffs(&[inf, -inf, inf]),
-            Poly::new_from_coeffs(&[1., -2.3, 1.]) / 0.
-        );
+        assert_eq!(poly!(inf, -inf, inf), poly!(1., -2.3, 1.) / 0.);
     }
 
     #[test]
     fn indexing() {
-        assert_eq!(3., Poly::new_from_coeffs(&[1., 3.])[1]);
+        assert_eq!(3., poly!(1., 3.)[1]);
 
         let mut p = Poly::new_from_roots(&[1., 4., 5.]);
         p[2] = 3.;
-        assert_eq!(Poly::new_from_coeffs(&[-20., 29., 3., 1.]), p);
+        assert_eq!(poly!(-20., 29., 3., 1.), p);
     }
 
     #[test]
