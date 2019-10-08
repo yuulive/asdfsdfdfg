@@ -699,6 +699,14 @@ impl<T: Copy + Num> Div<T> for Poly<T> {
 }
 
 /// Implementation of the additive identity for polynomials
+///
+/// # Example
+/// ```
+/// use automatica::polynomial::Poly;
+/// use num_traits::Zero;
+/// let zero = Poly::<u8>::zero();
+/// assert!(zero.is_zero());
+/// ```
 impl<T: Copy + Num + Zero> Zero for Poly<T> {
     fn zero() -> Self {
         Self {
@@ -707,11 +715,19 @@ impl<T: Copy + Num + Zero> Zero for Poly<T> {
     }
 
     fn is_zero(&self) -> bool {
-        self.coeffs == vec![T::zero()]
+        self.coeffs.len() == 1 && self.coeffs[0] == T::zero()
     }
 }
 
 /// Implementation of the multiplicative identity for polynomials
+///
+/// # Example
+/// ```
+/// use automatica::polynomial::Poly;
+/// use num_traits::One;
+/// let one = Poly::<u8>::one();
+/// assert!(one.is_one());
+/// ```
 impl<T: AddAssign + Copy + Num> One for Poly<T> {
     fn one() -> Self {
         Self {
@@ -720,7 +736,7 @@ impl<T: AddAssign + Copy + Num> One for Poly<T> {
     }
 
     fn is_one(&self) -> bool {
-        self.coeffs == vec![T::one()]
+        self.coeffs.len() == 1 && self.coeffs[0] == T::one()
     }
 }
 
