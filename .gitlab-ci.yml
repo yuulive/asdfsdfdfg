@@ -1,4 +1,5 @@
-image: 'rust:alpine'
+default:
+  image: 'rust:1.38-alpine'
 
 stages:
   - build
@@ -17,15 +18,20 @@ cache:
 build:
   stage: build
   script:
-    - rustc --version
-    - cargo --version
+    - "rustc --version && cargo --version"
+    - cargo build --verbose
+
+build latest:
+  stage: build
+  image: 'rust:alpine'
+  script:
+    - "rustc --version && cargo --version"
     - cargo build --verbose
 
 test:
   stage: test
   script:
-    - rustc --version
-    - cargo --version
+    - "rustc --version && cargo --version"
     - cargo test --verbose
 
 examples:
@@ -33,8 +39,7 @@ examples:
   before_script:
     - apk add --update make
   script:
-    - rustc --version
-    - cargo --version
+    - "rustc --version && cargo --version"
     - make all_examples
 
 pages:
