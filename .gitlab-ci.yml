@@ -30,7 +30,7 @@ test:
 
 examples:
   stage: examples
-  before-script:
+  before_script:
     - apk add --update make
   script:
     - rustc --version
