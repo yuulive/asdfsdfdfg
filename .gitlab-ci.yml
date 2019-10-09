@@ -1,18 +1,23 @@
 image: 'rust:alpine'
 
 stages:
+  - build
   - test
   - doc
-  - build
 
 variables:
   CARGO_HOME: $CI_PROJECT_DIR/cargo
 
+build:
+  stage: build
+  script:
+    - apk add --update make
+    - rustc --version
+    - cargo --version
+
 test:
   stage: test
   script:
-    - rustc --version
-    - cargo --version
     - cargo test --verbose
     - make all_examples
 
