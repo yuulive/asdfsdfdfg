@@ -67,11 +67,16 @@ pub trait Eval<T> {
 /// * `left` - first slice to zip
 /// * `right` - second slice to zip
 /// * `f` - function used to zip the two lists
-pub(crate) fn zip_with<T, F>(left: &[T], right: &[T], mut f: F) -> Vec<T>
+#[allow(dead_code)]
+pub(crate) fn zip_with<'a, L, R, T, F>(
+    left: &'a [L],
+    right: &'a [R],
+    mut f: F,
+) -> impl Iterator<Item = T> + 'a
 where
-    F: FnMut(&T, &T) -> T,
+    F: FnMut(&L, &R) -> T + 'a,
 {
-    left.iter().zip(right).map(|(l, r)| f(l, r)).collect()
+    left.iter().zip(right).map(move |(l, r)| f(l, r))
 }
 
 /// Zip two iterators extending the shorter one with the provided `fill` value.
