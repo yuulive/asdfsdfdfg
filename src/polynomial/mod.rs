@@ -1101,24 +1101,21 @@ impl Eval<DMatrix<Complex64>> for PolyMatrix {
 impl Add<PolyMatrix> for PolyMatrix {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self {
+    fn add(mut self, mut rhs: Self) -> Self {
         // Check which polynomial matrix has the highest degree
-        let new_coeffs = if self.degree() < rhs.degree() {
-            let mut result = rhs.matr_coeffs.to_vec();
+        let mut result = if self.degree() < rhs.degree() {
             for (i, c) in self.matr_coeffs.iter().enumerate() {
-                result[i] += c;
+                rhs[i] += c;
             }
-            result
-        } else if rhs.degree() < self.degree() {
-            let mut result = self.matr_coeffs.to_owned();
-            for (i, c) in rhs.matr_coeffs.iter().enumerate() {
-                result[i] += c;
-            }
-            result
+            rhs
         } else {
-            crate::zip_with(&self.matr_coeffs, &rhs.matr_coeffs, |l, r| l + r)
+            for (i, c) in rhs.matr_coeffs.iter().enumerate() {
+                self[i] += c;
+            }
+            self
         };
-        Self::new_from_coeffs(&new_coeffs)
+        result.trim();
+        result
     }
 }
 
@@ -1133,6 +1130,18 @@ impl Index<usize> for PolyMatrix {
 
     fn index(&self, i: usize) -> &DMatrix<f64> {
         &self.matr_coeffs[i]
+    }
+}
+
+/// Implementation of mutable indexing of polynomial matrix
+/// returning its coefficients.
+///
+/// # Panics
+///
+/// Panics for out of bounds access.
+impl IndexMut<usize> for PolyMatrix {
+    fn index_mut(&mut self, i: usize) -> &mut DMatrix<f64> {
+        &mut self.matr_coeffs[i]
     }
 }
 
