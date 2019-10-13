@@ -102,6 +102,44 @@ pub(crate) fn zip_longest<T: Copy>(left: &[T], right: &[T], fill: T) -> Vec<(T, 
     result
 }
 
+#[allow(dead_code)]
+struct ZipLongest<T, I>
+where
+    I: Iterator<Item = T>,
+{
+    a: I,
+    b: I,
+    fill: T,
+}
+
+#[allow(dead_code)]
+impl<T, I> ZipLongest<T, I>
+where
+    I: Iterator<Item = T>,
+{
+    fn new(a: I, b: I, fill: T) -> Self {
+        Self { a, b, fill }
+    }
+}
+
+#[allow(dead_code)]
+impl<T, I> Iterator for ZipLongest<T, I>
+where
+    T: Copy,
+    I: Iterator<Item = T>,
+{
+    type Item = (I::Item, I::Item);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match (self.a.next(), self.b.next()) {
+            (Some(l), Some(r)) => Some((l, r)),
+            (Some(l), None) => Some((l, self.fill)),
+            (None, Some(r)) => Some((self.fill, r)),
+            _ => None,
+        }
+    }
+}
+
 /// Zip two iterators  with the given function extending the shorter one
 /// with the provided `fill` value.
 ///
@@ -128,6 +166,20 @@ where
         }
     }
     result
+}
+
+#[allow(dead_code)]
+fn zip_longest_with_new<'a, U, T, F>(
+    left: &'a [U],
+    right: &'a [U],
+    fill: &'a U,
+    mut f: F,
+) -> impl Iterator<Item = T> + 'a
+where
+    F: FnMut(&U, &U) -> T + 'a,
+    U: Copy + 'a,
+{
+    ZipLongest::new(left.iter(), right.iter(), fill).map(move |(l, r)| f(l, r))
 }
 
 #[cfg(test)]
