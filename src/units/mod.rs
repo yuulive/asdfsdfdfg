@@ -89,8 +89,8 @@ mod tests {
 
     #[test]
     fn decibel() {
-        assert_eq!(40., 100_f64.to_db());
-        assert_eq!(-3.0102999566398116, 2_f64.inv().sqrt().to_db());
+        assert_abs_diff_eq!(40., 100_f64.to_db(), epsilon = 0.);
+        assert_relative_eq!(-3.0103, 2_f64.inv().sqrt().to_db(), max_relative = 1e5);
     }
 
     #[test]

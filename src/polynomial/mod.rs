@@ -878,13 +878,13 @@ mod tests {
             .iter()
             .zip(Poly::new_from_roots(&[-2., -2.]).roots().unwrap().iter())
             .map(|(x, y): (&f64, &f64)| (x - y).abs())
-            .all(|x| x < 0.000001));
+            .all(|x| x < 0.000_001));
 
         assert!(vec![1.0_f32, 2., 3.]
             .iter()
             .zip(Poly::new_from_roots(&[1., 2., 3.]).roots().unwrap().iter())
             .map(|(x, y): (&f32, &f32)| (x - y).abs())
-            .all(|x| x < 0.00001));
+            .all(|x| x < 0.000_01));
 
         assert_eq!(
             poly!(0., -2., 1., 1.),
@@ -895,9 +895,9 @@ mod tests {
     #[test]
     fn poly_eval() {
         let p = poly!(1., 2., 3.);
-        assert_eq!(86., p.eval(&5.));
+        assert_abs_diff_eq!(86., p.eval(&5.), epsilon = 0.);
 
-        assert_eq!(0.0, Poly::<f64>::zero().eval(&6.4));
+        assert_abs_diff_eq!(0., Poly::<f64>::zero().eval(&6.4), epsilon = 0.);
 
         let p2 = poly!(3, 4, 1);
         assert_eq!(143, p2.eval(&10));
@@ -952,6 +952,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::eq_op)]
     fn poly_sub() {
         assert_eq!(poly!(-2., 0., 2.), poly!(1., 2., 3.) - poly!(3., 2., 1.));
 
@@ -968,7 +969,7 @@ mod tests {
 
         assert_eq!(poly!(-1., 1.), 1. - poly!(2., 1.));
 
-        assert_eq!(poly!(-1i8, 1), 1i8 - poly!(2, 1));
+        assert_eq!(poly!(-1_i8, 1), 1_i8 - poly!(2, 1));
 
         assert_eq!(poly!(-10, 1), poly!(2, 1) - 12);
     }
@@ -976,10 +977,11 @@ mod tests {
     #[test]
     #[should_panic]
     fn poly_sub_panic() {
-        let _ = poly!(1, 2, 3) - 3u32;
+        let _ = poly!(1, 2, 3) - 3_u32;
     }
 
     #[test]
+    #[allow(clippy::erasing_op)]
     fn poly_mul() {
         assert_eq!(
             poly!(0., 0., -1., 0., -1.),
@@ -1019,7 +1021,7 @@ mod tests {
 
     #[test]
     fn indexing() {
-        assert_eq!(3., poly!(1., 3.)[1]);
+        assert_abs_diff_eq!(3., poly!(1., 3.)[1], epsilon = 0.);
 
         let mut p = Poly::new_from_roots(&[1., 4., 5.]);
         p[2] = 3.;
@@ -1049,13 +1051,16 @@ mod tests {
     }
 
     #[test]
-    fn identities() {
+    fn float_coeffs_identities() {
         assert!(Poly::<f64>::zero().is_zero());
         assert!(Poly::<f64>::one().is_one());
 
         assert!(Poly::<f32>::zero().is_zero());
         assert!(Poly::<f32>::one().is_one());
+    }
 
+    #[test]
+    fn integer_coeffs_identities() {
         assert!(Poly::<i8>::zero().is_zero());
         assert!(Poly::<i8>::one().is_one());
 
