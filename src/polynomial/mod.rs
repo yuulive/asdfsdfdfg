@@ -247,6 +247,71 @@ impl Poly<f64> {
     }
 }
 
+/// Implementation methods for Poly struct
+impl<T: Copy + Mul<Output = T> + NumCast + One> Poly<T> {
+    /// Calculate the derivative of the polynomial.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
+    /// let d = p.derive();
+    /// assert_eq!(Poly::new_from_coeffs(&[0., 2.]), d);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics when the exponent of the term (`usize`) cannot be converted
+    /// to `T`.
+    pub fn derive(&self) -> Self {
+        let derive_coeffs: Vec<_> = self
+            .coeffs
+            .iter()
+            .enumerate()
+            .skip(1)
+            .map(|(i, c)| *c * T::from(i).unwrap())
+            .collect();
+        Self {
+            coeffs: derive_coeffs,
+        }
+    }
+}
+
+/// Implementation methods for Poly struct
+impl<T: Copy + Div<Output = T> + NumCast> Poly<T> {
+    /// Calculate the integral of the polynomial. When used with integral types
+    /// it does not convert the coefficients to floats, division is between
+    /// integers.
+    ///
+    /// # Arguments
+    ///
+    /// * `constant` - Integration constant
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 0., 3.]);
+    /// let d = p.integrate(5.3);
+    /// assert_eq!(Poly::new_from_coeffs(&[5.3, 1., 0., 1.]), d);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics when the exponent of the term (`usize`) cannot be converted
+    /// to `T`.
+    pub fn integrate(&self, constant: T) -> Self {
+        let int_coeffs: Vec<_> = std::iter::once(constant)
+            .chain(
+                self.coeffs
+                    .iter()
+                    .enumerate()
+                    .map(|(i, c)| *c / T::from(i + 1).unwrap()),
+            )
+            .collect();
+        Self { coeffs: int_coeffs }
+    }
+}
+
 /// Evaluate the polynomial at the given real or complex number
 impl<N, T> Eval<N> for Poly<T>
 where
@@ -959,6 +1024,28 @@ mod tests {
         let mut p = Poly::new_from_roots(&[1., 4., 5.]);
         p[2] = 3.;
         assert_eq!(poly!(-20., 29., 3., 1.), p);
+    }
+
+    #[test]
+    fn derive() {
+        let p = poly!(1_u8, 2, 4, 8, 16);
+        let p_prime = poly!(2_u8, 8, 24, 64);
+        assert_eq!(p_prime, p.derive());
+    }
+
+    #[test]
+    fn integrate() {
+        let p = poly!(1_u8, 2, 4, 8, 16);
+        let p2 = poly!(9_u8, 1, 1, 1, 2, 3);
+        // Integer division.
+        assert_eq!(p2, p.integrate(9));
+    }
+
+    #[test]
+    fn derive_integrate() {
+        let d = poly!(1.3, 3.5, -2.3, -1.6);
+        let i = d.integrate(3.2);
+        assert_eq!(d, i.derive());
     }
 
     #[test]
