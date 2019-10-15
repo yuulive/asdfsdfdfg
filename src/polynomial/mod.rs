@@ -17,8 +17,8 @@ use std::{
 
 use nalgebra::{ComplexField, DMatrix, RealField, Scalar, Schur};
 use ndarray::{Array, Array2};
-use num_complex::{Complex, Complex64};
-use num_traits::{MulAdd, Num, NumCast, One, Signed, Zero};
+use num_complex::Complex;
+use num_traits::{Float, MulAdd, Num, NumAssignOps, NumCast, One, Signed, Zero};
 
 /// Polynomial object
 ///
@@ -1110,6 +1110,18 @@ pub(crate) struct PolyMatrix<T: Scalar> {
 }
 
 /// Implementation methods for `PolyMatrix` struct
+impl<T: Scalar> PolyMatrix<T> {
+    /// Degree of the polynomial matrix
+    pub(crate) fn degree(&self) -> usize {
+        assert!(
+            !self.matr_coeffs.is_empty(),
+            "Degree is not defined on empty polynomial matrix"
+        );
+        self.matr_coeffs.len() - 1
+    }
+}
+
+/// Implementation methods for `PolyMatrix` struct
 impl PolyMatrix<f64> {
     /// Create a new polynomial matrix given a slice of matrix coefficients.
     ///
@@ -1125,15 +1137,6 @@ impl PolyMatrix<f64> {
         pm.trim();
         debug_assert!(!pm.matr_coeffs.is_empty());
         pm
-    }
-
-    /// Degree of the polynomial matrix
-    pub(crate) fn degree(&self) -> usize {
-        assert!(
-            !self.matr_coeffs.is_empty(),
-            "Degree is not defined on empty polynomial matrix"
-        );
-        self.matr_coeffs.len() - 1
     }
 
     /// Implementation of polynomial matrix and matrix multiplication
@@ -1165,8 +1168,8 @@ impl PolyMatrix<f64> {
     }
 }
 
-impl Eval<DMatrix<Complex64>> for PolyMatrix<f64> {
-    fn eval(&self, s: &DMatrix<Complex64>) -> DMatrix<Complex64> {
+impl<T: NumAssignOps + Float + Scalar> Eval<DMatrix<Complex<T>>> for PolyMatrix<T> {
+    fn eval(&self, s: &DMatrix<Complex<T>>) -> DMatrix<Complex<T>> {
         // transform matr_coeffs in complex numbers matrices
         //
         // ┌     ┐ ┌       ┐ ┌       ┐ ┌     ┐
@@ -1179,10 +1182,10 @@ impl Eval<DMatrix<Complex64>> for PolyMatrix<f64> {
         let rows = self.matr_coeffs[0].nrows();
         let cols = self.matr_coeffs[0].ncols();
 
-        let mut result = DMatrix::from_element(rows, cols, Complex64::zero());
+        let mut result = DMatrix::from_element(rows, cols, Complex::<T>::zero());
 
         for mc in self.matr_coeffs.iter().rev() {
-            let mcplx = mc.map(|x| Complex64::new(x, 0.0));
+            let mcplx = mc.map(|x| Complex::<T>::new(x, T::zero()));
             result = result.component_mul(s) + mcplx;
         }
         result
@@ -1217,10 +1220,10 @@ impl Add<PolyMatrix<f64>> for PolyMatrix<f64> {
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl Index<usize> for PolyMatrix<f64> {
-    type Output = DMatrix<f64>;
+impl<T: Scalar> Index<usize> for PolyMatrix<T> {
+    type Output = DMatrix<T>;
 
-    fn index(&self, i: usize) -> &DMatrix<f64> {
+    fn index(&self, i: usize) -> &DMatrix<T> {
         &self.matr_coeffs[i]
     }
 }
@@ -1231,14 +1234,14 @@ impl Index<usize> for PolyMatrix<f64> {
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl IndexMut<usize> for PolyMatrix<f64> {
-    fn index_mut(&mut self, i: usize) -> &mut DMatrix<f64> {
+impl<T: Scalar> IndexMut<usize> for PolyMatrix<T> {
+    fn index_mut(&mut self, i: usize) -> &mut DMatrix<T> {
         &mut self.matr_coeffs[i]
     }
 }
 
 /// Implementation of polynomial matrix printing
-impl Display for PolyMatrix<f64> {
+impl<T: Display + Scalar + Zero> Display for PolyMatrix<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.degree() == 0 {
             return write!(f, "{}", self.matr_coeffs[0]);
@@ -1246,7 +1249,7 @@ impl Display for PolyMatrix<f64> {
         let mut s = String::new();
         let mut sep = "";
         for (i, c) in self.matr_coeffs.iter().enumerate() {
-            if c.iter().all(|&x| relative_eq!(x, 0.0)) {
+            if c.iter().all(|&x| x == T::zero()) {
                 continue;
             }
             s.push_str(sep);
