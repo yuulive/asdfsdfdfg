@@ -239,7 +239,7 @@ impl<T: Scalar + ComplexField + RealField + Debug> Poly<T> {
 /// Implementation methods for Poly struct
 impl Poly<f64> {
     /// Implementation of polynomial and matrix multiplication
-    pub(crate) fn mul(&self, rhs: &DMatrix<f64>) -> PolyMatrix {
+    pub(crate) fn mul(&self, rhs: &DMatrix<f64>) -> PolyMatrix<f64> {
         // It's the polynomial matrix whose coefficients are the coefficients
         // of the polynomial times the matrix
         let result: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
@@ -1105,12 +1105,12 @@ mod tests {
 ///
 /// P(x) = C0 + C1*x + C2*x^2 + ...
 #[derive(Clone, Debug)]
-pub(crate) struct PolyMatrix {
-    pub(crate) matr_coeffs: Vec<DMatrix<f64>>,
+pub(crate) struct PolyMatrix<T: Scalar> {
+    pub(crate) matr_coeffs: Vec<DMatrix<T>>,
 }
 
 /// Implementation methods for `PolyMatrix` struct
-impl PolyMatrix {
+impl PolyMatrix<f64> {
     /// Create a new polynomial matrix given a slice of matrix coefficients.
     ///
     /// # Arguments
@@ -1165,7 +1165,7 @@ impl PolyMatrix {
     }
 }
 
-impl Eval<DMatrix<Complex64>> for PolyMatrix {
+impl Eval<DMatrix<Complex64>> for PolyMatrix<f64> {
     fn eval(&self, s: &DMatrix<Complex64>) -> DMatrix<Complex64> {
         // transform matr_coeffs in complex numbers matrices
         //
@@ -1190,7 +1190,7 @@ impl Eval<DMatrix<Complex64>> for PolyMatrix {
 }
 
 /// Implementation of polynomial matrices addition
-impl Add<PolyMatrix> for PolyMatrix {
+impl Add<PolyMatrix<f64>> for PolyMatrix<f64> {
     type Output = Self;
 
     fn add(mut self, mut rhs: Self) -> Self {
@@ -1217,7 +1217,7 @@ impl Add<PolyMatrix> for PolyMatrix {
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl Index<usize> for PolyMatrix {
+impl Index<usize> for PolyMatrix<f64> {
     type Output = DMatrix<f64>;
 
     fn index(&self, i: usize) -> &DMatrix<f64> {
@@ -1231,14 +1231,14 @@ impl Index<usize> for PolyMatrix {
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl IndexMut<usize> for PolyMatrix {
+impl IndexMut<usize> for PolyMatrix<f64> {
     fn index_mut(&mut self, i: usize) -> &mut DMatrix<f64> {
         &mut self.matr_coeffs[i]
     }
 }
 
 /// Implementation of polynomial matrix printing
-impl Display for PolyMatrix {
+impl Display for PolyMatrix<f64> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.degree() == 0 {
             return write!(f, "{}", self.matr_coeffs[0]);
@@ -1306,8 +1306,8 @@ impl MatrixOfPoly {
 }
 
 /// Implement conversion between different representations.
-impl From<PolyMatrix> for MatrixOfPoly {
-    fn from(pm: PolyMatrix) -> Self {
+impl From<PolyMatrix<f64>> for MatrixOfPoly {
+    fn from(pm: PolyMatrix<f64>) -> Self {
         let coeffs = pm.matr_coeffs; // vector of matrices
         let rows = coeffs[0].nrows();
         let cols = coeffs[0].ncols();
