@@ -1275,12 +1275,12 @@ impl<T: Display + Scalar + Zero> Display for PolyMatrix<T> {
 ///
 /// P(x) = [[P1, P2], [P3, P4]]
 #[derive(Debug)]
-pub struct MatrixOfPoly {
-    pub(crate) matrix: Array2<Poly<f64>>,
+pub struct MatrixOfPoly<T> {
+    pub(crate) matrix: Array2<Poly<T>>,
 }
 
 /// Implementation methods for MP struct
-impl MatrixOfPoly {
+impl<T> MatrixOfPoly<T> {
     /// Create a new polynomial matrix given a vector of polynomials.
     ///
     /// # Arguments
@@ -1292,7 +1292,7 @@ impl MatrixOfPoly {
     /// # Panics
     ///
     /// Panics if the matrix cannot be build from given arguments.
-    fn new(rows: usize, cols: usize, data: Vec<Poly<f64>>) -> Self {
+    fn new(rows: usize, cols: usize, data: Vec<Poly<T>>) -> Self {
         Self {
             matrix: Array::from_shape_vec((rows, cols), data)
                 .expect("Input data do not allow to create the matrix"),
@@ -1301,7 +1301,7 @@ impl MatrixOfPoly {
 
     /// Extract the transfer function from the matrix if is the only one.
     /// Use to get Single Input Single Output transfer function.
-    pub fn siso(&self) -> Option<&Poly<f64>> {
+    pub fn siso(&self) -> Option<&Poly<T>> {
         if self.matrix.shape() == [1, 1] {
             self.matrix.first()
         } else {
@@ -1311,8 +1311,8 @@ impl MatrixOfPoly {
 }
 
 /// Implement conversion between different representations.
-impl From<PolyMatrix<f64>> for MatrixOfPoly {
-    fn from(pm: PolyMatrix<f64>) -> Self {
+impl<T: Scalar + Zero> From<PolyMatrix<T>> for MatrixOfPoly<T> {
+    fn from(pm: PolyMatrix<T>) -> Self {
         let coeffs = pm.matr_coeffs; // vector of matrices
         let rows = coeffs[0].nrows();
         let cols = coeffs[0].ncols();
@@ -1328,20 +1328,20 @@ impl From<PolyMatrix<f64>> for MatrixOfPoly {
         // Crate a vector containing the vector of coefficients a single
         // polynomial in row major mode with respect to the initial
         // vector of matrices.
-        let mut tmp: Vec<Vec<f64>> = vec![vec![]; rows * cols];
+        let mut tmp: Vec<Vec<T>> = vec![vec![]; rows * cols];
         for order in vectorized_coeffs {
             for (i, value) in order.into_iter().enumerate() {
                 tmp[i].push(value);
             }
         }
 
-        let polys: Vec<Poly<f64>> = tmp.iter().map(|p| Poly::new_from_coeffs(&p)).collect();
+        let polys: Vec<Poly<T>> = tmp.iter().map(|p| Poly::new_from_coeffs(&p)).collect();
         Self::new(rows, cols, polys)
     }
 }
 
 /// Implementation of matrix of polynomials printing
-impl Display for MatrixOfPoly {
+impl<T: Display + Signed> Display for MatrixOfPoly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", self.matrix)
     }

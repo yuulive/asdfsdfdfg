@@ -156,7 +156,7 @@ impl<T: Display + One + PartialEq + Signed + Zero> Display for Tf<T> {
 /// Matrix of transfer functions
 pub struct TfMatrix {
     /// Polynomial matrix of the numerators
-    num: MatrixOfPoly,
+    num: MatrixOfPoly<f64>,
     /// Common polynomial denominator
     den: Poly<f64>,
 }
@@ -169,7 +169,7 @@ impl TfMatrix {
     ///
     /// * `num` - Polynomial matrix
     /// * `den` - Characteristic polynomial of the system
-    pub fn new(num: MatrixOfPoly, den: Poly<f64>) -> Self {
+    pub fn new(num: MatrixOfPoly<f64>, den: Poly<f64>) -> Self {
         Self { num, den }
     }
 }
