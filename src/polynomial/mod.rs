@@ -1122,13 +1122,13 @@ impl<T: Scalar> PolyMatrix<T> {
 }
 
 /// Implementation methods for `PolyMatrix` struct
-impl PolyMatrix<f64> {
+impl<T: Scalar + Zero> PolyMatrix<T> {
     /// Create a new polynomial matrix given a slice of matrix coefficients.
     ///
     /// # Arguments
     ///
     /// * `coeffs` - slice of matrix coefficients
-    pub(crate) fn new_from_coeffs(matr_coeffs: &[DMatrix<f64>]) -> Self {
+    pub(crate) fn new_from_coeffs(matr_coeffs: &[DMatrix<T>]) -> Self {
         let shape = matr_coeffs[0].shape();
         assert!(matr_coeffs.iter().all(|c| c.shape() == shape));
         let mut pm = Self {
@@ -1139,6 +1139,20 @@ impl PolyMatrix<f64> {
         pm
     }
 
+    /// Trim the zeros coefficients of high degree terms
+    fn trim(&mut self) {
+        let rows = self.matr_coeffs[0].nrows();
+        let cols = self.matr_coeffs[0].ncols();
+        let zero = DMatrix::zeros(rows, cols);
+        if let Some(p) = self.matr_coeffs.iter().rposition(|c| c != &zero) {
+            self.matr_coeffs.truncate(p + 1);
+        } else {
+            self.matr_coeffs.resize(1, zero);
+        }
+    }
+}
+
+impl PolyMatrix<f64> {
     /// Implementation of polynomial matrix and matrix multiplication
     ///
     /// PolyMatrix * DMatrix
@@ -1153,18 +1167,6 @@ impl PolyMatrix<f64> {
     pub(crate) fn left_mul(&self, lhs: &DMatrix<f64>) -> Self {
         let res: Vec<_> = self.matr_coeffs.iter().map(|r| lhs * r).collect();
         Self::new_from_coeffs(&res)
-    }
-
-    /// Trim the zeros coefficients of high degree terms
-    fn trim(&mut self) {
-        let rows = self.matr_coeffs[0].nrows();
-        let cols = self.matr_coeffs[0].ncols();
-        let zero = DMatrix::zeros(rows, cols);
-        if let Some(p) = self.matr_coeffs.iter().rposition(|c| c != &zero) {
-            self.matr_coeffs.truncate(p + 1);
-        } else {
-            self.matr_coeffs.resize(1, zero);
-        }
     }
 }
 
