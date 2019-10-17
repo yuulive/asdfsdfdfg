@@ -129,13 +129,13 @@ impl<T: Decibel<T> + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf
 }
 
 /// Implementation of the polar plot for a transfer function
-impl PolarPlot for Tf<f64> {
+impl<T: Float + FloatConst + MulAdd<Output = T>> PolarPlot<T> for Tf<T> {
     fn polar(
         self,
-        min_freq: RadiantsPerSecond<f64>,
-        max_freq: RadiantsPerSecond<f64>,
-        step: f64,
-    ) -> PolarIterator {
+        min_freq: RadiantsPerSecond<T>,
+        max_freq: RadiantsPerSecond<T>,
+        step: T,
+    ) -> PolarIterator<T> {
         PolarIterator::new(self, min_freq, max_freq, step)
     }
 }

@@ -7,24 +7,25 @@
 
 use crate::{transfer_function::Tf, units::RadiantsPerSecond, Eval};
 
-use num_complex::Complex64;
+use num_complex::Complex;
+use num_traits::{Float, FloatConst, MulAdd};
 
 /// Struct for the calculation of Polar plots
 #[derive(Debug)]
-pub struct PolarIterator {
+pub struct PolarIterator<T: Float> {
     /// Transfer function
-    tf: Tf<f64>,
+    tf: Tf<T>,
     /// Number of intervals of the plot
-    intervals: f64,
+    intervals: T,
     /// Step between frequencies
-    step: f64,
+    step: T,
     /// Start frequency
-    base_freq: RadiantsPerSecond<f64>,
+    base_freq: RadiantsPerSecond<T>,
     /// Current data index
-    index: f64,
+    index: T,
 }
 
-impl PolarIterator {
+impl<T: Float + MulAdd<Output = T>> PolarIterator<T> {
     /// Create a PolarIterator struct
     ///
     /// # Arguments
@@ -41,12 +42,12 @@ impl PolarIterator {
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
     pub(crate) fn new(
-        tf: Tf<f64>,
-        min_freq: RadiantsPerSecond<f64>,
-        max_freq: RadiantsPerSecond<f64>,
-        step: f64,
+        tf: Tf<T>,
+        min_freq: RadiantsPerSecond<T>,
+        max_freq: RadiantsPerSecond<T>,
+        step: T,
     ) -> Self {
-        assert!(step > 0.0);
+        assert!(step > T::zero());
         assert!(min_freq < max_freq);
 
         let min = min_freq.0.log10();
@@ -57,52 +58,53 @@ impl PolarIterator {
             intervals,
             step,
             base_freq: RadiantsPerSecond(min),
-            index: 0.0,
+            index: T::zero(),
         }
     }
 }
 
 /// Struct to hold the data returned by the Polar iterator
-pub struct Polar {
+pub struct Polar<T> {
     /// Output
-    output: Complex64,
+    output: Complex<T>,
 }
 
 /// Implementation of Polar methods
-impl Polar {
+impl<T: Float> Polar<T> {
     /// Get the real part
-    pub fn real(&self) -> f64 {
+    pub fn real(&self) -> T {
         self.output.re
     }
 
     /// Get the imaginary part
-    pub fn imag(&self) -> f64 {
+    pub fn imag(&self) -> T {
         self.output.im
     }
 
     /// Get the magnitude
-    pub fn magnitude(&self) -> f64 {
+    pub fn magnitude(&self) -> T {
         self.output.norm()
     }
 
     /// Get the phase
-    pub fn phase(&self) -> f64 {
+    pub fn phase(&self) -> T {
         self.output.arg()
     }
 }
 
 /// Implementation of the Iterator trait for `PolarIterator` struct
-impl Iterator for PolarIterator {
-    type Item = Polar;
+impl<T: Float + MulAdd<Output = T>> Iterator for PolarIterator<T> {
+    type Item = Polar<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.intervals {
             None
         } else {
-            let freq_exponent = self.step.mul_add(self.index, self.base_freq.0);
-            let omega = 10_f64.powf(freq_exponent);
-            let j_omega = Complex64::new(0.0, omega);
-            self.index += 1.;
+            let freq_exponent = MulAdd::mul_add(self.step, self.index, self.base_freq.0);
+            // Safe cast to f32 or f64.
+            let omega = T::from(10.0).unwrap().powf(freq_exponent);
+            let j_omega = Complex::<T>::new(T::zero(), omega);
+            self.index = self.index + T::one();
             Some(Polar {
                 output: self.tf.eval(&j_omega),
             })
@@ -111,7 +113,7 @@ impl Iterator for PolarIterator {
 }
 
 /// Trait for the implementation of polar plot for a linear system.
-pub trait PolarPlot {
+pub trait PolarPlot<T: Float + FloatConst> {
     /// Create a PolarIterator struct
     ///
     /// # Arguments
@@ -128,8 +130,8 @@ pub trait PolarPlot {
     /// is not lower than the maximum frequency
     fn polar(
         self,
-        min_freq: RadiantsPerSecond<f64>,
-        max_freq: RadiantsPerSecond<f64>,
-        step: f64,
-    ) -> PolarIterator;
+        min_freq: RadiantsPerSecond<T>,
+        max_freq: RadiantsPerSecond<T>,
+        step: T,
+    ) -> PolarIterator<T>;
 }
