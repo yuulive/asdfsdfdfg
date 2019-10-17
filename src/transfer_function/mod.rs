@@ -16,14 +16,14 @@ use crate::{
         polar::{PolarIterator, PolarPlot},
     },
     polynomial::{MatrixOfPoly, Poly},
-    units::RadiantsPerSecond,
+    units::{Decibel, RadiantsPerSecond},
     Eval,
 };
 
 use nalgebra::{ComplexField, RealField, Scalar};
 use ndarray::{Array2, Axis, Zip};
 use num_complex::Complex;
-use num_traits::{Float, MulAdd, One, Signed, Zero};
+use num_traits::{Float, FloatConst, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
 use std::ops::{Index, IndexMut};
@@ -117,13 +117,13 @@ impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for Tf<T> {
 }
 
 /// Implementation of the Bode plot for a transfer function
-impl BodePlot for Tf<f64> {
+impl<T: Decibel<T> + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf<T> {
     fn bode(
         self,
-        min_freq: RadiantsPerSecond<f64>,
-        max_freq: RadiantsPerSecond<f64>,
-        step: f64,
-    ) -> BodeIterator {
+        min_freq: RadiantsPerSecond<T>,
+        max_freq: RadiantsPerSecond<T>,
+        step: T,
+    ) -> BodeIterator<T> {
         BodeIterator::new(self, min_freq, max_freq, step)
     }
 }
