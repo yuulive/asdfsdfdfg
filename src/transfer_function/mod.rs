@@ -22,7 +22,7 @@ use crate::{
 
 use nalgebra::{ComplexField, RealField, Scalar};
 use ndarray::{Array2, Axis, Zip};
-use num_complex::{Complex, Complex64};
+use num_complex::Complex;
 use num_traits::{Float, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
@@ -154,28 +154,28 @@ impl<T: Display + One + PartialEq + Signed + Zero> Display for Tf<T> {
 }
 
 /// Matrix of transfer functions
-pub struct TfMatrix {
+pub struct TfMatrix<T> {
     /// Polynomial matrix of the numerators
-    num: MatrixOfPoly<f64>,
+    num: MatrixOfPoly<T>,
     /// Common polynomial denominator
-    den: Poly<f64>,
+    den: Poly<T>,
 }
 
 /// Implementation of transfer function matrix
-impl TfMatrix {
+impl<T> TfMatrix<T> {
     /// Create a new transfer function matrix
     ///
     /// # Arguments
     ///
     /// * `num` - Polynomial matrix
     /// * `den` - Characteristic polynomial of the system
-    pub fn new(num: MatrixOfPoly<f64>, den: Poly<f64>) -> Self {
+    pub fn new(num: MatrixOfPoly<T>, den: Poly<T>) -> Self {
         Self { num, den }
     }
 }
 
-impl Eval<Vec<Complex64>> for TfMatrix {
-    fn eval(&self, s: &Vec<Complex64>) -> Vec<Complex64> {
+impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
+    fn eval(&self, s: &Vec<Complex<T>>) -> Vec<Complex<T>> {
         //
         // ┌  ┐ ┌┌         ┐ ┌     ┐┐┌  ┐
         // │y1│=││1/pc 1/pc│*│n1 n2│││s1│
@@ -189,7 +189,10 @@ impl Eval<Vec<Complex64>> for TfMatrix {
         // `.` means 'evaluated at'
 
         // Create a matrix to contain the result of the evaluation.
-        let mut res = Array2::from_elem(self.num.matrix.dim(), Complex64::new(0.0, 0.0));
+        let mut res = Array2::from_elem(
+            self.num.matrix.dim(),
+            Complex::<T>::new(T::zero(), T::zero()),
+        );
 
         // Zip the result and the numerator matrix row by row.
         Zip::from(res.genrows_mut())
@@ -206,7 +209,7 @@ impl Eval<Vec<Complex64>> for TfMatrix {
     }
 }
 
-impl From<Ss<f64>> for TfMatrix {
+impl From<Ss<f64>> for TfMatrix<f64> {
     /// Convert a state-space representation into a matrix of transfer functions
     ///
     /// # Arguments
@@ -226,10 +229,10 @@ impl From<Ss<f64>> for TfMatrix {
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl Index<[usize; 2]> for TfMatrix {
-    type Output = Poly<f64>;
+impl<T> Index<[usize; 2]> for TfMatrix<T> {
+    type Output = Poly<T>;
 
-    fn index(&self, i: [usize; 2]) -> &Poly<f64> {
+    fn index(&self, i: [usize; 2]) -> &Poly<T> {
         &self.num.matrix[i]
     }
 }
@@ -239,14 +242,14 @@ impl Index<[usize; 2]> for TfMatrix {
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl IndexMut<[usize; 2]> for TfMatrix {
-    fn index_mut(&mut self, i: [usize; 2]) -> &mut Poly<f64> {
+impl<T> IndexMut<[usize; 2]> for TfMatrix<T> {
+    fn index_mut(&mut self, i: [usize; 2]) -> &mut Poly<T> {
         &mut self.num.matrix[i]
     }
 }
 
 /// Implementation of transfer function matrix printing
-impl fmt::Display for TfMatrix {
+impl<T: Display + One + PartialEq + Signed + Zero> fmt::Display for TfMatrix<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s_num = self.num.to_string();
         let s_den = self.den.to_string();
