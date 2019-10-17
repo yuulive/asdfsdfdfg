@@ -16,7 +16,7 @@ fn main() {
     let g = Tf::new(num, den);
     println!("{}", g);
 
-    let step1 = |_: Seconds| vec![1.];
+    let step1 = |_: Seconds<f64>| vec![1.];
     let step2 = |_: usize| vec![1.];
 
     let sys = Ss::from(g);

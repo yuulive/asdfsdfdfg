@@ -29,7 +29,7 @@ pub(crate) enum Order {
 #[derive(Debug)]
 pub struct RkIterator<'a, F>
 where
-    F: Fn(Seconds) -> Vec<f64>,
+    F: Fn(Seconds<f64>) -> Vec<f64>,
 {
     /// Linear system
     sys: &'a Ss<f64>,
@@ -40,7 +40,7 @@ where
     /// Output vector.
     output: DVector<f64>,
     /// Interval.
-    h: Seconds,
+    h: Seconds<f64>,
     /// Number of steps.
     n: usize,
     /// Index.
@@ -51,7 +51,7 @@ where
 
 impl<'a, F> RkIterator<'a, F>
 where
-    F: Fn(Seconds) -> Vec<f64>,
+    F: Fn(Seconds<f64>) -> Vec<f64>,
 {
     /// Create the solver for a Runge-Kutta method.
     ///
@@ -67,7 +67,7 @@ where
         sys: &'a Ss<f64>,
         u: F,
         x0: &[f64],
-        h: Seconds,
+        h: Seconds<f64>,
         n: usize,
         order: Order,
     ) -> Self {
@@ -160,7 +160,7 @@ where
 /// Implementation of the Iterator trait for the `RkIterator` struct
 impl<'a, F> Iterator for RkIterator<'a, F>
 where
-    F: Fn(Seconds) -> Vec<f64>,
+    F: Fn(Seconds<f64>) -> Vec<f64>,
 {
     type Item = Rk;
 
@@ -182,7 +182,7 @@ where
 #[derive(Debug)]
 pub struct Rk {
     /// Time of the current step
-    time: Seconds,
+    time: Seconds<f64>,
     /// Current state
     state: Vec<f64>,
     /// Current output
@@ -191,7 +191,7 @@ pub struct Rk {
 
 impl Rk {
     /// Get the time of the current step
-    pub fn time(&self) -> Seconds {
+    pub fn time(&self) -> Seconds<f64> {
         self.time
     }
 
@@ -210,7 +210,7 @@ impl Rk {
 #[derive(Debug)]
 pub struct Rkf45Iterator<'a, F>
 where
-    F: Fn(Seconds) -> Vec<f64>,
+    F: Fn(Seconds<f64>) -> Vec<f64>,
 {
     /// Linear system
     sys: &'a Ss<f64>,
@@ -221,11 +221,11 @@ where
     /// Output vector.
     output: DVector<f64>,
     /// Interval.
-    h: Seconds,
+    h: Seconds<f64>,
     /// Time limit of the evaluation
-    limit: Seconds,
+    limit: Seconds<f64>,
     /// Time
-    time: Seconds,
+    time: Seconds<f64>,
     /// Tolerance
     tol: f64,
     /// Is initial step
@@ -234,7 +234,7 @@ where
 
 impl<'a, F> Rkf45Iterator<'a, F>
 where
-    F: Fn(Seconds) -> Vec<f64>,
+    F: Fn(Seconds<f64>) -> Vec<f64>,
 {
     /// Create a solver using Runge-Kutta-Fehlberg method
     ///
@@ -250,8 +250,8 @@ where
         sys: &'a Ss<f64>,
         u: F,
         x0: &[f64],
-        h: Seconds,
-        limit: Seconds,
+        h: Seconds<f64>,
+        limit: Seconds<f64>,
         tol: f64,
     ) -> Self {
         let start = DVector::from_vec(u(Seconds(0.)));
@@ -350,7 +350,7 @@ where
 /// Implementation of the Iterator trait for the `Rkf45Iterator` struct
 impl<'a, F> Iterator for Rkf45Iterator<'a, F>
 where
-    F: Fn(Seconds) -> Vec<f64>,
+    F: Fn(Seconds<f64>) -> Vec<f64>,
 {
     type Item = Rkf45;
 
@@ -386,7 +386,7 @@ const D: [f64; 5] = [
 #[derive(Debug)]
 pub struct Rkf45 {
     /// Current step size
-    time: Seconds,
+    time: Seconds<f64>,
     /// Current state
     state: Vec<f64>,
     /// Current output
@@ -397,7 +397,7 @@ pub struct Rkf45 {
 
 impl Rkf45 {
     /// Get the time of the current step
-    pub fn time(&self) -> Seconds {
+    pub fn time(&self) -> Seconds<f64> {
         self.time
     }
 
@@ -422,7 +422,7 @@ impl Rkf45 {
 #[derive(Debug)]
 pub struct RadauIterator<'a, F>
 where
-    F: Fn(Seconds) -> Vec<f64>,
+    F: Fn(Seconds<f64>) -> Vec<f64>,
 {
     /// Linear system
     sys: &'a Ss<f64>,
@@ -433,7 +433,7 @@ where
     /// Output vector
     output: DVector<f64>,
     /// Interval
-    h: Seconds,
+    h: Seconds<f64>,
     /// Number of steps
     n: usize,
     /// Index
@@ -446,7 +446,7 @@ where
 
 impl<'a, F> RadauIterator<'a, F>
 where
-    F: Fn(Seconds) -> Vec<f64>,
+    F: Fn(Seconds<f64>) -> Vec<f64>,
 {
     /// Create the solver for a Radau order 3 with 2 steps method.
     ///
@@ -458,7 +458,14 @@ where
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `tol` - tolerance of implicit solution finding
-    pub(crate) fn new(sys: &'a Ss<f64>, u: F, x0: &[f64], h: Seconds, n: usize, tol: f64) -> Self {
+    pub(crate) fn new(
+        sys: &'a Ss<f64>,
+        u: F,
+        x0: &[f64],
+        h: Seconds<f64>,
+        n: usize,
+        tol: f64,
+    ) -> Self {
         let start = DVector::from_vec(u(Seconds(0.)));
         let state = DVector::from_column_slice(x0);
         let output = &sys.c * &state + &sys.d * &start;
@@ -580,7 +587,7 @@ const RADAU_C: [f64; 2] = [1. / 3., 1.];
 /// Implementation of the Iterator trait for the `RadauIterator` struct.
 impl<'a, F> Iterator for RadauIterator<'a, F>
 where
-    F: Fn(Seconds) -> Vec<f64>,
+    F: Fn(Seconds<f64>) -> Vec<f64>,
 {
     type Item = Radau;
 
@@ -599,7 +606,7 @@ where
 #[derive(Debug)]
 pub struct Radau {
     /// Time of the current step
-    time: Seconds,
+    time: Seconds<f64>,
     /// Current state
     state: Vec<f64>,
     /// Current output
@@ -608,7 +615,7 @@ pub struct Radau {
 
 impl Radau {
     /// Get the time of the current step
-    pub fn time(&self) -> Seconds {
+    pub fn time(&self) -> Seconds<f64> {
         self.time
     }
 

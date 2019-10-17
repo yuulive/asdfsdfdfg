@@ -19,7 +19,7 @@ pub struct PolarIterator {
     /// Step between frequencies
     step: f64,
     /// Start frequency
-    base_freq: RadiantsPerSecond,
+    base_freq: RadiantsPerSecond<f64>,
     /// Current data index
     index: f64,
 }
@@ -42,8 +42,8 @@ impl PolarIterator {
     /// is not lower than the maximum frequency
     pub(crate) fn new(
         tf: Tf<f64>,
-        min_freq: RadiantsPerSecond,
-        max_freq: RadiantsPerSecond,
+        min_freq: RadiantsPerSecond<f64>,
+        max_freq: RadiantsPerSecond<f64>,
         step: f64,
     ) -> Self {
         assert!(step > 0.0);
@@ -128,8 +128,8 @@ pub trait PolarPlot {
     /// is not lower than the maximum frequency
     fn polar(
         self,
-        min_freq: RadiantsPerSecond,
-        max_freq: RadiantsPerSecond,
+        min_freq: RadiantsPerSecond<f64>,
+        max_freq: RadiantsPerSecond<f64>,
         step: f64,
     ) -> PolarIterator;
 }

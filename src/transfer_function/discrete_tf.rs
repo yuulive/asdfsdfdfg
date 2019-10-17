@@ -11,9 +11,9 @@ pub struct Tfz {
     /// Transfer function
     tf: Tf<f64>,
     /// Sampling period
-    ts: Seconds,
+    ts: Seconds<f64>,
     /// Discretization function
-    conversion: fn(Complex64, Seconds) -> Complex64,
+    conversion: fn(Complex64, Seconds<f64>) -> Complex64,
 }
 
 /// Implementation of `Tfz` struct.
@@ -24,7 +24,11 @@ impl Tfz {
     /// * `tf` - Continuous transfer function
     /// * `ts` - Sampling period
     /// * `conversion` - Conversion function
-    fn new_from_cont(tf: Tf<f64>, ts: Seconds, conversion: fn(Complex64, Seconds) -> Complex64) -> Self {
+    fn new_from_cont(
+        tf: Tf<f64>,
+        ts: Seconds<f64>,
+        conversion: fn(Complex64, Seconds<f64>) -> Complex64,
+    ) -> Self {
         Self { tf, ts, conversion }
     }
 
@@ -34,7 +38,7 @@ impl Tfz {
     /// * `tf` - Continuous transfer function
     /// * `ts` - Sampling period
     /// * `method` - Discretization method
-    pub fn discretize(tf: Tf<f64>, ts: Seconds, method: Discretization) -> Self {
+    pub fn discretize(tf: Tf<f64>, ts: Seconds<f64>, method: Discretization) -> Self {
         let conv = match method {
             Discretization::ForwardEuler => fe,
             Discretization::BackwardEuler => fb,
@@ -49,7 +53,7 @@ impl Tfz {
 /// # Arguments
 /// * `z` - Discrete evaluation point
 /// * `ts` - Sampling period
-fn fe(z: Complex64, ts: Seconds) -> Complex64 {
+fn fe(z: Complex64, ts: Seconds<f64>) -> Complex64 {
     (z - 1.) / ts.0
 }
 
@@ -58,7 +62,7 @@ fn fe(z: Complex64, ts: Seconds) -> Complex64 {
 /// # Arguments
 /// * `z` - Discrete evaluation point
 /// * `ts` - Sampling period
-fn fb(z: Complex64, ts: Seconds) -> Complex64 {
+fn fb(z: Complex64, ts: Seconds<f64>) -> Complex64 {
     (z - 1.) / (ts.0 * z)
 }
 
@@ -67,7 +71,7 @@ fn fb(z: Complex64, ts: Seconds) -> Complex64 {
 /// # Arguments
 /// * `z` - Discrete evaluation point
 /// * `ts` - Sampling period
-fn tu(z: Complex64, ts: Seconds) -> Complex64 {
+fn tu(z: Complex64, ts: Seconds<f64>) -> Complex64 {
     2. / ts.0 * (z - 1.) / (z + 1.)
 }
 

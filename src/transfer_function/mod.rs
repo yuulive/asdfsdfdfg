@@ -120,8 +120,8 @@ impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for Tf<T> {
 impl BodePlot for Tf<f64> {
     fn bode(
         self,
-        min_freq: RadiantsPerSecond,
-        max_freq: RadiantsPerSecond,
+        min_freq: RadiantsPerSecond<f64>,
+        max_freq: RadiantsPerSecond<f64>,
         step: f64,
     ) -> BodeIterator {
         BodeIterator::new(self, min_freq, max_freq, step)
@@ -132,8 +132,8 @@ impl BodePlot for Tf<f64> {
 impl PolarPlot for Tf<f64> {
     fn polar(
         self,
-        min_freq: RadiantsPerSecond,
-        max_freq: RadiantsPerSecond,
+        min_freq: RadiantsPerSecond<f64>,
+        max_freq: RadiantsPerSecond<f64>,
         step: f64,
     ) -> PolarIterator {
         PolarIterator::new(self, min_freq, max_freq, step)

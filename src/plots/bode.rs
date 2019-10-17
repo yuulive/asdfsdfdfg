@@ -22,7 +22,7 @@ pub struct BodeIterator {
     /// Step between frequencies
     step: f64,
     /// Start frequency
-    base_freq: RadiantsPerSecond,
+    base_freq: RadiantsPerSecond<f64>,
     /// Current data index
     index: f64,
 }
@@ -45,8 +45,8 @@ impl BodeIterator {
     /// is not lower than the maximum frequency
     pub(crate) fn new(
         tf: Tf<f64>,
-        min_freq: RadiantsPerSecond,
-        max_freq: RadiantsPerSecond,
+        min_freq: RadiantsPerSecond<f64>,
+        max_freq: RadiantsPerSecond<f64>,
         step: f64,
     ) -> Self {
         assert!(step > 0.0);
@@ -77,7 +77,7 @@ impl BodeIterator {
 /// Struct to hold the data returned by the Bode iterator
 pub struct Bode {
     /// Angular frequency (rad)
-    angular_frequency: RadiantsPerSecond,
+    angular_frequency: RadiantsPerSecond<f64>,
     /// Magnitude (absolute value or dB)
     magnitude: f64,
     /// Phase (rad or degrees)
@@ -87,12 +87,12 @@ pub struct Bode {
 /// Implementation of Bode methods
 impl Bode {
     /// Get the angular frequency
-    pub fn angular_frequency(&self) -> RadiantsPerSecond {
+    pub fn angular_frequency(&self) -> RadiantsPerSecond<f64> {
         self.angular_frequency
     }
 
     /// Get the frequency
-    pub fn frequency(&self) -> Hertz {
+    pub fn frequency(&self) -> Hertz<f64> {
         self.angular_frequency.into()
     }
 
@@ -147,8 +147,8 @@ pub trait BodePlot {
     /// is not lower than the maximum frequency
     fn bode(
         self,
-        min_freq: RadiantsPerSecond,
-        max_freq: RadiantsPerSecond,
+        min_freq: RadiantsPerSecond<f64>,
+        max_freq: RadiantsPerSecond<f64>,
         step: f64,
     ) -> BodeIterator;
 
@@ -166,7 +166,7 @@ pub trait BodePlot {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    fn bode_hz(self, min_freq: Hertz, max_freq: Hertz, step: f64) -> BodeIterator
+    fn bode_hz(self, min_freq: Hertz<f64>, max_freq: Hertz<f64>, step: f64) -> BodeIterator
     where
         Self: std::marker::Sized,
     {
