@@ -4,20 +4,21 @@
 
 use crate::{linear_system::discrete::Discretization, transfer_function::Tf, units::Seconds, Eval};
 
-use num_complex::Complex64;
+use num_complex::Complex;
+use num_traits::{Float, MulAdd};
 
 /// Discrete transfer function.
-pub struct Tfz {
+pub struct Tfz<T: Float> {
     /// Transfer function
-    tf: Tf<f64>,
+    tf: Tf<T>,
     /// Sampling period
-    ts: Seconds<f64>,
+    ts: Seconds<T>,
     /// Discretization function
-    conversion: fn(Complex64, Seconds<f64>) -> Complex64,
+    conversion: fn(Complex<T>, Seconds<T>) -> Complex<T>,
 }
 
 /// Implementation of `Tfz` struct.
-impl Tfz {
+impl<T: Float> Tfz<T> {
     /// Create a new discrete transfer function from a continuous one.
     ///
     /// # Arguments
@@ -25,9 +26,9 @@ impl Tfz {
     /// * `ts` - Sampling period
     /// * `conversion` - Conversion function
     fn new_from_cont(
-        tf: Tf<f64>,
-        ts: Seconds<f64>,
-        conversion: fn(Complex64, Seconds<f64>) -> Complex64,
+        tf: Tf<T>,
+        ts: Seconds<T>,
+        conversion: fn(Complex<T>, Seconds<T>) -> Complex<T>,
     ) -> Self {
         Self { tf, ts, conversion }
     }
@@ -38,7 +39,7 @@ impl Tfz {
     /// * `tf` - Continuous transfer function
     /// * `ts` - Sampling period
     /// * `method` - Discretization method
-    pub fn discretize(tf: Tf<f64>, ts: Seconds<f64>, method: Discretization) -> Self {
+    pub fn discretize(tf: Tf<T>, ts: Seconds<T>, method: Discretization) -> Self {
         let conv = match method {
             Discretization::ForwardEuler => fe,
             Discretization::BackwardEuler => fb,
@@ -53,8 +54,8 @@ impl Tfz {
 /// # Arguments
 /// * `z` - Discrete evaluation point
 /// * `ts` - Sampling period
-fn fe(z: Complex64, ts: Seconds<f64>) -> Complex64 {
-    (z - 1.) / ts.0
+fn fe<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
+    (z - T::one()) / ts.0
 }
 
 /// Backward Euler transformation
@@ -62,8 +63,8 @@ fn fe(z: Complex64, ts: Seconds<f64>) -> Complex64 {
 /// # Arguments
 /// * `z` - Discrete evaluation point
 /// * `ts` - Sampling period
-fn fb(z: Complex64, ts: Seconds<f64>) -> Complex64 {
-    (z - 1.) / (ts.0 * z)
+fn fb<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
+    (z - T::one()) / (z * ts.0)
 }
 
 /// Tustin transformation
@@ -71,13 +72,16 @@ fn fb(z: Complex64, ts: Seconds<f64>) -> Complex64 {
 /// # Arguments
 /// * `z` - Discrete evaluation point
 /// * `ts` - Sampling period
-fn tu(z: Complex64, ts: Seconds<f64>) -> Complex64 {
-    2. / ts.0 * (z - 1.) / (z + 1.)
+fn tu<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
+    let float = (T::one() + T::one()) / ts.0;
+    let complex = (z - T::one()) / (z + T::one());
+    // Complex<T> * T is implemented, not T * Complex<T>
+    complex * float
 }
 
 /// Implementation of the evaluation of a transfer function
-impl Eval<Complex64> for Tfz {
-    fn eval(&self, z: &Complex64) -> Complex64 {
+impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for Tfz<T> {
+    fn eval(&self, z: &Complex<T>) -> Complex<T> {
         let s = (self.conversion)(*z, self.ts);
         self.tf.eval(&s)
     }
