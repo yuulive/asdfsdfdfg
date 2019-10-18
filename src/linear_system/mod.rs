@@ -21,7 +21,10 @@ use nalgebra::{DMatrix, DVector, Scalar, Schur};
 use num_complex::Complex64;
 
 use std::convert::From;
-use std::{fmt, fmt::Debug};
+use std::{
+    fmt,
+    fmt::{Debug, Display, Formatter},
+};
 
 /// State-space representation of a linear system
 ///
@@ -149,7 +152,7 @@ impl Ss<f64> {
     /// # Arguments
     ///
     /// * `u` - Input vector
-    pub fn equilibrium(&self, u: &[f64]) -> Option<Equilibrium> {
+    pub fn equilibrium(&self, u: &[f64]) -> Option<Equilibrium<f64>> {
         assert_eq!(u.len(), self.b.ncols(), "Wrong number of inputs.");
         let u = DVector::from_row_slice(u);
         let inv_a = &self.a.clone().try_inverse()?;
@@ -359,39 +362,39 @@ impl fmt::Display for Ss<f64> {
 
 /// Struct describing an equilibrium point
 #[derive(Debug)]
-pub struct Equilibrium {
+pub struct Equilibrium<T: Scalar> {
     /// State equilibrium
-    x: DVector<f64>,
+    x: DVector<T>,
     /// Output equilibrium
-    y: DVector<f64>,
+    y: DVector<T>,
 }
 
 /// Implement methods for equilibrium
-impl Equilibrium {
+impl<T: Scalar> Equilibrium<T> {
     /// Create a new equilibrium given the state and the output vectors
     ///
     /// # Arguments
     ///
     /// * `x` - State equilibrium
     /// * `y` - Output equilibrium
-    pub(crate) fn new(x: DVector<f64>, y: DVector<f64>) -> Self {
+    pub(crate) fn new(x: DVector<T>, y: DVector<T>) -> Self {
         Self { x, y }
     }
 
     /// Retrieve state coordinates for equilibrium
-    pub fn x(&self) -> &[f64] {
+    pub fn x(&self) -> &[T] {
         self.x.as_slice()
     }
 
     /// Retrieve output coordinates for equilibrium
-    pub fn y(&self) -> &[f64] {
+    pub fn y(&self) -> &[T] {
         self.y.as_slice()
     }
 }
 
 /// Implementation of printing of equilibrium point
-impl fmt::Display for Equilibrium {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl<T: Display + Scalar> Display for Equilibrium<T> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "x: {}\ny: {}", self.x, self.y)
     }
 }
