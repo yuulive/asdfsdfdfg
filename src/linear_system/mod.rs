@@ -17,8 +17,8 @@ use crate::{
     units::Seconds,
 };
 
-use nalgebra::{DMatrix, DVector, Scalar, Schur};
-use num_complex::Complex64;
+use nalgebra::{ComplexField, DMatrix, DVector, RealField, Scalar, Schur};
+use num_complex::Complex;
 
 use std::convert::From;
 use std::{
@@ -33,7 +33,7 @@ use std::{
 /// y(t)    = C * x(t) + D * u(t)
 /// ```
 #[derive(Debug)]
-pub struct Ss<T: Scalar + Copy + Debug + PartialEq> {
+pub struct Ss<T: Scalar> {
     /// A matrix
     a: DMatrix<T>,
     /// B matrix
@@ -46,7 +46,7 @@ pub struct Ss<T: Scalar + Copy + Debug + PartialEq> {
     dim: Dim,
 }
 
-/// Dimensions of the linar system.
+/// Dim of the linar system.
 #[derive(Debug, Clone, Copy)]
 pub struct Dim {
     /// Number of states
@@ -76,7 +76,7 @@ impl Dim {
 }
 
 /// Implementation of the methods for the state-space
-impl Ss<f64> {
+impl<T: Scalar> Ss<T> {
     /// Create a new state-space representation
     ///
     /// # Arguments
@@ -96,10 +96,10 @@ impl Ss<f64> {
         states: usize,
         inputs: usize,
         outputs: usize,
-        a: &[f64],
-        b: &[f64],
-        c: &[f64],
-        d: &[f64],
+        a: &[T],
+        b: &[T],
+        c: &[T],
+        d: &[T],
     ) -> Self {
         Self {
             a: DMatrix::from_row_slice(states, states, a),
@@ -115,22 +115,22 @@ impl Ss<f64> {
     }
 
     /// Get the A matrix
-    pub(crate) fn a(&self) -> &DMatrix<f64> {
+    pub(crate) fn a(&self) -> &DMatrix<T> {
         &self.a
     }
 
     /// Get the C matrix
-    pub(crate) fn b(&self) -> &DMatrix<f64> {
+    pub(crate) fn b(&self) -> &DMatrix<T> {
         &self.b
     }
 
     /// Get the C matrix
-    pub(crate) fn c(&self) -> &DMatrix<f64> {
+    pub(crate) fn c(&self) -> &DMatrix<T> {
         &self.c
     }
 
     /// Get the D matrix
-    pub(crate) fn d(&self) -> &DMatrix<f64> {
+    pub(crate) fn d(&self) -> &DMatrix<T> {
         &self.d
     }
 
@@ -138,21 +138,27 @@ impl Ss<f64> {
     pub fn dim(&self) -> Dim {
         self.dim
     }
+}
 
+/// Implementation of the methods for the state-space
+impl<T: ComplexField + RealField> Ss<T> {
     /// Calculate the poles of the system
-    pub fn poles(&self) -> Vec<Complex64> {
+    pub fn poles(&self) -> Vec<Complex<T>> {
         Schur::new(self.a.clone())
             .complex_eigenvalues()
             .as_slice()
             .to_vec()
     }
+}
 
+/// Implementation of the methods for the state-space
+impl<T: ComplexField + Scalar> Ss<T> {
     /// Calculate the equilibrium point for the given input condition
     ///
     /// # Arguments
     ///
     /// * `u` - Input vector
-    pub fn equilibrium(&self, u: &[f64]) -> Option<Equilibrium<f64>> {
+    pub fn equilibrium(&self, u: &[T]) -> Option<Equilibrium<T>> {
         assert_eq!(u.len(), self.b.ncols(), "Wrong number of inputs.");
         let u = DVector::from_row_slice(u);
         let inv_a = &self.a.clone().try_inverse()?;
@@ -160,7 +166,10 @@ impl Ss<f64> {
         let y = (-&self.c * inv_a * &self.b + &self.d) * u;
         Some(Equilibrium::new(x, y))
     }
+}
 
+/// Implementation of the methods for the state-space
+impl Ss<f64> {
     /// Time evolution for the given input, using Runge-Kutta second order method
     ///
     /// # Arguments
