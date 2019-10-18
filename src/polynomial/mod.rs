@@ -185,7 +185,7 @@ impl<T: AddAssign + Copy + Num + Neg<Output = T>> Poly<T> {
 }
 
 /// Implementation methods for Poly struct
-impl<T: Scalar + ComplexField + RealField + Debug> Poly<T> {
+impl<T: Scalar + ComplexField + RealField> Poly<T> {
     /// Build the companion matrix of the polynomial.
     ///
     /// Subdiagonal terms are 1., rightmost column contains the coefficients

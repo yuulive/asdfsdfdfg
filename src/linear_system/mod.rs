@@ -19,6 +19,7 @@ use crate::{
 
 use nalgebra::{ComplexField, DMatrix, DVector, RealField, Scalar, Schur};
 use num_complex::Complex;
+use num_traits::Float;
 
 use std::convert::From;
 use std::{
@@ -286,7 +287,7 @@ pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
     (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
 }
 
-impl From<Tf<f64>> for Ss<f64> {
+impl<T: Float + Scalar + ComplexField + RealField> From<Tf<T>> for Ss<T> {
     /// Convert a transfer function representation into state space representation.
     /// Conversion is done using the observability canonical form.
     ///
@@ -314,7 +315,7 @@ impl From<Tf<f64>> for Ss<f64> {
     /// # Arguments
     ///
     /// `tf` - transfer function
-    fn from(tf: Tf<f64>) -> Self {
+    fn from(tf: Tf<T>) -> Self {
         // Get the denominator in the monic form and the leading coefficient.
         let (den_monic, den_n) = tf.den().monic();
         // Extend the numerator coefficients with zeros to the length of the
@@ -338,7 +339,7 @@ impl From<Tf<f64>> for Ss<f64> {
 
         // Crate a 1xn vector with all zeros but the last that is 1.
         let mut c = DMatrix::zeros(1, states);
-        c[states - 1] = 1.0;
+        c[states - 1] = T::one();
 
         // Crate a 1x1 matrix with the highest coefficient of the numerator.
         let d = DMatrix::from_element(1, 1, b_n);
@@ -359,8 +360,8 @@ impl From<Tf<f64>> for Ss<f64> {
 }
 
 /// Implementation of state-space representation
-impl fmt::Display for Ss<f64> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl<T: Scalar + Display> Display for Ss<T> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
             "A: {}\nB: {}\nC: {}\nD: {}",
