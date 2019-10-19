@@ -43,10 +43,10 @@ pub enum Discretization {
     Tustin,
 }
 
-impl Discrete<f64> for Ss<f64> {
-    fn time_evolution<F>(&self, steps: usize, input: F, x0: &[f64]) -> DiscreteIterator<F, f64>
+impl<T: ComplexField + Float + Scalar> Discrete<T> for Ss<T> {
+    fn time_evolution<F>(&self, steps: usize, input: F, x0: &[T]) -> DiscreteIterator<F, T>
     where
-        F: Fn(usize) -> Vec<f64>,
+        F: Fn(usize) -> Vec<T>,
     {
         let state = DVector::from_column_slice(x0);
         let next_state = DVector::from_column_slice(x0);
@@ -60,7 +60,7 @@ impl Discrete<f64> for Ss<f64> {
         }
     }
 
-    fn discretize(&self, st: f64, method: Discretization) -> Option<Self> {
+    fn discretize(&self, st: T, method: Discretization) -> Option<Self> {
         match method {
             Discretization::ForwardEuler => forward_euler(&self, st),
             Discretization::BackwardEuler => backward_euler(&self, st),
@@ -164,11 +164,12 @@ pub struct TimeEvolution<T> {
     output: Vec<T>,
 }
 
-impl<'a, F> Iterator for DiscreteIterator<'a, F, f64>
+impl<'a, F, T> Iterator for DiscreteIterator<'a, F, T>
 where
-    F: Fn(usize) -> Vec<f64>,
+    F: Fn(usize) -> Vec<T>,
+    T: AddAssign + Float + MulAssign + Scalar,
 {
-    type Item = TimeEvolution<f64>;
+    type Item = TimeEvolution<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.time > self.steps {
