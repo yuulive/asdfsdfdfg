@@ -14,7 +14,8 @@
 
 use crate::{linear_system::Ss, units::Seconds};
 
-use nalgebra::{DMatrix, DVector, Dynamic, LU};
+use nalgebra::{ComplexField, DMatrix, DVector, Dynamic, Scalar, LU};
+use num_traits::Float;
 
 /// Define the order of the Runge-Kutta method.
 #[derive(Debug)]
@@ -27,20 +28,21 @@ pub(crate) enum Order {
 
 /// Struct for the time evolution of a linear system
 #[derive(Debug)]
-pub struct RkIterator<'a, F>
+pub struct RkIterator<'a, F, T>
 where
-    F: Fn(Seconds<f64>) -> Vec<f64>,
+    F: Fn(Seconds<T>) -> Vec<T>,
+    T: Float + Scalar,
 {
     /// Linear system
-    sys: &'a Ss<f64>,
+    sys: &'a Ss<T>,
     /// Input function
     input: F,
     /// State vector.
-    state: DVector<f64>,
+    state: DVector<T>,
     /// Output vector.
-    output: DVector<f64>,
+    output: DVector<T>,
     /// Interval.
-    h: Seconds<f64>,
+    h: Seconds<T>,
     /// Number of steps.
     n: usize,
     /// Index.
@@ -49,7 +51,7 @@ where
     order: Order,
 }
 
-impl<'a, F> RkIterator<'a, F>
+impl<'a, F> RkIterator<'a, F, f64>
 where
     F: Fn(Seconds<f64>) -> Vec<f64>,
 {
@@ -89,7 +91,7 @@ where
     /// Initial step (time 0) of the Runge-Kutta solver.
     /// It contains the initial state and the calculated initial output
     /// at the constructor.
-    fn initial_step(&mut self) -> Option<Rk> {
+    fn initial_step(&mut self) -> Option<Rk<f64>> {
         self.index += 1;
         // State and output at time 0.
         Some(Rk {
@@ -101,7 +103,7 @@ where
 
     /// Runge-Kutta order 2 method.
     #[allow(clippy::cast_precision_loss)]
-    fn main_iteration_rk2(&mut self) -> Option<Rk> {
+    fn main_iteration_rk2(&mut self) -> Option<Rk<f64>> {
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
         // k1 = h*f(t_n, y_n)
         // k2 = h*f(t_n + h, y_n + k1)
@@ -126,7 +128,7 @@ where
 
     /// Runge-Kutta order 4 method.
     #[allow(clippy::cast_precision_loss)]
-    fn main_iteration_rk4(&mut self) -> Option<Rk> {
+    fn main_iteration_rk4(&mut self) -> Option<Rk<f64>> {
         // y_n+1 = y_n + h/6(k1 + 2*k2 + 2*k3 + k4) + O(h^4)
         // k1 = f(t_n, y_n)
         // k2 = f(t_n + h/2, y_n + h/2 * k1)
@@ -158,11 +160,11 @@ where
 }
 
 /// Implementation of the Iterator trait for the `RkIterator` struct
-impl<'a, F> Iterator for RkIterator<'a, F>
+impl<'a, F> Iterator for RkIterator<'a, F, f64>
 where
     F: Fn(Seconds<f64>) -> Vec<f64>,
 {
-    type Item = Rk;
+    type Item = Rk<f64>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.n {
@@ -180,59 +182,60 @@ where
 
 /// Struct to hold the data of the linear system time evolution
 #[derive(Debug)]
-pub struct Rk {
+pub struct Rk<T: Float> {
     /// Time of the current step
-    time: Seconds<f64>,
+    time: Seconds<T>,
     /// Current state
-    state: Vec<f64>,
+    state: Vec<T>,
     /// Current output
-    output: Vec<f64>,
+    output: Vec<T>,
 }
 
-impl Rk {
+impl<T: Float> Rk<T> {
     /// Get the time of the current step
-    pub fn time(&self) -> Seconds<f64> {
+    pub fn time(&self) -> Seconds<T> {
         self.time
     }
 
     /// Get the current state of the system
-    pub fn state(&self) -> &Vec<f64> {
+    pub fn state(&self) -> &Vec<T> {
         &self.state
     }
 
     /// Get the current output of the system
-    pub fn output(&self) -> &Vec<f64> {
+    pub fn output(&self) -> &Vec<T> {
         &self.output
     }
 }
 
 /// Struct for the time evolution of a linear system
 #[derive(Debug)]
-pub struct Rkf45Iterator<'a, F>
+pub struct Rkf45Iterator<'a, F, T>
 where
     F: Fn(Seconds<f64>) -> Vec<f64>,
+    T: Float + Scalar,
 {
     /// Linear system
-    sys: &'a Ss<f64>,
+    sys: &'a Ss<T>,
     /// Input function
     input: F,
     /// State vector.
-    state: DVector<f64>,
+    state: DVector<T>,
     /// Output vector.
-    output: DVector<f64>,
+    output: DVector<T>,
     /// Interval.
-    h: Seconds<f64>,
+    h: Seconds<T>,
     /// Time limit of the evaluation
-    limit: Seconds<f64>,
+    limit: Seconds<T>,
     /// Time
-    time: Seconds<f64>,
+    time: Seconds<T>,
     /// Tolerance
-    tol: f64,
+    tol: T,
     /// Is initial step
     initial_step: bool,
 }
 
-impl<'a, F> Rkf45Iterator<'a, F>
+impl<'a, F> Rkf45Iterator<'a, F, f64>
 where
     F: Fn(Seconds<f64>) -> Vec<f64>,
 {
@@ -274,7 +277,7 @@ where
     /// Initial step (time 0) of the rkf45 solver.
     /// It contains the initial state and the calculated initial output
     /// at the constructor
-    fn initial_step(&mut self) -> Option<Rkf45> {
+    fn initial_step(&mut self) -> Option<Rkf45<f64>> {
         self.initial_step = false;
         Some(Rkf45 {
             time: Seconds(0.),
@@ -285,7 +288,7 @@ where
     }
 
     /// Runge-Kutta-Fehlberg order 4 and 5 method with adaptive step size
-    fn main_iteration(&mut self) -> Option<Rkf45> {
+    fn main_iteration(&mut self) -> Option<Rkf45<f64>> {
         let mut error;
         loop {
             let u1 = DVector::from_vec((self.input)(self.time));
@@ -348,11 +351,11 @@ where
 }
 
 /// Implementation of the Iterator trait for the `Rkf45Iterator` struct
-impl<'a, F> Iterator for Rkf45Iterator<'a, F>
+impl<'a, F> Iterator for Rkf45Iterator<'a, F, f64>
 where
     F: Fn(Seconds<f64>) -> Vec<f64>,
 {
-    type Item = Rkf45;
+    type Item = Rkf45<f64>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.time > self.limit {
@@ -384,35 +387,35 @@ const D: [f64; 5] = [
 
 /// Struct to hold the data of the linear system time evolution
 #[derive(Debug)]
-pub struct Rkf45 {
+pub struct Rkf45<T: Float> {
     /// Current step size
-    time: Seconds<f64>,
+    time: Seconds<T>,
     /// Current state
-    state: Vec<f64>,
+    state: Vec<T>,
     /// Current output
-    output: Vec<f64>,
+    output: Vec<T>,
     /// Current maximum absolute error
-    error: f64,
+    error: T,
 }
 
-impl Rkf45 {
+impl<T: Float> Rkf45<T> {
     /// Get the time of the current step
-    pub fn time(&self) -> Seconds<f64> {
+    pub fn time(&self) -> Seconds<T> {
         self.time
     }
 
     /// Get the current state of the system
-    pub fn state(&self) -> &Vec<f64> {
+    pub fn state(&self) -> &Vec<T> {
         &self.state
     }
 
     /// Get the current output of the system
-    pub fn output(&self) -> &Vec<f64> {
+    pub fn output(&self) -> &Vec<T> {
         &self.output
     }
 
     /// Get the current maximum absolute error
-    pub fn error(&self) -> f64 {
+    pub fn error(&self) -> T {
         self.error
     }
 }
@@ -420,31 +423,32 @@ impl Rkf45 {
 /// Struct for the time evolution of the linear system using the implicit
 /// Radau method of order 3 with 2 steps
 #[derive(Debug)]
-pub struct RadauIterator<'a, F>
+pub struct RadauIterator<'a, F, T>
 where
-    F: Fn(Seconds<f64>) -> Vec<f64>,
+    F: Fn(Seconds<T>) -> Vec<T>,
+    T: ComplexField + Float + Scalar,
 {
     /// Linear system
-    sys: &'a Ss<f64>,
+    sys: &'a Ss<T>,
     /// Input function
     input: F,
     /// State vector
-    state: DVector<f64>,
+    state: DVector<T>,
     /// Output vector
-    output: DVector<f64>,
+    output: DVector<T>,
     /// Interval
-    h: Seconds<f64>,
+    h: Seconds<T>,
     /// Number of steps
     n: usize,
     /// Index
     index: usize,
     /// Tolerance
-    tol: f64,
+    tol: T,
     /// Store the LU decomposition of the Jacobian matrix
-    lu_jacobian: LU<f64, Dynamic, Dynamic>,
+    lu_jacobian: LU<T, Dynamic, Dynamic>,
 }
 
-impl<'a, F> RadauIterator<'a, F>
+impl<'a, F> RadauIterator<'a, F, f64>
 where
     F: Fn(Seconds<f64>) -> Vec<f64>,
 {
@@ -503,7 +507,7 @@ where
     /// Initial step (time 0) of the Radau solver.
     /// It contains the initial state and the calculated initial output
     /// at the constructor.
-    fn initial_step(&mut self) -> Option<Radau> {
+    fn initial_step(&mut self) -> Option<Radau<f64>> {
         self.index += 1;
         Some(Radau {
             time: Seconds(0.),
@@ -514,7 +518,7 @@ where
 
     /// Radau order 3 with 2 step implicit method.
     #[allow(clippy::cast_precision_loss)]
-    fn main_iteration(&mut self) -> Option<Radau> {
+    fn main_iteration(&mut self) -> Option<Radau<f64>> {
         let time = (self.index - 1) as f64 * self.h.0;
         let rows = self.sys.a.nrows();
         // k = [k1; k2] (column vector)
@@ -585,11 +589,11 @@ const RADAU_C: [f64; 2] = [1. / 3., 1.];
 //////
 
 /// Implementation of the Iterator trait for the `RadauIterator` struct.
-impl<'a, F> Iterator for RadauIterator<'a, F>
+impl<'a, F> Iterator for RadauIterator<'a, F, f64>
 where
     F: Fn(Seconds<f64>) -> Vec<f64>,
 {
-    type Item = Radau;
+    type Item = Radau<f64>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.n {
@@ -604,28 +608,28 @@ where
 
 /// Struct to hold the data of the linear system time evolution.
 #[derive(Debug)]
-pub struct Radau {
+pub struct Radau<T: Float> {
     /// Time of the current step
-    time: Seconds<f64>,
+    time: Seconds<T>,
     /// Current state
-    state: Vec<f64>,
+    state: Vec<T>,
     /// Current output
-    output: Vec<f64>,
+    output: Vec<T>,
 }
 
-impl Radau {
+impl<T: Float> Radau<T> {
     /// Get the time of the current step
-    pub fn time(&self) -> Seconds<f64> {
+    pub fn time(&self) -> Seconds<T> {
         self.time
     }
 
     /// Get the current state of the system
-    pub fn state(&self) -> &Vec<f64> {
+    pub fn state(&self) -> &Vec<T> {
         &self.state
     }
 
     /// Get the current output of the system
-    pub fn output(&self) -> &Vec<f64> {
+    pub fn output(&self) -> &Vec<T> {
         &self.output
     }
 }

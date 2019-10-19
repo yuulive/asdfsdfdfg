@@ -179,7 +179,7 @@ impl Ss<f64> {
     /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk2<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F>
+    pub fn rk2<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
@@ -194,7 +194,7 @@ impl Ss<f64> {
     /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk4<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F>
+    pub fn rk4<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
@@ -217,7 +217,7 @@ impl Ss<f64> {
         h: Seconds<f64>,
         limit: Seconds<f64>,
         tol: f64,
-    ) -> Rkf45Iterator<F>
+    ) -> Rkf45Iterator<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
@@ -240,7 +240,7 @@ impl Ss<f64> {
         h: Seconds<f64>,
         n: usize,
         tol: f64,
-    ) -> RadauIterator<F>
+    ) -> RadauIterator<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
