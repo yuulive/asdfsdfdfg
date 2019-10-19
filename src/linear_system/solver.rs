@@ -14,6 +14,8 @@
 
 use crate::{linear_system::Ss, units::Seconds};
 
+use std::ops::{AddAssign, MulAssign};
+
 use nalgebra::{ComplexField, DMatrix, DVector, Dynamic, Scalar, LU};
 use num_traits::Float;
 
@@ -51,9 +53,10 @@ where
     order: Order,
 }
 
-impl<'a, F> RkIterator<'a, F, f64>
+impl<'a, F, T> RkIterator<'a, F, T>
 where
-    F: Fn(Seconds<f64>) -> Vec<f64>,
+    F: Fn(Seconds<T>) -> Vec<T>,
+    T: Float + AddAssign + MulAssign + Scalar,
 {
     /// Create the solver for a Runge-Kutta method.
     ///
@@ -66,14 +69,14 @@ where
     /// * `n` - integration steps
     /// * `order` - order of the solver
     pub(crate) fn new(
-        sys: &'a Ss<f64>,
+        sys: &'a Ss<T>,
         u: F,
-        x0: &[f64],
-        h: Seconds<f64>,
+        x0: &[T],
+        h: Seconds<T>,
         n: usize,
         order: Order,
     ) -> Self {
-        let start = DVector::from_vec(u(Seconds(0.)));
+        let start = DVector::from_vec(u(Seconds(T::zero())));
         let state = DVector::from_column_slice(x0);
         let output = &sys.c * &state + &sys.d * &start;
         Self {
@@ -91,11 +94,11 @@ where
     /// Initial step (time 0) of the Runge-Kutta solver.
     /// It contains the initial state and the calculated initial output
     /// at the constructor.
-    fn initial_step(&mut self) -> Option<Rk<f64>> {
+    fn initial_step(&mut self) -> Option<Rk<T>> {
         self.index += 1;
         // State and output at time 0.
         Some(Rk {
-            time: Seconds(0.),
+            time: Seconds(T::zero()),
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
         })
@@ -103,19 +106,20 @@ where
 
     /// Runge-Kutta order 2 method.
     #[allow(clippy::cast_precision_loss)]
-    fn main_iteration_rk2(&mut self) -> Option<Rk<f64>> {
+    fn main_iteration_rk2(&mut self) -> Option<Rk<T>> {
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
         // k1 = h*f(t_n, y_n)
         // k2 = h*f(t_n + h, y_n + k1)
-        let init_time = Seconds((self.index - 1) as f64 * self.h.0);
-        let end_time = Seconds(self.index as f64 * self.h.0);
+        let init_time = Seconds(T::from(self.index - 1).unwrap() * self.h.0);
+        let end_time = Seconds(T::from(self.index).unwrap() * self.h.0);
         let u = DVector::from_vec((self.input)(init_time));
         let uh = DVector::from_vec((self.input)(end_time));
         let bu = &self.sys.b * &u;
         let buh = &self.sys.b * &uh;
-        let k1 = self.h.0 * (&self.sys.a * &self.state + &bu);
-        let k2 = self.h.0 * (&self.sys.a * (&self.state + &k1) + &buh);
-        self.state += 0.5 * (k1 + k2);
+        let k1 = (&self.sys.a * &self.state + &bu) * self.h.0;
+        let k2 = (&self.sys.a * (&self.state + &k1) + &buh) * self.h.0;
+        let _05 = T::from(0.5).unwrap(); // Safe cast to f32 and f64.
+        self.state += (k1 + k2) * _05;
         self.output = &self.sys.c * &self.state + &self.sys.d * &uh;
 
         self.index += 1;
@@ -128,15 +132,16 @@ where
 
     /// Runge-Kutta order 4 method.
     #[allow(clippy::cast_precision_loss)]
-    fn main_iteration_rk4(&mut self) -> Option<Rk<f64>> {
+    fn main_iteration_rk4(&mut self) -> Option<Rk<T>> {
         // y_n+1 = y_n + h/6(k1 + 2*k2 + 2*k3 + k4) + O(h^4)
         // k1 = f(t_n, y_n)
         // k2 = f(t_n + h/2, y_n + h/2 * k1)
         // k3 = f(t_n + h/2, y_n + h/2 * k2)
         // k2 = f(t_n + h, y_n + h*k3)
-        let init_time = Seconds((self.index - 1) as f64 * self.h.0);
-        let mid_time = Seconds(init_time.0 + 0.5 * self.h.0);
-        let end_time = Seconds(self.index as f64 * self.h.0);
+        let init_time = Seconds(T::from(self.index - 1).unwrap() * self.h.0);
+        let _05 = T::from(0.5).unwrap(); // Safe cast to f32 and f64.
+        let mid_time = Seconds(init_time.0 + _05 * self.h.0);
+        let end_time = Seconds(T::from(self.index).unwrap() * self.h.0);
         let u = DVector::from_vec((self.input)(init_time));
         let u_mid = DVector::from_vec((self.input)(mid_time));
         let u_end = DVector::from_vec((self.input)(end_time));
@@ -144,10 +149,12 @@ where
         let bu_mid = &self.sys.b * &u_mid;
         let bu_end = &self.sys.b * &u_end;
         let k1 = &self.sys.a * &self.state + &bu;
-        let k2 = &self.sys.a * (&self.state + 0.5 * self.h.0 * &k1) + &bu_mid;
-        let k3 = &self.sys.a * (&self.state + 0.5 * self.h.0 * &k2) + &bu_mid;
-        let k4 = &self.sys.a * (&self.state + self.h.0 * &k3) + &bu_end;
-        self.state += self.h.0 / 6. * (k1 + 2. * k2 + 2. * k3 + k4);
+        let k2 = &self.sys.a * (&self.state + &k1 * (_05 * self.h.0)) + &bu_mid;
+        let k3 = &self.sys.a * (&self.state + &k2 * (_05 * self.h.0)) + &bu_mid;
+        let k4 = &self.sys.a * (&self.state + &k3 * self.h.0) + &bu_end;
+        let _6 = T::from(6.).unwrap(); // Safe cast to f32 and f64.
+        let _2 = T::from(2.).unwrap(); // Safe cast to f32 and f64.
+        self.state += (k1 + k2 * _2 + k3 * _2 + k4) * (self.h.0 / _6);
         self.output = &self.sys.c * &self.state + &self.sys.d * &u_end;
 
         self.index += 1;
@@ -160,11 +167,12 @@ where
 }
 
 /// Implementation of the Iterator trait for the `RkIterator` struct
-impl<'a, F> Iterator for RkIterator<'a, F, f64>
+impl<'a, F, T> Iterator for RkIterator<'a, F, T>
 where
-    F: Fn(Seconds<f64>) -> Vec<f64>,
+    F: Fn(Seconds<T>) -> Vec<T>,
+    T: Float + AddAssign + MulAssign + Scalar,
 {
-    type Item = Rk<f64>;
+    type Item = Rk<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.n {
