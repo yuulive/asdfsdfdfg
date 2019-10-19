@@ -5,9 +5,9 @@
 
 use crate::linear_system::Ss;
 
-use std::ops::Mul;
+use std::ops::{AddAssign, MulAssign, SubAssign};
 
-use nalgebra::{DMatrix, DVector, Scalar};
+use nalgebra::{ComplexField, DMatrix, DVector, Scalar};
 use num_traits::Float;
 
 /// Trait for the set of methods on discrete linear systems.
@@ -75,16 +75,15 @@ impl Discrete<f64> for Ss<f64> {
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn forward_euler<T>(sys: &Ss<f64>, st: T) -> Option<Ss<f64>>
+fn forward_euler<T>(sys: &Ss<T>, st: T) -> Option<Ss<T>>
 where
-    T: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>,
+    T: Float + MulAssign + Scalar + AddAssign,
 {
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
-    let st = st.to_f64().unwrap();
     Some(Ss {
-        a: identity + st * &sys.a,
-        b: st * &sys.b,
+        a: identity + &sys.a * st,
+        b: &sys.b * st,
         c: sys.c.clone(),
         d: sys.d.clone(),
         dim: sys.dim,
@@ -97,16 +96,15 @@ where
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn backward_euler<T>(sys: &Ss<f64>, st: T) -> Option<Ss<f64>>
+fn backward_euler<T>(sys: &Ss<T>, st: T) -> Option<Ss<T>>
 where
-    T: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>,
+    T: ComplexField + Float + Scalar + SubAssign,
 {
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
-    let st = st.to_f64().unwrap();
-    if let Some(a) = (identity - st * &sys.a).try_inverse() {
+    if let Some(a) = (identity - &sys.a * st).try_inverse() {
         Some(Ss {
-            b: st * &a * &sys.b,
+            b: &a * &sys.b * st,
             c: &sys.c * &a,
             d: &sys.d + &sys.c * &a * &sys.b * st,
             a,
@@ -123,19 +121,19 @@ where
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn tustin<T>(sys: &Ss<f64>, st: T) -> Option<Ss<f64>>
+fn tustin<T>(sys: &Ss<T>, st: T) -> Option<Ss<T>>
 where
-    T: Float + Mul<DMatrix<f64>, Output = DMatrix<f64>>,
+    T: ComplexField + Float + Scalar,
 {
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
-    let st = st.to_f64().unwrap();
-    if let Some(a) = (&identity - 0.5 * st * &sys.a).try_inverse() {
+    let _05 = T::from_f32(0.5).unwrap(); // Safe cast to f64 of f32.
+    if let Some(a) = (&identity - &sys.a * (_05 * st)).try_inverse() {
         Some(Ss {
-            a: (&identity + 0.5 * st * &sys.a) * &a,
-            b: &a * &sys.b * st.sqrt(),
-            c: st.sqrt() * &sys.c * &a,
-            d: &sys.d + &sys.c * &a * &sys.b * 0.5 * st,
+            a: (&identity + &sys.a * (_05 * st)) * &a,
+            b: &a * &sys.b * Float::sqrt(st),
+            c: &sys.c * &a * Float::sqrt(st),
+            d: &sys.d + &sys.c * &a * &sys.b * _05 * st,
             dim: sys.dim,
         })
     } else {
