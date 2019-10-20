@@ -56,7 +56,7 @@ where
 impl<'a, F, T> RkIterator<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
-    T: Float + AddAssign + MulAssign + Scalar,
+    T: Float + AddAssign + MulAssign + RkConst + Scalar,
 {
     /// Create the solver for a Runge-Kutta method.
     ///
@@ -118,8 +118,7 @@ where
         let buh = &self.sys.b * &uh;
         let k1 = (&self.sys.a * &self.state + &bu) * self.h.0;
         let k2 = (&self.sys.a * (&self.state + &k1) + &buh) * self.h.0;
-        let _05 = T::from(0.5).unwrap(); // Safe cast to f32 and f64.
-        self.state += (k1 + k2) * _05;
+        self.state += (k1 + k2) * T::_05;
         self.output = &self.sys.c * &self.state + &self.sys.d * &uh;
 
         self.index += 1;
@@ -139,7 +138,7 @@ where
         // k3 = f(t_n + h/2, y_n + h/2 * k2)
         // k2 = f(t_n + h, y_n + h*k3)
         let init_time = Seconds(T::from(self.index - 1).unwrap() * self.h.0);
-        let _05 = T::from(0.5).unwrap(); // Safe cast to f32 and f64.
+        let _05 = T::_05;
         let mid_time = Seconds(init_time.0 + _05 * self.h.0);
         let end_time = Seconds(T::from(self.index).unwrap() * self.h.0);
         let u = DVector::from_vec((self.input)(init_time));
@@ -152,8 +151,8 @@ where
         let k2 = &self.sys.a * (&self.state + &k1 * (_05 * self.h.0)) + &bu_mid;
         let k3 = &self.sys.a * (&self.state + &k2 * (_05 * self.h.0)) + &bu_mid;
         let k4 = &self.sys.a * (&self.state + &k3 * self.h.0) + &bu_end;
-        let _6 = T::from(6.).unwrap(); // Safe cast to f32 and f64.
-        let _2 = T::from(2.).unwrap(); // Safe cast to f32 and f64.
+        let _2 = T::A[0];
+        let _6 = T::A[1];
         self.state += (k1 + k2 * _2 + k3 * _2 + k4) * (self.h.0 / _6);
         self.output = &self.sys.c * &self.state + &self.sys.d * &u_end;
 
@@ -166,11 +165,32 @@ where
     }
 }
 
+/// Trait that defines the constants used in the Rk solver.
+pub trait RkConst
+where
+    Self: std::marker::Sized,
+{
+    /// 0.5
+    const _05: Self;
+    /// [2., 6.]
+    const A: [Self; 2];
+}
+
+impl RkConst for f64 {
+    const _05: Self = 0.5;
+    const A: [Self; 2] = [2., 6.];
+}
+
+impl RkConst for f32 {
+    const _05: Self = 0.5;
+    const A: [Self; 2] = [2., 6.];
+}
+
 /// Implementation of the Iterator trait for the `RkIterator` struct
 impl<'a, F, T> Iterator for RkIterator<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
-    T: Float + AddAssign + MulAssign + Scalar,
+    T: Float + AddAssign + MulAssign + RkConst + Scalar,
 {
     type Item = Rk<T>;
 
