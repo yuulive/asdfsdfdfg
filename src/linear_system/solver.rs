@@ -151,8 +151,8 @@ where
         let k2 = &self.sys.a * (&self.state + &k1 * (_05 * self.h.0)) + &bu_mid;
         let k3 = &self.sys.a * (&self.state + &k2 * (_05 * self.h.0)) + &bu_mid;
         let k4 = &self.sys.a * (&self.state + &k3 * self.h.0) + &bu_end;
-        let _2 = T::A[0];
-        let _6 = T::A[1];
+        let _2 = T::A_RK[0];
+        let _6 = T::A_RK[1];
         self.state += (k1 + k2 * _2 + k3 * _2 + k4) * (self.h.0 / _6);
         self.output = &self.sys.c * &self.state + &self.sys.d * &u_end;
 
@@ -165,6 +165,7 @@ where
     }
 }
 
+// Coefficients of the Butcher table of rk method.
 /// Trait that defines the constants used in the Rk solver.
 pub trait RkConst
 where
@@ -173,18 +174,19 @@ where
     /// 0.5
     const _05: Self;
     /// [2., 6.]
-    const A: [Self; 2];
+    const A_RK: [Self; 2];
 }
 
 impl RkConst for f64 {
     const _05: Self = 0.5;
-    const A: [Self; 2] = [2., 6.];
+    const A_RK: [Self; 2] = [2., 6.];
 }
 
 impl RkConst for f32 {
     const _05: Self = 0.5;
-    const A: [Self; 2] = [2., 6.];
+    const A_RK: [Self; 2] = [2., 6.];
 }
+//////
 
 /// Implementation of the Iterator trait for the `RkIterator` struct
 impl<'a, F, T> Iterator for RkIterator<'a, F, T>
@@ -320,35 +322,47 @@ where
         let mut error;
         loop {
             let u1 = DVector::from_vec((self.input)(self.time));
-            let u2 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * A[0])));
-            let u3 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * A[1])));
-            let u4 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * A[2])));
+            let u2 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * f64::A[0])));
+            let u3 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * f64::A[1])));
+            let u4 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * f64::A[2])));
             let u5 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0)));
-            let u6 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * A[3])));
+            let u6 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * f64::A[3])));
 
             let k1 = self.h.0 * (&self.sys.a * &self.state + &self.sys.b * &u1);
-            let k2 = self.h.0 * (&self.sys.a * (&self.state + B21 * &k1) + &self.sys.b * &u2);
+            let k2 = self.h.0 * (&self.sys.a * (&self.state + f64::B21 * &k1) + &self.sys.b * &u2);
             let k3 = self.h.0
-                * (&self.sys.a * (&self.state + B3[0] * &k1 + B3[1] * &k2) + &self.sys.b * &u3);
+                * (&self.sys.a * (&self.state + f64::B3[0] * &k1 + f64::B3[1] * &k2)
+                    + &self.sys.b * &u3);
             let k4 = self.h.0
-                * (&self.sys.a * (&self.state + B4[0] * &k1 + B4[1] * &k2 + B4[2] * &k3)
+                * (&self.sys.a
+                    * (&self.state + f64::B4[0] * &k1 + f64::B4[1] * &k2 + f64::B4[2] * &k3)
                     + &self.sys.b * &u4);
             let k5 = self.h.0
                 * (&self.sys.a
-                    * (&self.state + B5[0] * &k1 + B5[1] * &k2 + B5[2] * &k3 + B5[3] * &k4)
+                    * (&self.state
+                        + f64::B5[0] * &k1
+                        + f64::B5[1] * &k2
+                        + f64::B5[2] * &k3
+                        + f64::B5[3] * &k4)
                     + &self.sys.b * &u5);
             let k6 = self.h.0
                 * (&self.sys.a
                     * (&self.state
-                        + B6[0] * &k1
-                        + B6[1] * &k2
-                        + B6[2] * &k3
-                        + B6[3] * &k4
-                        + B6[4] * &k5)
+                        + f64::B6[0] * &k1
+                        + f64::B6[1] * &k2
+                        + f64::B6[2] * &k3
+                        + f64::B6[3] * &k4
+                        + f64::B6[4] * &k5)
                     + &self.sys.b * &u6);
 
-            let xn1 = &self.state + C[0] * &k1 + C[1] * &k3 + C[2] * &k4 + C[3] * &k5;
-            let xn1_ = &self.state + D[0] * &k1 + D[1] * &k3 + D[2] * &k4 + D[3] * &k5 + D[4] * &k6;
+            let xn1 =
+                &self.state + f64::C[0] * &k1 + f64::C[1] * &k3 + f64::C[2] * &k4 + f64::C[3] * &k5;
+            let xn1_ = &self.state
+                + f64::D[0] * &k1
+                + f64::D[1] * &k3
+                + f64::D[2] * &k4
+                + f64::D[3] * &k5
+                + f64::D[4] * &k6;
 
             // Take the maximum absolute error between the states of the system.
             error = (&xn1 - &xn1_).abs().max();
@@ -397,20 +411,62 @@ where
 }
 
 // Coefficients of the Butcher table of rkf45 method.
-const A: [f64; 4] = [1. / 4., 3. / 8., 12. / 13., 1. / 2.];
-const B21: f64 = 1. / 4.;
-const B3: [f64; 2] = [3. / 32., 9. / 32.];
-const B4: [f64; 3] = [1932. / 2197., -7200. / 2197., 7296. / 2197.];
-const B5: [f64; 4] = [439. / 216., -8., 3680. / 513., -845. / 4104.];
-const B6: [f64; 5] = [-8. / 27., 2., -3544. / 2565., 1859. / 4104., -11. / 40.];
-const C: [f64; 4] = [25. / 216., 1408. / 2564., 2197. / 4101., -1. / 5.];
-const D: [f64; 5] = [
-    16. / 135.,
-    6656. / 12_825.,
-    28_561. / 56_430.,
-    -9. / 50.,
-    2. / 55.,
-];
+/// Trait that defines the constants used in the Rkf45 solver.
+pub trait Rkf45Const
+where
+    Self: std::marker::Sized,
+{
+    /// A
+    const A: [Self; 4];
+    /// B21
+    const B21: Self;
+    /// B3
+    const B3: [Self; 2];
+    /// B4
+    const B4: [Self; 3];
+    /// B5
+    const B5: [Self; 4];
+    /// B6
+    const B6: [Self; 5];
+    /// C
+    const C: [Self; 4];
+    /// D
+    const D: [Self; 5];
+}
+
+impl Rkf45Const for f64 {
+    const A: [f64; 4] = [1. / 4., 3. / 8., 12. / 13., 1. / 2.];
+    const B21: f64 = 1. / 4.;
+    const B3: [f64; 2] = [3. / 32., 9. / 32.];
+    const B4: [f64; 3] = [1932. / 2197., -7200. / 2197., 7296. / 2197.];
+    const B5: [f64; 4] = [439. / 216., -8., 3680. / 513., -845. / 4104.];
+    const B6: [f64; 5] = [-8. / 27., 2., -3544. / 2565., 1859. / 4104., -11. / 40.];
+    const C: [f64; 4] = [25. / 216., 1408. / 2564., 2197. / 4101., -1. / 5.];
+    const D: [f64; 5] = [
+        16. / 135.,
+        6656. / 12_825.,
+        28_561. / 56_430.,
+        -9. / 50.,
+        2. / 55.,
+    ];
+}
+
+impl Rkf45Const for f32 {
+    const A: [f32; 4] = [1. / 4., 3. / 8., 12. / 13., 1. / 2.];
+    const B21: f32 = 1. / 4.;
+    const B3: [f32; 2] = [3. / 32., 9. / 32.];
+    const B4: [f32; 3] = [1932. / 2197., -7200. / 2197., 7296. / 2197.];
+    const B5: [f32; 4] = [439. / 216., -8., 3680. / 513., -845. / 4104.];
+    const B6: [f32; 5] = [-8. / 27., 2., -3544. / 2565., 1859. / 4104., -11. / 40.];
+    const C: [f32; 4] = [25. / 216., 1408. / 2564., 2197. / 4101., -1. / 5.];
+    const D: [f32; 5] = [
+        16. / 135.,
+        6656. / 12_825.,
+        28_561. / 56_430.,
+        -9. / 50.,
+        2. / 55.,
+    ];
+}
 //////
 
 /// Struct to hold the data of the linear system time evolution
@@ -506,10 +562,10 @@ where
         let g = &sys.a * h.0;
         let rows = &sys.a.nrows(); // A is a square matrix.
         let identity = DMatrix::<f64>::identity(*rows, *rows);
-        let j11 = &g * RADAU_A[0] - &identity;
-        let j12 = &g * RADAU_A[1];
-        let j21 = &g * RADAU_A[2];
-        let j22 = &g * RADAU_A[3] - &identity;
+        let j11 = &g * f64::RADAU_A[0] - &identity;
+        let j12 = &g * f64::RADAU_A[1];
+        let j21 = &g * f64::RADAU_A[2];
+        let j22 = &g * f64::RADAU_A[3] - &identity;
         let mut jac = DMatrix::zeros(2 * *rows, 2 * *rows);
         // Copy the sub matrices into the Jacobian.
         let sub_matrix_size = (*rows, *rows);
@@ -557,9 +613,9 @@ where
         k.slice_mut((0, 0), sub_vec_size).copy_from(&self.state);
         k.slice_mut((rows, 0), sub_vec_size).copy_from(&self.state);
 
-        let u1 = DVector::from_vec((self.input)(Seconds(time + RADAU_C[0] * self.h.0)));
+        let u1 = DVector::from_vec((self.input)(Seconds(time + f64::RADAU_C[0] * self.h.0)));
         let bu1 = &self.sys.b * &u1;
-        let u2 = DVector::from_vec((self.input)(Seconds(time + RADAU_C[1] * self.h.0)));
+        let u2 = DVector::from_vec((self.input)(Seconds(time + f64::RADAU_C[1] * self.h.0)));
         let bu2 = &self.sys.b * &u2;
         let mut f = DVector::<f64>::zeros(2 * rows);
         // Max 10 iterations.
@@ -567,10 +623,12 @@ where
             let k1 = k.slice((0, 0), sub_vec_size);
             let k2 = k.slice((rows, 0), sub_vec_size);
 
-            let f1 = &self.sys.a * (&self.state + self.h.0 * (RADAU_A[0] * k1 + RADAU_A[1] * k2))
+            let f1 = &self.sys.a
+                * (&self.state + self.h.0 * (f64::RADAU_A[0] * k1 + f64::RADAU_A[1] * k2))
                 + &bu1
                 - k1;
-            let f2 = &self.sys.a * (&self.state + self.h.0 * (RADAU_A[2] * k1 + RADAU_A[3] * k2))
+            let f2 = &self.sys.a
+                * (&self.state + self.h.0 * (f64::RADAU_A[2] * k1 + f64::RADAU_A[3] * k2))
                 + &bu2
                 - k2;
             f.slice_mut((0, 0), sub_vec_size).copy_from(&f1);
@@ -594,8 +652,8 @@ where
             }
         }
         self.state += self.h.0
-            * (RADAU_B[0] * k.slice((0, 0), (rows, 1))
-                + RADAU_B[1] * k.slice((rows, 0), (rows, 1)));
+            * (f64::RADAU_B[0] * k.slice((0, 0), (rows, 1))
+                + f64::RADAU_B[1] * k.slice((rows, 0), (rows, 1)));
 
         let end_time = Seconds(self.index as f64 * self.h.0);
         let u = DVector::from_vec((self.input)(end_time));
@@ -611,9 +669,30 @@ where
 }
 
 // Constants for Radau method.
-const RADAU_A: [f64; 4] = [5. / 12., -1. / 12., 3. / 4., 1. / 4.];
-const RADAU_B: [f64; 2] = [3. / 4., 1. / 4.];
-const RADAU_C: [f64; 2] = [1. / 3., 1.];
+/// Trait that defines the constants used in the Radau solver.
+pub trait RadauConst
+where
+    Self: std::marker::Sized,
+{
+    /// A
+    const RADAU_A: [Self; 4];
+    /// B
+    const RADAU_B: [Self; 2];
+    /// C
+    const RADAU_C: [Self; 2];
+}
+
+impl RadauConst for f64 {
+    const RADAU_A: [Self; 4] = [5. / 12., -1. / 12., 3. / 4., 1. / 4.];
+    const RADAU_B: [Self; 2] = [3. / 4., 1. / 4.];
+    const RADAU_C: [Self; 2] = [1. / 3., 1.];
+}
+
+impl RadauConst for f32 {
+    const RADAU_A: [Self; 4] = [5. / 12., -1. / 12., 3. / 4., 1. / 4.];
+    const RADAU_B: [Self; 2] = [3. / 4., 1. / 4.];
+    const RADAU_C: [Self; 2] = [1. / 3., 1.];
+}
 //////
 
 /// Implementation of the Iterator trait for the `RadauIterator` struct.
