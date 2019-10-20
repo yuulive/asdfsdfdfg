@@ -14,7 +14,10 @@
 
 use crate::{linear_system::Ss, units::Seconds};
 
-use std::ops::{AddAssign, MulAssign};
+use std::{
+    marker::Sized,
+    ops::{AddAssign, MulAssign},
+};
 
 use nalgebra::{ComplexField, DMatrix, DVector, Dynamic, Scalar, LU};
 use num_traits::Float;
@@ -169,23 +172,25 @@ where
 /// Trait that defines the constants used in the Rk solver.
 pub trait RkConst
 where
-    Self: std::marker::Sized,
+    Self: Sized,
 {
-    /// 0.5
+    /// 0.5 constant
     const _05: Self;
-    /// [2., 6.]
+    /// A
     const A_RK: [Self; 2];
 }
 
-impl RkConst for f64 {
-    const _05: Self = 0.5;
-    const A_RK: [Self; 2] = [2., 6.];
+macro_rules! impl_rk_const {
+    ($t:ty) => {
+        impl RkConst for $t {
+            const _05: Self = 0.5;
+            const A_RK: [Self; 2] = [2., 6.];
+        }
+    };
 }
 
-impl RkConst for f32 {
-    const _05: Self = 0.5;
-    const A_RK: [Self; 2] = [2., 6.];
-}
+impl_rk_const!(f32);
+impl_rk_const!(f64);
 //////
 
 /// Implementation of the Iterator trait for the `RkIterator` struct
@@ -414,7 +419,7 @@ where
 /// Trait that defines the constants used in the Rkf45 solver.
 pub trait Rkf45Const
 where
-    Self: std::marker::Sized,
+    Self: Sized,
 {
     /// A
     const A: [Self; 4];
@@ -434,39 +439,29 @@ where
     const D: [Self; 5];
 }
 
-impl Rkf45Const for f64 {
-    const A: [f64; 4] = [1. / 4., 3. / 8., 12. / 13., 1. / 2.];
-    const B21: f64 = 1. / 4.;
-    const B3: [f64; 2] = [3. / 32., 9. / 32.];
-    const B4: [f64; 3] = [1932. / 2197., -7200. / 2197., 7296. / 2197.];
-    const B5: [f64; 4] = [439. / 216., -8., 3680. / 513., -845. / 4104.];
-    const B6: [f64; 5] = [-8. / 27., 2., -3544. / 2565., 1859. / 4104., -11. / 40.];
-    const C: [f64; 4] = [25. / 216., 1408. / 2564., 2197. / 4101., -1. / 5.];
-    const D: [f64; 5] = [
-        16. / 135.,
-        6656. / 12_825.,
-        28_561. / 56_430.,
-        -9. / 50.,
-        2. / 55.,
-    ];
+macro_rules! impl_rkf45_const {
+    ($t:ty) => {
+        impl Rkf45Const for $t {
+            const A: [Self; 4] = [1. / 4., 3. / 8., 12. / 13., 1. / 2.];
+            const B21: Self = 1. / 4.;
+            const B3: [Self; 2] = [3. / 32., 9. / 32.];
+            const B4: [Self; 3] = [1932. / 2197., -7200. / 2197., 7296. / 2197.];
+            const B5: [Self; 4] = [439. / 216., -8., 3680. / 513., -845. / 4104.];
+            const B6: [Self; 5] = [-8. / 27., 2., -3544. / 2565., 1859. / 4104., -11. / 40.];
+            const C: [Self; 4] = [25. / 216., 1408. / 2564., 2197. / 4101., -1. / 5.];
+            const D: [Self; 5] = [
+                16. / 135.,
+                6656. / 12_825.,
+                28_561. / 56_430.,
+                -9. / 50.,
+                2. / 55.,
+            ];
+        }
+    };
 }
 
-impl Rkf45Const for f32 {
-    const A: [f32; 4] = [1. / 4., 3. / 8., 12. / 13., 1. / 2.];
-    const B21: f32 = 1. / 4.;
-    const B3: [f32; 2] = [3. / 32., 9. / 32.];
-    const B4: [f32; 3] = [1932. / 2197., -7200. / 2197., 7296. / 2197.];
-    const B5: [f32; 4] = [439. / 216., -8., 3680. / 513., -845. / 4104.];
-    const B6: [f32; 5] = [-8. / 27., 2., -3544. / 2565., 1859. / 4104., -11. / 40.];
-    const C: [f32; 4] = [25. / 216., 1408. / 2564., 2197. / 4101., -1. / 5.];
-    const D: [f32; 5] = [
-        16. / 135.,
-        6656. / 12_825.,
-        28_561. / 56_430.,
-        -9. / 50.,
-        2. / 55.,
-    ];
-}
+impl_rkf45_const!(f32);
+impl_rkf45_const!(f64);
 //////
 
 /// Struct to hold the data of the linear system time evolution
@@ -672,7 +667,7 @@ where
 /// Trait that defines the constants used in the Radau solver.
 pub trait RadauConst
 where
-    Self: std::marker::Sized,
+    Self: Sized,
 {
     /// A
     const RADAU_A: [Self; 4];
@@ -682,17 +677,18 @@ where
     const RADAU_C: [Self; 2];
 }
 
-impl RadauConst for f64 {
-    const RADAU_A: [Self; 4] = [5. / 12., -1. / 12., 3. / 4., 1. / 4.];
-    const RADAU_B: [Self; 2] = [3. / 4., 1. / 4.];
-    const RADAU_C: [Self; 2] = [1. / 3., 1.];
+macro_rules! impl_radau_const {
+    ($t:ty) => {
+        impl RadauConst for $t {
+            const RADAU_A: [Self; 4] = [5. / 12., -1. / 12., 3. / 4., 1. / 4.];
+            const RADAU_B: [Self; 2] = [3. / 4., 1. / 4.];
+            const RADAU_C: [Self; 2] = [1. / 3., 1.];
+        }
+    };
 }
 
-impl RadauConst for f32 {
-    const RADAU_A: [Self; 4] = [5. / 12., -1. / 12., 3. / 4., 1. / 4.];
-    const RADAU_B: [Self; 2] = [3. / 4., 1. / 4.];
-    const RADAU_C: [Self; 2] = [1. / 3., 1.];
-}
+impl_radau_const!(f32);
+impl_radau_const!(f64);
 //////
 
 /// Implementation of the Iterator trait for the `RadauIterator` struct.
