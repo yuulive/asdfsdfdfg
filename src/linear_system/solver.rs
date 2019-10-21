@@ -16,11 +16,11 @@ use crate::{linear_system::Ss, units::Seconds};
 
 use std::{
     marker::Sized,
-    ops::{AddAssign, MulAssign},
+    ops::{AddAssign, MulAssign, SubAssign},
 };
 
 use nalgebra::{ComplexField, DMatrix, DVector, Dynamic, Scalar, LU};
-use num_traits::Float;
+use num_traits::{Float, Signed};
 
 /// Define the order of the Runge-Kutta method.
 #[derive(Debug)]
@@ -59,7 +59,7 @@ where
 impl<'a, F, T> RkIterator<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
-    T: Float + AddAssign + MulAssign + RkConst + Scalar,
+    T: AddAssign + Float + MulAssign + RkConst + Scalar,
 {
     /// Create the solver for a Runge-Kutta method.
     ///
@@ -197,7 +197,7 @@ impl_rk_const!(f64);
 impl<'a, F, T> Iterator for RkIterator<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
-    T: Float + AddAssign + MulAssign + RkConst + Scalar,
+    T: AddAssign + Float + MulAssign + RkConst + Scalar,
 {
     type Item = Rk<T>;
 
@@ -247,7 +247,7 @@ impl<T: Float> Rk<T> {
 #[derive(Debug)]
 pub struct Rkf45Iterator<'a, F, T>
 where
-    F: Fn(Seconds<f64>) -> Vec<f64>,
+    F: Fn(Seconds<T>) -> Vec<T>,
     T: Float + Scalar,
 {
     /// Linear system
@@ -270,9 +270,10 @@ where
     initial_step: bool,
 }
 
-impl<'a, F> Rkf45Iterator<'a, F, f64>
+impl<'a, F, T> Rkf45Iterator<'a, F, T>
 where
-    F: Fn(Seconds<f64>) -> Vec<f64>,
+    F: Fn(Seconds<T>) -> Vec<T>,
+    T: AddAssign + Float + MulAssign + Rkf45Const + Scalar + Signed + SubAssign,
 {
     /// Create a solver using Runge-Kutta-Fehlberg method
     ///
@@ -285,14 +286,14 @@ where
     /// * `limit` - time limit of the evaluation
     /// * `tol` - error tolerance
     pub(crate) fn new(
-        sys: &'a Ss<f64>,
+        sys: &'a Ss<T>,
         u: F,
-        x0: &[f64],
-        h: Seconds<f64>,
-        limit: Seconds<f64>,
-        tol: f64,
+        x0: &[T],
+        h: Seconds<T>,
+        limit: Seconds<T>,
+        tol: T,
     ) -> Self {
-        let start = DVector::from_vec(u(Seconds(0.)));
+        let start = DVector::from_vec(u(Seconds(T::zero())));
         let state = DVector::from_column_slice(x0);
         // Calculate the output at time 0.
         let output = &sys.c * &state + &sys.d * &start;
@@ -303,7 +304,7 @@ where
             output,
             h,
             limit,
-            time: Seconds(0.),
+            time: Seconds(T::zero()),
             tol,
             initial_step: true,
         }
@@ -312,74 +313,71 @@ where
     /// Initial step (time 0) of the rkf45 solver.
     /// It contains the initial state and the calculated initial output
     /// at the constructor
-    fn initial_step(&mut self) -> Option<Rkf45<f64>> {
+    fn initial_step(&mut self) -> Option<Rkf45<T>> {
         self.initial_step = false;
         Some(Rkf45 {
-            time: Seconds(0.),
+            time: Seconds(T::zero()),
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
-            error: 0.,
+            error: T::zero(),
         })
     }
 
     /// Runge-Kutta-Fehlberg order 4 and 5 method with adaptive step size
-    fn main_iteration(&mut self) -> Option<Rkf45<f64>> {
+    fn main_iteration(&mut self) -> Option<Rkf45<T>> {
         let mut error;
         loop {
             let u1 = DVector::from_vec((self.input)(self.time));
-            let u2 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * f64::A[0])));
-            let u3 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * f64::A[1])));
-            let u4 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * f64::A[2])));
+            let u2 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * T::A[0])));
+            let u3 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * T::A[1])));
+            let u4 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * T::A[2])));
             let u5 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0)));
-            let u6 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * f64::A[3])));
+            let u6 = DVector::from_vec((self.input)(Seconds(self.time.0 + self.h.0 * T::A[3])));
 
-            let k1 = self.h.0 * (&self.sys.a * &self.state + &self.sys.b * &u1);
-            let k2 = self.h.0 * (&self.sys.a * (&self.state + f64::B21 * &k1) + &self.sys.b * &u2);
-            let k3 = self.h.0
-                * (&self.sys.a * (&self.state + f64::B3[0] * &k1 + f64::B3[1] * &k2)
-                    + &self.sys.b * &u3);
-            let k4 = self.h.0
-                * (&self.sys.a
-                    * (&self.state + f64::B4[0] * &k1 + f64::B4[1] * &k2 + f64::B4[2] * &k3)
-                    + &self.sys.b * &u4);
-            let k5 = self.h.0
-                * (&self.sys.a
-                    * (&self.state
-                        + f64::B5[0] * &k1
-                        + f64::B5[1] * &k2
-                        + f64::B5[2] * &k3
-                        + f64::B5[3] * &k4)
-                    + &self.sys.b * &u5);
-            let k6 = self.h.0
-                * (&self.sys.a
-                    * (&self.state
-                        + f64::B6[0] * &k1
-                        + f64::B6[1] * &k2
-                        + f64::B6[2] * &k3
-                        + f64::B6[3] * &k4
-                        + f64::B6[4] * &k5)
-                    + &self.sys.b * &u6);
+            let k1 = (&self.sys.a * &self.state + &self.sys.b * &u1) * self.h.0;
+            let k2 = (&self.sys.a * (&self.state + &k1 * T::B21) + &self.sys.b * &u2) * self.h.0;
+            let k3 = (&self.sys.a * (&self.state + &k1 * T::B3[0] + &k2 * T::B3[1])
+                + &self.sys.b * &u3)
+                * self.h.0;
+            let k4 = (&self.sys.a
+                * (&self.state + &k1 * T::B4[0] + &k2 * T::B4[1] + &k3 * T::B4[2])
+                + &self.sys.b * &u4)
+                * self.h.0;
+            let k5 = (&self.sys.a
+                * (&self.state
+                    + &k1 * T::B5[0]
+                    + &k2 * T::B5[1]
+                    + &k3 * T::B5[2]
+                    + &k4 * T::B5[3])
+                + &self.sys.b * &u5)
+                * self.h.0;
+            let k6 = (&self.sys.a
+                * (&self.state
+                    + &k1 * T::B6[0]
+                    + &k2 * T::B6[1]
+                    + &k3 * T::B6[2]
+                    + &k4 * T::B6[3]
+                    + &k5 * T::B6[4])
+                + &self.sys.b * &u6)
+                * self.h.0;
 
-            let xn1 =
-                &self.state + f64::C[0] * &k1 + f64::C[1] * &k3 + f64::C[2] * &k4 + f64::C[3] * &k5;
+            let xn1 = &self.state + &k1 * T::C[0] + &k3 * T::C[1] + &k4 * T::C[2] + &k5 * T::C[3];
             let xn1_ = &self.state
-                + f64::D[0] * &k1
-                + f64::D[1] * &k3
-                + f64::D[2] * &k4
-                + f64::D[3] * &k5
-                + f64::D[4] * &k6;
+                + &k1 * T::D[0]
+                + &k3 * T::D[1]
+                + &k4 * T::D[2]
+                + &k5 * T::D[3]
+                + &k6 * T::D[4];
 
             // Take the maximum absolute error between the states of the system.
             error = (&xn1 - &xn1_).abs().max();
             let error_ratio = self.tol / error;
-            // Safety factor to avoid too small step changes.
-            let safety_factor = 0.95;
             if error < self.tol {
-                self.h.0 = safety_factor * self.h.0 * error_ratio.powf(0.25);
+                self.h.0 = T::SAFETY_FACTOR * self.h.0 * error_ratio.powf(T::EXP[0]);
                 self.state = xn1;
                 break;
             }
-            self.h.0 = safety_factor * self.h.0 * error_ratio.powf(0.2);
+            self.h.0 = T::SAFETY_FACTOR * self.h.0 * error_ratio.powf(T::EXP[1]);
         }
 
         // Update time before calculate the output.
@@ -398,11 +396,12 @@ where
 }
 
 /// Implementation of the Iterator trait for the `Rkf45Iterator` struct
-impl<'a, F> Iterator for Rkf45Iterator<'a, F, f64>
+impl<'a, F, T> Iterator for Rkf45Iterator<'a, F, T>
 where
-    F: Fn(Seconds<f64>) -> Vec<f64>,
+    F: Fn(Seconds<T>) -> Vec<T>,
+    T: AddAssign + Float + MulAssign + Rkf45Const + Signed + Scalar + SubAssign,
 {
-    type Item = Rkf45<f64>;
+    type Item = Rkf45<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.time > self.limit {
@@ -437,6 +436,10 @@ where
     const C: [Self; 4];
     /// D
     const D: [Self; 5];
+    /// Safety factor to avoid too small step changes.
+    const SAFETY_FACTOR: Self;
+    /// Error ratio exponents.
+    const EXP: [Self; 2];
 }
 
 macro_rules! impl_rkf45_const {
@@ -456,6 +459,8 @@ macro_rules! impl_rkf45_const {
                 -9. / 50.,
                 2. / 55.,
             ];
+            const SAFETY_FACTOR: Self = 0.95;
+            const EXP: [Self; 2] = [0.25, 0.2];
         }
     };
 }
