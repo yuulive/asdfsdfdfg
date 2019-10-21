@@ -114,8 +114,9 @@ where
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
         // k1 = h*f(t_n, y_n)
         // k2 = h*f(t_n + h, y_n + k1)
-        let init_time = Seconds(T::from(self.index - 1).unwrap() * self.h.0);
-        let end_time = Seconds(T::from(self.index).unwrap() * self.h.0);
+        // Retrun None if conversion fails.
+        let init_time = Seconds(T::from(self.index - 1)? * self.h.0);
+        let end_time = Seconds(T::from(self.index)? * self.h.0);
         let u = DVector::from_vec((self.input)(init_time));
         let uh = DVector::from_vec((self.input)(end_time));
         let bu = &self.sys.b * &u;
@@ -141,10 +142,11 @@ where
         // k2 = f(t_n + h/2, y_n + h/2 * k1)
         // k3 = f(t_n + h/2, y_n + h/2 * k2)
         // k2 = f(t_n + h, y_n + h*k3)
-        let init_time = Seconds(T::from(self.index - 1).unwrap() * self.h.0);
+        // Return None if conversion fails
+        let init_time = Seconds(T::from(self.index - 1)? * self.h.0);
         let _05 = T::_05;
         let mid_time = Seconds(init_time.0 + _05 * self.h.0);
-        let end_time = Seconds(T::from(self.index).unwrap() * self.h.0);
+        let end_time = Seconds(T::from(self.index)? * self.h.0);
         let u = DVector::from_vec((self.input)(init_time));
         let u_mid = DVector::from_vec((self.input)(mid_time));
         let u_end = DVector::from_vec((self.input)(end_time));
