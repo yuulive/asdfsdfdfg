@@ -19,6 +19,7 @@ use std::{
     ops::{AddAssign, MulAssign, SubAssign},
 };
 
+use approx::{AbsDiffEq, RelativeEq};
 use nalgebra::{ComplexField, DMatrix, DVector, Dynamic, Scalar, LU};
 use num_traits::{Float, Signed};
 
@@ -532,9 +533,10 @@ where
     lu_jacobian: LU<T, Dynamic, Dynamic>,
 }
 
-impl<'a, F> RadauIterator<'a, F, f64>
+impl<'a, F, T> RadauIterator<'a, F, T>
 where
-    F: Fn(Seconds<f64>) -> Vec<f64>,
+    F: Fn(Seconds<T>) -> Vec<T>,
+    T: AbsDiffEq<Epsilon = T> + ComplexField + Float + Scalar + RadauConst + RelativeEq,
 {
     /// Create the solver for a Radau order 3 with 2 steps method.
     ///
@@ -546,26 +548,19 @@ where
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `tol` - tolerance of implicit solution finding
-    pub(crate) fn new(
-        sys: &'a Ss<f64>,
-        u: F,
-        x0: &[f64],
-        h: Seconds<f64>,
-        n: usize,
-        tol: f64,
-    ) -> Self {
-        let start = DVector::from_vec(u(Seconds(0.)));
+    pub(crate) fn new(sys: &'a Ss<T>, u: F, x0: &[T], h: Seconds<T>, n: usize, tol: T) -> Self {
+        let start = DVector::from_vec(u(Seconds(T::zero())));
         let state = DVector::from_column_slice(x0);
         let output = &sys.c * &state + &sys.d * &start;
         // Jacobian matrix can be precomputed since it is constant for the
         // given system.
         let g = &sys.a * h.0;
         let rows = &sys.a.nrows(); // A is a square matrix.
-        let identity = DMatrix::<f64>::identity(*rows, *rows);
-        let j11 = &g * f64::RADAU_A[0] - &identity;
-        let j12 = &g * f64::RADAU_A[1];
-        let j21 = &g * f64::RADAU_A[2];
-        let j22 = &g * f64::RADAU_A[3] - &identity;
+        let identity = DMatrix::<T>::identity(*rows, *rows);
+        let j11 = &g * T::RADAU_A[0] - &identity;
+        let j12 = &g * T::RADAU_A[1];
+        let j21 = &g * T::RADAU_A[2];
+        let j22 = &g * T::RADAU_A[3] - &identity;
         let mut jac = DMatrix::zeros(2 * *rows, 2 * *rows);
         // Copy the sub matrices into the Jacobian.
         let sub_matrix_size = (*rows, *rows);
@@ -591,10 +586,10 @@ where
     /// Initial step (time 0) of the Radau solver.
     /// It contains the initial state and the calculated initial output
     /// at the constructor.
-    fn initial_step(&mut self) -> Option<Radau<f64>> {
+    fn initial_step(&mut self) -> Option<Radau<T>> {
         self.index += 1;
         Some(Radau {
-            time: Seconds(0.),
+            time: Seconds(T::zero()),
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
         })
@@ -602,33 +597,34 @@ where
 
     /// Radau order 3 with 2 step implicit method.
     #[allow(clippy::cast_precision_loss)]
-    fn main_iteration(&mut self) -> Option<Radau<f64>> {
-        let time = (self.index - 1) as f64 * self.h.0;
+    fn main_iteration(&mut self) -> Option<Radau<T>> {
+        // Return None if conversion fails.
+        let time = T::from(self.index - 1)? * self.h.0;
         let rows = self.sys.a.nrows();
         // k = [k1; k2] (column vector)
-        let mut k = DVector::<f64>::zeros(2 * rows);
+        let mut k = DVector::<T>::zeros(2 * rows);
         // k sub-vectors (or block vectors) are have size (rows x 1).
         let sub_vec_size = (rows, 1);
         // Use as first guess for k1 and k2 the current state.
         k.slice_mut((0, 0), sub_vec_size).copy_from(&self.state);
         k.slice_mut((rows, 0), sub_vec_size).copy_from(&self.state);
 
-        let u1 = DVector::from_vec((self.input)(Seconds(time + f64::RADAU_C[0] * self.h.0)));
+        let u1 = DVector::from_vec((self.input)(Seconds(time + T::RADAU_C[0] * self.h.0)));
         let bu1 = &self.sys.b * &u1;
-        let u2 = DVector::from_vec((self.input)(Seconds(time + f64::RADAU_C[1] * self.h.0)));
+        let u2 = DVector::from_vec((self.input)(Seconds(time + T::RADAU_C[1] * self.h.0)));
         let bu2 = &self.sys.b * &u2;
-        let mut f = DVector::<f64>::zeros(2 * rows);
+        let mut f = DVector::<T>::zeros(2 * rows);
         // Max 10 iterations.
         for _ in 0..10 {
             let k1 = k.slice((0, 0), sub_vec_size);
             let k2 = k.slice((rows, 0), sub_vec_size);
 
             let f1 = &self.sys.a
-                * (&self.state + self.h.0 * (f64::RADAU_A[0] * k1 + f64::RADAU_A[1] * k2))
+                * (&self.state + (k1 * T::RADAU_A[0] + k2 * T::RADAU_A[1]) * self.h.0)
                 + &bu1
                 - k1;
             let f2 = &self.sys.a
-                * (&self.state + self.h.0 * (f64::RADAU_A[2] * k1 + f64::RADAU_A[3] * k2))
+                * (&self.state + (k1 * T::RADAU_A[2] + k2 * T::RADAU_A[3]) * self.h.0)
                 + &bu2
                 - k2;
             f.slice_mut((0, 0), sub_vec_size).copy_from(&f1);
@@ -645,17 +641,18 @@ where
                 return None;
             };
 
-            let eq = &knew.relative_eq(&k, self.tol, 0.001);
+            let eq = &knew.relative_eq(&k, self.tol, T::RADAU_ABS_TOL);
             k = knew; // Use the latest solution calculated.
             if *eq {
                 break;
             }
         }
-        self.state += self.h.0
-            * (f64::RADAU_B[0] * k.slice((0, 0), (rows, 1))
-                + f64::RADAU_B[1] * k.slice((rows, 0), (rows, 1)));
+        self.state += (k.slice((0, 0), (rows, 1)) * T::RADAU_B[0]
+            + k.slice((rows, 0), (rows, 1)) * T::RADAU_B[1])
+            * self.h.0;
 
-        let end_time = Seconds(self.index as f64 * self.h.0);
+        // Return None if conversion fails.
+        let end_time = Seconds(T::from(self.index)? * self.h.0);
         let u = DVector::from_vec((self.input)(end_time));
         self.output = &self.sys.c * &self.state + &self.sys.d * &u;
 
@@ -680,6 +677,8 @@ where
     const RADAU_B: [Self; 2];
     /// C
     const RADAU_C: [Self; 2];
+    /// Absolute tolerance for equality comparisons.
+    const RADAU_ABS_TOL: Self;
 }
 
 macro_rules! impl_radau_const {
@@ -688,6 +687,7 @@ macro_rules! impl_radau_const {
             const RADAU_A: [Self; 4] = [5. / 12., -1. / 12., 3. / 4., 1. / 4.];
             const RADAU_B: [Self; 2] = [3. / 4., 1. / 4.];
             const RADAU_C: [Self; 2] = [1. / 3., 1.];
+            const RADAU_ABS_TOL: Self = 0.001;
         }
     };
 }
@@ -697,11 +697,12 @@ impl_radau_const!(f64);
 //////
 
 /// Implementation of the Iterator trait for the `RadauIterator` struct.
-impl<'a, F> Iterator for RadauIterator<'a, F, f64>
+impl<'a, F, T> Iterator for RadauIterator<'a, F, T>
 where
-    F: Fn(Seconds<f64>) -> Vec<f64>,
+    F: Fn(Seconds<T>) -> Vec<T>,
+    T: AbsDiffEq<Epsilon = T> + ComplexField + Float + Scalar + RadauConst + RelativeEq,
 {
-    type Item = Radau<f64>;
+    type Item = Radau<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.n {
