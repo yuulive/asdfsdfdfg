@@ -127,7 +127,8 @@ where
 {
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
-    let _05 = T::from_f32(0.5).unwrap(); // Safe cast to f64 of f32.
+    // Casting is safe for both f32 and f64, representation is exact.
+    let _05 = T::from(0.5_f32).unwrap();
     if let Some(a) = (&identity - &sys.a * (_05 * st)).try_inverse() {
         Some(Ss {
             a: (&identity + &sys.a * (_05 * st)) * &a,

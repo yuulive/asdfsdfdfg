@@ -118,8 +118,8 @@ impl<T: Float + MulAdd<Output = T>> Iterator for BodeIterator<T> {
             None
         } else {
             let freq_exponent = MulAdd::mul_add(self.step, self.index, self.base_freq.0);
-            // Casting is safe for both f32 and f64.
-            let omega = T::from(10.).unwrap().powf(freq_exponent);
+            // Casting is safe for both f32 and f64, representation is exact.
+            let omega = T::from(10.0_f32).unwrap().powf(freq_exponent);
             let j_omega = Complex::<T>::new(T::zero(), omega);
             let g = self.tf.eval(&j_omega);
             //self.index += T::one();
