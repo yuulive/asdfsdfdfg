@@ -12,7 +12,6 @@ use num_traits::Float;
 
 /// Trait for the set of methods on discrete linear systems.
 pub trait Discrete<T: Scalar> {
-    //pub trait Discrete<T: Float + Mul<DMatrix<T>, Output = DMatrix<T>> + Scalar> {
     /// Time evolution for a discrete linear system.
     ///
     /// # Arguments
@@ -29,6 +28,7 @@ pub trait Discrete<T: Scalar> {
     /// # Arguments
     ///
     /// * `st` - sample time
+    /// * `method` - discretization method
     fn discretize(&self, st: T, method: Discretization) -> Option<Ss<T>>;
 }
 
@@ -44,6 +44,24 @@ pub enum Discretization {
 }
 
 impl<T: ComplexField + Float + Scalar> Discrete<T> for Ss<T> {
+    /// Time evolution for a discrete linear system.
+    ///
+    /// # Arguments
+    ///
+    /// * `step` - simulation length
+    /// * `input` - input function
+    /// * `x0` - initial state
+    ///
+    /// # Example
+    /// ```
+    /// # #[macro_use] extern crate approx;
+    /// use automatica::linear_system::{discrete::{Discrete, Discretization}, Ss};
+    /// let disc_sys = Ss::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
+    /// let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
+    /// let evo = disc_sys.time_evolution(20, impulse, &[0., 0.]);
+    /// let last = evo.last().unwrap();
+    /// assert_abs_diff_eq!(0., last.state()[1], epsilon = 0.001);
+    /// ```
     fn time_evolution<F>(&self, steps: usize, input: F, x0: &[T]) -> DiscreteIterator<F, T>
     where
         F: Fn(usize) -> Vec<T>,
@@ -60,6 +78,23 @@ impl<T: ComplexField + Float + Scalar> Discrete<T> for Ss<T> {
         }
     }
 
+    /// Convert a linear system into a discrete system.
+    ///
+    /// # Arguments
+    ///
+    /// * `st` - sample time
+    /// * `method` - discretization method
+    ///
+    /// # Example
+    /// ```
+    /// # #[macro_use] extern crate approx;
+    /// use automatica::linear_system::{discrete::{Discrete, Discretization}, Ss};
+    /// let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
+    /// let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
+    /// let evo = disc_sys.time_evolution(20, |t| vec![1.], &[0., 0.]);
+    /// let last = evo.last().unwrap();
+    /// assert_relative_eq!(0.79, last.state()[1], max_relative = 0.01);
+    /// ```
     fn discretize(&self, st: T, method: Discretization) -> Option<Self> {
         match method {
             Discretization::ForwardEuler => forward_euler(&self, st),
