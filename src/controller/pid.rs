@@ -91,8 +91,8 @@ impl<T: Float> Pid<T> {
             )
         } else {
             Tf::new(
-                Poly::new_from_coeffs(&[T::one(), self.kp * self.ti, self.kp * self.ti * self.td]),
-                Poly::new_from_coeffs(&[T::zero(), self.ti]),
+                Poly::new_from_coeffs(&[T::one(), self.ti, self.ti * self.td]),
+                Poly::new_from_coeffs(&[T::zero(), self.ti / self.kp]),
             )
         }
     }
@@ -109,6 +109,6 @@ mod pid_tests {
         let pid = Pid::new_ideal(10., 5., 2.);
         let tf = pid.tf();
         let c = tf.eval(&Complex64::new(0., 1.));
-        assert_eq!(Complex64::new(10., 19.8), c);
+        assert_eq!(Complex64::new(10., 18.), c);
     }
 }
