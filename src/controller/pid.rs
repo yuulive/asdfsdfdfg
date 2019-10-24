@@ -32,6 +32,12 @@ impl<T: Float> Pid<T> {
     /// * `kp` - Proportional action coefficient
     /// * `ti` - Integral time
     /// * `td` - Derivative time
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::controller::pid::Pid;
+    /// let pid = Pid::new_ideal(4., 6., 0.1);
+    /// ```
     pub fn new_ideal(kp: T, ti: T, td: T) -> Self {
         Self {
             kp,
@@ -49,6 +55,12 @@ impl<T: Float> Pid<T> {
     /// * `ti` - Integral time
     /// * `td` - Derivative time
     /// * `n` - Constant for additional pole
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::controller::pid::Pid;
+    /// let pid = Pid::new(4., 6., 12., 0.1);
+    /// ```
     pub fn new(kp: T, ti: T, td: T, n: T) -> Self {
         Self {
             kp,
@@ -73,9 +85,18 @@ impl<T: Float> Pid<T> {
     /// # Ideal PID
     ///
     /// ```text
-    ///    1 + Ti*s + Ti*Ti*s^2
+    ///    1 + Ti*s + Ti*Td*s^2
     /// Kp --------------------
     ///           Ti*s
+    /// ```
+    ///
+    /// # Example
+    /// ```
+    /// #[macro_use] extern crate automatica;
+    /// use automatica::{controller::pid::Pid, transfer_function::Tf};
+    /// let pid = Pid::new_ideal(2., 2., 0.5);
+    /// let tf = Tf::new(poly![1., 2., 1.], poly![0., 1.]);
+    /// assert_eq!(tf, pid.tf());
     /// ```
     pub fn tf(&self) -> Tf<T> {
         if let Some(n) = self.n {

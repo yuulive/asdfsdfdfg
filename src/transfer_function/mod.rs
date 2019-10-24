@@ -33,7 +33,7 @@ use std::{
 };
 
 /// Transfer function representation of a linear system
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Tf<T> {
     /// Transfer function numerator
     num: Poly<T>,
