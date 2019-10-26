@@ -37,6 +37,7 @@ test:
 
 cover:
   stage: cover
+  image: 'rust:latest'
   script:
     - "rustc --version && cargo --version"
     - cargo install grcov
