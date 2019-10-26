@@ -4,6 +4,7 @@ default:
 stages:
   - build
   - test
+  - cover
   - examples
   - doc
 
@@ -33,6 +34,16 @@ test:
   script:
     - "rustc --version && cargo --version"
     - cargo test --verbose
+
+cover:
+  stage: cover
+  script:
+    - "rustc --version && cargo --version"
+    - cargo install grcov
+    - grcov build/ -t lcov > lcov.info
+  artifacts:
+    paths:
+      - lcov.info
 
 examples:
   stage: examples
