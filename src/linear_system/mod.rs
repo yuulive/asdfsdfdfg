@@ -93,6 +93,13 @@ impl<T: Scalar> Ss<T> {
     /// # Panics
     ///
     /// Panics if matrix dimensions do not match
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::linear_system::Ss;
+    /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
+    /// ```
     pub fn new_from_slice(
         states: usize,
         inputs: usize,
@@ -136,6 +143,14 @@ impl<T: Scalar> Ss<T> {
     }
 
     /// Get the dimensions of the system (states, inputs, outputs).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::linear_system::Ss;
+    /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
+    /// let dimensions = sys.dim();
+    /// ```
     pub fn dim(&self) -> Dim {
         self.dim
     }
@@ -144,6 +159,15 @@ impl<T: Scalar> Ss<T> {
 /// Implementation of the methods for the state-space
 impl<T: ComplexField + RealField> Ss<T> {
     /// Calculate the poles of the system
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::linear_system::Ss;
+    /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
+    /// let poles = sys.poles();
+    /// //assert_eq!(vec![-2., -7.][0], poles[1].re);
+    /// ```
     pub fn poles(&self) -> Vec<Complex<T>> {
         Schur::new(self.a.clone())
             .complex_eigenvalues()
@@ -159,6 +183,21 @@ impl<T: ComplexField + Scalar> Ss<T> {
     /// # Arguments
     ///
     /// * `u` - Input vector
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::linear_system::Ss;
+    /// let a = [-1., 1., -1., 0.25];
+    /// let b = [1., 0.25];
+    /// let c = [0., 1., -1., 1.];
+    /// let d = [0., 1.];
+    ///
+    /// let sys = Ss::new_from_slice(2, 1, 2, &a, &b, &c, &d);
+    /// let u = 0.0;
+    /// let eq = sys.equilibrium(&[u]).unwrap();
+    /// assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
+    /// ```
     pub fn equilibrium(&self, u: &[T]) -> Option<Equilibrium<T>> {
         assert_eq!(u.len(), self.b.ncols(), "Wrong number of inputs.");
         let u = DVector::from_row_slice(u);
