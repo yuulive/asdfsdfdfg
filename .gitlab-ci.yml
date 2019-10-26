@@ -40,8 +40,8 @@ cover:
   image: 'rust:latest'
   script:
     - "rustc --version && cargo --version"
-    - cargo install grcov
-    - grcov build/ -t lcov > lcov.info
+    - cargo install --root $CARGO_HOME grcov
+    - $CARGO_HOME/grcov build/ -t lcov > lcov.info
   artifacts:
     paths:
       - lcov.info
