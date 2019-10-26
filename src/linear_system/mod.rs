@@ -454,6 +454,19 @@ mod tests {
     use nalgebra::DMatrix;
 
     #[test]
+    #[ignore]
+    fn poles() {
+        let eig1 = -2.;
+        let eig2 = -7.;
+        let a = DMatrix::from_row_slice(2, 2, &[eig1, 0., 3., eig2]);
+        let schur = Schur::new(a);
+        //dbg!(&schur);
+        let poles = schur.complex_eigenvalues();
+        //dbg!(poles);
+        assert_eq!((eig1, eig2), (poles[0].re, poles[1].re));
+    }
+
+    #[test]
     fn leverrier_algorythm() {
         use crate::polynomial::MatrixOfPoly;
 
