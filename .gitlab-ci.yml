@@ -38,7 +38,7 @@ cover:
   stage: test
   image: 'rust:latest'
   before_script:
-    - "apt-get update && apt-get install libssl-dev pkg-config cmake zlib1g-dev"
+    - "apt-get update && apt-get -y install libssl-dev pkg-config cmake zlib1g-dev"
     - cargo install cargo-tarpaulin
   script:
     - "rustc --version && cargo --version"
