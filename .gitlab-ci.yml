@@ -44,7 +44,7 @@ cover:
   script:
     - "rustc --version && cargo --version"
     - cargo tarpaulin -v --exclude-files cargo -o Html
-  coverage: '/\d+\.\d+/ coverage'
+  coverage: '/\d+\.\d+/ coverage/'
   artifacts:
     paths:
       - tarpaulin-report.html
