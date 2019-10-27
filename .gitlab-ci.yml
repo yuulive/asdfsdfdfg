@@ -7,14 +7,6 @@ stages:
   - examples
   - doc
 
-variables:
-  CARGO_HOME: $CI_PROJECT_DIR/cargo
-
-cache:
-  paths:
-    - $CARGO_HOME
-    - target/
-
 build:
   stage: build
   script:
