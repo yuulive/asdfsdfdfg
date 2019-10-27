@@ -4,7 +4,6 @@ default:
 stages:
   - build
   - test
-  - cover
   - examples
   - doc
 
@@ -36,15 +35,13 @@ test:
     - cargo test --verbose
 
 cover:
-  stage: cover
-  image: 'rust:latest'
+  stage: test
+  before_script:
+    - apk add --update openssl-dev pkgconf cmake zlib-dev
+    - cargo install cargo-tarpaulin
   script:
     - "rustc --version && cargo --version"
-    - cargo install --root $CARGO_HOME grcov
-    - $CARGO_HOME/grcov build/ -t lcov > lcov.info
-  artifacts:
-    paths:
-      - lcov.info
+    - cargo tarpaulin -v
 
 examples:
   stage: examples
