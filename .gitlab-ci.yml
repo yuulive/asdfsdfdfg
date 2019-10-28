@@ -7,47 +7,78 @@ stages:
   - examples
   - doc
 
-build:
+variables:
+  CARGO_HOME_BIN: $CI_PROJECT_DIR/cargo/bin
+  TARGET: target
+
+.build_template: &build_definition
   stage: build
   script:
     - "rustc --version && cargo --version"
     - cargo build --verbose
 
-build latest:
-  stage: build
+build:
+  <<: *build_definition
+  cache:
+    key: buildDefault
+    paths:
+      - $TARGET
+
+build:latest:
+  <<: *build_definition
   image: 'rust:alpine'
-  script:
-    - "rustc --version && cargo --version"
-    - cargo build --verbose
+  cache:
+    key: buildLatest
+    paths:
+      - $TARGET
+  allow_failure: true
 
 test:
   stage: test
+  cache:
+    key: test
+    paths:
+      - $TARGET
+  needs: ["build"]
   script:
     - "rustc --version && cargo --version"
     - cargo test --verbose
 
 cover:
   stage: test
+  # Tarpaulin do not work in Alpine image.
   image: 'rust:latest'
+  cache:
+    key: cover
+    paths:
+      - $CARGO_HOME_BIN
+      - $TARGET
   before_script:
+    # Check if cargo-tarpaulin is present in $CARGO_HOME_BIN
     - "apt-get update && apt-get -y install libssl-dev pkg-config cmake zlib1g-dev"
-    - cargo install cargo-tarpaulin
-    - rm -rf cargo/registry
+    - cargo install cargo-tarpaulin || true
+    - rm -rf cargo/registry || true
   script:
     - "rustc --version && cargo --version"
     - cargo tarpaulin -v --exclude-files cargo -o Html
-  coverage: '/\d+\.\d+/ coverage/'
+  coverage: '/\d+\.\d+\% coverage/'
   artifacts:
     paths:
       - tarpaulin-report.html
+  allow_failure: true
 
 examples:
   stage: examples
+  cache:
+    key: test
+    paths:
+      - $TARGET
   before_script:
     - apk add --update make
   script:
     - "rustc --version && cargo --version"
     - make all_examples
+  needs: ["test"]
 
 pages:
   stage: doc
