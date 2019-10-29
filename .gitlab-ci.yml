@@ -71,6 +71,7 @@ examples:
   stage: examples
   cache:
     key: test
+    policy: pull
     paths:
       - $TARGET
   before_script:

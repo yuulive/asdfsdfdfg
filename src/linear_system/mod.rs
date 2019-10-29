@@ -157,7 +157,7 @@ impl<T: Scalar> Ss<T> {
 }
 
 /// Implementation of the methods for the state-space
-impl<T: ComplexField + RealField> Ss<T> {
+impl<T: ComplexField + Float + RealField> Ss<T> {
     /// Calculate the poles of the system
     ///
     /// # Example
@@ -166,14 +166,56 @@ impl<T: ComplexField + RealField> Ss<T> {
     /// use automatica::linear_system::Ss;
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// let poles = sys.poles();
-    /// //assert_eq!(vec![-2., -7.][0], poles[1].re);
+    /// assert_eq!(-2., poles[0].re);
+    /// assert_eq!(-7., poles[1].re);
     /// ```
     pub fn poles(&self) -> Vec<Complex<T>> {
-        Schur::new(self.a.clone())
-            .complex_eigenvalues()
-            .as_slice()
-            .to_vec()
+        if self.a.nrows() == 2 {
+            let m00 = self.a[(0, 0)];
+            let m01 = self.a[(0, 1)];
+            let m10 = self.a[(1, 0)];
+            let m11 = self.a[(1, 1)];
+            let trace = m00 + m11;
+            let determinant = m00 * m11 - m01 * m10;
+
+            let (eig1, eig2) = quadratic_roots(-trace, determinant);
+
+            vec![eig1, eig2]
+        } else {
+            Schur::new(self.a.clone())
+                .complex_eigenvalues()
+                .as_slice()
+                .to_vec()
+        }
     }
+}
+
+/// Calculate the quadratic roots of x^2 + b*x + c = 0. Returns always a couple
+/// of complex roots.
+///
+/// # Arguments
+///
+/// * `b` - first degree coefficient
+/// * `c` - zero degree coefficient
+#[allow(clippy::many_single_char_names)]
+fn quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>) {
+    let b_ = b / T::from(2.0_f32).unwrap(); // Safe cast, it's exact.
+    let d = b_.powi(2) - c; // Discriminant
+    let (eig1r, eig1i, eig2r, eig2i) = if d.is_zero() {
+        (-b_, T::zero(), -b_, T::zero())
+    } else if d.is_sign_negative() {
+        // Negative discriminant.
+        let s = (-d).sqrt();
+        (-b_, -s, -b_, s)
+    } else {
+        // Positive discriminant.
+        let s = d.sqrt();
+        let g = if b > T::zero() { T::one() } else { -T::one() };
+        let h = -(b_ + g * s);
+        (c / h, T::zero(), h, T::zero())
+    };
+
+    (Complex::new(eig1r, eig1i), Complex::new(eig2r, eig2i))
 }
 
 /// Implementation of the methods for the state-space
@@ -455,7 +497,7 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn poles() {
+    fn poles_fail() {
         let eig1 = -2.;
         let eig2 = -7.;
         let a = DMatrix::from_row_slice(2, 2, &[eig1, 0., 3., eig2]);
@@ -464,6 +506,38 @@ mod tests {
         let poles = schur.complex_eigenvalues();
         //dbg!(poles);
         assert_eq!((eig1, eig2), (poles[0].re, poles[1].re));
+    }
+
+    #[test]
+    fn poles() {
+        let eig1 = -2.;
+        let eig2 = -7.;
+        let sys = Ss::new_from_slice(
+            2,
+            1,
+            1,
+            &[eig1, 0., 3., eig2],
+            &[1., 3.],
+            &[-1., 0.5],
+            &[0.1],
+        );
+        let poles = sys.poles();
+        assert_eq!((eig1, eig2), (poles[0].re, poles[1].re));
+    }
+
+    #[test]
+    fn roots() {
+        let root1 = Complex::<f64>::new(-1., 0.);
+        let root2 = Complex::<f64>::new(-2., 0.);
+        assert_eq!((root1, root2), quadratic_roots(3., 2.));
+
+        let root1 = Complex::<f64>::new(-0., -1.);
+        let root2 = Complex::<f64>::new(-0., 1.);
+        assert_eq!((root1, root2), quadratic_roots(0., 1.));
+
+        let root1 = Complex::<f64>::new(3., -1.);
+        let root2 = Complex::<f64>::new(3., 1.);
+        assert_eq!((root1, root2), quadratic_roots(-6., 10.));
     }
 
     #[test]
