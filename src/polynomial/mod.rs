@@ -36,7 +36,7 @@ pub struct Poly<T> {
 /// ```
 /// #[macro_use] extern crate automatica;
 /// let p = poly!(1., 2., 3.);
-/// assert_eq!(2, p.degree());
+/// assert_eq!(Some(2), p.degree());
 /// ```
 #[macro_export]
 macro_rules! poly {
@@ -47,23 +47,13 @@ macro_rules! poly {
 
 /// Implementation methods for Poly struct
 impl<T> Poly<T> {
-    /// Degree of the polynomial
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::polynomial::Poly;
-    /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
-    /// assert_eq!(2, p.degree());
-    /// ```
-    pub fn degree(&self) -> usize {
-        assert!(
-            !self.coeffs.is_empty(),
-            "Degree is not defined on empty polynomial"
-        );
-        self.coeffs.len() - 1
+    /// Length of the polynomial coefficients
+    pub(crate) fn len(&self) -> usize {
+        self.coeffs.len()
     }
 }
 
+/// Implementation methods for Poly struct
 impl<T: Copy> Poly<T> {
     /// Vector of the polynomial's coefficients
     ///
@@ -79,8 +69,28 @@ impl<T: Copy> Poly<T> {
 }
 
 /// Implementation methods for Poly struct
-impl<T: Copy + Zero> Poly<T> {
-    /// Extend the polynomial coefficients with 0 to the given degree.
+impl<T: Copy + Num + Zero> Poly<T> {
+    /// Degree of the polynomial
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
+    /// assert_eq!(Some(2), p.degree());
+    /// ```
+    pub fn degree(&self) -> Option<usize> {
+        assert!(
+            !self.coeffs.is_empty(),
+            "Degree is not defined on empty polynomial"
+        );
+        if self.is_zero() {
+            None
+        } else {
+            Some(self.coeffs.len() - 1)
+        }
+    }
+
+    /// Extend the polynomial coefficients with 0 to the given degree in place.
     /// It does not truncate the polynomial.
     ///
     /// # Arguments
@@ -95,9 +105,14 @@ impl<T: Copy + Zero> Poly<T> {
     /// assert_eq!(vec![1, 2, 3, 0, 0, 0], p.coeffs());
     /// ```
     pub fn extend(&mut self, degree: usize) {
-        if degree > self.degree() {
-            self.coeffs.resize(degree + 1, T::zero());
-        }
+        // if degree > self.degree() {
+        //     self.coeffs.resize(degree + 1, T::zero());
+        // }
+        match self.degree() {
+            None => self.coeffs.resize(degree + 1, T::zero()),
+            Some(d) if degree > d => self.coeffs.resize(degree + 1, T::zero()),
+            _ => (),
+        };
     }
 }
 
@@ -191,17 +206,20 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// Subdiagonal terms are 1., rightmost column contains the coefficients
     /// of the monic polynomial with opposite sign.
     pub(crate) fn companion(&self) -> DMatrix<T> {
-        let length = self.degree();
-        let hi_coeff = self.coeffs[length];
-        DMatrix::from_fn(length, length, |i, j| {
-            if j == length - 1 {
-                -self.coeffs[i] / hi_coeff // monic polynomial
-            } else if i == j + 1 {
-                T::one()
-            } else {
-                T::zero()
-            }
-        })
+        if let Some(length) = self.degree() {
+            let hi_coeff = self.coeffs[length];
+            DMatrix::from_fn(length, length, |i, j| {
+                if j == length - 1 {
+                    -self.coeffs[i] / hi_coeff // monic polynomial
+                } else if i == j + 1 {
+                    T::one()
+                } else {
+                    T::zero()
+                }
+            })
+        } else {
+            DMatrix::zeros(1, 1)
+        }
     }
 
     /// Calculate the real roots of the polynomial
@@ -214,7 +232,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// assert_eq!(roots, p.roots().unwrap().as_slice());
     /// ```
     pub fn roots(&self) -> Option<Vec<T>> {
-        if self.degree() == 2 {
+        if self.degree() == Some(2) {
             if let Some(r) = quadratic_roots(self[1] / self[2], self[0] / self[2]) {
                 Some(vec![r.0, r.1])
             } else {
@@ -238,7 +256,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// assert_eq!(vec![-i, i], p.complex_roots());
     /// ```
     pub fn complex_roots(&self) -> Vec<Complex<T>> {
-        if self.degree() == 2 {
+        if self.degree() == Some(2) {
             let b = self[1] / self[2];
             let c = self[0] / self[2];
             let (r1, r2) = complex_quadratic_roots(b, c);
@@ -577,10 +595,10 @@ impl<T: Copy + PartialEq + Sub<Output = T> + Zero> Sub for Poly<T> {
     fn sub(mut self, mut rhs: Self) -> Self {
         // Check which polynomial has the highest degree.
         // Mutate the arguments since are passed as values.
-        let mut result = if self.degree() < rhs.degree() {
+        let mut result = if self.len() < rhs.len() {
             // iterate on rhs and do the subtraction until self has values,
             // then invert the coefficients of rhs
-            for i in 0..=rhs.degree() {
+            for i in 0..rhs.len() {
                 rhs[i] = *self.coeffs.get(i).unwrap_or(&T::zero()) - rhs[i];
             }
             rhs
@@ -703,11 +721,10 @@ impl<T: Copy + Mul<Output = T> + PartialEq + Zero> Mul for &Poly<T> {
     #[allow(clippy::suspicious_arithmetic_impl)]
     fn mul(self, rhs: Self) -> Poly<T> {
         // Polynomial multiplication is implemented as discrete convolution.
-        let new_degree = self.degree() + rhs.degree();
-        let new_length = new_degree + 1;
+        let new_length = self.len() + rhs.len() - 1;
         let mut new_coeffs: Vec<T> = vec![T::zero(); new_length];
-        for i in 0..=self.degree() {
-            for j in 0..=rhs.degree() {
+        for i in 0..self.len() {
+            for j in 0..rhs.len() {
                 let a = *self.coeffs.get(i).unwrap_or(&T::zero());
                 let b = *rhs.coeffs.get(j).unwrap_or(&T::zero());
                 let index = i + j;
@@ -884,7 +901,7 @@ impl<T: Display + One + PartialEq + Signed + Zero> Display for Poly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.coeffs.is_empty() {
             return write!(f, "0");
-        } else if self.degree() == 0 {
+        } else if self.len() == 0 {
             return write!(f, "{}", self.coeffs[0]);
         }
         let mut s = String::new();
@@ -957,6 +974,21 @@ mod tests {
             poly!(0., -2., 1., 1.),
             Poly::new_from_roots(&[-0., -2., 1.])
         );
+    }
+
+    #[test]
+    fn len() {
+        let p = Poly::new_from_coeffs(&[1., 2., 3.]);
+        assert_eq!(3, p.len());
+    }
+
+    #[test]
+    fn degree() {
+        let p = Poly::new_from_coeffs(&[1., 2., 3.]);
+        assert_eq!(Some(2), p.degree());
+
+        let p2 = Poly::new_from_coeffs(&[0.]);
+        assert_eq!(None, p2.degree());
     }
 
     #[test]

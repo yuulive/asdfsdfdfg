@@ -50,6 +50,8 @@ impl<T: Float> Tf<T> {
     /// * `num` - Transfer function numerator
     /// * `den` - Transfer function denominator
     pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
+        assert!(!num.is_zero());
+        assert!(!den.is_zero());
         Self { num, den }
     }
 

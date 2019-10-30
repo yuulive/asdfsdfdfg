@@ -374,7 +374,9 @@ impl<T: Float + Scalar + ComplexField + RealField> From<Tf<T>> for Ss<T> {
         let (den_monic, den_n) = tf.den().monic();
         // Extend the numerator coefficients with zeros to the length of the
         // denominator polynomial.
-        let order = den_monic.degree();
+        let order = den_monic
+            .degree()
+            .expect("Transfer functions cannot have zero polynomial denominator");
         // Divide the denominator polynomial by the highest coefficient of the
         // numerator polinomial to mantain the original gain.
         let mut num = tf.num().clone() / den_n;
