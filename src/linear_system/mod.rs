@@ -12,6 +12,7 @@ pub mod solver;
 
 use crate::{
     linear_system::solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
+    polynomial,
     polynomial::{Poly, PolyMatrix},
     transfer_function::Tf,
     units::Seconds,
@@ -178,7 +179,7 @@ impl<T: ComplexField + Float + RealField> Ss<T> {
             let trace = m00 + m11;
             let determinant = m00 * m11 - m01 * m10;
 
-            let (eig1, eig2) = quadratic_roots(-trace, determinant);
+            let (eig1, eig2) = polynomial::complex_quadratic_roots(-trace, determinant);
 
             vec![eig1, eig2]
         } else {
@@ -188,34 +189,6 @@ impl<T: ComplexField + Float + RealField> Ss<T> {
                 .to_vec()
         }
     }
-}
-
-/// Calculate the quadratic roots of x^2 + b*x + c = 0. Returns always a couple
-/// of complex roots.
-///
-/// # Arguments
-///
-/// * `b` - first degree coefficient
-/// * `c` - zero degree coefficient
-#[allow(clippy::many_single_char_names)]
-fn quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>) {
-    let b_ = b / T::from(2.0_f32).unwrap(); // Safe cast, it's exact.
-    let d = b_.powi(2) - c; // Discriminant
-    let (eig1r, eig1i, eig2r, eig2i) = if d.is_zero() {
-        (-b_, T::zero(), -b_, T::zero())
-    } else if d.is_sign_negative() {
-        // Negative discriminant.
-        let s = (-d).sqrt();
-        (-b_, -s, -b_, s)
-    } else {
-        // Positive discriminant.
-        let s = d.sqrt();
-        let g = if b > T::zero() { T::one() } else { -T::one() };
-        let h = -(b_ + g * s);
-        (c / h, T::zero(), h, T::zero())
-    };
-
-    (Complex::new(eig1r, eig1i), Complex::new(eig2r, eig2i))
 }
 
 /// Implementation of the methods for the state-space
@@ -523,21 +496,6 @@ mod tests {
         );
         let poles = sys.poles();
         assert_eq!((eig1, eig2), (poles[0].re, poles[1].re));
-    }
-
-    #[test]
-    fn roots() {
-        let root1 = Complex::<f64>::new(-1., 0.);
-        let root2 = Complex::<f64>::new(-2., 0.);
-        assert_eq!((root1, root2), quadratic_roots(3., 2.));
-
-        let root1 = Complex::<f64>::new(-0., -1.);
-        let root2 = Complex::<f64>::new(-0., 1.);
-        assert_eq!((root1, root2), quadratic_roots(0., 1.));
-
-        let root1 = Complex::<f64>::new(3., -1.);
-        let root2 = Complex::<f64>::new(3., 1.);
-        assert_eq!((root1, root2), quadratic_roots(-6., 10.));
     }
 
     #[test]

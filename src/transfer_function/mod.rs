@@ -64,7 +64,7 @@ impl<T: Float> Tf<T> {
     }
 }
 
-impl<T: Scalar + ComplexField + RealField + Debug> Tf<T> {
+impl<T: ComplexField + Debug + Float + RealField + Scalar> Tf<T> {
     /// Calculate the poles of the transfer function
     pub fn poles(&self) -> Option<Vec<T>> {
         self.den.roots()

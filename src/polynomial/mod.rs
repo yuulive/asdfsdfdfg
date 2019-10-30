@@ -185,7 +185,7 @@ impl<T: AddAssign + Copy + Num + Neg<Output = T>> Poly<T> {
 }
 
 /// Implementation methods for Poly struct
-impl<T: Scalar + ComplexField + RealField> Poly<T> {
+impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// Build the companion matrix of the polynomial.
     ///
     /// Subdiagonal terms are 1., rightmost column contains the coefficients
@@ -214,10 +214,18 @@ impl<T: Scalar + ComplexField + RealField> Poly<T> {
     /// assert_eq!(roots, p.roots().unwrap().as_slice());
     /// ```
     pub fn roots(&self) -> Option<Vec<T>> {
-        // Build the companion matrix
-        let comp = self.companion();
-        let schur = Schur::new(comp);
-        schur.eigenvalues().map(|e| e.as_slice().to_vec())
+        if self.degree() == 2 {
+            if let Some(r) = quadratic_roots(self[1] / self[2], self[0] / self[2]) {
+                Some(vec![r.0, r.1])
+            } else {
+                None
+            }
+        } else {
+            // Build the companion matrix
+            let comp = self.companion();
+            let schur = Schur::new(comp);
+            schur.eigenvalues().map(|e| e.as_slice().to_vec())
+        }
     }
 
     /// Calculate the complex roots of the polynomial
@@ -227,13 +235,72 @@ impl<T: Scalar + ComplexField + RealField> Poly<T> {
     /// use automatica::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
     /// let i = num_complex::Complex::i();
-    /// assert_eq!(vec![i, -i], p.complex_roots());
+    /// assert_eq!(vec![-i, i], p.complex_roots());
     /// ```
     pub fn complex_roots(&self) -> Vec<Complex<T>> {
-        let comp = self.companion();
-        let schur = Schur::new(comp);
-        schur.complex_eigenvalues().as_slice().to_vec()
+        if self.degree() == 2 {
+            let b = self[1] / self[2];
+            let c = self[0] / self[2];
+            let (r1, r2) = complex_quadratic_roots(b, c);
+            vec![r1, r2]
+        } else {
+            let comp = self.companion();
+            let schur = Schur::new(comp);
+            schur.complex_eigenvalues().as_slice().to_vec()
+        }
     }
+}
+
+/// Calculate the complex roots of the quadratic equation x^2 + b*x + c = 0.
+///
+/// # Arguments
+///
+/// * `b` - first degree coefficient
+/// * `c` - zero degree coefficient
+#[allow(clippy::many_single_char_names)]
+pub(crate) fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>) {
+    let b_ = b / T::from(2.0_f32).unwrap(); // Safe cast, it's exact.
+    let d = b_.powi(2) - c; // Discriminant
+    let (eig1r, eig1i, eig2r, eig2i) = if d.is_zero() {
+        (-b_, T::zero(), -b_, T::zero())
+    } else if d.is_sign_negative() {
+        // Negative discriminant.
+        let s = (-d).sqrt();
+        (-b_, -s, -b_, s)
+    } else {
+        // Positive discriminant.
+        let s = d.sqrt();
+        let g = if b > T::zero() { T::one() } else { -T::one() };
+        let h = -(b_ + g * s);
+        (c / h, T::zero(), h, T::zero())
+    };
+
+    (Complex::new(eig1r, eig1i), Complex::new(eig2r, eig2i))
+}
+
+/// Calculate the real roots of the quadratic equation x^2 + b*x + c = 0.
+///
+/// # Arguments
+///
+/// * `b` - first degree coefficient
+/// * `c` - zero degree coefficient
+#[allow(clippy::many_single_char_names)]
+pub(crate) fn quadratic_roots<T: Float>(b: T, c: T) -> Option<(T, T)> {
+    let b_ = b / T::from(2.0_f32).unwrap(); // Safe cast, it's exact.
+    let d = b_.powi(2) - c; // Discriminant
+    let (r1, r2) = if d.is_zero() {
+        (-b_, -b_)
+    } else if d.is_sign_negative() {
+        return None;
+    } else {
+        // Positive discriminant.
+        let s = d.sqrt();
+        let g = if b > T::zero() { T::one() } else { -T::one() };
+        let h = -(b_ + g * s);
+        (c / h, h)
+    };
+
+    Some((r1, r2))
 }
 
 /// Implementation methods for Poly struct
@@ -1096,6 +1163,36 @@ mod tests {
 
         assert!(Poly::<usize>::zero().is_zero());
         assert!(Poly::<usize>::one().is_one());
+    }
+
+    #[test]
+    fn roots() {
+        let root1 = -1.;
+        let root2 = -2.;
+        assert_eq!(Some((root1, root2)), quadratic_roots(3., 2.));
+
+        assert_eq!(None, quadratic_roots(-6., 10.));
+
+        let root1 = 3.;
+        assert_eq!(Some((root1, root1)), quadratic_roots(-6., 9.));
+    }
+
+    #[test]
+    fn complex_roots() {
+        let root1 = Complex::<f64>::new(-1., 0.);
+        let root2 = Complex::<f64>::new(-2., 0.);
+        assert_eq!((root1, root2), complex_quadratic_roots(3., 2.));
+
+        let root1 = Complex::<f64>::new(-0., -1.);
+        let root2 = Complex::<f64>::new(-0., 1.);
+        assert_eq!((root1, root2), complex_quadratic_roots(0., 1.));
+
+        let root1 = Complex::<f64>::new(3., -1.);
+        let root2 = Complex::<f64>::new(3., 1.);
+        assert_eq!((root1, root2), complex_quadratic_roots(-6., 10.));
+
+        let root1 = Complex::<f64>::new(3., 0.);
+        assert_eq!((root1, root1), complex_quadratic_roots(-6., 9.));
     }
 }
 
