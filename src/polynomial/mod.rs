@@ -279,7 +279,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
 pub(crate) fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>) {
     let b_ = b / T::from(2.0_f32).unwrap(); // Safe cast, it's exact.
     let d = b_.powi(2) - c; // Discriminant
-    let (eig1r, eig1i, eig2r, eig2i) = if d.is_zero() {
+    let (root1_r, root1_i, root2_r, root2_i) = if d.is_zero() {
         (-b_, T::zero(), -b_, T::zero())
     } else if d.is_sign_negative() {
         // Negative discriminant.
@@ -293,7 +293,10 @@ pub(crate) fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Comp
         (c / h, T::zero(), h, T::zero())
     };
 
-    (Complex::new(eig1r, eig1i), Complex::new(eig2r, eig2i))
+    (
+        Complex::new(root1_r, root1_i),
+        Complex::new(root2_r, root2_i),
+    )
 }
 
 /// Calculate the real roots of the quadratic equation x^2 + b*x + c = 0.
@@ -1205,8 +1208,8 @@ mod tests {
 
         assert_eq!(None, quadratic_roots(-6., 10.));
 
-        let root1 = 3.;
-        assert_eq!(Some((root1, root1)), quadratic_roots(-6., 9.));
+        let root3 = 3.;
+        assert_eq!(Some((root3, root3)), quadratic_roots(-6., 9.));
     }
 
     #[test]

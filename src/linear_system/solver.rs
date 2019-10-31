@@ -144,8 +144,7 @@ where
         // k2 = f(t_n + h, y_n + h*k3)
         // Return None if conversion fails
         let init_time = Seconds(T::from(self.index - 1)? * self.h.0);
-        let _05 = T::_05;
-        let mid_time = Seconds(init_time.0 + _05 * self.h.0);
+        let mid_time = Seconds(init_time.0 + T::_05 * self.h.0);
         let end_time = Seconds(T::from(self.index)? * self.h.0);
         let u = DVector::from_vec((self.input)(init_time));
         let u_mid = DVector::from_vec((self.input)(mid_time));
@@ -154,12 +153,12 @@ where
         let bu_mid = &self.sys.b * &u_mid;
         let bu_end = &self.sys.b * &u_end;
         let k1 = &self.sys.a * &self.state + &bu;
-        let k2 = &self.sys.a * (&self.state + &k1 * (_05 * self.h.0)) + &bu_mid;
-        let k3 = &self.sys.a * (&self.state + &k2 * (_05 * self.h.0)) + &bu_mid;
+        let k2 = &self.sys.a * (&self.state + &k1 * (T::_05 * self.h.0)) + &bu_mid;
+        let k3 = &self.sys.a * (&self.state + &k2 * (T::_05 * self.h.0)) + &bu_mid;
         let k4 = &self.sys.a * (&self.state + &k3 * self.h.0) + &bu_end;
-        let _2 = T::A_RK[0];
-        let _6 = T::A_RK[1];
-        self.state += (k1 + k2 * _2 + k3 * _2 + k4) * (self.h.0 / _6);
+        let n_2 = T::A_RK[0];
+        let n_6 = T::A_RK[1];
+        self.state += (k1 + k2 * n_2 + k3 * n_2 + k4) * (self.h.0 / n_6);
         self.output = &self.sys.c * &self.state + &self.sys.d * &u_end;
 
         self.index += 1;
@@ -175,7 +174,7 @@ where
 /// Trait that defines the constants used in the Rk solver.
 pub trait RkConst
 where
-    Self: Sized,
+    Self: Copy + Sized,
 {
     /// 0.5 constant
     const _05: Self;
@@ -421,7 +420,7 @@ where
 /// Trait that defines the constants used in the Rkf45 solver.
 pub trait Rkf45Const
 where
-    Self: Sized,
+    Self: Copy + Sized,
 {
     /// A
     const A: [Self; 4];
@@ -671,7 +670,7 @@ where
 /// Trait that defines the constants used in the Radau solver.
 pub trait RadauConst
 where
-    Self: Sized,
+    Self: Copy + Sized,
 {
     /// A
     const RADAU_A: [Self; 4];
