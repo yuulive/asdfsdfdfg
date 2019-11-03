@@ -122,7 +122,7 @@ impl<T: Float> Pid<T> {
 #[cfg(test)]
 mod pid_tests {
     use super::*;
-    use crate::Eval;
+    use crate::{units::Decibel, Eval};
     use num_complex::Complex64;
 
     #[test]
@@ -143,5 +143,9 @@ mod pid_tests {
         let pid = Pid::new(2., 2., 0.5, 5.);
         let r = pid.tf();
         assert_eq!(Some(vec![0., -10.]), r.poles());
+        let l = &g * &r;
+        let critical_freq = 0.8;
+        let c = l.eval(&Complex64::new(0., critical_freq));
+        assert_abs_diff_eq!(0., c.norm().to_db(), epsilon = 0.1);
     }
 }
