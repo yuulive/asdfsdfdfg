@@ -327,7 +327,7 @@ pub(crate) fn quadratic_roots<T: Float>(b: T, c: T) -> Option<(T, T)> {
 /// Implementation methods for Poly struct
 impl Poly<f64> {
     /// Implementation of polynomial and matrix multiplication
-    pub(crate) fn mul(&self, rhs: &DMatrix<f64>) -> PolyMatrix<f64> {
+    pub(crate) fn multiply(&self, rhs: &DMatrix<f64>) -> PolyMatrix<f64> {
         // It's the polynomial matrix whose coefficients are the coefficients
         // of the polynomial times the matrix
         let result: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();

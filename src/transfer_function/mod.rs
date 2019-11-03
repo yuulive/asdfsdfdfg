@@ -26,7 +26,7 @@ use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
-use std::ops::{Index, IndexMut};
+use std::ops::{Index, IndexMut, Mul};
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
@@ -101,7 +101,7 @@ impl TryFrom<Ss<f64>> for Tf<f64> {
     fn try_from(ss: Ss<f64>) -> Result<Self, Self::Error> {
         let (pc, a_inv) = linear_system::leverrier(ss.a());
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
-        let rest = pc.mul(ss.d());
+        let rest = pc.multiply(ss.d());
         let tf = g + rest;
         if let Some(num) = MatrixOfPoly::from(tf).siso() {
             Ok(Self::new(num.clone(), pc))
@@ -211,6 +211,26 @@ impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
     }
 }
 
+/// Implementation of transfer function multiplication
+impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for &Tf<T> {
+    type Output = Tf<T>;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let num = &self.num * &rhs.num;
+        let den = &self.den * &rhs.den;
+        Tf::new(num, den)
+    }
+}
+
+/// Implementation of transfer function multiplication
+impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for Tf<T> {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self {
+        Mul::mul(&self, &rhs)
+    }
+}
+
 impl From<Ss<f64>> for TfMatrix<f64> {
     /// Convert a state-space representation into a matrix of transfer functions
     ///
@@ -220,7 +240,7 @@ impl From<Ss<f64>> for TfMatrix<f64> {
     fn from(ss: Ss<f64>) -> Self {
         let (pc, a_inv) = linear_system::leverrier(ss.a());
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
-        let rest = pc.mul(ss.d());
+        let rest = pc.multiply(ss.d());
         let tf = g + rest;
         Self::new(MatrixOfPoly::from(tf), pc)
     }
