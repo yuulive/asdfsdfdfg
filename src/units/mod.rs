@@ -58,7 +58,7 @@ impl Decibel<f64> for f64 {
 
 /// Implementation of the Decibels for f32
 impl Decibel<f32> for f32 {
-    /// Convert f64 to decibels
+    /// Convert f32 to decibels
     fn to_db(&self) -> Self {
         20. * self.log10()
     }
@@ -101,6 +101,8 @@ mod tests {
     fn decibel() {
         assert_abs_diff_eq!(40., 100_f64.to_db(), epsilon = 0.);
         assert_relative_eq!(-3.0103, 2_f64.inv().sqrt().to_db(), max_relative = 1e5);
+
+        assert_abs_diff_eq!(0., 1_f32.to_db(), epsilon = 0.);
     }
 
     #[test]
@@ -113,6 +115,24 @@ mod tests {
 
         let rps = RadiantsPerSecond(2.0);
         assert_eq!(rps, RadiantsPerSecond::from(Hertz::from(rps)));
+    }
+
+    #[quickcheck]
+    fn qc_conversion_hertz(hz: f64) -> bool {
+        relative_eq!(
+            hz,
+            Hertz::from(RadiantsPerSecond::from(Hertz(hz))).0,
+            max_relative = 1e-15
+        )
+    }
+
+    #[quickcheck]
+    fn qc_conversion_rps(rps: f64) -> bool {
+        relative_eq!(
+            rps,
+            RadiantsPerSecond::from(Hertz::from(RadiantsPerSecond(rps))).0,
+            max_relative = 1e-15
+        )
     }
 
     #[test]

@@ -126,10 +126,22 @@ mod pid_tests {
     use num_complex::Complex64;
 
     #[test]
-    fn pid_creation() {
+    fn ideal_pid_creation() {
         let pid = Pid::new_ideal(10., 5., 2.);
         let tf = pid.tf();
         let c = tf.eval(&Complex64::new(0., 1.));
         assert_eq!(Complex64::new(10., 18.), c);
+    }
+
+    #[test]
+    fn real_pid_creation() {
+        // Example 15.1
+        let g = Tf::new(
+            Poly::new_from_coeffs(&[1.]),
+            Poly::new_from_roots(&[-1., -1., -1.]),
+        );
+        let pid = Pid::new(2., 2., 0.5, 5.);
+        let r = pid.tf();
+        assert_eq!(Some(vec![0., -10.]), r.poles());
     }
 }

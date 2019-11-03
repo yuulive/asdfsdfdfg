@@ -10,3 +10,7 @@ num-complex = "0.2"
 nalgebra = "0.18.0"
 ndarray = "0.12.1"
 approx = "0.3.2"
+
+[dev-dependencies]
+quickcheck = "0.9"
+quickcheck_macros = "0.8"

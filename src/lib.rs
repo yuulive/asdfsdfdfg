@@ -44,6 +44,12 @@
 #[macro_use]
 extern crate approx;
 
+#[cfg(test)]
+extern crate quickcheck;
+#[cfg(test)]
+#[macro_use(quickcheck)]
+extern crate quickcheck_macros;
+
 pub mod controller;
 pub mod linear_system;
 pub mod plots;
