@@ -64,6 +64,7 @@ impl<T: Float + MulAdd<Output = T>> PolarIterator<T> {
 }
 
 /// Struct to hold the data returned by the Polar iterator
+#[derive(Clone, Copy, Debug)]
 pub struct Polar<T> {
     /// Output
     output: Complex<T>,
@@ -134,4 +135,38 @@ pub trait PolarPlot<T: Float + FloatConst> {
         max_freq: RadiantsPerSecond<T>,
         step: T,
     ) -> PolarIterator<T>;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::poly;
+
+    #[test]
+    fn create_iterator() {
+        let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
+        let iter = PolarIterator::new(tf, RadiantsPerSecond(10.), RadiantsPerSecond(1000.), 0.1);
+        assert_eq!(20., iter.intervals);
+        assert_eq!(RadiantsPerSecond(1.), iter.base_freq);
+        assert_eq!(0., iter.index);
+    }
+
+    #[test]
+    fn polar_struct() {
+        let p = Polar {
+            output: Complex::new(3., 4.),
+        };
+        assert_eq!(3., p.real());
+        assert_eq!(4., p.imag());
+        assert_eq!(5., p.magnitude());
+        assert_relative_eq!(0.9273, p.phase(), max_relative = 0.00001);
+    }
+
+    #[test]
+    fn iterator() {
+        let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
+        let iter = PolarIterator::new(tf, RadiantsPerSecond(10.), RadiantsPerSecond(1000.), 0.1);
+        // 20 steps -> 21 iteration
+        assert_eq!(21, iter.count());
+    }
 }
