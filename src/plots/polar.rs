@@ -19,8 +19,8 @@ pub struct PolarIterator<T: Float> {
     intervals: T,
     /// Step between frequencies
     step: T,
-    /// Start frequency
-    base_freq: RadiantsPerSecond<T>,
+    /// Start frequency exponent
+    base_freq_exp: T,
     /// Current data index
     index: T,
 }
@@ -57,7 +57,7 @@ impl<T: Float + MulAdd<Output = T>> PolarIterator<T> {
             tf,
             intervals,
             step,
-            base_freq: RadiantsPerSecond(min),
+            base_freq_exp: min,
             index: T::zero(),
         }
     }
@@ -101,7 +101,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for PolarIterator<T> {
         if self.index > self.intervals {
             None
         } else {
-            let freq_exponent = MulAdd::mul_add(self.step, self.index, self.base_freq.0);
+            let freq_exponent = MulAdd::mul_add(self.step, self.index, self.base_freq_exp);
             // Casting is safe for both f32 and f64, representation is exact.
             let omega = T::from(10.0_f32).unwrap().powf(freq_exponent);
             let j_omega = Complex::<T>::new(T::zero(), omega);
@@ -147,7 +147,7 @@ mod tests {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
         let iter = PolarIterator::new(tf, RadiantsPerSecond(10.), RadiantsPerSecond(1000.), 0.1);
         assert_eq!(20., iter.intervals);
-        assert_eq!(RadiantsPerSecond(1.), iter.base_freq);
+        assert_eq!(1., iter.base_freq_exp);
         assert_eq!(0., iter.index);
     }
 
