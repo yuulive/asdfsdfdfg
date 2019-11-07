@@ -77,6 +77,7 @@ impl<T: Decibel<T> + Float + MulAdd<Output = T>> BodeIterator<T> {
 }
 
 /// Struct to hold the data returned by the Bode iterator
+#[derive(Debug, PartialEq)]
 pub struct Bode<T: Float> {
     /// Angular frequency (rad)
     angular_frequency: RadiantsPerSecond<T>,
@@ -175,5 +176,54 @@ pub trait BodePlot<T: Float + FloatConst> {
         Self: std::marker::Sized,
     {
         self.bode(min_freq.into(), max_freq.into(), step)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::poly;
+
+    #[test]
+    fn create_iterator() {
+        let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
+        let iter = BodeIterator::new(tf, RadiantsPerSecond(10.), RadiantsPerSecond(1000.), 0.1);
+        assert_eq!(20., iter.intervals);
+        assert_eq!(RadiantsPerSecond(1.), iter.base_freq);
+        assert_eq!(0., iter.index);
+    }
+
+    #[test]
+    fn create_iterator_db_deg() {
+        let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
+        let iter = BodeIterator::new(tf, RadiantsPerSecond(10.), RadiantsPerSecond(1000.), 0.1);
+        let iter2 = iter.into_db_deg();
+        let res = iter2.last().unwrap();
+        assert_eq!(RadiantsPerSecond(1000.), res.angular_frequency());
+        assert_relative_eq!(-90.0, res.phase(), max_relative = 0.001);
+    }
+
+    #[test]
+    fn polar_struct() {
+        let f = RadiantsPerSecond(120.);
+        let mag = 3.;
+        let ph = std::f64::consts::PI;
+        let p = Bode {
+            angular_frequency: f,
+            magnitude: mag,
+            phase: ph,
+        };
+        assert_eq!(f, p.angular_frequency());
+        assert_relative_eq!(19.0986, p.frequency().0, max_relative = 0.00001);
+        assert_eq!(mag, p.magnitude());
+        assert_eq!(ph, p.phase());
+    }
+
+    #[test]
+    fn iterator() {
+        let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
+        let iter = BodeIterator::new(tf, RadiantsPerSecond(10.), RadiantsPerSecond(1000.), 0.1);
+        // 20 steps -> 21 iteration
+        assert_eq!(21, iter.count());
     }
 }
