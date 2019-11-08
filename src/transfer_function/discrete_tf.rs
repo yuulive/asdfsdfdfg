@@ -39,6 +39,24 @@ impl<T: Float> Tfz<T> {
     /// * `tf` - Continuous transfer function
     /// * `ts` - Sampling period
     /// * `method` - Discretization method
+    ///
+    /// Example
+    /// ```
+    /// use automatica::{
+    ///     Eval,
+    ///     linear_system::discrete::Discretization,
+    ///     polynomial::Poly,
+    ///     transfer_function::{Tf, discrete_tf::Tfz},
+    ///     units::Seconds
+    /// };
+    /// use num_complex::Complex64;
+    /// let tf = Tf::new(
+    ///     Poly::new_from_coeffs(&[2., 20.]),
+    ///     Poly::new_from_coeffs(&[1., 0.1]),
+    /// );
+    /// let tfz = Tfz::discretize(tf, Seconds(1.), Discretization::BackwardEuler);
+    /// let gz = tfz.eval(&Complex64::i());
+    /// ```
     pub fn discretize(tf: Tf<T>, ts: Seconds<T>, method: Discretization) -> Self {
         let conv = match method {
             Discretization::ForwardEuler => fe,
@@ -116,7 +134,49 @@ mod tests {
         let g = tf.eval(&z);
         assert_relative_eq!(20.159, g.norm().to_db(), max_relative = 1e-4);
         assert_relative_eq!(75.828, g.arg().to_degrees(), max_relative = 1e-4);
+    }
 
+    #[test]
+    fn eval_forward_euler() {
+        let tf = Tf::new(
+            Poly::new_from_coeffs(&[2., 20.]),
+            Poly::new_from_coeffs(&[1., 0.1]),
+        );
+        let z = 0.5 * Complex64::i();
+        let ts = Seconds(1.);
+        let tfz = Tfz::discretize(tf, ts, Discretization::ForwardEuler);
+        let s = (tfz.conversion)(z, ts);
+        assert_eq!(Complex64::new(-1.0, 0.5), s);
+
+        let gz = tfz.eval(&z);
+        assert_relative_eq!(27.175, gz.norm().to_db(), max_relative = 1e-4);
+        assert_relative_eq!(147.77, gz.arg().to_degrees(), max_relative = 1e-4);
+    }
+
+    #[test]
+    fn eval_backward_euler() {
+        let tf = Tf::new(
+            Poly::new_from_coeffs(&[2., 20.]),
+            Poly::new_from_coeffs(&[1., 0.1]),
+        );
+        let z = 0.5 * Complex64::i();
+        let ts = Seconds(1.);
+        let tfz = Tfz::discretize(tf, ts, Discretization::BackwardEuler);
+        let s = (tfz.conversion)(z, ts);
+        assert_eq!(Complex64::new(1.0, 2.0), s);
+
+        let gz = tfz.eval(&z);
+        assert_relative_eq!(32.220, gz.norm().to_db(), max_relative = 1e-4);
+        assert_relative_eq!(50.884, gz.arg().to_degrees(), max_relative = 1e-4);
+    }
+
+    #[test]
+    fn eval_tustin() {
+        let tf = Tf::new(
+            Poly::new_from_coeffs(&[2., 20.]),
+            Poly::new_from_coeffs(&[1., 0.1]),
+        );
+        let z = 0.5 * Complex64::i();
         let ts = Seconds(1.);
         let tfz = Tfz::discretize(tf, ts, Discretization::Tustin);
         let s = (tfz.conversion)(z, ts);
