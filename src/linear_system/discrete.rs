@@ -93,7 +93,7 @@ impl<T: ComplexField + Float + Scalar> Discrete<T> for Ss<T> {
     /// let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
     /// let evo = disc_sys.time_evolution(20, |t| vec![1.], &[0., 0.]);
     /// let last = evo.last().unwrap();
-    /// assert_relative_eq!(0.79, last.state()[1], max_relative = 0.01);
+    /// assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
     /// ```
     fn discretize(&self, st: T, method: Discretization) -> Option<Self> {
         match method {
@@ -164,12 +164,13 @@ where
     let identity = DMatrix::identity(states, states);
     // Casting is safe for both f32 and f64, representation is exact.
     let n_05 = T::from(0.5_f32).unwrap();
-    if let Some(a) = (&identity - &sys.a * (n_05 * st)).try_inverse() {
+    if let Some(k) = (&identity - &sys.a * (n_05 * st)).try_inverse() {
+        let b = &k * &sys.b * st;
         Some(Ss {
-            a: (&identity + &sys.a * (n_05 * st)) * &a,
-            b: &a * &sys.b * Float::sqrt(st),
-            c: &sys.c * &a * Float::sqrt(st),
-            d: &sys.d + &sys.c * &a * &sys.b * n_05 * st,
+            a: &k * (&identity + &sys.a * (n_05 * st)),
+            c: &sys.c * &k,
+            d: &sys.d + &sys.c * &b * n_05,
+            b,
             dim: sys.dim,
         })
     } else {
