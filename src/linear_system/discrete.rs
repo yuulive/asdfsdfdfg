@@ -245,3 +245,48 @@ impl<T> TimeEvolution<T> {
         &self.output
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn time_evolution() {
+        let disc_sys =
+            Ss::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
+        let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
+        let evo = disc_sys.time_evolution(20, impulse, &[0., 0.]);
+        let last = evo.last().unwrap();
+        assert_eq!(20, last.time());
+        assert_abs_diff_eq!(0., last.state()[1], epsilon = 0.001);
+        assert_abs_diff_eq!(0., last.output()[0], epsilon = 0.001);
+    }
+
+    #[test]
+    fn discretization_tustin() {
+        let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
+        let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
+        let evo = disc_sys.time_evolution(20, |_| vec![1.], &[0., 0.]);
+        let last = evo.last().unwrap();
+        assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
+    }
+
+    #[test]
+    fn discretization_euler_backward() {
+        let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
+        let disc_sys = sys.discretize(0.1, Discretization::BackwardEuler).unwrap();
+        //let evo = disc_sys.time_evolution(20, |_| vec![1.], &[0., 0.]);
+        let evo = disc_sys.time_evolution(50, |_| vec![1.], &[0., 0.]);
+        let last = evo.last().unwrap();
+        assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
+    }
+
+    #[test]
+    fn discretization_euler_forward() {
+        let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
+        let disc_sys = sys.discretize(0.1, Discretization::ForwardEuler).unwrap();
+        let evo = disc_sys.time_evolution(20, |_| vec![1.], &[0., 0.]);
+        let last = evo.last().unwrap();
+        assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
+    }
+}
