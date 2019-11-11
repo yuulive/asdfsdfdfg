@@ -216,9 +216,13 @@ impl<T: ComplexField + Scalar> Ss<T> {
     pub fn equilibrium(&self, u: &[T]) -> Option<Equilibrium<T>> {
         assert_eq!(u.len(), self.b.ncols(), "Wrong number of inputs.");
         let u = DVector::from_row_slice(u);
-        let inv_a = &self.a.clone().try_inverse()?;
-        let x = -inv_a * &self.b * &u;
-        let y = (-&self.c * inv_a * &self.b + &self.d) * u;
+        // 0 = A*x + B*u
+        let bu = -&self.b * &u;
+        let lu = &self.a.clone().lu();
+        // A*x = -B*u
+        let x = lu.solve(&bu)?;
+        // y = C*x + D*u
+        let y = &self.c * &x + &self.d * u;
         Some(Equilibrium::new(x, y))
     }
 }
