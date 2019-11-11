@@ -49,7 +49,7 @@ pub struct Ss<T: Scalar> {
 }
 
 /// Dim of the linar system.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Dim {
     /// Number of states
     states: usize,
@@ -474,8 +474,42 @@ mod tests {
     use super::*;
     use nalgebra::DMatrix;
 
+    #[quickcheck]
+    fn dimensions(states: usize, inputs: usize, outputs: usize) -> bool {
+        let d = Dim {
+            states,
+            inputs,
+            outputs,
+        };
+        states == d.states() && inputs == d.inputs() && outputs == d.outputs()
+    }
+
     #[test]
-    #[ignore]
+    fn system_dimensions() {
+        let states = 2;
+        let inputs = 1;
+        let outputs = 1;
+        let sys = Ss::new_from_slice(
+            states,
+            inputs,
+            outputs,
+            &[-2., 0., 3., -7.],
+            &[1., 3.],
+            &[-1., 0.5],
+            &[0.1],
+        );
+        assert_eq!(
+            Dim {
+                states,
+                inputs,
+                outputs
+            },
+            sys.dim()
+        );
+    }
+
+    #[test]
+    #[should_panic]
     fn poles_fail() {
         let eig1 = -2.;
         let eig2 = -7.;
@@ -488,7 +522,7 @@ mod tests {
     }
 
     #[test]
-    fn poles() {
+    fn poles_regression() {
         let eig1 = -2.;
         let eig2 = -7.;
         let sys = Ss::new_from_slice(
@@ -502,6 +536,107 @@ mod tests {
         );
         let poles = sys.poles();
         assert_eq!((eig1, eig2), (poles[0].re, poles[1].re));
+    }
+
+    #[quickcheck]
+    fn poles_two(eig1: f64, eig2: f64) -> bool {
+        let sys = Ss::new_from_slice(
+            2,
+            1,
+            1,
+            &[eig1, 0., 3., eig2],
+            &[1., 3.],
+            &[-1., 0.5],
+            &[0.1],
+        );
+        let poles = sys.poles();
+
+        let mut expected = [eig1, eig2];
+        expected.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+        let mut actual = [poles[0].re, poles[1].re];
+        actual.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+        relative_eq!(expected[0], actual[0], max_relative = 1e-10)
+            && relative_eq!(expected[1], actual[1], max_relative = 1e-10)
+    }
+
+    #[test]
+    fn poles_three() {
+        let eig1 = -7.;
+        let eig2 = -2.;
+        let eig3 = 1.25;
+        let sys = Ss::new_from_slice(
+            3,
+            1,
+            1,
+            &[eig1, 0., 0., 3., eig2, 0., 10., 0.8, eig3],
+            &[1., 3., -5.5],
+            &[-1., 0.5, -4.3],
+            &[0.],
+        );
+        let mut poles = sys.poles();
+        poles.sort_unstable_by(|a, b| a.re.partial_cmp(&b.re).unwrap());
+        assert_relative_eq!(eig1, poles[0].re, max_relative = 1e-10);
+        assert_relative_eq!(eig2, poles[1].re, max_relative = 1e-10);
+        assert_relative_eq!(eig3, poles[2].re, max_relative = 1e-10);
+    }
+
+    #[test]
+    fn equilibrium() {
+        let a = [-1., 1., -1., 0.25];
+        let b = [1., 0.25];
+        let c = [0., 1.];
+        let d = [0.];
+
+        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let u = 0.0;
+        let eq = sys.equilibrium(&[u]).unwrap();
+        assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
+        println!("{}", &eq);
+        assert!(!format!("{}", eq).is_empty());
+    }
+
+    #[test]
+    fn new_rk2() {
+        let a = [-1., 1., -1., 0.25];
+        let b = [1., 0.25];
+        let c = [0., 1.];
+        let d = [0.];
+        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let iter = sys.rk2(|_| vec![1.], &[0., 0.], Seconds(0.1), 30);
+        assert_eq!(31, iter.count());
+    }
+
+    #[test]
+    fn new_rk4() {
+        let a = [-1., 1., -1., 0.25];
+        let b = [1., 0.25];
+        let c = [0., 1.];
+        let d = [0.];
+        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let iter = sys.rk4(|_| vec![1.], &[0., 0.], Seconds(0.1), 30);
+        assert_eq!(31, iter.count());
+    }
+
+    #[test]
+    fn new_rkf45() {
+        let a = [-1., 1., -1., 0.25];
+        let b = [1., 0.25];
+        let c = [0., 1.];
+        let d = [0.];
+        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let iter = sys.rkf45(|_| vec![1.], &[0., 0.], Seconds(0.1), Seconds(2.), 1e-5);
+        assert_relative_eq!(2., iter.last().unwrap().time().0, max_relative = 0.01);
+    }
+
+    #[test]
+    fn new_radau() {
+        let a = [-1., 1., -1., 0.25];
+        let b = [1., 0.25];
+        let c = [0., 1.];
+        let d = [0.];
+        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let iter = sys.radau(|_| vec![1.], &[0., 0.], Seconds(0.1), 30, 1e-5);
+        assert_eq!(31, iter.count());
     }
 
     #[test]
