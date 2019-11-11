@@ -35,6 +35,7 @@ build:latest:
 
 test:
   stage: test
+  image: 'rust:latest'
   cache:
     key: test
     paths:
@@ -69,13 +70,12 @@ cover:
 
 examples:
   stage: examples
+  image: 'rust:latest'
   cache:
     key: test
     policy: pull
     paths:
       - $TARGET
-  before_script:
-    - apk add --update make
   script:
     - "rustc --version && cargo --version"
     - make all_examples
