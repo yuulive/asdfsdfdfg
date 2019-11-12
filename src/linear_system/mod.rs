@@ -671,6 +671,21 @@ mod tests {
     }
 
     #[test]
+    fn leverrier_1x1_matrix() {
+        let t = DMatrix::from_row_slice(1, 1, &[3.]);
+        let expected_pc = Poly::new_from_coeffs(&[-3., 1.]);
+        let expected_degree0 = DMatrix::from_row_slice(1, 1, &[1.]);
+
+        let (p, poly_matrix) = leverrier(&t);
+        assert_eq!(expected_pc, p);
+        assert_eq!(expected_degree0, poly_matrix[0]);
+
+        let mp = crate::polynomial::MatrixOfPoly::from(poly_matrix);
+        let expected_result = "[[1]]";
+        assert_eq!(expected_result, format!("{}", &mp));
+    }
+
+    #[test]
     fn convert_to_ss_1() {
         let tf = Tf::new(
             Poly::new_from_coeffs(&[1.]),
