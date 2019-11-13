@@ -282,3 +282,50 @@ impl<T: Display + One + PartialEq + Signed + Zero> fmt::Display for TfMatrix<T> 
         write!(f, "{}\n{}\n{}", s_num, dash, s_den)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::poly;
+
+    #[test]
+    fn transfer_function_creation() {
+        let num = poly!(1., 2., 3.);
+        let den = poly!(-4.2, -3.12, 0.0012);
+        let tf = Tf::new(num.clone(), den.clone());
+        assert_eq!(&num, tf.num());
+        assert_eq!(&den, tf.den());
+    }
+
+    #[test]
+    fn poles() {
+        let tf = Tf::new(poly!(1.), poly!(6., -5., 1.));
+        assert_eq!(Some(vec![2., 3.]), tf.poles());
+    }
+
+    #[test]
+    fn complex_poles() {
+        use num_complex::Complex32;
+        let tf = Tf::new(poly!(1.), poly!(10., -6., 1.));
+        assert_eq!(
+            vec![Complex32::new(3., -1.), Complex32::new(3., 1.)],
+            tf.complex_poles()
+        );
+    }
+
+    #[test]
+    fn zeros() {
+        let tf = Tf::new(poly!(1.), poly!(6., -5., 1.));
+        assert_eq!(Some(vec![]), tf.zeros());
+    }
+
+    #[test]
+    fn complex_zeros() {
+        use num_complex::Complex32;
+        let tf = Tf::new(poly!(3.25, 3., 1.), poly!(10., -3., 1.));
+        assert_eq!(
+            vec![Complex32::new(-1.5, -1.), Complex32::new(-1.5, 1.)],
+            tf.complex_zeros()
+        );
+    }
+}
