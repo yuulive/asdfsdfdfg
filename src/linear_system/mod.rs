@@ -387,7 +387,8 @@ impl<T: Float + Scalar + ComplexField + RealField> From<Tf<T>> for Ss<T> {
         num.extend(order);
 
         // Calculate the observability canonical form.
-        let a = den_monic.companion();
+        // TODO change trait From -> TryFrom
+        let a = den_monic.companion().expect("Denomiator has no poles");
 
         // Get the number of states n.
         let states = a.nrows();

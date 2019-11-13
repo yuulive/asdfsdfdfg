@@ -205,20 +205,21 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     ///
     /// Subdiagonal terms are 1., rightmost column contains the coefficients
     /// of the monic polynomial with opposite sign.
-    pub(crate) fn companion(&self) -> DMatrix<T> {
-        if let Some(length) = self.degree() {
-            let hi_coeff = self.coeffs[length];
-            DMatrix::from_fn(length, length, |i, j| {
-                if j == length - 1 {
-                    -self.coeffs[i] / hi_coeff // monic polynomial
-                } else if i == j + 1 {
-                    T::one()
-                } else {
-                    T::zero()
-                }
-            })
-        } else {
-            DMatrix::zeros(1, 1)
+    pub(crate) fn companion(&self) -> Option<DMatrix<T>> {
+        match self.degree() {
+            Some(degree) if degree > 0 => {
+                let hi_coeff = self.coeffs[degree];
+                Some(DMatrix::from_fn(degree, degree, |i, j| {
+                    if j == degree - 1 {
+                        -self.coeffs[i] / hi_coeff // monic polynomial
+                    } else if i == j + 1 {
+                        T::one()
+                    } else {
+                        T::zero()
+                    }
+                }))
+            }
+            _ => None,
         }
     }
 
@@ -240,7 +241,10 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
             }
         } else {
             // Build the companion matrix
-            let comp = self.companion();
+            let comp = match self.companion() {
+                Some(comp) => comp,
+                _ => return Some(vec![]),
+            };
             let schur = Schur::new(comp);
             schur.eigenvalues().map(|e| e.as_slice().to_vec())
         }
@@ -262,7 +266,10 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
             let (r1, r2) = complex_quadratic_roots(b, c);
             vec![r1, r2]
         } else {
-            let comp = self.companion();
+            let comp = match self.companion() {
+                Some(comp) => comp,
+                _ => return vec![],
+            };
             let schur = Schur::new(comp);
             schur.complex_eigenvalues().as_slice().to_vec()
         }
