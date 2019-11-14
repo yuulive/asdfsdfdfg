@@ -105,9 +105,6 @@ impl<T: Copy + Num + Zero> Poly<T> {
     /// assert_eq!(vec![1, 2, 3, 0, 0, 0], p.coeffs());
     /// ```
     pub fn extend(&mut self, degree: usize) {
-        // if degree > self.degree() {
-        //     self.coeffs.resize(degree + 1, T::zero());
-        // }
         match self.degree() {
             None => self.coeffs.resize(degree + 1, T::zero()),
             Some(d) if degree > d => self.coeffs.resize(degree + 1, T::zero()),
@@ -963,6 +960,13 @@ mod tests {
     }
 
     #[test]
+    fn coeffs() {
+        let int = [1, 2, 3, 4, 5];
+        let p = Poly::new_from_coeffs(&int);
+        assert_eq!(int, p.coeffs().as_slice());
+    }
+
+    #[test]
     fn poly_creation_roots() {
         assert_eq!(poly!(4., 4., 1.), Poly::new_from_roots(&[-2., -2.]));
 
@@ -999,6 +1003,34 @@ mod tests {
 
         let p2 = Poly::new_from_coeffs(&[0.]);
         assert_eq!(None, p2.degree());
+    }
+
+    #[test]
+    fn extend_less() {
+        let mut p1 = poly!(3, 4, 2);
+        let p2 = p1.clone();
+        p1.extend(1);
+        assert_eq!(p1, p2);
+    }
+
+    #[test]
+    fn extend_more() {
+        let mut p1 = poly!(3, 4, 2);
+        let p2 = Poly {
+            coeffs: vec![3, 4, 2, 0, 0, 0, 0],
+        };
+        p1.extend(6);
+        assert_eq!(p1, p2);
+    }
+
+    #[test]
+    fn extend_zero() {
+        let mut p1 = Poly::<u32>::zero();
+        let p2 = Poly {
+            coeffs: vec![0, 0, 0, 0],
+        };
+        p1.extend(3);
+        assert_eq!(p1, p2);
     }
 
     #[test]
@@ -1217,6 +1249,19 @@ mod tests {
 
         let root3 = 3.;
         assert_eq!(Some((root3, root3)), quadratic_roots(-6., 9.));
+    }
+
+    #[test]
+    fn poly_roots() {
+        let roots = &[0., -1., 1.];
+        let p = Poly::new_from_roots(roots);
+        assert_eq!(roots, p.roots().unwrap().as_slice());
+    }
+
+    #[test]
+    fn poly_complx_roots() {
+        let p = Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * poly!(2., 1.);
+        assert_eq!(p.complex_roots().len(), 3);
     }
 
     #[test]
