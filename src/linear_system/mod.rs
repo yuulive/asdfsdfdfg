@@ -22,7 +22,7 @@ use nalgebra::{ComplexField, DMatrix, DVector, RealField, Scalar, Schur};
 use num_complex::Complex;
 use num_traits::Float;
 
-use std::convert::From;
+use std::convert::TryFrom;
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
@@ -345,7 +345,9 @@ pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
     (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
 }
 
-impl<T: Float + Scalar + ComplexField + RealField> From<Tf<T>> for Ss<T> {
+impl<T: Float + Scalar + ComplexField + RealField> TryFrom<Tf<T>> for Ss<T> {
+    type Error = &'static str;
+
     /// Convert a transfer function representation into state space representation.
     /// Conversion is done using the observability canonical form.
     ///
@@ -373,7 +375,7 @@ impl<T: Float + Scalar + ComplexField + RealField> From<Tf<T>> for Ss<T> {
     /// # Arguments
     ///
     /// `tf` - transfer function
-    fn from(tf: Tf<T>) -> Self {
+    fn try_from(tf: Tf<T>) -> Result<Self, Self::Error> {
         // Get the denominator in the monic form and the leading coefficient.
         let (den_monic, den_n) = tf.den().monic();
         // Extend the numerator coefficients with zeros to the length of the
@@ -387,8 +389,10 @@ impl<T: Float + Scalar + ComplexField + RealField> From<Tf<T>> for Ss<T> {
         num.extend(order);
 
         // Calculate the observability canonical form.
-        // TODO change trait From -> TryFrom
-        let a = den_monic.companion().expect("Denomiator has no poles");
+        let a = match den_monic.companion() {
+            Some(a) => a,
+            _ => return Err("Denominator has no poles"),
+        };
 
         // Get the number of states n.
         let states = a.nrows();
@@ -406,7 +410,7 @@ impl<T: Float + Scalar + ComplexField + RealField> From<Tf<T>> for Ss<T> {
         let d = DMatrix::from_element(1, 1, b_n);
 
         // A single transfer function has only one input and one output.
-        Self {
+        Ok(Self {
             a,
             b,
             c,
@@ -416,7 +420,7 @@ impl<T: Float + Scalar + ComplexField + RealField> From<Tf<T>> for Ss<T> {
                 inputs: 1,
                 outputs: 1,
             },
-        }
+        })
     }
 }
 
@@ -693,7 +697,7 @@ mod tests {
             Poly::new_from_coeffs(&[1., 1., 1.]),
         );
 
-        let ss = Ss::from(tf);
+        let ss = Ss::try_from(tf).unwrap();
 
         assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -1., 1., -1.]), *ss.a());
         assert_eq!(DMatrix::from_row_slice(2, 1, &[1., 0.]), *ss.b());
@@ -708,7 +712,7 @@ mod tests {
             Poly::new_from_coeffs(&[3., 4., 1.]),
         );
 
-        let ss = Ss::from(tf);
+        let ss = Ss::try_from(tf).unwrap();
 
         assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -3., 1., -4.]), *ss.a());
         assert_eq!(DMatrix::from_row_slice(2, 1, &[-2., -4.]), *ss.b());

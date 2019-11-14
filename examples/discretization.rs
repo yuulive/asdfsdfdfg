@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate automatica;
 
+use std::convert::TryFrom;
+
 use automatica::{
     linear_system::{
         discrete::{Discrete, Discretization},
@@ -19,7 +21,7 @@ fn main() {
     let step = |_: Seconds<f64>| vec![1.];
     let discrete_step = |_: usize| vec![1.];
 
-    let sys = Ss::from(g);
+    let sys = Ss::try_from(g).unwrap();
     println!("{}", &sys);
     let x0 = [0., 0.];
     let steps = 250;
