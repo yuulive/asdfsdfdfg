@@ -9,7 +9,7 @@
 
 use crate::Eval;
 
-use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Neg, Sub};
+use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub};
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
@@ -1336,11 +1336,11 @@ impl<T: Scalar + Zero> PolyMatrix<T> {
     }
 }
 
-impl PolyMatrix<f64> {
+impl<T: Scalar + Zero + One + Add + AddAssign + Mul + MulAssign> PolyMatrix<T> {
     /// Implementation of polynomial matrix and matrix multiplication
     ///
     /// PolyMatrix * DMatrix
-    pub(crate) fn right_mul(&self, rhs: &DMatrix<f64>) -> Self {
+    pub(crate) fn right_mul(&self, rhs: &DMatrix<T>) -> Self {
         let result: Vec<_> = self.matr_coeffs.iter().map(|x| x * rhs).collect();
         Self::new_from_coeffs(&result)
     }
@@ -1348,7 +1348,7 @@ impl PolyMatrix<f64> {
     /// Implementation of matrix and polynomial matrix multiplication
     ///
     /// DMatrix * PolyMatrix
-    pub(crate) fn left_mul(&self, lhs: &DMatrix<f64>) -> Self {
+    pub(crate) fn left_mul(&self, lhs: &DMatrix<T>) -> Self {
         let res: Vec<_> = self.matr_coeffs.iter().map(|r| lhs * r).collect();
         Self::new_from_coeffs(&res)
     }
@@ -1358,10 +1358,10 @@ impl<T: NumAssignOps + Float + Scalar> Eval<DMatrix<Complex<T>>> for PolyMatrix<
     fn eval(&self, s: &DMatrix<Complex<T>>) -> DMatrix<Complex<T>> {
         // transform matr_coeffs in complex numbers matrices
         //
-        // ┌     ┐ ┌       ┐ ┌       ┐ ┌     ┐
-        // │P1 P2│=│a01 a02│+│a11 a12│*│s1 s2│
-        // │P3 P4│ │a03 a04│ │a13 a14│ │s1 s2│
-        // └     ┘ └       ┘ └       ┘ └     ┘
+        // ┌     ┐ ┌       ┐ ┌       ┐ ┌     ┐ ┌       ┐ ┌         ┐
+        // │P1 P2│=│a01 a02│+│a11 a12│*│s1 s2│+│a21 a22│*│s1^2 s2^2│
+        // │P3 P4│ │a03 a04│ │a13 a14│ │s1 s2│ │a23 a24│ │s1^2 s2^2│
+        // └     ┘ └       ┘ └       ┘ └     ┘ └       ┘ └         ┘
         // `*` is the element by element multiplication
         // If i have a 2x2 matr_coeff the result shall be a 2x2 matrix,
         // because otherwise i will sum P1 and P2 (P3 and P4)
@@ -1536,6 +1536,82 @@ mod tests2 {
     use super::*;
 
     #[test]
+    fn trim_empty() {
+        let v = vec![DMatrix::<f32>::zeros(1, 2), DMatrix::zeros(1, 2)];
+        let pm = PolyMatrix::new_from_coeffs(&v);
+        assert_eq!(DMatrix::zeros(1, 2), pm.matr_coeffs[0]);
+    }
+
+    #[test]
+    fn right_mul() {
+        let v = vec![
+            DMatrix::from_row_slice(2, 2, &[1.0_f32, 2., 3., 4.]),
+            DMatrix::from_row_slice(2, 2, &[1., 0., 0., 1.]),
+        ];
+        let pm = PolyMatrix::new_from_coeffs(&v);
+        let res = pm.right_mul(&DMatrix::from_row_slice(2, 2, &[5., 0., 0., 5.]));
+        assert_eq!(
+            DMatrix::from_row_slice(2, 2, &[5., 10., 15., 20.]),
+            res.matr_coeffs[0]
+        );
+        dbg!(&res);
+    }
+
+    #[test]
+    fn left_mul() {
+        let v = vec![
+            DMatrix::from_row_slice(2, 2, &[1.0_f32, 2., 3., 4.]),
+            DMatrix::from_row_slice(2, 2, &[1., 0., 0., 1.]),
+        ];
+        let pm = PolyMatrix::new_from_coeffs(&v);
+        let res = pm.left_mul(&DMatrix::from_row_slice(2, 2, &[5., 0., 0., 5.]));
+        assert_eq!(DMatrix::from_row_slice(2, 2, &[5., 10., 15., 20.]), res[0]);
+    }
+
+    #[test]
+    fn eval() {
+        let v = vec![
+            DMatrix::from_row_slice(2, 2, &[1.0_f32, 2., 3., 4.]),
+            DMatrix::from_row_slice(2, 2, &[1., 0., 0., 1.]),
+        ];
+        let pm = PolyMatrix::new_from_coeffs(&v);
+        let res = pm.eval(&DMatrix::from_row_slice(
+            2,
+            2,
+            &[
+                Complex::new(5., 0.),
+                Complex::zero(),
+                Complex::zero(),
+                Complex::new(0., 5.),
+            ],
+        ));
+        assert_eq!(
+            DMatrix::from_row_slice(
+                2,
+                2,
+                &[
+                    Complex::new(6., 0.),
+                    Complex::new(2., 0.),
+                    Complex::new(3., 0.),
+                    Complex::new(4., 5.)
+                ]
+            ),
+            res
+        );
+    }
+
+    #[test]
+    fn add() {
+        let v = vec![
+            DMatrix::from_row_slice(2, 2, &[1.0_f64, 2., 3., 4.]),
+            DMatrix::from_row_slice(2, 2, &[1., 0., 0., 1.]),
+        ];
+        let pm = PolyMatrix::new_from_coeffs(&v);
+        let res = pm.clone() + pm;
+        assert_eq!(DMatrix::from_row_slice(2, 2, &[2., 4., 6., 8.]), res[0]);
+    }
+
+    #[test]
     fn mp_creation() {
         let c = [4.3, 5.32];
         let p = Poly::new_from_coeffs(&c);
@@ -1543,5 +1619,24 @@ mod tests2 {
         let mp = MatrixOfPoly::new(2, 2, v);
         let expected = "[[4.3 +5.32*s, 4.3 +5.32*s],\n [4.3 +5.32*s, 4.3 +5.32*s]]";
         assert_eq!(expected, format!("{}", &mp));
+    }
+
+    #[test]
+    fn siso() {
+        let v = vec![Poly::new_from_coeffs(&[4.3, 5.32])];
+        let mp = MatrixOfPoly::new(1, 1, v);
+        let res = mp.siso();
+        assert!(res.is_some());
+        assert_relative_eq!(14.94, res.unwrap().eval(&2.), max_relative = 1e-10);
+    }
+
+    #[test]
+    fn siso_fail() {
+        let c = [4.3, 5.32];
+        let p = Poly::new_from_coeffs(&c);
+        let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
+        let mp = MatrixOfPoly::new(2, 2, v);
+        let res = mp.siso();
+        assert!(res.is_none());
     }
 }
