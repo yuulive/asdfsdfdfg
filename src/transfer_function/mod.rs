@@ -328,4 +328,30 @@ mod tests {
             tf.complex_zeros()
         );
     }
+
+    #[test]
+    fn bode() {
+        let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
+        let b = tf.bode(RadiantsPerSecond(0.1), RadiantsPerSecond(100.0), 0.1);
+        for g in b.into_db_deg() {
+            assert!(g.magnitude() < 0.);
+            assert!(g.phase() < 0.);
+        }
+    }
+
+    #[test]
+    fn polar() {
+        let tf = Tf::new(poly!(5.), Poly::new_from_roots(&[-1., -10.]));
+        let p = tf.polar(RadiantsPerSecond(0.1), RadiantsPerSecond(10.0), 0.1);
+        for g in p {
+            assert!(g.magnitude() < 1.);
+            assert!(g.phase() < 0.);
+        }
+    }
+
+    #[test]
+    fn print() {
+        let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
+        assert_eq!("1\n──────\n1 +1*s", format!("{}", tf));
+    }
 }
