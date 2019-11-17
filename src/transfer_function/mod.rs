@@ -111,6 +111,26 @@ impl TryFrom<Ss<f64>> for Tf<f64> {
     }
 }
 
+/// Implementation of transfer function multiplication
+impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for &Tf<T> {
+    type Output = Tf<T>;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let num = &self.num * &rhs.num;
+        let den = &self.den * &rhs.den;
+        Tf::new(num, den)
+    }
+}
+
+/// Implementation of transfer function multiplication
+impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for Tf<T> {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self {
+        Mul::mul(&self, &rhs)
+    }
+}
+
 /// Implementation of the evaluation of a transfer function
 impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for Tf<T> {
     fn eval(&self, s: &Complex<T>) -> Complex<T> {
@@ -156,6 +176,7 @@ impl<T: Display + One + PartialEq + Signed + Zero> Display for Tf<T> {
 }
 
 /// Matrix of transfer functions
+#[derive(Debug)]
 pub struct TfMatrix<T> {
     /// Polynomial matrix of the numerators
     num: MatrixOfPoly<T>,
@@ -171,8 +192,15 @@ impl<T> TfMatrix<T> {
     ///
     /// * `num` - Polynomial matrix
     /// * `den` - Characteristic polynomial of the system
-    pub fn new(num: MatrixOfPoly<T>, den: Poly<T>) -> Self {
+    pub(crate) fn new(num: MatrixOfPoly<T>, den: Poly<T>) -> Self {
         Self { num, den }
+    }
+}
+
+impl<T: Clone> TfMatrix<T> {
+    /// Retrive the characteristic polynomial of the system.
+    pub fn den(&self) -> Poly<T> {
+        self.den.clone()
     }
 }
 
@@ -185,8 +213,8 @@ impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
         // └  ┘ └└         ┘ └     ┘┘└  ┘
         // `*` is the element by element multiplication
         // ┌     ┐ ┌┌         ┐ ┌     ┐┐ ┌┌     ┐ ┌     ┐┐
-        // │y1 y2│=││1/pc 1/pc│.│s1 s2││*││n1 n2│.│s1 s2││
-        // │y3 y4│ ││1/pc 1/pc│ │s1 s2││ ││n3 n4│ │s1 s2││
+        // │y1+y2│=││1/pc 1/pc│.│s1 s2││*││n1 n2│.│s1 s2││
+        // │y3+y4│ ││1/pc 1/pc│ │s1 s2││ ││n3 n4│ │s1 s2││
         // └     ┘ └└         ┘ └     ┘┘ └└     ┘ └     ┘┘
         // `.` means 'evaluated at'
 
@@ -208,26 +236,6 @@ impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
             });
 
         res.sum_axis(Axis(1)).to_vec()
-    }
-}
-
-/// Implementation of transfer function multiplication
-impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for &Tf<T> {
-    type Output = Tf<T>;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        let num = &self.num * &rhs.num;
-        let den = &self.den * &rhs.den;
-        Tf::new(num, den)
-    }
-}
-
-/// Implementation of transfer function multiplication
-impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for Tf<T> {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self {
-        Mul::mul(&self, &rhs)
     }
 }
 
@@ -330,6 +338,15 @@ mod tests {
     }
 
     #[test]
+    fn tf_mul() {
+        let tf1 = Tf::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let tf2 = Tf::new(poly!(3.), poly!(1., 6., 5.));
+        let actual = &tf1 * &tf2;
+        let expected = Tf::new(poly!(3., 6., 9.), poly!(1., 11., 35., 25.));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn bode() {
         let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
         let b = tf.bode(RadiantsPerSecond(0.1), RadiantsPerSecond(100.0), 0.1);
@@ -353,5 +370,62 @@ mod tests {
     fn print() {
         let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
         assert_eq!("1\n──────\n1 +1*s", format!("{}", tf));
+    }
+
+    #[test]
+    fn tf_matrix_new() {
+        let sys = Ss::new_from_slice(
+            2,
+            2,
+            2,
+            &[-2., 0., 0., -1.],
+            &[0., 1., 1., 2.],
+            &[1., 2., 3., 4.],
+            &[1., 0., 0., 1.],
+        );
+        let tfm = TfMatrix::from(sys);
+        assert_eq!(tfm[[0, 0]], poly!(6., 5., 1.));
+        assert_eq!(tfm[[0, 1]], poly!(9., 5.));
+        assert_eq!(tfm[[1, 0]], poly!(8., 4.));
+        assert_eq!(tfm[[1, 1]], poly!(21., 14., 1.));
+        assert_eq!(tfm.den, poly!(2., 3., 1.));
+    }
+
+    #[test]
+    fn tf_matrix_eval() {
+        let sys = Ss::new_from_slice(
+            2,
+            2,
+            2,
+            &[-2., 0., 0., -1.],
+            &[0., 1., 1., 2.],
+            &[1., 2., 3., 4.],
+            &[1., 0., 0., 1.],
+        );
+        let tfm = TfMatrix::from(sys);
+        let i = Complex::<f64>::i();
+        let res = tfm.eval(&vec![i, i]);
+        assert_relative_eq!(res[0].re, 4.4, max_relative = 1e-15);
+        assert_relative_eq!(res[0].im, -3.2, max_relative = 1e-15);
+        assert_relative_eq!(res[1].re, 8.2, max_relative = 1e-15);
+        assert_relative_eq!(res[1].im, -6.6, max_relative = 1e-15);
+    }
+
+    #[test]
+    fn tf_matrix_print() {
+        let sys = Ss::new_from_slice(
+            2,
+            2,
+            2,
+            &[-2., 0., 0., -1.],
+            &[0., 1., 1., 2.],
+            &[1., 2., 3., 4.],
+            &[1., 0., 0., 1.],
+        );
+        let tfm = TfMatrix::from(sys);
+        assert_eq!(
+            "[[6 +5*s +1*s^2, 9 +5*s],\n [8 +4*s, 21 +14*s +1*s^2]]\n─────────────\n2 +3*s +1*s^2",
+            format!("{}", tfm)
+        );
     }
 }
