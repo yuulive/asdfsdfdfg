@@ -9,20 +9,22 @@
 
 use crate::{polynomial::Poly, transfer_function::Tf};
 
+use num_traits::Float;
+
 /// Proportional-Integral-Derivative controller
-pub struct Pid {
+pub struct Pid<T: Float> {
     /// Proportional action coefficient
-    kp: f64,
+    kp: T,
     /// Integral time
-    ti: f64,
+    ti: T,
     /// Derivative time
-    td: f64,
+    td: T,
     /// Constant for additional pole
-    n: Option<f64>,
+    n: Option<T>,
 }
 
 /// Implementation of Pid methods
-impl Pid {
+impl<T: Float> Pid<T> {
     /// Create a new ideal PID controller
     ///
     /// # Arguments
@@ -30,7 +32,13 @@ impl Pid {
     /// * `kp` - Proportional action coefficient
     /// * `ti` - Integral time
     /// * `td` - Derivative time
-    pub fn new_ideal(kp: f64, ti: f64, td: f64) -> Self {
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::controller::pid::Pid;
+    /// let pid = Pid::new_ideal(4., 6., 0.1);
+    /// ```
+    pub fn new_ideal(kp: T, ti: T, td: T) -> Self {
         Self {
             kp,
             ti,
@@ -47,7 +55,13 @@ impl Pid {
     /// * `ti` - Integral time
     /// * `td` - Derivative time
     /// * `n` - Constant for additional pole
-    pub fn new(kp: f64, ti: f64, td: f64, n: f64) -> Self {
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::controller::pid::Pid;
+    /// let pid = Pid::new(4., 6., 12., 0.1);
+    /// ```
+    pub fn new(kp: T, ti: T, td: T, n: T) -> Self {
         Self {
             kp,
             ti,
@@ -71,16 +85,25 @@ impl Pid {
     /// # Ideal PID
     ///
     /// ```text
-    ///    1 + Ti*s + Ti*Ti*s^2
+    ///    1 + Ti*s + Ti*Td*s^2
     /// Kp --------------------
     ///           Ti*s
     /// ```
-    pub fn tf(&self) -> Tf {
+    ///
+    /// # Example
+    /// ```
+    /// #[macro_use] extern crate automatica;
+    /// use automatica::{controller::pid::Pid, transfer_function::Tf};
+    /// let pid = Pid::new_ideal(2., 2., 0.5);
+    /// let tf = Tf::new(poly![1., 2., 1.], poly![0., 1.]);
+    /// assert_eq!(tf, pid.tf());
+    /// ```
+    pub fn tf(&self) -> Tf<T> {
         if let Some(n) = self.n {
             let a0 = self.kp * n;
             let a1 = self.kp * (self.ti * n + self.td);
-            let a2 = self.kp * self.ti * self.td * (1. + n);
-            let b0 = 0.;
+            let a2 = self.kp * self.ti * self.td * (T::one() + n);
+            let b0 = T::zero();
             let b1 = self.ti * n;
             let b2 = self.ti * self.td;
             Tf::new(
@@ -89,8 +112,8 @@ impl Pid {
             )
         } else {
             Tf::new(
-                Poly::new_from_coeffs(&[1., self.kp * self.ti, self.kp * self.ti * self.td]),
-                Poly::new_from_coeffs(&[0., self.ti]),
+                Poly::new_from_coeffs(&[T::one(), self.ti, self.ti * self.td]),
+                Poly::new_from_coeffs(&[T::zero(), self.ti / self.kp]),
             )
         }
     }
@@ -99,14 +122,30 @@ impl Pid {
 #[cfg(test)]
 mod pid_tests {
     use super::*;
-    use crate::Eval;
+    use crate::{units::Decibel, Eval};
     use num_complex::Complex64;
 
     #[test]
-    fn pid_creation() {
+    fn ideal_pid_creation() {
         let pid = Pid::new_ideal(10., 5., 2.);
         let tf = pid.tf();
         let c = tf.eval(&Complex64::new(0., 1.));
-        assert_eq!(Complex64::new(10., 19.8), c);
+        assert_eq!(Complex64::new(10., 18.), c);
+    }
+
+    #[test]
+    fn real_pid_creation() {
+        // Example 15.1
+        let g = Tf::new(
+            Poly::new_from_coeffs(&[1.]),
+            Poly::new_from_roots(&[-1., -1., -1.]),
+        );
+        let pid = Pid::new(2., 2., 0.5, 5.);
+        let r = pid.tf();
+        assert_eq!(Some(vec![0., -10.]), r.poles());
+        let l = &g * &r;
+        let critical_freq = 0.8;
+        let c = l.eval(&Complex64::new(0., critical_freq));
+        assert_abs_diff_eq!(0., c.norm().to_db(), epsilon = 0.1);
     }
 }

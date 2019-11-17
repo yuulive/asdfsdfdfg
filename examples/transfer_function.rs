@@ -1,19 +1,17 @@
+#[macro_use]
 extern crate automatica;
 
 use automatica::transfer_function::Tf;
-use automatica::{polynomial::Poly, Eval};
+use automatica::Eval;
 
-use num_complex::Complex;
+use num_complex::Complex64;
 
 fn main() {
-    let tf = Tf::new(
-        Poly::new_from_coeffs(&[-0.75, 0.25]),
-        Poly::new_from_coeffs(&[0.75, 0.75, 1.]),
-    );
+    let tf = Tf::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
 
     println!("T:\n{}", tf);
 
-    let c = tf.eval(&Complex::new(0., 0.9));
+    let c = tf.eval(&Complex64::new(0., 0.9));
     println!(
         "{}\n{}dB, {}°",
         c,

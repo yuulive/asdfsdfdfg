@@ -12,16 +12,21 @@ pub mod solver;
 
 use crate::{
     linear_system::solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
+    polynomial,
     polynomial::{Poly, PolyMatrix},
     transfer_function::Tf,
     units::Seconds,
 };
 
-use nalgebra::{DMatrix, DVector, Schur};
-use num_complex::Complex64;
+use nalgebra::{ComplexField, DMatrix, DVector, RealField, Scalar, Schur};
+use num_complex::Complex;
+use num_traits::Float;
 
-use std::convert::From;
-use std::fmt;
+use std::convert::TryFrom;
+use std::{
+    fmt,
+    fmt::{Debug, Display, Formatter},
+};
 
 /// State-space representation of a linear system
 ///
@@ -30,21 +35,21 @@ use std::fmt;
 /// y(t)    = C * x(t) + D * u(t)
 /// ```
 #[derive(Debug)]
-pub struct Ss {
+pub struct Ss<T: Scalar> {
     /// A matrix
-    a: DMatrix<f64>,
+    a: DMatrix<T>,
     /// B matrix
-    b: DMatrix<f64>,
+    b: DMatrix<T>,
     /// C matrix
-    c: DMatrix<f64>,
+    c: DMatrix<T>,
     /// D matrix
-    d: DMatrix<f64>,
+    d: DMatrix<T>,
     /// Dimensions
     dim: Dim,
 }
 
-/// Dimensions of the linar system.
-#[derive(Debug, Clone, Copy)]
+/// Dim of the linar system.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Dim {
     /// Number of states
     states: usize,
@@ -73,7 +78,7 @@ impl Dim {
 }
 
 /// Implementation of the methods for the state-space
-impl Ss {
+impl<T: Scalar> Ss<T> {
     /// Create a new state-space representation
     ///
     /// # Arguments
@@ -89,14 +94,21 @@ impl Ss {
     /// # Panics
     ///
     /// Panics if matrix dimensions do not match
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::linear_system::Ss;
+    /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
+    /// ```
     pub fn new_from_slice(
         states: usize,
         inputs: usize,
         outputs: usize,
-        a: &[f64],
-        b: &[f64],
-        c: &[f64],
-        d: &[f64],
+        a: &[T],
+        b: &[T],
+        c: &[T],
+        d: &[T],
     ) -> Self {
         Self {
             a: DMatrix::from_row_slice(states, states, a),
@@ -112,52 +124,111 @@ impl Ss {
     }
 
     /// Get the A matrix
-    pub(crate) fn a(&self) -> &DMatrix<f64> {
+    pub(crate) fn a(&self) -> &DMatrix<T> {
         &self.a
     }
 
     /// Get the C matrix
-    pub(crate) fn b(&self) -> &DMatrix<f64> {
+    pub(crate) fn b(&self) -> &DMatrix<T> {
         &self.b
     }
 
     /// Get the C matrix
-    pub(crate) fn c(&self) -> &DMatrix<f64> {
+    pub(crate) fn c(&self) -> &DMatrix<T> {
         &self.c
     }
 
     /// Get the D matrix
-    pub(crate) fn d(&self) -> &DMatrix<f64> {
+    pub(crate) fn d(&self) -> &DMatrix<T> {
         &self.d
     }
 
     /// Get the dimensions of the system (states, inputs, outputs).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::linear_system::Ss;
+    /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
+    /// let dimensions = sys.dim();
+    /// ```
     pub fn dim(&self) -> Dim {
         self.dim
     }
+}
 
+/// Implementation of the methods for the state-space
+impl<T: ComplexField + Float + RealField> Ss<T> {
     /// Calculate the poles of the system
-    pub fn poles(&self) -> Vec<Complex64> {
-        Schur::new(self.a.clone())
-            .complex_eigenvalues()
-            .as_slice()
-            .to_vec()
-    }
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::linear_system::Ss;
+    /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
+    /// let poles = sys.poles();
+    /// assert_eq!(-2., poles[0].re);
+    /// assert_eq!(-7., poles[1].re);
+    /// ```
+    pub fn poles(&self) -> Vec<Complex<T>> {
+        if self.a.nrows() == 2 {
+            let m00 = self.a[(0, 0)];
+            let m01 = self.a[(0, 1)];
+            let m10 = self.a[(1, 0)];
+            let m11 = self.a[(1, 1)];
+            let trace = m00 + m11;
+            let determinant = m00 * m11 - m01 * m10;
 
+            let (eig1, eig2) = polynomial::complex_quadratic_roots(-trace, determinant);
+
+            vec![eig1, eig2]
+        } else {
+            Schur::new(self.a.clone())
+                .complex_eigenvalues()
+                .as_slice()
+                .to_vec()
+        }
+    }
+}
+
+/// Implementation of the methods for the state-space
+impl<T: ComplexField + Scalar> Ss<T> {
     /// Calculate the equilibrium point for the given input condition
     ///
     /// # Arguments
     ///
     /// * `u` - Input vector
-    pub fn equilibrium(&self, u: &[f64]) -> Option<Equilibrium> {
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::linear_system::Ss;
+    /// let a = [-1., 1., -1., 0.25];
+    /// let b = [1., 0.25];
+    /// let c = [0., 1., -1., 1.];
+    /// let d = [0., 1.];
+    ///
+    /// let sys = Ss::new_from_slice(2, 1, 2, &a, &b, &c, &d);
+    /// let u = 0.0;
+    /// let eq = sys.equilibrium(&[u]).unwrap();
+    /// assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
+    /// ```
+    pub fn equilibrium(&self, u: &[T]) -> Option<Equilibrium<T>> {
         assert_eq!(u.len(), self.b.ncols(), "Wrong number of inputs.");
         let u = DVector::from_row_slice(u);
-        let inv_a = &self.a.clone().try_inverse()?;
-        let x = -inv_a * &self.b * &u;
-        let y = (-&self.c * inv_a * &self.b + &self.d) * u;
+        // 0 = A*x + B*u
+        let bu = -&self.b * &u;
+        let lu = &self.a.clone().lu();
+        // A*x = -B*u
+        let x = lu.solve(&bu)?;
+        // y = C*x + D*u
+        let y = &self.c * &x + &self.d * u;
         Some(Equilibrium::new(x, y))
     }
+}
 
+/// Implementation of the methods for the state-space
+impl Ss<f64> {
     /// Time evolution for the given input, using Runge-Kutta second order method
     ///
     /// # Arguments
@@ -166,9 +237,9 @@ impl Ss {
     /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk2<F>(&self, u: F, x0: &[f64], h: Seconds, n: usize) -> RkIterator<F>
+    pub fn rk2<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F, f64>
     where
-        F: Fn(Seconds) -> Vec<f64>,
+        F: Fn(Seconds<f64>) -> Vec<f64>,
     {
         RkIterator::new(self, u, x0, h, n, Order::Rk2)
     }
@@ -181,9 +252,9 @@ impl Ss {
     /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk4<F>(&self, u: F, x0: &[f64], h: Seconds, n: usize) -> RkIterator<F>
+    pub fn rk4<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F, f64>
     where
-        F: Fn(Seconds) -> Vec<f64>,
+        F: Fn(Seconds<f64>) -> Vec<f64>,
     {
         RkIterator::new(self, u, x0, h, n, Order::Rk4)
     }
@@ -201,12 +272,12 @@ impl Ss {
         &self,
         u: F,
         x0: &[f64],
-        h: Seconds,
-        limit: Seconds,
+        h: Seconds<f64>,
+        limit: Seconds<f64>,
         tol: f64,
-    ) -> Rkf45Iterator<F>
+    ) -> Rkf45Iterator<F, f64>
     where
-        F: Fn(Seconds) -> Vec<f64>,
+        F: Fn(Seconds<f64>) -> Vec<f64>,
     {
         Rkf45Iterator::new(self, u, x0, h, limit, tol)
     }
@@ -220,9 +291,16 @@ impl Ss {
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `tol` - error tolerance
-    pub fn radau<F>(&self, u: F, x0: &[f64], h: Seconds, n: usize, tol: f64) -> RadauIterator<F>
+    pub fn radau<F>(
+        &self,
+        u: F,
+        x0: &[f64],
+        h: Seconds<f64>,
+        n: usize,
+        tol: f64,
+    ) -> RadauIterator<F, f64>
     where
-        F: Fn(Seconds) -> Vec<f64>,
+        F: Fn(Seconds<f64>) -> Vec<f64>,
     {
         RadauIterator::new(self, u, x0, h, n, tol)
     }
@@ -239,7 +317,7 @@ impl Ss {
 /// a1 = -trace(A); ak = -1/k * trace(A*Bk)
 /// Bk = a_(k-1)*I + A*B_(k-1)
 #[allow(non_snake_case, clippy::cast_precision_loss)]
-pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly, PolyMatrix) {
+pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
     let size = A.nrows(); // A is a square matrix.
     let mut a = vec![1.0];
     let a1 = -A.trace();
@@ -267,7 +345,9 @@ pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly, PolyMatrix) {
     (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
 }
 
-impl From<Tf> for Ss {
+impl<T: Float + Scalar + ComplexField + RealField> TryFrom<Tf<T>> for Ss<T> {
+    type Error = &'static str;
+
     /// Convert a transfer function representation into state space representation.
     /// Conversion is done using the observability canonical form.
     ///
@@ -295,19 +375,24 @@ impl From<Tf> for Ss {
     /// # Arguments
     ///
     /// `tf` - transfer function
-    fn from(tf: Tf) -> Self {
+    fn try_from(tf: Tf<T>) -> Result<Self, Self::Error> {
         // Get the denominator in the monic form and the leading coefficient.
         let (den_monic, den_n) = tf.den().monic();
         // Extend the numerator coefficients with zeros to the length of the
         // denominator polynomial.
-        let order = den_monic.degree();
+        let order = den_monic
+            .degree()
+            .expect("Transfer functions cannot have zero polynomial denominator");
         // Divide the denominator polynomial by the highest coefficient of the
         // numerator polinomial to mantain the original gain.
         let mut num = tf.num().clone() / den_n;
         num.extend(order);
 
         // Calculate the observability canonical form.
-        let a = den_monic.companion();
+        let a = match den_monic.companion() {
+            Some(a) => a,
+            _ => return Err("Denominator has no poles"),
+        };
 
         // Get the number of states n.
         let states = a.nrows();
@@ -319,13 +404,13 @@ impl From<Tf> for Ss {
 
         // Crate a 1xn vector with all zeros but the last that is 1.
         let mut c = DMatrix::zeros(1, states);
-        c[states - 1] = 1.0;
+        c[states - 1] = T::one();
 
         // Crate a 1x1 matrix with the highest coefficient of the numerator.
         let d = DMatrix::from_element(1, 1, b_n);
 
         // A single transfer function has only one input and one output.
-        Self {
+        Ok(Self {
             a,
             b,
             c,
@@ -335,13 +420,13 @@ impl From<Tf> for Ss {
                 inputs: 1,
                 outputs: 1,
             },
-        }
+        })
     }
 }
 
 /// Implementation of state-space representation
-impl fmt::Display for Ss {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl<T: Scalar + Display> Display for Ss<T> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
             "A: {}\nB: {}\nC: {}\nD: {}",
@@ -352,39 +437,39 @@ impl fmt::Display for Ss {
 
 /// Struct describing an equilibrium point
 #[derive(Debug)]
-pub struct Equilibrium {
+pub struct Equilibrium<T: Scalar> {
     /// State equilibrium
-    x: DVector<f64>,
+    x: DVector<T>,
     /// Output equilibrium
-    y: DVector<f64>,
+    y: DVector<T>,
 }
 
 /// Implement methods for equilibrium
-impl Equilibrium {
+impl<T: Scalar> Equilibrium<T> {
     /// Create a new equilibrium given the state and the output vectors
     ///
     /// # Arguments
     ///
     /// * `x` - State equilibrium
     /// * `y` - Output equilibrium
-    pub(crate) fn new(x: DVector<f64>, y: DVector<f64>) -> Self {
+    pub(crate) fn new(x: DVector<T>, y: DVector<T>) -> Self {
         Self { x, y }
     }
 
     /// Retrieve state coordinates for equilibrium
-    pub fn x(&self) -> &[f64] {
+    pub fn x(&self) -> &[T] {
         self.x.as_slice()
     }
 
     /// Retrieve output coordinates for equilibrium
-    pub fn y(&self) -> &[f64] {
+    pub fn y(&self) -> &[T] {
         self.y.as_slice()
     }
 }
 
 /// Implementation of printing of equilibrium point
-impl fmt::Display for Equilibrium {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl<T: Display + Scalar> Display for Equilibrium<T> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "x: {}\ny: {}", self.x, self.y)
     }
 }
@@ -393,6 +478,171 @@ impl fmt::Display for Equilibrium {
 mod tests {
     use super::*;
     use nalgebra::DMatrix;
+
+    #[quickcheck]
+    fn dimensions(states: usize, inputs: usize, outputs: usize) -> bool {
+        let d = Dim {
+            states,
+            inputs,
+            outputs,
+        };
+        states == d.states() && inputs == d.inputs() && outputs == d.outputs()
+    }
+
+    #[test]
+    fn system_dimensions() {
+        let states = 2;
+        let inputs = 1;
+        let outputs = 1;
+        let sys = Ss::new_from_slice(
+            states,
+            inputs,
+            outputs,
+            &[-2., 0., 3., -7.],
+            &[1., 3.],
+            &[-1., 0.5],
+            &[0.1],
+        );
+        assert_eq!(
+            Dim {
+                states,
+                inputs,
+                outputs
+            },
+            sys.dim()
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn poles_fail() {
+        let eig1 = -2.;
+        let eig2 = -7.;
+        let a = DMatrix::from_row_slice(2, 2, &[eig1, 0., 3., eig2]);
+        let schur = Schur::new(a);
+        //dbg!(&schur);
+        let poles = schur.complex_eigenvalues();
+        //dbg!(poles);
+        assert_eq!((eig1, eig2), (poles[0].re, poles[1].re));
+    }
+
+    #[test]
+    fn poles_regression() {
+        let eig1 = -2.;
+        let eig2 = -7.;
+        let sys = Ss::new_from_slice(
+            2,
+            1,
+            1,
+            &[eig1, 0., 3., eig2],
+            &[1., 3.],
+            &[-1., 0.5],
+            &[0.1],
+        );
+        let poles = sys.poles();
+        assert_eq!((eig1, eig2), (poles[0].re, poles[1].re));
+    }
+
+    #[quickcheck]
+    fn poles_two(eig1: f64, eig2: f64) -> bool {
+        let sys = Ss::new_from_slice(
+            2,
+            1,
+            1,
+            &[eig1, 0., 3., eig2],
+            &[1., 3.],
+            &[-1., 0.5],
+            &[0.1],
+        );
+        let poles = sys.poles();
+
+        let mut expected = [eig1, eig2];
+        expected.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+        let mut actual = [poles[0].re, poles[1].re];
+        actual.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+        relative_eq!(expected[0], actual[0], max_relative = 1e-10)
+            && relative_eq!(expected[1], actual[1], max_relative = 1e-10)
+    }
+
+    #[test]
+    fn poles_three() {
+        let eig1 = -7.;
+        let eig2 = -2.;
+        let eig3 = 1.25;
+        let sys = Ss::new_from_slice(
+            3,
+            1,
+            1,
+            &[eig1, 0., 0., 3., eig2, 0., 10., 0.8, eig3],
+            &[1., 3., -5.5],
+            &[-1., 0.5, -4.3],
+            &[0.],
+        );
+        let mut poles = sys.poles();
+        poles.sort_unstable_by(|a, b| a.re.partial_cmp(&b.re).unwrap());
+        assert_relative_eq!(eig1, poles[0].re, max_relative = 1e-10);
+        assert_relative_eq!(eig2, poles[1].re, max_relative = 1e-10);
+        assert_relative_eq!(eig3, poles[2].re, max_relative = 1e-10);
+    }
+
+    #[test]
+    fn equilibrium() {
+        let a = [-1., 1., -1., 0.25];
+        let b = [1., 0.25];
+        let c = [0., 1.];
+        let d = [0.];
+
+        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let u = 0.0;
+        let eq = sys.equilibrium(&[u]).unwrap();
+        assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
+        println!("{}", &eq);
+        assert!(!format!("{}", eq).is_empty());
+    }
+
+    #[test]
+    fn new_rk2() {
+        let a = [-1., 1., -1., 0.25];
+        let b = [1., 0.25];
+        let c = [0., 1.];
+        let d = [0.];
+        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let iter = sys.rk2(|_| vec![1.], &[0., 0.], Seconds(0.1), 30);
+        assert_eq!(31, iter.count());
+    }
+
+    #[test]
+    fn new_rk4() {
+        let a = [-1., 1., -1., 0.25];
+        let b = [1., 0.25];
+        let c = [0., 1.];
+        let d = [0.];
+        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let iter = sys.rk4(|_| vec![1.], &[0., 0.], Seconds(0.1), 30);
+        assert_eq!(31, iter.count());
+    }
+
+    #[test]
+    fn new_rkf45() {
+        let a = [-1., 1., -1., 0.25];
+        let b = [1., 0.25];
+        let c = [0., 1.];
+        let d = [0.];
+        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let iter = sys.rkf45(|_| vec![1.], &[0., 0.], Seconds(0.1), Seconds(2.), 1e-5);
+        assert_relative_eq!(2., iter.last().unwrap().time().0, max_relative = 0.01);
+    }
+
+    #[test]
+    fn new_radau() {
+        let a = [-1., 1., -1., 0.25];
+        let b = [1., 0.25];
+        let c = [0., 1.];
+        let d = [0.];
+        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let iter = sys.radau(|_| vec![1.], &[0., 0.], Seconds(0.1), 30, 1e-5);
+        assert_eq!(31, iter.count());
+    }
 
     #[test]
     fn leverrier_algorythm() {
@@ -426,13 +676,28 @@ mod tests {
     }
 
     #[test]
+    fn leverrier_1x1_matrix() {
+        let t = DMatrix::from_row_slice(1, 1, &[3.]);
+        let expected_pc = Poly::new_from_coeffs(&[-3., 1.]);
+        let expected_degree0 = DMatrix::from_row_slice(1, 1, &[1.]);
+
+        let (p, poly_matrix) = leverrier(&t);
+        assert_eq!(expected_pc, p);
+        assert_eq!(expected_degree0, poly_matrix[0]);
+
+        let mp = crate::polynomial::MatrixOfPoly::from(poly_matrix);
+        let expected_result = "[[1]]";
+        assert_eq!(expected_result, format!("{}", &mp));
+    }
+
+    #[test]
     fn convert_to_ss_1() {
         let tf = Tf::new(
             Poly::new_from_coeffs(&[1.]),
             Poly::new_from_coeffs(&[1., 1., 1.]),
         );
 
-        let ss = Ss::from(tf);
+        let ss = Ss::try_from(tf).unwrap();
 
         assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -1., 1., -1.]), *ss.a());
         assert_eq!(DMatrix::from_row_slice(2, 1, &[1., 0.]), *ss.b());
@@ -447,7 +712,7 @@ mod tests {
             Poly::new_from_coeffs(&[3., 4., 1.]),
         );
 
-        let ss = Ss::from(tf);
+        let ss = Ss::try_from(tf).unwrap();
 
         assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -3., 1., -4.]), *ss.a());
         assert_eq!(DMatrix::from_row_slice(2, 1, &[-2., -4.]), *ss.b());

@@ -3,10 +3,12 @@
 //! List of strongly typed units of measurement. It avoids the use of primitive
 //! types.
 
-use std::convert::From;
+use std::{
+    convert::From,
+    fmt::{Display, Formatter, LowerExp, UpperExp},
+};
 
-/// 2π
-const TAU: f64 = 2. * std::f64::consts::PI;
+use num_traits::{Float, FloatConst};
 
 /// Macro to implement Display trait for units. It passes the formatter options
 /// to the unit inner type.
@@ -18,23 +20,23 @@ const TAU: f64 = 2. * std::f64::consts::PI;
 macro_rules! impl_display {
     ($name:ident) => {
         /// Format the unit as its inner type.
-        impl std::fmt::Display for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                self.0.fmt(f)
+        impl<T: Display + Float> Display for $name<T> {
+            fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+                Display::fmt(&self.0, f)
             }
         }
 
         /// Format the unit as its inner type.
-        impl std::fmt::LowerExp for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                self.0.fmt(f)
+        impl<T: LowerExp + Float> LowerExp for $name<T> {
+            fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+                LowerExp::fmt(&self.0, f)
             }
         }
 
         /// Format the unit as its inner type.
-        impl std::fmt::UpperExp for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                self.0.fmt(f)
+        impl<T: UpperExp + Float> UpperExp for $name<T> {
+            fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+                UpperExp::fmt(&self.0, f)
             }
         }
     };
@@ -54,31 +56,39 @@ impl Decibel<f64> for f64 {
     }
 }
 
+/// Implementation of the Decibels for f32
+impl Decibel<f32> for f32 {
+    /// Convert f32 to decibels
+    fn to_db(&self) -> Self {
+        20. * self.log10()
+    }
+}
+
 /// Unit of measurement: seconds [s]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub struct Seconds(pub f64);
+pub struct Seconds<T: Float>(pub T);
 
 /// Unit of measurement: Hertz [Hz]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub struct Hertz(pub f64);
+pub struct Hertz<T: Float>(pub T);
 
 /// Unit of measurement: Radiants per seconds [rad/s]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub struct RadiantsPerSecond(pub f64);
+pub struct RadiantsPerSecond<T: Float>(pub T);
 
 impl_display!(Seconds);
 impl_display!(Hertz);
 impl_display!(RadiantsPerSecond);
 
-impl From<Hertz> for RadiantsPerSecond {
-    fn from(hz: Hertz) -> Self {
-        Self(TAU * hz.0)
+impl<T: Float + FloatConst> From<Hertz<T>> for RadiantsPerSecond<T> {
+    fn from(hz: Hertz<T>) -> Self {
+        Self((T::PI() + T::PI()) * hz.0)
     }
 }
 
-impl From<RadiantsPerSecond> for Hertz {
-    fn from(rps: RadiantsPerSecond) -> Self {
-        Self(rps.0 / TAU)
+impl<T: Float + FloatConst> From<RadiantsPerSecond<T>> for Hertz<T> {
+    fn from(rps: RadiantsPerSecond<T>) -> Self {
+        Self(rps.0 / (T::PI() + T::PI()))
     }
 }
 
@@ -89,19 +99,40 @@ mod tests {
 
     #[test]
     fn decibel() {
-        assert_eq!(40., 100_f64.to_db());
-        assert_eq!(-3.0102999566398116, 2_f64.inv().sqrt().to_db());
+        assert_abs_diff_eq!(40., 100_f64.to_db(), epsilon = 0.);
+        assert_relative_eq!(-3.0103, 2_f64.inv().sqrt().to_db(), max_relative = 1e5);
+
+        assert_abs_diff_eq!(0., 1_f32.to_db(), epsilon = 0.);
     }
 
     #[test]
     fn conversion() {
-        assert_eq!(RadiantsPerSecond(TAU), RadiantsPerSecond::from(Hertz(1.0)));
+        let tau = 2. * std::f64::consts::PI;
+        assert_eq!(RadiantsPerSecond(tau), RadiantsPerSecond::from(Hertz(1.0)));
 
         let hz = Hertz(2.0);
         assert_eq!(hz, Hertz::from(RadiantsPerSecond::from(hz)));
 
         let rps = RadiantsPerSecond(2.0);
         assert_eq!(rps, RadiantsPerSecond::from(Hertz::from(rps)));
+    }
+
+    #[quickcheck]
+    fn qc_conversion_hertz(hz: f64) -> bool {
+        relative_eq!(
+            hz,
+            Hertz::from(RadiantsPerSecond::from(Hertz(hz))).0,
+            max_relative = 1e-15
+        )
+    }
+
+    #[quickcheck]
+    fn qc_conversion_rps(rps: f64) -> bool {
+        relative_eq!(
+            rps,
+            RadiantsPerSecond::from(Hertz::from(RadiantsPerSecond(rps))).0,
+            max_relative = 1e-15
+        )
     }
 
     #[test]

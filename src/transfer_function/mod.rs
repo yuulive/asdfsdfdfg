@@ -16,70 +16,79 @@ use crate::{
         polar::{PolarIterator, PolarPlot},
     },
     polynomial::{MatrixOfPoly, Poly},
-    units::RadiantsPerSecond,
+    units::{Decibel, RadiantsPerSecond},
     Eval,
 };
 
+use nalgebra::{ComplexField, RealField, Scalar};
 use ndarray::{Array2, Axis, Zip};
-use num_complex::Complex64;
+use num_complex::Complex;
+use num_traits::{Float, FloatConst, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
-use std::fmt;
-use std::ops::{Index, IndexMut};
+use std::ops::{Index, IndexMut, Mul};
+use std::{
+    fmt,
+    fmt::{Debug, Display, Formatter},
+};
 
 /// Transfer function representation of a linear system
-#[derive(Debug)]
-pub struct Tf {
+#[derive(Debug, PartialEq)]
+pub struct Tf<T> {
     /// Transfer function numerator
-    num: Poly,
+    num: Poly<T>,
     /// Transfer function denominator
-    den: Poly,
+    den: Poly<T>,
 }
 
 /// Implementation of transfer function methods
-impl Tf {
+impl<T: Float> Tf<T> {
     /// Create a new transfer function given its numerator and denominator
     ///
     /// # Arguments
     ///
     /// * `num` - Transfer function numerator
     /// * `den` - Transfer function denominator
-    pub fn new(num: Poly, den: Poly) -> Self {
+    pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
+        assert!(!num.is_zero());
+        assert!(!den.is_zero());
         Self { num, den }
     }
 
     /// Extract transfer function numerator
-    pub fn num(&self) -> &Poly {
+    pub fn num(&self) -> &Poly<T> {
         &self.num
     }
 
     /// Extract transfer function denominator
-    pub fn den(&self) -> &Poly {
+    pub fn den(&self) -> &Poly<T> {
         &self.den
     }
+}
 
+impl<T: ComplexField + Debug + Float + RealField + Scalar> Tf<T> {
     /// Calculate the poles of the transfer function
-    pub fn poles(&self) -> Option<Vec<f64>> {
+    pub fn poles(&self) -> Option<Vec<T>> {
         self.den.roots()
     }
 
     /// Calculate the poles of the transfer function
-    pub fn complex_poles(&self) -> Vec<Complex64> {
+    pub fn complex_poles(&self) -> Vec<Complex<T>> {
         self.den.complex_roots()
     }
 
     /// Calculate the zeros of the transfer function
-    pub fn zeros(&self) -> Option<Vec<f64>> {
+    pub fn zeros(&self) -> Option<Vec<T>> {
         self.num.roots()
     }
 
     /// Calculate the zeros of the transfer function
-    pub fn complex_zeros(&self) -> Vec<Complex64> {
+    pub fn complex_zeros(&self) -> Vec<Complex<T>> {
         self.num.complex_roots()
     }
 }
 
-impl TryFrom<Ss> for Tf {
+impl TryFrom<Ss<f64>> for Tf<f64> {
     type Error = &'static str;
 
     /// Convert a state-space representation into transfer functions.
@@ -89,10 +98,10 @@ impl TryFrom<Ss> for Tf {
     /// # Arguments
     ///
     /// `ss` - state space linear system
-    fn try_from(ss: Ss) -> Result<Self, Self::Error> {
+    fn try_from(ss: Ss<f64>) -> Result<Self, Self::Error> {
         let (pc, a_inv) = linear_system::leverrier(ss.a());
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
-        let rest = pc.mul(ss.d());
+        let rest = pc.multiply(ss.d());
         let tf = g + rest;
         if let Some(num) = MatrixOfPoly::from(tf).siso() {
             Ok(Self::new(num.clone(), pc))
@@ -102,40 +111,60 @@ impl TryFrom<Ss> for Tf {
     }
 }
 
+/// Implementation of transfer function multiplication
+impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for &Tf<T> {
+    type Output = Tf<T>;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let num = &self.num * &rhs.num;
+        let den = &self.den * &rhs.den;
+        Tf::new(num, den)
+    }
+}
+
+/// Implementation of transfer function multiplication
+impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for Tf<T> {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self {
+        Mul::mul(&self, &rhs)
+    }
+}
+
 /// Implementation of the evaluation of a transfer function
-impl Eval<Complex64> for Tf {
-    fn eval(&self, s: &Complex64) -> Complex64 {
+impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for Tf<T> {
+    fn eval(&self, s: &Complex<T>) -> Complex<T> {
         self.num.eval(s) / self.den.eval(s)
     }
 }
 
 /// Implementation of the Bode plot for a transfer function
-impl BodePlot for Tf {
+impl<T: Decibel<T> + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf<T> {
     fn bode(
         self,
-        min_freq: RadiantsPerSecond,
-        max_freq: RadiantsPerSecond,
-        step: f64,
-    ) -> BodeIterator {
+        min_freq: RadiantsPerSecond<T>,
+        max_freq: RadiantsPerSecond<T>,
+        step: T,
+    ) -> BodeIterator<T> {
         BodeIterator::new(self, min_freq, max_freq, step)
     }
 }
 
 /// Implementation of the polar plot for a transfer function
-impl PolarPlot for Tf {
+impl<T: Float + FloatConst + MulAdd<Output = T>> PolarPlot<T> for Tf<T> {
     fn polar(
         self,
-        min_freq: RadiantsPerSecond,
-        max_freq: RadiantsPerSecond,
-        step: f64,
-    ) -> PolarIterator {
+        min_freq: RadiantsPerSecond<T>,
+        max_freq: RadiantsPerSecond<T>,
+        step: T,
+    ) -> PolarIterator<T> {
         PolarIterator::new(self, min_freq, max_freq, step)
     }
 }
 
 /// Implementation of transfer function printing
-impl fmt::Display for Tf {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl<T: Display + One + PartialEq + Signed + Zero> Display for Tf<T> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let s_num = self.num.to_string();
         let s_den = self.den.to_string();
 
@@ -147,28 +176,36 @@ impl fmt::Display for Tf {
 }
 
 /// Matrix of transfer functions
-pub struct TfMatrix {
+#[derive(Debug)]
+pub struct TfMatrix<T> {
     /// Polynomial matrix of the numerators
-    num: MatrixOfPoly,
+    num: MatrixOfPoly<T>,
     /// Common polynomial denominator
-    den: Poly,
+    den: Poly<T>,
 }
 
 /// Implementation of transfer function matrix
-impl TfMatrix {
+impl<T> TfMatrix<T> {
     /// Create a new transfer function matrix
     ///
     /// # Arguments
     ///
     /// * `num` - Polynomial matrix
     /// * `den` - Characteristic polynomial of the system
-    pub fn new(num: MatrixOfPoly, den: Poly) -> Self {
+    pub(crate) fn new(num: MatrixOfPoly<T>, den: Poly<T>) -> Self {
         Self { num, den }
     }
 }
 
-impl Eval<Vec<Complex64>> for TfMatrix {
-    fn eval(&self, s: &Vec<Complex64>) -> Vec<Complex64> {
+impl<T: Clone> TfMatrix<T> {
+    /// Retrive the characteristic polynomial of the system.
+    pub fn den(&self) -> Poly<T> {
+        self.den.clone()
+    }
+}
+
+impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
+    fn eval(&self, s: &Vec<Complex<T>>) -> Vec<Complex<T>> {
         //
         // ┌  ┐ ┌┌         ┐ ┌     ┐┐┌  ┐
         // │y1│=││1/pc 1/pc│*│n1 n2│││s1│
@@ -176,13 +213,16 @@ impl Eval<Vec<Complex64>> for TfMatrix {
         // └  ┘ └└         ┘ └     ┘┘└  ┘
         // `*` is the element by element multiplication
         // ┌     ┐ ┌┌         ┐ ┌     ┐┐ ┌┌     ┐ ┌     ┐┐
-        // │y1 y2│=││1/pc 1/pc│.│s1 s2││*││n1 n2│.│s1 s2││
-        // │y3 y4│ ││1/pc 1/pc│ │s1 s2││ ││n3 n4│ │s1 s2││
+        // │y1+y2│=││1/pc 1/pc│.│s1 s2││*││n1 n2│.│s1 s2││
+        // │y3+y4│ ││1/pc 1/pc│ │s1 s2││ ││n3 n4│ │s1 s2││
         // └     ┘ └└         ┘ └     ┘┘ └└     ┘ └     ┘┘
         // `.` means 'evaluated at'
 
         // Create a matrix to contain the result of the evaluation.
-        let mut res = Array2::from_elem(self.num.matrix.dim(), Complex64::new(0.0, 0.0));
+        let mut res = Array2::from_elem(
+            self.num.matrix.dim(),
+            Complex::<T>::new(T::zero(), T::zero()),
+        );
 
         // Zip the result and the numerator matrix row by row.
         Zip::from(res.genrows_mut())
@@ -199,16 +239,16 @@ impl Eval<Vec<Complex64>> for TfMatrix {
     }
 }
 
-impl From<Ss> for TfMatrix {
+impl From<Ss<f64>> for TfMatrix<f64> {
     /// Convert a state-space representation into a matrix of transfer functions
     ///
     /// # Arguments
     ///
     /// `ss` - state space linear system
-    fn from(ss: Ss) -> Self {
+    fn from(ss: Ss<f64>) -> Self {
         let (pc, a_inv) = linear_system::leverrier(ss.a());
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
-        let rest = pc.mul(ss.d());
+        let rest = pc.multiply(ss.d());
         let tf = g + rest;
         Self::new(MatrixOfPoly::from(tf), pc)
     }
@@ -219,10 +259,10 @@ impl From<Ss> for TfMatrix {
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl Index<[usize; 2]> for TfMatrix {
-    type Output = Poly;
+impl<T> Index<[usize; 2]> for TfMatrix<T> {
+    type Output = Poly<T>;
 
-    fn index(&self, i: [usize; 2]) -> &Poly {
+    fn index(&self, i: [usize; 2]) -> &Poly<T> {
         &self.num.matrix[i]
     }
 }
@@ -232,14 +272,14 @@ impl Index<[usize; 2]> for TfMatrix {
 /// # Panics
 ///
 /// Panics for out of bounds access.
-impl IndexMut<[usize; 2]> for TfMatrix {
-    fn index_mut(&mut self, i: [usize; 2]) -> &mut Poly {
+impl<T> IndexMut<[usize; 2]> for TfMatrix<T> {
+    fn index_mut(&mut self, i: [usize; 2]) -> &mut Poly<T> {
         &mut self.num.matrix[i]
     }
 }
 
 /// Implementation of transfer function matrix printing
-impl fmt::Display for TfMatrix {
+impl<T: Display + One + PartialEq + Signed + Zero> fmt::Display for TfMatrix<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s_num = self.num.to_string();
         let s_den = self.den.to_string();
@@ -248,5 +288,144 @@ impl fmt::Display for TfMatrix {
         let dash = "\u{2500}".repeat(length);
 
         write!(f, "{}\n{}\n{}", s_num, dash, s_den)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::poly;
+
+    #[test]
+    fn transfer_function_creation() {
+        let num = poly!(1., 2., 3.);
+        let den = poly!(-4.2, -3.12, 0.0012);
+        let tf = Tf::new(num.clone(), den.clone());
+        assert_eq!(&num, tf.num());
+        assert_eq!(&den, tf.den());
+    }
+
+    #[test]
+    fn poles() {
+        let tf = Tf::new(poly!(1.), poly!(6., -5., 1.));
+        assert_eq!(Some(vec![2., 3.]), tf.poles());
+    }
+
+    #[test]
+    fn complex_poles() {
+        use num_complex::Complex32;
+        let tf = Tf::new(poly!(1.), poly!(10., -6., 1.));
+        assert_eq!(
+            vec![Complex32::new(3., -1.), Complex32::new(3., 1.)],
+            tf.complex_poles()
+        );
+    }
+
+    #[test]
+    fn zeros() {
+        let tf = Tf::new(poly!(1.), poly!(6., -5., 1.));
+        assert_eq!(Some(vec![]), tf.zeros());
+    }
+
+    #[test]
+    fn complex_zeros() {
+        use num_complex::Complex32;
+        let tf = Tf::new(poly!(3.25, 3., 1.), poly!(10., -3., 1.));
+        assert_eq!(
+            vec![Complex32::new(-1.5, -1.), Complex32::new(-1.5, 1.)],
+            tf.complex_zeros()
+        );
+    }
+
+    #[test]
+    fn tf_mul() {
+        let tf1 = Tf::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let tf2 = Tf::new(poly!(3.), poly!(1., 6., 5.));
+        let actual = &tf1 * &tf2;
+        let expected = Tf::new(poly!(3., 6., 9.), poly!(1., 11., 35., 25.));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn bode() {
+        let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
+        let b = tf.bode(RadiantsPerSecond(0.1), RadiantsPerSecond(100.0), 0.1);
+        for g in b.into_db_deg() {
+            assert!(g.magnitude() < 0.);
+            assert!(g.phase() < 0.);
+        }
+    }
+
+    #[test]
+    fn polar() {
+        let tf = Tf::new(poly!(5.), Poly::new_from_roots(&[-1., -10.]));
+        let p = tf.polar(RadiantsPerSecond(0.1), RadiantsPerSecond(10.0), 0.1);
+        for g in p {
+            assert!(g.magnitude() < 1.);
+            assert!(g.phase() < 0.);
+        }
+    }
+
+    #[test]
+    fn print() {
+        let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
+        assert_eq!("1\n──────\n1 +1*s", format!("{}", tf));
+    }
+
+    #[test]
+    fn tf_matrix_new() {
+        let sys = Ss::new_from_slice(
+            2,
+            2,
+            2,
+            &[-2., 0., 0., -1.],
+            &[0., 1., 1., 2.],
+            &[1., 2., 3., 4.],
+            &[1., 0., 0., 1.],
+        );
+        let tfm = TfMatrix::from(sys);
+        assert_eq!(tfm[[0, 0]], poly!(6., 5., 1.));
+        assert_eq!(tfm[[0, 1]], poly!(9., 5.));
+        assert_eq!(tfm[[1, 0]], poly!(8., 4.));
+        assert_eq!(tfm[[1, 1]], poly!(21., 14., 1.));
+        assert_eq!(tfm.den, poly!(2., 3., 1.));
+    }
+
+    #[test]
+    fn tf_matrix_eval() {
+        let sys = Ss::new_from_slice(
+            2,
+            2,
+            2,
+            &[-2., 0., 0., -1.],
+            &[0., 1., 1., 2.],
+            &[1., 2., 3., 4.],
+            &[1., 0., 0., 1.],
+        );
+        let tfm = TfMatrix::from(sys);
+        let i = Complex::<f64>::i();
+        let res = tfm.eval(&vec![i, i]);
+        assert_relative_eq!(res[0].re, 4.4, max_relative = 1e-15);
+        assert_relative_eq!(res[0].im, -3.2, max_relative = 1e-15);
+        assert_relative_eq!(res[1].re, 8.2, max_relative = 1e-15);
+        assert_relative_eq!(res[1].im, -6.6, max_relative = 1e-15);
+    }
+
+    #[test]
+    fn tf_matrix_print() {
+        let sys = Ss::new_from_slice(
+            2,
+            2,
+            2,
+            &[-2., 0., 0., -1.],
+            &[0., 1., 1., 2.],
+            &[1., 2., 3., 4.],
+            &[1., 0., 0., 1.],
+        );
+        let tfm = TfMatrix::from(sys);
+        assert_eq!(
+            "[[6 +5*s +1*s^2, 9 +5*s],\n [8 +4*s, 21 +14*s +1*s^2]]\n─────────────\n2 +3*s +1*s^2",
+            format!("{}", tfm)
+        );
     }
 }

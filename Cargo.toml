@@ -1,6 +1,6 @@
 [package]
 name = "automatica"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["daingun <>"]
 edition = "2018"
 
@@ -9,3 +9,8 @@ num-traits = "0.2"
 num-complex = "0.2"
 nalgebra = "0.18.0"
 ndarray = "0.12.1"
+approx = "0.3.2"
+
+[dev-dependencies]
+quickcheck = "0.9"
+quickcheck_macros = "0.8"

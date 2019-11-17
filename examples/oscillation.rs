@@ -38,7 +38,7 @@ fn main() {
     );
 
     // Free movement.
-    let null_input = |_: Seconds| vec![0.];
+    let null_input = |_: Seconds<f64>| vec![0.];
     let x0 = &[1., 0.];
 
     // Solvers.

@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## [0.6.0] - 2019-11-18
+## Added
+- Increased the quantity of tests and documentation tests
+- Polynomial derivation and integration
+## Changed
+- Generalization of polynomials
+- Generalization of PID
+- Generalization of discretization methods
+- Generalization of transfer functions
+- Generalization of linear systems
+- Generalization of polynomial matrices
+- Generalization of transfer function matices
+- Generalization of units of measurement
+- Generalization of discrete transfer functions
+- Generalization of Bode and polar plots
+- Generalization of discrete linear systems
+- Generalization of linear system solvers
+- The degree of a polynomial now returns an Option, which is None for zero polynomial
+- Companion matrix is None for zero degree polynomial
+## Fixed
+- Error in the calculation of ideal PID transfer function
+- Error in the calculation of 2x2 matrix eigenvalues
+- Error in state space Tustin discretization
+
 ## [0.5.0] - 2019-09-08
 ### Added
 - Discretization of transfer functions
