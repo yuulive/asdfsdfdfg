@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## [0.6.0] - 2019-11-18
 ## Added
 - Increased the quantity of tests and documentation tests
 - Polynomial derivation and integration
@@ -18,9 +20,11 @@
 - Generalization of discrete linear systems
 - Generalization of linear system solvers
 - The degree of a polynomial now returns an Option, which is None for zero polynomial
+- Companion matrix is None for zero degree polynomial
 ## Fixed
 - Error in the calculation of ideal PID transfer function
 - Error in the calculation of 2x2 matrix eigenvalues
+- Error in state space Tustin discretization
 
 ## [0.5.0] - 2019-09-08
 ### Added
