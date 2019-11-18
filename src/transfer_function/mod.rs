@@ -23,7 +23,7 @@ use crate::{
 use nalgebra::{ComplexField, RealField, Scalar};
 use ndarray::{Array2, Axis, Zip};
 use num_complex::Complex;
-use num_traits::{Float, FloatConst, MulAdd, One, Signed, Zero};
+use num_traits::{Float, FloatConst, Inv, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
 use std::ops::{Index, IndexMut, Mul};
@@ -49,6 +49,10 @@ impl<T: Float> Tf<T> {
     ///
     /// * `num` - Transfer function numerator
     /// * `den` - Transfer function denominator
+    ///
+    /// Panics
+    ///
+    /// If either numerator of denominator is zero the method panics.
     pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
         assert!(!num.is_zero());
         assert!(!den.is_zero());
@@ -63,6 +67,26 @@ impl<T: Float> Tf<T> {
     /// Extract transfer function denominator
     pub fn den(&self) -> &Poly<T> {
         &self.den
+    }
+}
+
+/// Implementation of transfer function methods
+impl<T> Tf<T> {
+    /// Compute the reciprocal of a transfer function in place.
+    pub fn inv_mut(&mut self) {
+        std::mem::swap(&mut self.num, &mut self.den);
+    }
+}
+
+impl<T: Clone> Inv for &Tf<T> {
+    type Output = Tf<T>;
+
+    /// Compute the reciprocal of a transfer function.
+    fn inv(self) -> Self::Output {
+        Tf {
+            num: self.den.clone(),
+            den: self.num.clone(),
+        }
     }
 }
 
@@ -303,6 +327,19 @@ mod tests {
         let tf = Tf::new(num.clone(), den.clone());
         assert_eq!(&num, tf.num());
         assert_eq!(&den, tf.den());
+    }
+
+    #[test]
+    fn tf_inversion() {
+        let num1 = poly!(1., 2., 3.);
+        let den1 = poly!(-4.2, -3.12, 0.0012);
+        let tf1 = Tf::new(num1.clone(), den1.clone());
+        let num2 = poly!(-4.2, -3.12, 0.0012);
+        let den2 = poly!(1., 2., 3.);
+        let mut tf2 = Tf::new(num2.clone(), den2.clone());
+        assert_eq!(tf2, tf1.inv());
+        tf2.inv_mut();
+        assert_eq!(tf2, tf1);
     }
 
     #[test]
