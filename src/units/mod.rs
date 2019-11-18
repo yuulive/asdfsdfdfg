@@ -8,7 +8,7 @@ use std::{
     fmt::{Display, Formatter, LowerExp, UpperExp},
 };
 
-use num_traits::{Float, FloatConst};
+use num_traits::{Float, FloatConst, Inv, Num};
 
 /// Macro to implement Display trait for units. It passes the formatter options
 /// to the unit inner type.
@@ -20,7 +20,7 @@ use num_traits::{Float, FloatConst};
 macro_rules! impl_display {
     ($name:ident) => {
         /// Format the unit as its inner type.
-        impl<T: Display + Float> Display for $name<T> {
+        impl<T: Display + Num> Display for $name<T> {
             fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
                 Display::fmt(&self.0, f)
             }
@@ -66,36 +66,55 @@ impl Decibel<f32> for f32 {
 
 /// Unit of measurement: seconds [s]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub struct Seconds<T: Float>(pub T);
+pub struct Seconds<T: Num>(pub T);
 
 /// Unit of measurement: Hertz [Hz]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub struct Hertz<T: Float>(pub T);
+pub struct Hertz<T: Num>(pub T);
 
 /// Unit of measurement: Radiants per seconds [rad/s]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub struct RadiantsPerSecond<T: Float>(pub T);
+pub struct RadiantsPerSecond<T: Num>(pub T);
 
 impl_display!(Seconds);
 impl_display!(Hertz);
 impl_display!(RadiantsPerSecond);
 
-impl<T: Float + FloatConst> From<Hertz<T>> for RadiantsPerSecond<T> {
+impl<T: Num + FloatConst> From<Hertz<T>> for RadiantsPerSecond<T> {
+    /// Convert Hertz into radiants per second.
     fn from(hz: Hertz<T>) -> Self {
         Self((T::PI() + T::PI()) * hz.0)
     }
 }
 
-impl<T: Float + FloatConst> From<RadiantsPerSecond<T>> for Hertz<T> {
+impl<T: Num + FloatConst> From<RadiantsPerSecond<T>> for Hertz<T> {
+    /// Convert radiants per second into Hertz.
     fn from(rps: RadiantsPerSecond<T>) -> Self {
         Self(rps.0 / (T::PI() + T::PI()))
+    }
+}
+
+impl<T: Inv<Output = T> + Num> Inv for Seconds<T> {
+    type Output = Hertz<T>;
+
+    /// Convert seconds into Hertz.
+    fn inv(self) -> Self::Output {
+        Hertz(self.0.inv())
+    }
+}
+
+impl<T: Inv<Output = T> + Num> Inv for Hertz<T> {
+    type Output = Seconds<T>;
+
+    /// Convert Hertz into seconds.
+    fn inv(self) -> Self::Output {
+        Seconds(self.0.inv())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use num_traits::ops::inv::Inv;
 
     #[test]
     fn decibel() {
@@ -133,6 +152,18 @@ mod tests {
             RadiantsPerSecond::from(Hertz::from(RadiantsPerSecond(rps))).0,
             max_relative = 1e-15
         )
+    }
+
+    #[quickcheck]
+    fn qc_conversion_s_hz(s: f32) -> bool {
+        // f32 precision.
+        relative_eq!(s, Seconds(s).inv().inv().0, max_relative = 1e-5)
+    }
+
+    #[quickcheck]
+    fn qc_conversion_hz_s(hz: f64) -> bool {
+        // f64 precision.
+        relative_eq!(hz, Hertz(hz).inv().inv().0, max_relative = 1e-14)
     }
 
     #[test]
