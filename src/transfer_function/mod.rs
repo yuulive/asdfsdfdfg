@@ -162,7 +162,7 @@ impl<T: Float> Add for Tf<T> {
 }
 
 /// Implementation of transfer function multiplication
-impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for &Tf<T> {
+impl<T: Float> Mul for &Tf<T> {
     type Output = Tf<T>;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -173,7 +173,7 @@ impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for &Tf<T> {
 }
 
 /// Implementation of transfer function multiplication
-impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for Tf<T> {
+impl<T: Float> Mul for Tf<T> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
@@ -182,7 +182,7 @@ impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for Tf<T> {
 }
 
 /// Implementation of transfer function division
-impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Div for &Tf<T> {
+impl<T: Float> Div for &Tf<T> {
     type Output = Tf<T>;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -193,7 +193,7 @@ impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Div for &Tf<T> {
 }
 
 /// Implementation of transfer function division
-impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Div for Tf<T> {
+impl<T: Float> Div for Tf<T> {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self {
