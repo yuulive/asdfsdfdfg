@@ -476,6 +476,25 @@ impl<T> IndexMut<usize> for Poly<T> {
     }
 }
 
+/// Implementation of polynomial negation
+impl<T: Copy + Neg<Output = T>> Neg for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn neg(self) -> Self::Output {
+        let c: Vec<_> = self.coeffs.iter().map(|&i| -i).collect();
+        Poly { coeffs: c }
+    }
+}
+
+/// Implementation of polynomial negation
+impl<T: Copy + Neg<Output = T>> Neg for Poly<T> {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Neg::neg(&self)
+    }
+}
+
 /// Implementation of polynomial addition
 impl<T: Copy + Num> Add<Poly<T>> for Poly<T> {
     type Output = Self;
@@ -1068,6 +1087,13 @@ mod tests {
             Complex::zero(),
             Poly::<f64>::new_from_coeffs(&[]).eval(&Complex::new(2., 3.))
         );
+    }
+
+    #[test]
+    fn poly_neg() {
+        let p1 = poly!(1., 2.34, -4.2229);
+        let p2 = -&p1;
+        assert_eq!(p1, -p2);
     }
 
     #[test]
