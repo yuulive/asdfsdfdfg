@@ -26,7 +26,7 @@ use num_complex::Complex;
 use num_traits::{Float, FloatConst, Inv, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
-use std::ops::{Add, Div, Index, IndexMut, Mul};
+use std::ops::{Add, Div, Index, IndexMut, Mul, Neg};
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
@@ -132,6 +132,26 @@ impl TryFrom<Ss<f64>> for Tf<f64> {
         } else {
             Err("Linear system is not Single Input Single Output")
         }
+    }
+}
+
+/// Implementation of transfer function negation.
+/// Negative sign is transferred to the numerator.
+impl<T: Float> Neg for &Tf<T> {
+    type Output = Tf<T>;
+
+    fn neg(self) -> Self::Output {
+        Tf::new(-&self.num, self.den.clone())
+    }
+}
+
+/// Implementation of transfer function negation.
+/// Negative sign is transferred to the numerator.
+impl<T: Float> Neg for Tf<T> {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Neg::neg(&self)
     }
 }
 
@@ -418,6 +438,14 @@ mod tests {
             vec![Complex32::new(-1.5, -1.), Complex32::new(-1.5, 1.)],
             tf.complex_zeros()
         );
+    }
+
+    #[test]
+    fn tf_neg() {
+        let tf1 = Tf::new(poly!(1., 2.), poly!(1., 5.));
+        let tf2 = Tf::new(poly!(-1., -2.), poly!(1., 5.));
+        assert_eq!(-&tf1, tf2);
+        assert_eq!(tf1, -(-(&tf1)));
     }
 
     #[test]
