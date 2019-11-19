@@ -26,7 +26,7 @@ use num_complex::Complex;
 use num_traits::{Float, FloatConst, Inv, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
-use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
+use std::ops::{Add, Div, Index, IndexMut, Mul};
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
@@ -132,6 +132,32 @@ impl TryFrom<Ss<f64>> for Tf<f64> {
         } else {
             Err("Linear system is not Single Input Single Output")
         }
+    }
+}
+
+/// Implementation of transfer function addition
+impl<T: Float> Add for &Tf<T> {
+    type Output = Tf<T>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        let (num, den) = if self.den == rhs.den {
+            (&self.num + &rhs.num, self.den.clone())
+        } else {
+            (
+                &self.num * &rhs.den + &self.den * &rhs.num,
+                &self.den * &rhs.den,
+            )
+        };
+        Tf::new(num, den)
+    }
+}
+
+/// Implementation of transfer function addition
+impl<T: Float> Add for Tf<T> {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        Add::add(&self, &rhs)
     }
 }
 
@@ -392,6 +418,24 @@ mod tests {
             vec![Complex32::new(-1.5, -1.), Complex32::new(-1.5, 1.)],
             tf.complex_zeros()
         );
+    }
+
+    #[test]
+    fn tf_add1() {
+        let tf1 = Tf::new(poly!(1., 2.), poly!(1., 5.));
+        let tf2 = Tf::new(poly!(3.), poly!(1., 5.));
+        let actual = &tf1 + &tf2;
+        let expected = Tf::new(poly!(4., 2.), poly!(1., 5.));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tf_add2() {
+        let tf1 = Tf::new(poly!(1., 2.), poly!(3., -4.));
+        let tf2 = Tf::new(poly!(3.), poly!(1., 5.));
+        let actual = tf1 + tf2;
+        let expected = Tf::new(poly!(10., -5., 10.), poly!(3., 11., -20.));
+        assert_eq!(expected, actual);
     }
 
     #[test]
