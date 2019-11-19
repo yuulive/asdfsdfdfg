@@ -26,7 +26,7 @@ use num_complex::Complex;
 use num_traits::{Float, FloatConst, Inv, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
-use std::ops::{Index, IndexMut, Mul};
+use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
@@ -152,6 +152,26 @@ impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Mul for Tf<T> {
 
     fn mul(self, rhs: Self) -> Self {
         Mul::mul(&self, &rhs)
+    }
+}
+
+/// Implementation of transfer function division
+impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Div for &Tf<T> {
+    type Output = Tf<T>;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        let num = &self.num * &rhs.den;
+        let den = &self.den * &rhs.num;
+        Tf::new(num, den)
+    }
+}
+
+/// Implementation of transfer function division
+impl<T: Copy + Float + Mul<Output = T> + PartialEq + Zero> Div for Tf<T> {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self {
+        Div::div(&self, &rhs)
     }
 }
 
@@ -380,6 +400,15 @@ mod tests {
         let tf2 = Tf::new(poly!(3.), poly!(1., 6., 5.));
         let actual = &tf1 * &tf2;
         let expected = Tf::new(poly!(3., 6., 9.), poly!(1., 11., 35., 25.));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tf_div() {
+        let tf1 = Tf::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let tf2 = Tf::new(poly!(3.), poly!(1., 6., 5.));
+        let actual = tf2 / tf1;
+        let expected = Tf::new(poly!(3., 15.), poly!(1., 8., 20., 28., 15.));
         assert_eq!(expected, actual);
     }
 
