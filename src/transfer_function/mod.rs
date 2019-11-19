@@ -26,7 +26,7 @@ use num_complex::Complex;
 use num_traits::{Float, FloatConst, Inv, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
-use std::ops::{Add, Div, Index, IndexMut, Mul, Neg};
+use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
@@ -178,6 +178,32 @@ impl<T: Float> Add for Tf<T> {
 
     fn add(self, rhs: Self) -> Self {
         Add::add(&self, &rhs)
+    }
+}
+
+/// Implementation of transfer function subtraction
+impl<T: Float> Sub for &Tf<T> {
+    type Output = Tf<T>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        let (num, den) = if self.den == rhs.den {
+            (&self.num - &rhs.num, self.den.clone())
+        } else {
+            (
+                &self.num * &rhs.den - &self.den * &rhs.num,
+                &self.den * &rhs.den,
+            )
+        };
+        Tf::new(num, den)
+    }
+}
+
+/// Implementation of transfer function subtraction
+impl<T: Float> Sub for Tf<T> {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        Sub::sub(&self, &rhs)
     }
 }
 
@@ -463,6 +489,24 @@ mod tests {
         let tf2 = Tf::new(poly!(3.), poly!(1., 5.));
         let actual = tf1 + tf2;
         let expected = Tf::new(poly!(10., -5., 10.), poly!(3., 11., -20.));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tf_sub1() {
+        let tf1 = Tf::new(poly!(-1., 9.), poly!(4., -1.));
+        let tf2 = Tf::new(poly!(3.), poly!(4., -1.));
+        let actual = &tf1 - &tf2;
+        let expected = Tf::new(poly!(-4., 9.), poly!(4., -1.));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tf_sub2() {
+        let tf1 = Tf::new(poly!(1., -2.), poly!(4., -4.));
+        let tf2 = Tf::new(poly!(2.), poly!(2., 3.));
+        let actual = tf1 - tf2;
+        let expected = Tf::new(poly!(-6., 7., -6.), poly!(8., 4., -12.));
         assert_eq!(expected, actual);
     }
 
