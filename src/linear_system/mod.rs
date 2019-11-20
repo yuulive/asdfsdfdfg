@@ -189,6 +189,19 @@ impl<T: ComplexField + Float + RealField> Ss<T> {
                 .to_vec()
         }
     }
+
+    /// System stability. Checks if all A matrix eigenvalues (poles) are negative.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::linear_system::Ss;
+    /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
+    /// assert!(sys.is_stable());
+    /// ```
+    pub fn is_stable(&self) -> bool {
+        self.poles().iter().all(|p| p.re.is_negative())
+    }
 }
 
 /// Implementation of the methods for the state-space
@@ -541,6 +554,7 @@ mod tests {
         );
         let poles = sys.poles();
         assert_eq!((eig1, eig2), (poles[0].re, poles[1].re));
+        assert!(sys.is_stable())
     }
 
     #[quickcheck]
