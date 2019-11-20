@@ -882,7 +882,7 @@ impl<T: Copy + Num> Div<T> for Poly<T> {
 /// let zero = Poly::<u8>::zero();
 /// assert!(zero.is_zero());
 /// ```
-impl<T: Copy + Num + Zero> Zero for Poly<T> {
+impl<T: Copy + Num> Zero for Poly<T> {
     fn zero() -> Self {
         Self {
             coeffs: vec![T::zero()],

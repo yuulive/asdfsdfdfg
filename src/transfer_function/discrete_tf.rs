@@ -5,10 +5,13 @@
 use crate::{linear_system::discrete::Discretization, transfer_function::Tf, units::Seconds, Eval};
 
 use num_complex::Complex;
-use num_traits::{Float, MulAdd};
+use num_traits::{Float, MulAdd, Num};
 
-/// Discrete transfer function.
-pub struct Tfz<T: Float> {
+/// Discrete transfer function
+pub type Tfz<T> = Tf<T>;
+
+/// Discretization of a transfer function
+pub struct TfDiscretization<T: Num> {
     /// Transfer function
     tf: Tf<T>,
     /// Sampling period
@@ -17,9 +20,9 @@ pub struct Tfz<T: Float> {
     conversion: fn(Complex<T>, Seconds<T>) -> Complex<T>,
 }
 
-/// Implementation of `Tfz` struct.
-impl<T: Float> Tfz<T> {
-    /// Create a new discrete transfer function from a continuous one.
+/// Implementation of `TfDiscretization` struct.
+impl<T: Num> TfDiscretization<T> {
+    /// Create a new discretization transfer function from a continuous one.
     ///
     /// # Arguments
     /// * `tf` - Continuous transfer function
@@ -32,7 +35,10 @@ impl<T: Float> Tfz<T> {
     ) -> Self {
         Self { tf, ts, conversion }
     }
+}
 
+/// Implementation of `TfDiscretization` struct.
+impl<T: Float> TfDiscretization<T> {
     /// Discretize a transfer function.
     ///
     /// # Arguments
@@ -46,7 +52,7 @@ impl<T: Float> Tfz<T> {
     ///     Eval,
     ///     linear_system::discrete::Discretization,
     ///     polynomial::Poly,
-    ///     transfer_function::{Tf, discrete_tf::Tfz},
+    ///     transfer_function::{Tf, discrete_tf::TfDiscretization},
     ///     units::Seconds
     /// };
     /// use num_complex::Complex64;
@@ -54,7 +60,7 @@ impl<T: Float> Tfz<T> {
     ///     Poly::new_from_coeffs(&[2., 20.]),
     ///     Poly::new_from_coeffs(&[1., 0.1]),
     /// );
-    /// let tfz = Tfz::discretize(tf, Seconds(1.), Discretization::BackwardEuler);
+    /// let tfz = TfDiscretization::discretize(tf, Seconds(1.), Discretization::BackwardEuler);
     /// let gz = tfz.eval(&Complex64::i());
     /// ```
     pub fn discretize(tf: Tf<T>, ts: Seconds<T>, method: Discretization) -> Self {
@@ -97,8 +103,8 @@ fn tu<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
     complex * float
 }
 
-/// Implementation of the evaluation of a transfer function
-impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for Tfz<T> {
+/// Implementation of the evaluation of a transfer function discretization
+impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for TfDiscretization<T> {
     fn eval(&self, z: &Complex<T>) -> Complex<T> {
         let s = (self.conversion)(*z, self.ts);
         self.tf.eval(&s)
@@ -108,13 +114,17 @@ impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for Tfz<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::polynomial::Poly;
-    use crate::{units::Decibel, Eval};
+    use crate::{poly, polynomial::Poly, units::Decibel, Eval};
     use num_complex::Complex64;
 
     #[test]
+    fn tfz() {
+        let _ = Tfz::new(poly!(1.), poly!(1., 2., 3.));
+    }
+
+    #[test]
     fn new_tfz() {
-        let _t = Tfz {
+        let _t = TfDiscretization {
             tf: Tf::new(
                 Poly::new_from_coeffs(&[0., 1.]),
                 Poly::new_from_coeffs(&[1., 1., 1.]),
@@ -144,7 +154,7 @@ mod tests {
         );
         let z = 0.5 * Complex64::i();
         let ts = Seconds(1.);
-        let tfz = Tfz::discretize(tf, ts, Discretization::ForwardEuler);
+        let tfz = TfDiscretization::discretize(tf, ts, Discretization::ForwardEuler);
         let s = (tfz.conversion)(z, ts);
         assert_eq!(Complex64::new(-1.0, 0.5), s);
 
@@ -161,7 +171,7 @@ mod tests {
         );
         let z = 0.5 * Complex64::i();
         let ts = Seconds(1.);
-        let tfz = Tfz::discretize(tf, ts, Discretization::BackwardEuler);
+        let tfz = TfDiscretization::discretize(tf, ts, Discretization::BackwardEuler);
         let s = (tfz.conversion)(z, ts);
         assert_eq!(Complex64::new(1.0, 2.0), s);
 
@@ -178,7 +188,7 @@ mod tests {
         );
         let z = 0.5 * Complex64::i();
         let ts = Seconds(1.);
-        let tfz = Tfz::discretize(tf, ts, Discretization::Tustin);
+        let tfz = TfDiscretization::discretize(tf, ts, Discretization::Tustin);
         let s = (tfz.conversion)(z, ts);
         assert_eq!(Complex64::new(-1.2, 1.6), s);
 
