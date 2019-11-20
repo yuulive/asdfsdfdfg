@@ -112,6 +112,38 @@ impl<T: ComplexField + Debug + Float + RealField + Scalar> Tf<T> {
     }
 }
 
+impl<T: Float> Tf<T> {
+    /// Negative feedback.
+    ///
+    /// ```text
+    ///           L(s)
+    /// G(s) = ----------
+    ///         1 + L(s)
+    /// ```
+    /// where `self = L(s)`
+    pub fn feedback_n(&self) -> Self {
+        Tf {
+            num: self.num.clone(),
+            den: &self.den + &self.num,
+        }
+    }
+
+    /// Positive feedback
+    ///
+    /// ```text
+    ///           L(s)
+    /// G(s) = ----------
+    ///         1 - L(s)
+    /// ```
+    /// where `self = L(s)`
+    pub fn feedback_p(&self) -> Self {
+        Tf {
+            num: self.num.clone(),
+            den: &self.den - &self.num,
+        }
+    }
+}
+
 impl TryFrom<Ss<f64>> for Tf<f64> {
     type Error = &'static str;
 
@@ -464,6 +496,20 @@ mod tests {
             vec![Complex32::new(-1.5, -1.), Complex32::new(-1.5, 1.)],
             tf.complex_zeros()
         );
+    }
+
+    #[quickcheck]
+    fn tf_negative_feedback(b: f64) -> bool {
+        let l = Tf::new(poly!(1.), poly!(-b, 1.));
+        let g = Tf::new(poly!(1.), poly!(-b + 1., 1.));
+        g == l.feedback_n()
+    }
+
+    #[quickcheck]
+    fn tf_positive_feedback(b: f64) -> bool {
+        let l = Tf::new(poly!(1.), poly!(-b, 1.));
+        let g = Tf::new(poly!(1.), poly!(-b - 1., 1.));
+        g == l.feedback_p()
     }
 
     #[test]
