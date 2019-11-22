@@ -1,6 +1,9 @@
 extern crate automatica;
 
-use automatica::linear_system::{discrete::Discrete, Ss};
+use automatica::{
+    linear_system::{discrete::Discrete, Ss},
+    signals::discrete,
+};
 
 fn main() {
     let a = [0.2, 0., 0., 0.6, 0.15, 0., 0., 0.8, 0.08];
@@ -12,7 +15,7 @@ fn main() {
     println!("{}", &sys);
 
     let input = 50.;
-    let te = sys.time_evolution(8, |_| vec![input], &[0., 0., 0.]);
+    let te = sys.time_evolution(8, discrete::step(input, 1), &[0., 0., 0.]);
 
     let last_step = te.last().unwrap();
     println!("{:?}", last_step);
