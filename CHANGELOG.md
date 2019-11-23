@@ -5,6 +5,7 @@
 - Implementation of transfer function arithmetic operations
 - Implementation of transfer function feedback
 - Check for system stability
+- Add common input signals
 
 ## [0.6.0] - 2019-11-18
 ## Added

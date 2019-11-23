@@ -26,6 +26,21 @@ pub mod continuous {
     pub fn step<T: Float>(k: T, size: usize) -> impl Fn(Seconds<T>) -> Vec<T> {
         move |_| vec![k; size]
     }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[quickcheck]
+        fn zero_input(s: f64) -> bool {
+            0. == zero(1)(Seconds(s))[0]
+        }
+
+        #[quickcheck]
+        fn step_input(s: f64) -> bool {
+            3. == step(3., 1)(Seconds(s))[0]
+        }
+    }
 }
 
 pub mod discrete {
@@ -65,6 +80,29 @@ pub mod discrete {
             } else {
                 vec![T::zero(); size]
             }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[quickcheck]
+        fn zero_input(s: usize) -> bool {
+            0. == zero(1)(s)[0]
+        }
+
+        #[quickcheck]
+        fn step_input(s: usize) -> bool {
+            3. == step(3., 1)(s)[0]
+        }
+
+        #[test]
+        fn impulse_input() {
+            let mut out: Vec<_> = (0..20).map(|t| impulse(10., 15, 1)(t)[0]).collect();
+            assert_eq!(10., out[15]);
+            out.remove(15);
+            assert!(out.iter().all(|&o| o == 0.))
         }
     }
 }
