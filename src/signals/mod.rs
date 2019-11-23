@@ -2,7 +2,7 @@
 
 use num_traits::Float;
 
-use crate::units::Seconds;
+use crate::units::{RadiantsPerSecond, Seconds};
 
 pub mod continuous {
     //! Collection of continuous signals.
@@ -27,9 +27,27 @@ pub mod continuous {
         move |_| vec![k; size]
     }
 
+    /// Sine input (single input single output).
+    ///
+    /// `sin(omega*t - phase)`
+    ///
+    /// # Arguments
+    ///
+    /// * `a` - sine amplitude
+    /// * `omega` - sine pulse in radiants per second
+    /// * `phi` - sine phase in radiants
+    pub fn sin_siso<T: Float>(
+        a: T,
+        omega: RadiantsPerSecond<T>,
+        phi: T,
+    ) -> impl Fn(Seconds<T>) -> Vec<T> {
+        move |t| vec![a * T::sin(omega.0 * t.0 - phi)]
+    }
+
     #[cfg(test)]
     mod tests {
         use super::*;
+        use std::f64::consts::PI;
 
         #[quickcheck]
         fn zero_input(s: f64) -> bool {
@@ -39,6 +57,13 @@ pub mod continuous {
         #[quickcheck]
         fn step_input(s: f64) -> bool {
             3. == step(3., 1)(Seconds(s))[0]
+        }
+
+        #[quickcheck]
+        fn sin_input(t: f64) -> bool {
+            let sine = sin_siso(1., RadiantsPerSecond(0.5), 0.)(Seconds(t))[0];
+            let traslated_sine = sin_siso(1., RadiantsPerSecond(0.5), PI)(Seconds(t))[0];
+            relative_eq!(sine, -traslated_sine, max_relative = 1e-10)
         }
     }
 }
