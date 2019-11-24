@@ -26,6 +26,7 @@ use num_complex::Complex;
 use num_traits::{Float, FloatConst, Inv, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
+use std::marker::PhantomData;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
 use std::{
     fmt,
@@ -34,15 +35,31 @@ use std::{
 
 /// Transfer function representation of a linear system
 #[derive(Debug, PartialEq)]
-pub struct Tf<T> {
+pub struct TfGen<T, U> {
     /// Transfer function numerator
     num: Poly<T>,
     /// Transfer function denominator
     den: Poly<T>,
+    /// Tag to disambiguate continuous and discrete
+    _type: PhantomData<U>,
 }
 
+/// Type for continuous systems
+#[derive(Debug, PartialEq)]
+pub struct Continuous;
+
+/// Type for discrete systems
+#[derive(Debug, PartialEq)]
+pub struct Discrete;
+
+/// Continuous transfer function
+pub type Tf<T> = TfGen<T, Continuous>;
+
+/// Discrete transfer function
+pub type Tfz<T> = TfGen<T, Discrete>;
+
 /// Implementation of transfer function methods
-impl<T: Float> Tf<T> {
+impl<T: Float, U> TfGen<T, U> {
     /// Create a new transfer function given its numerator and denominator
     ///
     /// # Arguments
@@ -56,7 +73,11 @@ impl<T: Float> Tf<T> {
     pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
         assert!(!num.is_zero());
         assert!(!den.is_zero());
-        Self { num, den }
+        Self {
+            num,
+            den,
+            _type: PhantomData::<U>,
+        }
     }
 
     /// Extract transfer function numerator
@@ -71,26 +92,27 @@ impl<T: Float> Tf<T> {
 }
 
 /// Implementation of transfer function methods
-impl<T> Tf<T> {
+impl<T, U> TfGen<T, U> {
     /// Compute the reciprocal of a transfer function in place.
     pub fn inv_mut(&mut self) {
         std::mem::swap(&mut self.num, &mut self.den);
     }
 }
 
-impl<T: Clone> Inv for &Tf<T> {
-    type Output = Tf<T>;
+impl<T: Clone, U> Inv for &TfGen<T, U> {
+    type Output = TfGen<T, U>;
 
     /// Compute the reciprocal of a transfer function.
     fn inv(self) -> Self::Output {
-        Tf {
+        Self::Output {
             num: self.den.clone(),
             den: self.num.clone(),
+            _type: PhantomData::<U>,
         }
     }
 }
 
-impl<T: ComplexField + Debug + Float + RealField + Scalar> Tf<T> {
+impl<T: ComplexField + Debug + Float + RealField + Scalar, U> TfGen<T, U> {
     /// Calculate the poles of the transfer function
     pub fn poles(&self) -> Option<Vec<T>> {
         self.den.roots()
@@ -112,7 +134,7 @@ impl<T: ComplexField + Debug + Float + RealField + Scalar> Tf<T> {
     }
 }
 
-impl<T: Float> Tf<T> {
+impl<T: Float, U> TfGen<T, U> {
     /// Negative feedback.
     ///
     /// ```text
@@ -122,9 +144,10 @@ impl<T: Float> Tf<T> {
     /// ```
     /// where `self = L(s)`
     pub fn feedback_n(&self) -> Self {
-        Tf {
+        Self {
             num: self.num.clone(),
             den: &self.den + &self.num,
+            _type: PhantomData::<U>,
         }
     }
 
@@ -137,14 +160,15 @@ impl<T: Float> Tf<T> {
     /// ```
     /// where `self = L(s)`
     pub fn feedback_p(&self) -> Self {
-        Tf {
+        Self {
             num: self.num.clone(),
             den: &self.den - &self.num,
+            _type: PhantomData::<U>,
         }
     }
 }
 
-impl TryFrom<Ss<f64>> for Tf<f64> {
+impl<U> TryFrom<Ss<f64>> for TfGen<f64, U> {
     type Error = &'static str;
 
     /// Convert a state-space representation into transfer functions.
@@ -169,17 +193,17 @@ impl TryFrom<Ss<f64>> for Tf<f64> {
 
 /// Implementation of transfer function negation.
 /// Negative sign is transferred to the numerator.
-impl<T: Float> Neg for &Tf<T> {
-    type Output = Tf<T>;
+impl<T: Float, U> Neg for &TfGen<T, U> {
+    type Output = TfGen<T, U>;
 
     fn neg(self) -> Self::Output {
-        Tf::new(-&self.num, self.den.clone())
+        Self::Output::new(-&self.num, self.den.clone())
     }
 }
 
 /// Implementation of transfer function negation.
 /// Negative sign is transferred to the numerator.
-impl<T: Float> Neg for Tf<T> {
+impl<T: Float, U> Neg for TfGen<T, U> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -188,8 +212,8 @@ impl<T: Float> Neg for Tf<T> {
 }
 
 /// Implementation of transfer function addition
-impl<T: Float> Add for &Tf<T> {
-    type Output = Tf<T>;
+impl<T: Float, U> Add for &TfGen<T, U> {
+    type Output = TfGen<T, U>;
 
     fn add(self, rhs: Self) -> Self::Output {
         let (num, den) = if self.den == rhs.den {
@@ -200,12 +224,12 @@ impl<T: Float> Add for &Tf<T> {
                 &self.den * &rhs.den,
             )
         };
-        Tf::new(num, den)
+        Self::Output::new(num, den)
     }
 }
 
 /// Implementation of transfer function addition
-impl<T: Float> Add for Tf<T> {
+impl<T: Float, U> Add for TfGen<T, U> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -214,8 +238,8 @@ impl<T: Float> Add for Tf<T> {
 }
 
 /// Implementation of transfer function subtraction
-impl<T: Float> Sub for &Tf<T> {
-    type Output = Tf<T>;
+impl<T: Float, U> Sub for &TfGen<T, U> {
+    type Output = TfGen<T, U>;
 
     fn sub(self, rhs: Self) -> Self::Output {
         let (num, den) = if self.den == rhs.den {
@@ -226,12 +250,12 @@ impl<T: Float> Sub for &Tf<T> {
                 &self.den * &rhs.den,
             )
         };
-        Tf::new(num, den)
+        Self::Output::new(num, den)
     }
 }
 
 /// Implementation of transfer function subtraction
-impl<T: Float> Sub for Tf<T> {
+impl<T: Float, U> Sub for TfGen<T, U> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
@@ -240,18 +264,18 @@ impl<T: Float> Sub for Tf<T> {
 }
 
 /// Implementation of transfer function multiplication
-impl<T: Float> Mul for &Tf<T> {
-    type Output = Tf<T>;
+impl<T: Float, U> Mul for &TfGen<T, U> {
+    type Output = TfGen<T, U>;
 
     fn mul(self, rhs: Self) -> Self::Output {
         let num = &self.num * &rhs.num;
         let den = &self.den * &rhs.den;
-        Tf::new(num, den)
+        Self::Output::new(num, den)
     }
 }
 
 /// Implementation of transfer function multiplication
-impl<T: Float> Mul for Tf<T> {
+impl<T: Float, U> Mul for TfGen<T, U> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
@@ -260,18 +284,18 @@ impl<T: Float> Mul for Tf<T> {
 }
 
 /// Implementation of transfer function division
-impl<T: Float> Div for &Tf<T> {
-    type Output = Tf<T>;
+impl<T: Float, U> Div for &TfGen<T, U> {
+    type Output = TfGen<T, U>;
 
     fn div(self, rhs: Self) -> Self::Output {
         let num = &self.num * &rhs.den;
         let den = &self.den * &rhs.num;
-        Tf::new(num, den)
+        Self::Output::new(num, den)
     }
 }
 
 /// Implementation of transfer function division
-impl<T: Float> Div for Tf<T> {
+impl<T: Float, U> Div for TfGen<T, U> {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self {
@@ -280,7 +304,7 @@ impl<T: Float> Div for Tf<T> {
 }
 
 /// Implementation of the evaluation of a transfer function
-impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for Tf<T> {
+impl<T: Float + MulAdd<Output = T>, U> Eval<Complex<T>> for TfGen<T, U> {
     fn eval(&self, s: &Complex<T>) -> Complex<T> {
         self.num.eval(s) / self.den.eval(s)
     }
