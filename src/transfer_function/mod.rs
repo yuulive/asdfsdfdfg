@@ -35,7 +35,7 @@ use std::{
 
 /// Transfer function representation of a linear system
 #[derive(Debug, PartialEq)]
-pub struct TfGen<T, U> {
+pub struct TfGen<T, U: Time> {
     /// Transfer function numerator
     num: Poly<T>,
     /// Transfer function denominator
@@ -44,13 +44,17 @@ pub struct TfGen<T, U> {
     _type: PhantomData<U>,
 }
 
+pub trait Time {}
+
 /// Type for continuous systems
 #[derive(Debug, PartialEq)]
-pub struct Continuous;
+pub enum Continuous {}
+impl Time for Continuous {}
 
 /// Type for discrete systems
 #[derive(Debug, PartialEq)]
-pub struct Discrete;
+pub enum Discrete {}
+impl Time for Discrete {}
 
 /// Continuous transfer function
 pub type Tf<T> = TfGen<T, Continuous>;
@@ -59,7 +63,7 @@ pub type Tf<T> = TfGen<T, Continuous>;
 pub type Tfz<T> = TfGen<T, Discrete>;
 
 /// Implementation of transfer function methods
-impl<T: Float, U> TfGen<T, U> {
+impl<T: Float, U: Time> TfGen<T, U> {
     /// Create a new transfer function given its numerator and denominator
     ///
     /// # Arguments
@@ -92,14 +96,14 @@ impl<T: Float, U> TfGen<T, U> {
 }
 
 /// Implementation of transfer function methods
-impl<T, U> TfGen<T, U> {
+impl<T, U: Time> TfGen<T, U> {
     /// Compute the reciprocal of a transfer function in place.
     pub fn inv_mut(&mut self) {
         std::mem::swap(&mut self.num, &mut self.den);
     }
 }
 
-impl<T: Clone, U> Inv for &TfGen<T, U> {
+impl<T: Clone, U: Time> Inv for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     /// Compute the reciprocal of a transfer function.
@@ -112,7 +116,7 @@ impl<T: Clone, U> Inv for &TfGen<T, U> {
     }
 }
 
-impl<T: ComplexField + Debug + Float + RealField + Scalar, U> TfGen<T, U> {
+impl<T: ComplexField + Debug + Float + RealField + Scalar, U: Time> TfGen<T, U> {
     /// Calculate the poles of the transfer function
     pub fn poles(&self) -> Option<Vec<T>> {
         self.den.roots()
@@ -134,7 +138,7 @@ impl<T: ComplexField + Debug + Float + RealField + Scalar, U> TfGen<T, U> {
     }
 }
 
-impl<T: Float, U> TfGen<T, U> {
+impl<T: Float, U: Time> TfGen<T, U> {
     /// Negative feedback.
     ///
     /// ```text
@@ -168,7 +172,7 @@ impl<T: Float, U> TfGen<T, U> {
     }
 }
 
-impl<U> TryFrom<Ss<f64>> for TfGen<f64, U> {
+impl<U: Time> TryFrom<Ss<f64>> for TfGen<f64, U> {
     type Error = &'static str;
 
     /// Convert a state-space representation into transfer functions.
@@ -193,7 +197,7 @@ impl<U> TryFrom<Ss<f64>> for TfGen<f64, U> {
 
 /// Implementation of transfer function negation.
 /// Negative sign is transferred to the numerator.
-impl<T: Float, U> Neg for &TfGen<T, U> {
+impl<T: Float, U: Time> Neg for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     fn neg(self) -> Self::Output {
@@ -203,7 +207,7 @@ impl<T: Float, U> Neg for &TfGen<T, U> {
 
 /// Implementation of transfer function negation.
 /// Negative sign is transferred to the numerator.
-impl<T: Float, U> Neg for TfGen<T, U> {
+impl<T: Float, U: Time> Neg for TfGen<T, U> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -212,7 +216,7 @@ impl<T: Float, U> Neg for TfGen<T, U> {
 }
 
 /// Implementation of transfer function addition
-impl<T: Float, U> Add for &TfGen<T, U> {
+impl<T: Float, U: Time> Add for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -229,7 +233,7 @@ impl<T: Float, U> Add for &TfGen<T, U> {
 }
 
 /// Implementation of transfer function addition
-impl<T: Float, U> Add for TfGen<T, U> {
+impl<T: Float, U: Time> Add for TfGen<T, U> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -238,7 +242,7 @@ impl<T: Float, U> Add for TfGen<T, U> {
 }
 
 /// Implementation of transfer function subtraction
-impl<T: Float, U> Sub for &TfGen<T, U> {
+impl<T: Float, U: Time> Sub for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -255,7 +259,7 @@ impl<T: Float, U> Sub for &TfGen<T, U> {
 }
 
 /// Implementation of transfer function subtraction
-impl<T: Float, U> Sub for TfGen<T, U> {
+impl<T: Float, U: Time> Sub for TfGen<T, U> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
@@ -264,7 +268,7 @@ impl<T: Float, U> Sub for TfGen<T, U> {
 }
 
 /// Implementation of transfer function multiplication
-impl<T: Float, U> Mul for &TfGen<T, U> {
+impl<T: Float, U: Time> Mul for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -275,7 +279,7 @@ impl<T: Float, U> Mul for &TfGen<T, U> {
 }
 
 /// Implementation of transfer function multiplication
-impl<T: Float, U> Mul for TfGen<T, U> {
+impl<T: Float, U: Time> Mul for TfGen<T, U> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
@@ -284,7 +288,7 @@ impl<T: Float, U> Mul for TfGen<T, U> {
 }
 
 /// Implementation of transfer function division
-impl<T: Float, U> Div for &TfGen<T, U> {
+impl<T: Float, U: Time> Div for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -295,7 +299,7 @@ impl<T: Float, U> Div for &TfGen<T, U> {
 }
 
 /// Implementation of transfer function division
-impl<T: Float, U> Div for TfGen<T, U> {
+impl<T: Float, U: Time> Div for TfGen<T, U> {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self {
@@ -304,7 +308,7 @@ impl<T: Float, U> Div for TfGen<T, U> {
 }
 
 /// Implementation of the evaluation of a transfer function
-impl<T: Float + MulAdd<Output = T>, U> Eval<Complex<T>> for TfGen<T, U> {
+impl<T: Float + MulAdd<Output = T>, U: Time> Eval<Complex<T>> for TfGen<T, U> {
     fn eval(&self, s: &Complex<T>) -> Complex<T> {
         self.num.eval(s) / self.den.eval(s)
     }
