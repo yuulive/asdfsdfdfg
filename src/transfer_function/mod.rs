@@ -8,7 +8,7 @@
 //! since it is equal for every transfer function.
 
 pub mod continuous;
-pub mod discrete_tf;
+pub mod discrete;
 
 use nalgebra::{ComplexField, RealField, Scalar};
 use ndarray::{Array2, Axis, Zip};

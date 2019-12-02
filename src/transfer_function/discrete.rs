@@ -56,7 +56,7 @@ impl<T: Float> TfDiscretization<T> {
     /// use automatica::{
     ///     linear_system::discrete::Discretization,
     ///     polynomial::Poly,
-    ///     transfer_function::discrete_tf::TfDiscretization,
+    ///     transfer_function::discrete::TfDiscretization,
     ///     units::Seconds,
     ///     Eval,
     ///     Tf

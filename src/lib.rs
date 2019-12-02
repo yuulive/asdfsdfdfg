@@ -58,7 +58,7 @@ pub mod signals;
 pub mod transfer_function;
 pub mod units;
 
-pub use transfer_function::{continuous::Tf, discrete_tf::Tfz};
+pub use transfer_function::{continuous::Tf, discrete::Tfz};
 
 /// Trait for the implementation of object evaluation
 pub trait Eval<T> {
