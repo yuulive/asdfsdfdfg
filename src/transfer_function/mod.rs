@@ -26,7 +26,7 @@ use std::{
 use crate::{
     linear_system::{self, Ss},
     polynomial::{MatrixOfPoly, Poly},
-    Discrete, Eval, Time,
+    Eval, Time,
 };
 
 /// Transfer function representation of a linear system
@@ -39,9 +39,6 @@ pub struct TfGen<T, U: Time> {
     /// Tag to disambiguate continuous and discrete
     _type: PhantomData<U>,
 }
-
-/// Discrete transfer function
-pub type Tfz<T> = TfGen<T, Discrete>;
 
 /// Implementation of transfer function methods
 impl<T: Float, U: Time> TfGen<T, U> {
