@@ -9,8 +9,8 @@ use automatica::{
         Ss,
     },
     signals::{continuous, discrete},
-    transfer_function::Tf,
     units::Seconds,
+    Tf,
 };
 
 fn main() {

@@ -58,6 +58,8 @@ pub mod signals;
 pub mod transfer_function;
 pub mod units;
 
+pub use transfer_function::{continuous::Tf, Tfz};
+
 /// Trait for the implementation of object evaluation
 pub trait Eval<T> {
     /// Evaluate the polynomial at the value x
@@ -67,6 +69,19 @@ pub trait Eval<T> {
     /// * `x` - Value at which the polynomial is evaluated
     fn eval(&self, x: &T) -> T;
 }
+
+/// Trait to tag Continuous or Discrete types
+pub trait Time {}
+
+/// Type for continuous systems
+#[derive(Debug, PartialEq)]
+pub enum Continuous {}
+impl Time for Continuous {}
+
+/// Type for discrete systems
+#[derive(Debug, PartialEq)]
+pub enum Discrete {}
+impl Time for Discrete {}
 
 /// Zip two slices with the given function
 ///

@@ -14,7 +14,7 @@ use crate::{
     linear_system::solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
     polynomial,
     polynomial::{Poly, PolyMatrix},
-    transfer_function::Tf,
+    transfer_function::continuous::Tf,
     units::Seconds,
 };
 

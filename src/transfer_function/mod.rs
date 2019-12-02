@@ -7,23 +7,13 @@
 //! numerators are stored in a matrix, while the denominator is stored once,
 //! since it is equal for every transfer function.
 
+pub mod continuous;
 pub mod discrete_tf;
-
-use crate::{
-    linear_system::{self, Ss},
-    plots::{
-        bode::{BodeIterator, BodePlot},
-        polar::{PolarIterator, PolarPlot},
-    },
-    polynomial::{MatrixOfPoly, Poly},
-    units::{Decibel, RadiantsPerSecond},
-    Eval,
-};
 
 use nalgebra::{ComplexField, RealField, Scalar};
 use ndarray::{Array2, Axis, Zip};
 use num_complex::Complex;
-use num_traits::{Float, FloatConst, Inv, MulAdd, One, Signed, Zero};
+use num_traits::{Float, Inv, MulAdd, One, Signed, Zero};
 
 use std::convert::TryFrom;
 use std::marker::PhantomData;
@@ -31,6 +21,12 @@ use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
+};
+
+use crate::{
+    linear_system::{self, Ss},
+    polynomial::{MatrixOfPoly, Poly},
+    Discrete, Eval, Time,
 };
 
 /// Transfer function representation of a linear system
@@ -43,21 +39,6 @@ pub struct TfGen<T, U: Time> {
     /// Tag to disambiguate continuous and discrete
     _type: PhantomData<U>,
 }
-
-pub trait Time {}
-
-/// Type for continuous systems
-#[derive(Debug, PartialEq)]
-pub enum Continuous {}
-impl Time for Continuous {}
-
-/// Type for discrete systems
-#[derive(Debug, PartialEq)]
-pub enum Discrete {}
-impl Time for Discrete {}
-
-/// Continuous transfer function
-pub type Tf<T> = TfGen<T, Continuous>;
 
 /// Discrete transfer function
 pub type Tfz<T> = TfGen<T, Discrete>;
@@ -314,32 +295,8 @@ impl<T: Float + MulAdd<Output = T>, U: Time> Eval<Complex<T>> for TfGen<T, U> {
     }
 }
 
-/// Implementation of the Bode plot for a transfer function
-impl<T: Decibel<T> + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf<T> {
-    fn bode(
-        self,
-        min_freq: RadiantsPerSecond<T>,
-        max_freq: RadiantsPerSecond<T>,
-        step: T,
-    ) -> BodeIterator<T> {
-        BodeIterator::new(self, min_freq, max_freq, step)
-    }
-}
-
-/// Implementation of the polar plot for a transfer function
-impl<T: Float + FloatConst + MulAdd<Output = T>> PolarPlot<T> for Tf<T> {
-    fn polar(
-        self,
-        min_freq: RadiantsPerSecond<T>,
-        max_freq: RadiantsPerSecond<T>,
-        step: T,
-    ) -> PolarIterator<T> {
-        PolarIterator::new(self, min_freq, max_freq, step)
-    }
-}
-
 /// Implementation of transfer function printing
-impl<T: Display + One + PartialEq + Signed + Zero> Display for Tf<T> {
+impl<T: Display + One + PartialEq + Signed + Zero, U: Time> Display for TfGen<T, U> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let s_num = self.num.to_string();
         let s_den = self.den.to_string();
@@ -470,7 +427,7 @@ impl<T: Display + One + PartialEq + Signed + Zero> fmt::Display for TfMatrix<T> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::poly;
+    use crate::{poly, Tf};
 
     #[test]
     fn transfer_function_creation() {
@@ -600,26 +557,6 @@ mod tests {
         let actual = tf2 / tf1;
         let expected = Tf::new(poly!(3., 15.), poly!(1., 8., 20., 28., 15.));
         assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn bode() {
-        let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
-        let b = tf.bode(RadiantsPerSecond(0.1), RadiantsPerSecond(100.0), 0.1);
-        for g in b.into_db_deg() {
-            assert!(g.magnitude() < 0.);
-            assert!(g.phase() < 0.);
-        }
-    }
-
-    #[test]
-    fn polar() {
-        let tf = Tf::new(poly!(5.), Poly::new_from_roots(&[-1., -10.]));
-        let p = tf.polar(RadiantsPerSecond(0.1), RadiantsPerSecond(10.0), 0.1);
-        for g in p {
-            assert!(g.magnitude() < 1.);
-            assert!(g.phase() < 0.);
-        }
     }
 
     #[test]

@@ -7,7 +7,7 @@
 //! let transfer_function = pid.tf();
 //! ```
 
-use crate::{polynomial::Poly, transfer_function::Tf};
+use crate::{polynomial::Poly, transfer_function::continuous::Tf};
 
 use num_traits::Float;
 
@@ -93,7 +93,7 @@ impl<T: Float> Pid<T> {
     /// # Example
     /// ```
     /// #[macro_use] extern crate automatica;
-    /// use automatica::{controller::pid::Pid, transfer_function::Tf};
+    /// use automatica::{controller::pid::Pid, Tf};
     /// let pid = Pid::new_ideal(2., 2., 0.5);
     /// let tf = Tf::new(poly![1., 2., 1.], poly![0., 1.]);
     /// assert_eq!(tf, pid.tf());
