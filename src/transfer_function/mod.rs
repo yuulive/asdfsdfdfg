@@ -311,13 +311,13 @@ impl<T: Display + One + PartialEq + Signed + Zero, U: Time> Display for TfGen<T,
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{poly, Tf};
+    use crate::{poly, Continuous, Discrete};
 
     #[test]
     fn transfer_function_creation() {
         let num = poly!(1., 2., 3.);
         let den = poly!(-4.2, -3.12, 0.0012);
-        let tf = Tf::new(num.clone(), den.clone());
+        let tf = TfGen::<_, Continuous>::new(num.clone(), den.clone());
         assert_eq!(&num, tf.num());
         assert_eq!(&den, tf.den());
     }
@@ -326,10 +326,10 @@ mod tests {
     fn tf_inversion() {
         let num1 = poly!(1., 2., 3.);
         let den1 = poly!(-4.2, -3.12, 0.0012);
-        let tf1 = Tf::new(num1.clone(), den1.clone());
+        let tf1 = TfGen::<_, Discrete>::new(num1.clone(), den1.clone());
         let num2 = poly!(-4.2, -3.12, 0.0012);
         let den2 = poly!(1., 2., 3.);
-        let mut tf2 = Tf::new(num2.clone(), den2.clone());
+        let mut tf2 = TfGen::new(num2.clone(), den2.clone());
         assert_eq!(tf2, tf1.inv());
         tf2.inv_mut();
         assert_eq!(tf2, tf1);
@@ -337,14 +337,14 @@ mod tests {
 
     #[test]
     fn poles() {
-        let tf = Tf::new(poly!(1.), poly!(6., -5., 1.));
+        let tf = TfGen::<_, Continuous>::new(poly!(1.), poly!(6., -5., 1.));
         assert_eq!(Some(vec![2., 3.]), tf.poles());
     }
 
     #[test]
     fn complex_poles() {
         use num_complex::Complex32;
-        let tf = Tf::new(poly!(1.), poly!(10., -6., 1.));
+        let tf = TfGen::<_, Continuous>::new(poly!(1.), poly!(10., -6., 1.));
         assert_eq!(
             vec![Complex32::new(3., -1.), Complex32::new(3., 1.)],
             tf.complex_poles()
@@ -353,14 +353,14 @@ mod tests {
 
     #[test]
     fn zeros() {
-        let tf = Tf::new(poly!(1.), poly!(6., -5., 1.));
+        let tf = TfGen::<_, Discrete>::new(poly!(1.), poly!(6., -5., 1.));
         assert_eq!(Some(vec![]), tf.zeros());
     }
 
     #[test]
     fn complex_zeros() {
         use num_complex::Complex32;
-        let tf = Tf::new(poly!(3.25, 3., 1.), poly!(10., -3., 1.));
+        let tf = TfGen::<_, Discrete>::new(poly!(3.25, 3., 1.), poly!(10., -3., 1.));
         assert_eq!(
             vec![Complex32::new(-1.5, -1.), Complex32::new(-1.5, 1.)],
             tf.complex_zeros()
@@ -369,83 +369,83 @@ mod tests {
 
     #[quickcheck]
     fn tf_negative_feedback(b: f64) -> bool {
-        let l = Tf::new(poly!(1.), poly!(-b, 1.));
-        let g = Tf::new(poly!(1.), poly!(-b + 1., 1.));
+        let l = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b, 1.));
+        let g = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b + 1., 1.));
         g == l.feedback_n()
     }
 
     #[quickcheck]
     fn tf_positive_feedback(b: f64) -> bool {
-        let l = Tf::new(poly!(1.), poly!(-b, 1.));
-        let g = Tf::new(poly!(1.), poly!(-b - 1., 1.));
+        let l = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b, 1.));
+        let g = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b - 1., 1.));
         g == l.feedback_p()
     }
 
     #[test]
     fn tf_neg() {
-        let tf1 = Tf::new(poly!(1., 2.), poly!(1., 5.));
-        let tf2 = Tf::new(poly!(-1., -2.), poly!(1., 5.));
+        let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(1., 5.));
+        let tf2 = TfGen::<_, Discrete>::new(poly!(-1., -2.), poly!(1., 5.));
         assert_eq!(-&tf1, tf2);
         assert_eq!(tf1, -(-(&tf1)));
     }
 
     #[test]
     fn tf_add1() {
-        let tf1 = Tf::new(poly!(1., 2.), poly!(1., 5.));
-        let tf2 = Tf::new(poly!(3.), poly!(1., 5.));
+        let tf1 = TfGen::<_, Continuous>::new(poly!(1., 2.), poly!(1., 5.));
+        let tf2 = TfGen::new(poly!(3.), poly!(1., 5.));
         let actual = &tf1 + &tf2;
-        let expected = Tf::new(poly!(4., 2.), poly!(1., 5.));
+        let expected = TfGen::new(poly!(4., 2.), poly!(1., 5.));
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tf_add2() {
-        let tf1 = Tf::new(poly!(1., 2.), poly!(3., -4.));
-        let tf2 = Tf::new(poly!(3.), poly!(1., 5.));
+        let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(3., -4.));
+        let tf2 = TfGen::new(poly!(3.), poly!(1., 5.));
         let actual = tf1 + tf2;
-        let expected = Tf::new(poly!(10., -5., 10.), poly!(3., 11., -20.));
+        let expected = TfGen::new(poly!(10., -5., 10.), poly!(3., 11., -20.));
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tf_sub1() {
-        let tf1 = Tf::new(poly!(-1., 9.), poly!(4., -1.));
-        let tf2 = Tf::new(poly!(3.), poly!(4., -1.));
+        let tf1 = TfGen::<_, Continuous>::new(poly!(-1., 9.), poly!(4., -1.));
+        let tf2 = TfGen::new(poly!(3.), poly!(4., -1.));
         let actual = &tf1 - &tf2;
-        let expected = Tf::new(poly!(-4., 9.), poly!(4., -1.));
+        let expected = TfGen::new(poly!(-4., 9.), poly!(4., -1.));
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tf_sub2() {
-        let tf1 = Tf::new(poly!(1., -2.), poly!(4., -4.));
-        let tf2 = Tf::new(poly!(2.), poly!(2., 3.));
+        let tf1 = TfGen::<_, Discrete>::new(poly!(1., -2.), poly!(4., -4.));
+        let tf2 = TfGen::new(poly!(2.), poly!(2., 3.));
         let actual = tf1 - tf2;
-        let expected = Tf::new(poly!(-6., 7., -6.), poly!(8., 4., -12.));
+        let expected = TfGen::new(poly!(-6., 7., -6.), poly!(8., 4., -12.));
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tf_mul() {
-        let tf1 = Tf::new(poly!(1., 2., 3.), poly!(1., 5.));
-        let tf2 = Tf::new(poly!(3.), poly!(1., 6., 5.));
+        let tf1 = TfGen::<_, Continuous>::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let tf2 = TfGen::new(poly!(3.), poly!(1., 6., 5.));
         let actual = &tf1 * &tf2;
-        let expected = Tf::new(poly!(3., 6., 9.), poly!(1., 11., 35., 25.));
+        let expected = TfGen::new(poly!(3., 6., 9.), poly!(1., 11., 35., 25.));
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tf_div() {
-        let tf1 = Tf::new(poly!(1., 2., 3.), poly!(1., 5.));
-        let tf2 = Tf::new(poly!(3.), poly!(1., 6., 5.));
+        let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let tf2 = TfGen::new(poly!(3.), poly!(1., 6., 5.));
         let actual = tf2 / tf1;
-        let expected = Tf::new(poly!(3., 15.), poly!(1., 8., 20., 28., 15.));
+        let expected = TfGen::new(poly!(3., 15.), poly!(1., 8., 20., 28., 15.));
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn print() {
-        let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
+        let tf = TfGen::<_, Continuous>::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
         assert_eq!("1\n──────\n1 +1*s", format!("{}", tf));
     }
 }
