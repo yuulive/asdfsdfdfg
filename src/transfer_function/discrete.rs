@@ -2,13 +2,18 @@
 //!
 //! The discretization can be performed with Euler or Tustin methods.
 
-use crate::{linear_system::discrete::Discretization, transfer_function::Tf, units::Seconds, Eval};
+use crate::{
+    linear_system::discrete::Discretization,
+    transfer_function::{continuous::Tf, TfGen},
+    units::Seconds,
+    Discrete, Eval,
+};
 
 use num_complex::Complex;
 use num_traits::{Float, MulAdd, Num};
 
 /// Discrete transfer function
-pub type Tfz<T> = Tf<T>;
+pub type Tfz<T> = TfGen<T, Discrete>;
 
 /// Discretization of a transfer function
 pub struct TfDiscretization<T: Num> {
@@ -49,11 +54,12 @@ impl<T: Float> TfDiscretization<T> {
     /// Example
     /// ```
     /// use automatica::{
-    ///     Eval,
     ///     linear_system::discrete::Discretization,
     ///     polynomial::Poly,
-    ///     transfer_function::{Tf, discrete_tf::TfDiscretization},
-    ///     units::Seconds
+    ///     transfer_function::discrete::TfDiscretization,
+    ///     units::Seconds,
+    ///     Eval,
+    ///     Tf
     /// };
     /// use num_complex::Complex64;
     /// let tf = Tf::new(

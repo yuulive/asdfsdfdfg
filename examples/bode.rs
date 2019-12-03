@@ -1,7 +1,7 @@
 extern crate automatica;
 
 use automatica::plots::bode::BodePlot;
-use automatica::transfer_function::Tf;
+use automatica::Tf;
 use automatica::{
     polynomial::Poly,
     units::{Decibel, RadiantsPerSecond},

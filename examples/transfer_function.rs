@@ -1,8 +1,7 @@
 #[macro_use]
 extern crate automatica;
 
-use automatica::transfer_function::Tf;
-use automatica::Eval;
+use automatica::{Eval, Tf};
 
 use num_complex::Complex64;
 

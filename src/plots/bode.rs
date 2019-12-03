@@ -6,7 +6,7 @@
 //! inverse of the poles and zeros time constants.
 
 use crate::{
-    transfer_function::Tf,
+    transfer_function::continuous::Tf,
     units::{Decibel, Hertz, RadiantsPerSecond},
     Eval,
 };
