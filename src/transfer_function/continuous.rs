@@ -9,11 +9,28 @@ use crate::{
     },
     transfer_function::TfGen,
     units::{Decibel, RadiantsPerSecond},
-    Continuous,
+    Continuous, Eval,
 };
 
 /// Continuous transfer function
 pub type Tf<T> = TfGen<T, Continuous>;
+
+impl<T: Float + MulAdd<Output = T>> Tf<T> {
+    /// Static gain `G(0)`.
+    /// Ratio between constant output and constant input.
+    /// Static gain is defined only for transfer functions of 0 type.
+    ///
+    /// Example
+    ///
+    /// ```
+    /// use automatica::{poly, Tf};
+    /// let tf = Tf::new(poly!(4., -3.),poly!(2., 5., -0.5));
+    /// assert_eq!(2., tf.static_gain());
+    /// ```
+    pub fn static_gain(&self) -> T {
+        self.eval(&T::zero())
+    }
+}
 
 /// Implementation of the Bode plot for a transfer function
 impl<T: Decibel<T> + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf<T> {

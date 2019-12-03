@@ -11,10 +11,13 @@ fn main() {
     println!("T:\n{}", tf);
 
     let c = tf.eval(&Complex64::new(0., 0.9));
+    println!("\nEvaluation at s = 0 + 0.9i:");
     println!(
         "{}\n{}dB, {}°",
         c,
         20. * c.norm().log(10.),
         c.arg().to_degrees()
     );
+
+    println!("\nStatic Gain: {:.3}", tf.static_gain());
 }

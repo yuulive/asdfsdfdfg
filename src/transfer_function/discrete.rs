@@ -15,6 +15,23 @@ use num_traits::{Float, MulAdd, Num};
 /// Discrete transfer function
 pub type Tfz<T> = TfGen<T, Discrete>;
 
+impl<T: Float + MulAdd<Output = T>> Tfz<T> {
+    /// Static gain `G(1)`.
+    /// Ratio between constant output and constant input.
+    /// Static gain is defined only for transfer functions of 0 type.
+    ///
+    /// Example
+    ///
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let tf = Tfz::new(poly!(5., -3.),poly!(2., 5., -6.));
+    /// assert_eq!(2., tf.static_gain());
+    /// ```
+    pub fn static_gain(&self) -> T {
+        self.eval(&T::one())
+    }
+}
+
 /// Discretization of a transfer function
 pub struct TfDiscretization<T: Num> {
     /// Transfer function

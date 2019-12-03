@@ -411,7 +411,7 @@ where
     T: Copy + NumCast,
 {
     /// Evaluate the polynomial using Horner's method. The evaluation is safe
-    /// is the polynomial coefficient can be casted the type `N`.
+    /// if the polynomial coefficient can be casted the type `N`.
     ///
     /// # Arguments
     ///
