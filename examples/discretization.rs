@@ -4,13 +4,10 @@ extern crate automatica;
 use std::convert::TryFrom;
 
 use automatica::{
-    linear_system::{
-        discrete::{Discrete, Discretization},
-        Ss,
-    },
+    linear_system::discrete::{DiscreteTime, Discretization},
     signals::{continuous, discrete},
     units::Seconds,
-    Tf,
+    Ss, Tf,
 };
 
 fn main() {

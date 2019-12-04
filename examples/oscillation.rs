@@ -1,6 +1,6 @@
 extern crate automatica;
 
-use automatica::{linear_system::Ss, signals::continuous, units::Seconds, Tf};
+use automatica::{signals::continuous, units::Seconds, Ss, Tf};
 
 use std::convert::TryFrom;
 

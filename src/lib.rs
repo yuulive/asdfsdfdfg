@@ -58,6 +58,7 @@ pub mod signals;
 pub mod transfer_function;
 pub mod units;
 
+pub use linear_system::{discrete::Ssd, Ss};
 pub use transfer_function::{continuous::Tf, discrete::Tfz, matrix::TfMatrix};
 
 /// Trait for the implementation of object evaluation

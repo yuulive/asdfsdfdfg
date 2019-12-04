@@ -1,9 +1,6 @@
 extern crate automatica;
 
-use automatica::{
-    linear_system::{discrete::Discrete, Ss},
-    signals::discrete,
-};
+use automatica::{linear_system::discrete::DiscreteTime, signals::discrete, Ss};
 
 fn main() {
     let a = [0.2, 0., 0., 0.6, 0.15, 0., 0., 0.8, 0.08];

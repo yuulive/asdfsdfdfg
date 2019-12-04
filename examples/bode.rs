@@ -1,11 +1,10 @@
 extern crate automatica;
 
-use automatica::plots::bode::BodePlot;
-use automatica::Tf;
 use automatica::{
+    plots::bode::BodePlot,
     polynomial::Poly,
     units::{Decibel, RadiantsPerSecond},
-    Eval,
+    Eval, Tf,
 };
 
 use num_complex::Complex;

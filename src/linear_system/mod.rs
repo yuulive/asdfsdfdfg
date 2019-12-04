@@ -10,22 +10,24 @@
 pub mod discrete;
 pub mod solver;
 
+use nalgebra::{ComplexField, DMatrix, DVector, RealField, Scalar, Schur};
+use num_complex::Complex;
+use num_traits::Float;
+
+use std::{
+    convert::TryFrom,
+    fmt,
+    fmt::{Debug, Display, Formatter},
+    marker::PhantomData,
+};
+
 use crate::{
     linear_system::solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
     polynomial,
     polynomial::{Poly, PolyMatrix},
     transfer_function::continuous::Tf,
     units::Seconds,
-};
-
-use nalgebra::{ComplexField, DMatrix, DVector, RealField, Scalar, Schur};
-use num_complex::Complex;
-use num_traits::Float;
-
-use std::convert::TryFrom;
-use std::{
-    fmt,
-    fmt::{Debug, Display, Formatter},
+    Continuous, Time,
 };
 
 /// State-space representation of a linear system
@@ -35,7 +37,7 @@ use std::{
 /// y(t)    = C * x(t) + D * u(t)
 /// ```
 #[derive(Debug)]
-pub struct Ss<T: Scalar> {
+pub struct SsGen<T: Scalar, U: Time> {
     /// A matrix
     a: DMatrix<T>,
     /// B matrix
@@ -46,7 +48,12 @@ pub struct Ss<T: Scalar> {
     d: DMatrix<T>,
     /// Dimensions
     dim: Dim,
+    /// Tag for continuous or discrete time
+    time: PhantomData<U>,
 }
+
+/// State-space representation of continuous time linear system
+pub type Ss<T> = SsGen<T, Continuous>;
 
 /// Dim of the linar system.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -120,6 +127,7 @@ impl<T: Scalar> Ss<T> {
                 inputs,
                 outputs,
             },
+            time: PhantomData,
         }
     }
 
@@ -433,6 +441,7 @@ impl<T: Float + Scalar + ComplexField + RealField> TryFrom<Tf<T>> for Ss<T> {
                 inputs: 1,
                 outputs: 1,
             },
+            time: PhantomData,
         })
     }
 }

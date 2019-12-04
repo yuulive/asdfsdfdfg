@@ -3,15 +3,24 @@
 //! This module contains the methods to handle discrete systems and
 //! discretization of continuous systems.
 
-use crate::linear_system::Ss;
-
-use std::ops::{AddAssign, MulAssign, SubAssign};
-
 use nalgebra::{ComplexField, DMatrix, DVector, Scalar};
 use num_traits::Float;
 
+use std::{
+    marker::PhantomData,
+    ops::{AddAssign, MulAssign, SubAssign},
+};
+
+use crate::{
+    linear_system::{Ss, SsGen},
+    Discrete,
+};
+
+/// State-space representation of discrete time linear system
+pub type Ssd<T> = SsGen<T, Discrete>;
+
 /// Trait for the set of methods on discrete linear systems.
-pub trait Discrete<T: Scalar> {
+pub trait DiscreteTime<T: Scalar> {
     /// Time evolution for a discrete linear system.
     ///
     /// # Arguments
@@ -43,7 +52,7 @@ pub enum Discretization {
     Tustin,
 }
 
-impl<T: ComplexField + Float + Scalar> Discrete<T> for Ss<T> {
+impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     /// Time evolution for a discrete linear system.
     ///
     /// # Arguments
@@ -55,7 +64,7 @@ impl<T: ComplexField + Float + Scalar> Discrete<T> for Ss<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::linear_system::{discrete::{Discrete, Discretization}, Ss};
+    /// use automatica::linear_system::{discrete::{DiscreteTime, Discretization}, Ss};
     /// let disc_sys = Ss::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
     /// let evo = disc_sys.time_evolution(20, impulse, &[0., 0.]);
@@ -88,7 +97,7 @@ impl<T: ComplexField + Float + Scalar> Discrete<T> for Ss<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::linear_system::{discrete::{Discrete, Discretization}, Ss};
+    /// use automatica::linear_system::{discrete::{DiscreteTime, Discretization}, Ss};
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
     /// let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
     /// let evo = disc_sys.time_evolution(20, |t| vec![1.], &[0., 0.]);
@@ -122,6 +131,7 @@ where
         c: sys.c.clone(),
         d: sys.d.clone(),
         dim: sys.dim,
+        time: PhantomData,
     })
 }
 
@@ -144,6 +154,7 @@ where
             d: &sys.d + &sys.c * &a * &sys.b * st,
             a,
             dim: sys.dim,
+            time: PhantomData,
         })
     } else {
         None
@@ -172,6 +183,7 @@ where
             d: &sys.d + &sys.c * &b * n_05,
             b,
             dim: sys.dim,
+            time: PhantomData,
         })
     } else {
         None
