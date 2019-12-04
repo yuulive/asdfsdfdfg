@@ -63,6 +63,12 @@ mod tests {
     use super::*;
     use crate::{poly, polynomial::Poly};
 
+    #[quickcheck]
+    fn static_gain(g: f32) -> bool {
+        let tf = Tf::new(poly!(g, -3.), poly!(1., 5., -0.5));
+        g == tf.static_gain()
+    }
+
     #[test]
     fn bode() {
         let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));

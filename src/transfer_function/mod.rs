@@ -442,6 +442,15 @@ mod tests {
     }
 
     #[test]
+    fn tf_mul2() {
+        let tf1 = TfGen::<_, Continuous>::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let tf2 = TfGen::new(poly!(-5.), poly!(1., 6., 5.));
+        let actual = tf1 * tf2;
+        let expected = TfGen::new(poly!(-5., -10., -15.), poly!(1., 11., 35., 25.));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn tf_div() {
         let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2., 3.), poly!(1., 5.));
         let tf2 = TfGen::new(poly!(3.), poly!(1., 6., 5.));

@@ -146,6 +146,12 @@ mod tests {
     }
 
     #[test]
+    fn static_gain() {
+        let tf = Tfz::new(poly!(5., -3.), poly!(2., 5., -6.));
+        assert_eq!(2., tf.static_gain());
+    }
+
+    #[test]
     fn new_tfz() {
         let _t = TfDiscretization {
             tf: Tf::new(

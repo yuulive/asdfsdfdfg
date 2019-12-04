@@ -6,6 +6,9 @@
 - Implementation of transfer function feedback
 - Check for system stability
 - Add common input signals
+- Add transfer function static gain
+## Changed
+- Split type for continuous and discrete transfer functions
 
 ## [0.6.0] - 2019-11-18
 ## Added
