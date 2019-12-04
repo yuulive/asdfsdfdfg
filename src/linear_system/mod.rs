@@ -25,7 +25,7 @@ use crate::{
     linear_system::solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
     polynomial,
     polynomial::{Poly, PolyMatrix},
-    transfer_function::continuous::Tf,
+    transfer_function::TfGen,
     units::Seconds,
     Continuous, Time,
 };
@@ -85,7 +85,7 @@ impl Dim {
 }
 
 /// Implementation of the methods for the state-space
-impl<T: Scalar> Ss<T> {
+impl<T: Scalar, U: Time> SsGen<T, U> {
     /// Create a new state-space representation
     ///
     /// # Arguments
@@ -166,7 +166,7 @@ impl<T: Scalar> Ss<T> {
 }
 
 /// Implementation of the methods for the state-space
-impl<T: ComplexField + Float + RealField> Ss<T> {
+impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// Calculate the poles of the system
     ///
     /// # Example
@@ -213,7 +213,7 @@ impl<T: ComplexField + Float + RealField> Ss<T> {
 }
 
 /// Implementation of the methods for the state-space
-impl<T: ComplexField + Scalar> Ss<T> {
+impl<T: ComplexField + Scalar, U: Time> SsGen<T, U> {
     /// Calculate the equilibrium point for the given input condition
     ///
     /// # Arguments
@@ -366,7 +366,7 @@ pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
     (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
 }
 
-impl<T: Float + Scalar + ComplexField + RealField> TryFrom<Tf<T>> for Ss<T> {
+impl<T: Float + Scalar + ComplexField + RealField, U: Time> TryFrom<TfGen<T, U>> for SsGen<T, U> {
     type Error = &'static str;
 
     /// Convert a transfer function representation into state space representation.
@@ -396,7 +396,7 @@ impl<T: Float + Scalar + ComplexField + RealField> TryFrom<Tf<T>> for Ss<T> {
     /// # Arguments
     ///
     /// `tf` - transfer function
-    fn try_from(tf: Tf<T>) -> Result<Self, Self::Error> {
+    fn try_from(tf: TfGen<T, U>) -> Result<Self, Self::Error> {
         // Get the denominator in the monic form and the leading coefficient.
         let (den_monic, den_n) = tf.den().monic();
         // Extend the numerator coefficients with zeros to the length of the
@@ -447,7 +447,7 @@ impl<T: Float + Scalar + ComplexField + RealField> TryFrom<Tf<T>> for Ss<T> {
 }
 
 /// Implementation of state-space representation
-impl<T: Scalar + Display> Display for Ss<T> {
+impl<T: Scalar + Display, U: Time> Display for SsGen<T, U> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
@@ -714,7 +714,8 @@ mod tests {
     }
 
     #[test]
-    fn convert_to_ss_1() {
+    fn convert_to_ss_continuous() {
+        use crate::transfer_function::continuous::Tf;
         let tf = Tf::new(
             Poly::new_from_coeffs(&[1.]),
             Poly::new_from_coeffs(&[1., 1., 1.]),
@@ -726,20 +727,5 @@ mod tests {
         assert_eq!(DMatrix::from_row_slice(2, 1, &[1., 0.]), *ss.b());
         assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), *ss.c());
         assert_eq!(DMatrix::from_row_slice(1, 1, &[0.]), *ss.d());
-    }
-
-    #[test]
-    fn convert_to_ss_2() {
-        let tf = Tf::new(
-            Poly::new_from_coeffs(&[1., 0., 1.]),
-            Poly::new_from_coeffs(&[3., 4., 1.]),
-        );
-
-        let ss = Ss::try_from(tf).unwrap();
-
-        assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -3., 1., -4.]), *ss.a());
-        assert_eq!(DMatrix::from_row_slice(2, 1, &[-2., -4.]), *ss.b());
-        assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), *ss.c());
-        assert_eq!(DMatrix::from_row_slice(1, 1, &[1.]), *ss.d());
     }
 }
