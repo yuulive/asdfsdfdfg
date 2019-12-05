@@ -1,12 +1,12 @@
 //! # Continuous time Linear system
 
-use nalgebra::{ComplexField, RealField};
+use nalgebra::{ComplexField, DVector, RealField, Scalar};
 use num_traits::Float;
 
 use crate::{
     linear_system::{
         solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
-        SsGen,
+        Equilibrium, SsGen,
     },
     units::Seconds,
     Continuous,
@@ -14,6 +14,47 @@ use crate::{
 
 /// State-space representation of continuous time linear system
 pub type Ss<T> = SsGen<T, Continuous>;
+
+/// Implementation of the methods for the state-space
+impl<T: ComplexField + Scalar> Ss<T> {
+    /// Calculate the equilibrium point for continuous time systems,
+    /// given the input condition
+    /// ```text
+    /// x = - A^-1 * B * u
+    /// y = - (C * A^-1 * B + D) * u
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `u` - Input vector
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::Ss;
+    /// let a = [-1., 1., -1., 0.25];
+    /// let b = [1., 0.25];
+    /// let c = [0., 1., -1., 1.];
+    /// let d = [0., 1.];
+    ///
+    /// let sys = Ss::new_from_slice(2, 1, 2, &a, &b, &c, &d);
+    /// let u = 0.0;
+    /// let eq = sys.equilibrium(&[u]).unwrap();
+    /// assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
+    /// ```
+    pub fn equilibrium(&self, u: &[T]) -> Option<Equilibrium<T>> {
+        assert_eq!(u.len(), self.b.ncols(), "Wrong number of inputs.");
+        let u = DVector::from_row_slice(u);
+        // 0 = A*x + B*u
+        let bu = -&self.b * &u;
+        let lu = &self.a.clone().lu();
+        // A*x = -B*u
+        let x = lu.solve(&bu)?;
+        // y = C*x + D*u
+        let y = &self.c * &x + &self.d * u;
+        Some(Equilibrium::new(x, y))
+    }
+}
 
 /// Implementation of the methods for the state-space
 impl<T: ComplexField + Float + RealField> Ss<T> {
@@ -113,6 +154,19 @@ impl Ss<f64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn equilibrium() {
+        let a = [-1., 1., -1., 0.25];
+        let b = [1., 0.25];
+        let c = [0., 1., -1., 1.];
+        let d = [0., 1.];
+
+        let sys = Ss::new_from_slice(2, 1, 2, &a, &b, &c, &d);
+        let u = 0.0;
+        let eq = sys.equilibrium(&[u]).unwrap();
+        assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
+    }
 
     #[test]
     fn stability() {

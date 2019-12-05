@@ -12,12 +12,53 @@ use std::{
 };
 
 use crate::{
-    linear_system::{continuous::Ss, SsGen},
+    linear_system::{continuous::Ss, Equilibrium, SsGen},
     Discrete,
 };
 
 /// State-space representation of discrete time linear system
 pub type Ssd<T> = SsGen<T, Discrete>;
+
+/// Implementation of the methods for the state-space
+impl<T: ComplexField + Scalar> Ssd<T> {
+    /// Calculate the equilibrium point for discrete time systems,
+    /// given the input condition
+    /// ```text
+    /// x = (I-A)^-1 * B * u
+    /// y = (C * (I-A)^-1 * B + D) * u
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `u` - Input vector
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::Ssd;
+    /// let a = [-1., 1., -1., 0.25];
+    /// let b = [1., 0.25];
+    /// let c = [0., 1., -1., 1.];
+    /// let d = [0., 1.];
+    ///
+    /// let sys = Ssd::new_from_slice(2, 1, 2, &a, &b, &c, &d);
+    /// let u = 0.0;
+    /// let eq = sys.equilibrium(&[u]).unwrap();
+    /// assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
+    /// ```
+    pub fn equilibrium(&self, u: &[T]) -> Option<Equilibrium<T>> {
+        assert_eq!(u.len(), self.b.ncols(), "Wrong number of inputs.");
+        let u = DVector::from_row_slice(u);
+        // x = A*x + B*u -> (I-A)*x = B*u
+        let bu = &self.b * &u;
+        let lu = (DMatrix::identity(self.a.nrows(), self.a.ncols()) - &self.a.clone()).lu();
+        // (I-A)*x = -B*u
+        let x = lu.solve(&bu)?;
+        // y = C*x + D*u
+        let y = &self.c * &x + &self.d * u;
+        Some(Equilibrium::new(x, y))
+    }
+}
 
 /// Trait for the set of methods on discrete linear systems.
 pub trait DiscreteTime<T: Scalar> {
@@ -263,6 +304,23 @@ mod tests {
     use super::*;
     use crate::polynomial::Poly;
     use std::convert::TryFrom;
+
+    #[test]
+    fn equilibrium() {
+        let a = &[0., 0.8, 0.4, 1., 0., 0., 0., 1., 0.7];
+        let b = &[0., 1., 0., 0., -1., 0.];
+        let c = &[1., 1.8, 1.1];
+        let d = &[-1., 1.];
+        let u = &[170., 0.];
+
+        let sys = Ssd::new_from_slice(3, 2, 1, a, b, c, d);
+        let eq = sys.equilibrium(u).unwrap();
+
+        assert_relative_eq!(200.0, eq.x()[0]);
+        assert_relative_eq!(200.0, eq.x()[1]);
+        assert_relative_eq!(100.0, eq.x()[2], max_relative = 1e-10);
+        assert_relative_eq!(500.0, eq.y()[0]);
+    }
 
     #[test]
     fn convert_to_ss_discrete() {

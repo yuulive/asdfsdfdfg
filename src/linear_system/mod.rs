@@ -51,7 +51,7 @@ pub struct SsGen<T: Scalar, U: Time> {
     time: PhantomData<U>,
 }
 
-/// Dim of the linar system.
+/// Dim of the linear system.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Dim {
     /// Number of states
@@ -192,42 +192,6 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
                 .as_slice()
                 .to_vec()
         }
-    }
-}
-
-/// Implementation of the methods for the state-space
-impl<T: ComplexField + Scalar, U: Time> SsGen<T, U> {
-    /// Calculate the equilibrium point for the given input condition
-    ///
-    /// # Arguments
-    ///
-    /// * `u` - Input vector
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use automatica::Ss;
-    /// let a = [-1., 1., -1., 0.25];
-    /// let b = [1., 0.25];
-    /// let c = [0., 1., -1., 1.];
-    /// let d = [0., 1.];
-    ///
-    /// let sys = Ss::new_from_slice(2, 1, 2, &a, &b, &c, &d);
-    /// let u = 0.0;
-    /// let eq = sys.equilibrium(&[u]).unwrap();
-    /// assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
-    /// ```
-    pub fn equilibrium(&self, u: &[T]) -> Option<Equilibrium<T>> {
-        assert_eq!(u.len(), self.b.ncols(), "Wrong number of inputs.");
-        let u = DVector::from_row_slice(u);
-        // 0 = A*x + B*u
-        let bu = -&self.b * &u;
-        let lu = &self.a.clone().lu();
-        // A*x = -B*u
-        let x = lu.solve(&bu)?;
-        // y = C*x + D*u
-        let y = &self.c * &x + &self.d * u;
-        Some(Equilibrium::new(x, y))
     }
 }
 
