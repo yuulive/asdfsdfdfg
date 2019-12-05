@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-    linear_system::{self, Ss},
+    linear_system::{self, continuous::Ss},
     polynomial::{MatrixOfPoly, Poly},
     Eval,
 };

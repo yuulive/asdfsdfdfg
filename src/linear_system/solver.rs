@@ -12,7 +12,7 @@
 //! `Radau` is an implicit Runge-Kutta-Radau of order 3 with 2 steps, it is
 //! suitable for stiff systems.
 
-use crate::{linear_system::Ss, units::Seconds};
+use crate::{linear_system::continuous::Ss, units::Seconds};
 
 use std::{
     marker::Sized,

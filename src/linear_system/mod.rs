@@ -7,6 +7,7 @@
 //! The time evolution of the system is defined through iterator, created by
 //! different solvers.
 
+pub mod continuous;
 pub mod discrete;
 pub mod solver;
 
@@ -22,12 +23,10 @@ use std::{
 };
 
 use crate::{
-    linear_system::solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
     polynomial,
     polynomial::{Poly, PolyMatrix},
     transfer_function::TfGen,
-    units::Seconds,
-    Continuous, Time,
+    Time,
 };
 
 /// State-space representation of a linear system
@@ -51,9 +50,6 @@ pub struct SsGen<T: Scalar, U: Time> {
     /// Tag for continuous or discrete time
     time: PhantomData<U>,
 }
-
-/// State-space representation of continuous time linear system
-pub type Ss<T> = SsGen<T, Continuous>;
 
 /// Dim of the linar system.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -105,7 +101,7 @@ impl<T: Scalar, U: Time> SsGen<T, U> {
     /// # Example
     ///
     /// ```
-    /// use automatica::linear_system::Ss;
+    /// use automatica::Ss;
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// ```
     pub fn new_from_slice(
@@ -156,8 +152,8 @@ impl<T: Scalar, U: Time> SsGen<T, U> {
     /// # Example
     ///
     /// ```
-    /// use automatica::linear_system::Ss;
-    /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
+    /// use automatica::Ssd;
+    /// let sys = Ssd::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// let dimensions = sys.dim();
     /// ```
     pub fn dim(&self) -> Dim {
@@ -172,7 +168,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// # Example
     ///
     /// ```
-    /// use automatica::linear_system::Ss;
+    /// use automatica::Ss;
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// let poles = sys.poles();
     /// assert_eq!(-2., poles[0].re);
@@ -197,19 +193,6 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
                 .to_vec()
         }
     }
-
-    /// System stability. Checks if all A matrix eigenvalues (poles) are negative.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use automatica::linear_system::Ss;
-    /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
-    /// assert!(sys.is_stable());
-    /// ```
-    pub fn is_stable(&self) -> bool {
-        self.poles().iter().all(|p| p.re.is_negative())
-    }
 }
 
 /// Implementation of the methods for the state-space
@@ -223,7 +206,7 @@ impl<T: ComplexField + Scalar, U: Time> SsGen<T, U> {
     /// # Example
     ///
     /// ```
-    /// use automatica::linear_system::Ss;
+    /// use automatica::Ss;
     /// let a = [-1., 1., -1., 0.25];
     /// let b = [1., 0.25];
     /// let c = [0., 1., -1., 1.];
@@ -245,85 +228,6 @@ impl<T: ComplexField + Scalar, U: Time> SsGen<T, U> {
         // y = C*x + D*u
         let y = &self.c * &x + &self.d * u;
         Some(Equilibrium::new(x, y))
-    }
-}
-
-/// Implementation of the methods for the state-space
-impl Ss<f64> {
-    /// Time evolution for the given input, using Runge-Kutta second order method
-    ///
-    /// # Arguments
-    ///
-    /// * `u` - input function returning a vector (column mayor)
-    /// * `x0` - initial state (column mayor)
-    /// * `h` - integration time interval
-    /// * `n` - integration steps
-    pub fn rk2<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F, f64>
-    where
-        F: Fn(Seconds<f64>) -> Vec<f64>,
-    {
-        RkIterator::new(self, u, x0, h, n, Order::Rk2)
-    }
-
-    /// Time evolution for the given input, using Runge-Kutta fourth order method
-    ///
-    /// # Arguments
-    ///
-    /// * `u` - input function returning a vector (column mayor)
-    /// * `x0` - initial state (column mayor)
-    /// * `h` - integration time interval
-    /// * `n` - integration steps
-    pub fn rk4<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F, f64>
-    where
-        F: Fn(Seconds<f64>) -> Vec<f64>,
-    {
-        RkIterator::new(self, u, x0, h, n, Order::Rk4)
-    }
-
-    /// Runge-Kutta-Fehlberg 45 with adaptive step for time evolution.
-    ///
-    /// # Arguments
-    ///
-    /// * `u` - input function returning a vector (column vector)
-    /// * `x0` - initial state (column vector)
-    /// * `h` - integration time interval
-    /// * `limit` - time evaluation limit
-    /// * `tol` - error tolerance
-    pub fn rkf45<F>(
-        &self,
-        u: F,
-        x0: &[f64],
-        h: Seconds<f64>,
-        limit: Seconds<f64>,
-        tol: f64,
-    ) -> Rkf45Iterator<F, f64>
-    where
-        F: Fn(Seconds<f64>) -> Vec<f64>,
-    {
-        Rkf45Iterator::new(self, u, x0, h, limit, tol)
-    }
-
-    /// Radau of order 3 with 2 steps method for time evolution.
-    ///
-    /// # Arguments
-    ///
-    /// * `u` - input function returning a vector (column vector)
-    /// * `x0` - initial state (column vector)
-    /// * `h` - integration time interval
-    /// * `n` - integration steps
-    /// * `tol` - error tolerance
-    pub fn radau<F>(
-        &self,
-        u: F,
-        x0: &[f64],
-        h: Seconds<f64>,
-        n: usize,
-        tol: f64,
-    ) -> RadauIterator<F, f64>
-    where
-        F: Fn(Seconds<f64>) -> Vec<f64>,
-    {
-        RadauIterator::new(self, u, x0, h, n, tol)
     }
 }
 
@@ -499,6 +403,7 @@ impl<T: Display + Scalar> Display for Equilibrium<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{Continuous, Discrete};
     use nalgebra::DMatrix;
 
     #[quickcheck]
@@ -516,7 +421,7 @@ mod tests {
         let states = 2;
         let inputs = 1;
         let outputs = 1;
-        let sys = Ss::new_from_slice(
+        let sys = SsGen::<_, Continuous>::new_from_slice(
             states,
             inputs,
             outputs,
@@ -552,7 +457,7 @@ mod tests {
     fn poles_regression() {
         let eig1 = -2.;
         let eig2 = -7.;
-        let sys = Ss::new_from_slice(
+        let sys = SsGen::<_, Discrete>::new_from_slice(
             2,
             1,
             1,
@@ -563,12 +468,11 @@ mod tests {
         );
         let poles = sys.poles();
         assert_eq!((eig1, eig2), (poles[0].re, poles[1].re));
-        assert!(sys.is_stable())
     }
 
     #[quickcheck]
     fn poles_two(eig1: f64, eig2: f64) -> bool {
-        let sys = Ss::new_from_slice(
+        let sys = SsGen::<_, Continuous>::new_from_slice(
             2,
             1,
             1,
@@ -592,7 +496,7 @@ mod tests {
         let eig1 = -7.;
         let eig2 = -2.;
         let eig3 = 1.25;
-        let sys = Ss::new_from_slice(
+        let sys = SsGen::<_, Discrete>::new_from_slice(
             3,
             1,
             1,
@@ -615,56 +519,12 @@ mod tests {
         let c = [0., 1.];
         let d = [0.];
 
-        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let sys = SsGen::<_, Continuous>::new_from_slice(2, 1, 1, &a, &b, &c, &d);
         let u = 0.0;
         let eq = sys.equilibrium(&[u]).unwrap();
         assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
         println!("{}", &eq);
         assert!(!format!("{}", eq).is_empty());
-    }
-
-    #[test]
-    fn new_rk2() {
-        let a = [-1., 1., -1., 0.25];
-        let b = [1., 0.25];
-        let c = [0., 1.];
-        let d = [0.];
-        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
-        let iter = sys.rk2(|_| vec![1.], &[0., 0.], Seconds(0.1), 30);
-        assert_eq!(31, iter.count());
-    }
-
-    #[test]
-    fn new_rk4() {
-        let a = [-1., 1., -1., 0.25];
-        let b = [1., 0.25];
-        let c = [0., 1.];
-        let d = [0.];
-        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
-        let iter = sys.rk4(|_| vec![1.], &[0., 0.], Seconds(0.1), 30);
-        assert_eq!(31, iter.count());
-    }
-
-    #[test]
-    fn new_rkf45() {
-        let a = [-1., 1., -1., 0.25];
-        let b = [1., 0.25];
-        let c = [0., 1.];
-        let d = [0.];
-        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
-        let iter = sys.rkf45(|_| vec![1.], &[0., 0.], Seconds(0.1), Seconds(2.), 1e-5);
-        assert_relative_eq!(2., iter.last().unwrap().time().0, max_relative = 0.01);
-    }
-
-    #[test]
-    fn new_radau() {
-        let a = [-1., 1., -1., 0.25];
-        let b = [1., 0.25];
-        let c = [0., 1.];
-        let d = [0.];
-        let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
-        let iter = sys.radau(|_| vec![1.], &[0., 0.], Seconds(0.1), 30, 1e-5);
-        assert_eq!(31, iter.count());
     }
 
     #[test]
@@ -721,7 +581,7 @@ mod tests {
             Poly::new_from_coeffs(&[1., 1., 1.]),
         );
 
-        let ss = Ss::try_from(tf).unwrap();
+        let ss = SsGen::try_from(tf).unwrap();
 
         assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -1., 1., -1.]), *ss.a());
         assert_eq!(DMatrix::from_row_slice(2, 1, &[1., 0.]), *ss.b());

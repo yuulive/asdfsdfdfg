@@ -24,7 +24,7 @@ use std::{
 };
 
 use crate::{
-    linear_system::{self, Ss},
+    linear_system::{self, SsGen},
     polynomial::{MatrixOfPoly, Poly},
     Eval, Time,
 };
@@ -150,7 +150,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     }
 }
 
-impl<U: Time> TryFrom<Ss<f64>> for TfGen<f64, U> {
+impl<U: Time> TryFrom<SsGen<f64, U>> for TfGen<f64, U> {
     type Error = &'static str;
 
     /// Convert a state-space representation into transfer functions.
@@ -160,7 +160,7 @@ impl<U: Time> TryFrom<Ss<f64>> for TfGen<f64, U> {
     /// # Arguments
     ///
     /// `ss` - state space linear system
-    fn try_from(ss: Ss<f64>) -> Result<Self, Self::Error> {
+    fn try_from(ss: SsGen<f64, U>) -> Result<Self, Self::Error> {
         let (pc, a_inv) = linear_system::leverrier(ss.a());
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
         let rest = pc.multiply(ss.d());

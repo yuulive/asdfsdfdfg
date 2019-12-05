@@ -12,7 +12,7 @@ use std::{
 };
 
 use crate::{
-    linear_system::{Ss, SsGen},
+    linear_system::{continuous::Ss, SsGen},
     Discrete,
 };
 
@@ -64,7 +64,7 @@ impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::linear_system::{discrete::{DiscreteTime, Discretization}, Ss};
+    /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ss};
     /// let disc_sys = Ss::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
     /// let evo = disc_sys.time_evolution(20, impulse, &[0., 0.]);
@@ -97,7 +97,7 @@ impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::linear_system::{discrete::{DiscreteTime, Discretization}, Ss};
+    /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ss};
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
     /// let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
     /// let evo = disc_sys.time_evolution(20, |t| vec![1.], &[0., 0.]);
