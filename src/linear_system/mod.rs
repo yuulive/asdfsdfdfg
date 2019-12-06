@@ -24,7 +24,7 @@ use std::{
 
 use crate::{
     polynomial,
-    polynomial::{Poly, PolyMatrix},
+    polynomial::{matrix::PolyMatrix, Poly},
     transfer_function::TfGen,
     Time,
 };
@@ -367,7 +367,8 @@ impl<T: Display + Scalar> Display for Equilibrium<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Continuous, Discrete};
+    use crate::{polynomial::matrix::MatrixOfPoly, Continuous, Discrete};
+
     use nalgebra::DMatrix;
 
     #[quickcheck]
@@ -493,8 +494,6 @@ mod tests {
 
     #[test]
     fn leverrier_algorythm() {
-        use crate::polynomial::MatrixOfPoly;
-
         // Example of LeVerrier algorithm (Wikipedia)");
         let t = DMatrix::from_row_slice(3, 3, &[3., 1., 5., 3., 3., 1., 4., 6., 4.]);
         let expected_pc = Poly::new_from_coeffs(&[-40., 4., -10., 1.]);
@@ -532,7 +531,7 @@ mod tests {
         assert_eq!(expected_pc, p);
         assert_eq!(expected_degree0, poly_matrix[0]);
 
-        let mp = crate::polynomial::MatrixOfPoly::from(poly_matrix);
+        let mp = MatrixOfPoly::from(poly_matrix);
         let expected_result = "[[1]]";
         assert_eq!(expected_result, format!("{}", &mp));
     }

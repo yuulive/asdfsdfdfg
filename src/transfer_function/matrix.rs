@@ -12,7 +12,7 @@ use std::{
 
 use crate::{
     linear_system::{self, SsGen},
-    polynomial::{MatrixOfPoly, Poly},
+    polynomial::{matrix::MatrixOfPoly, Poly},
     Eval, Time,
 };
 
