@@ -61,39 +61,7 @@ impl<T: ComplexField + Scalar> Ssd<T> {
 }
 
 /// Trait for the set of methods on discrete linear systems.
-pub trait DiscreteTime<T: Scalar> {
-    /// Time evolution for a discrete linear system.
-    ///
-    /// # Arguments
-    ///
-    /// * `step` - simulation length
-    /// * `input` - input function
-    /// * `x0` - initial state
-    fn time_evolution<F>(&self, steps: usize, input: F, x0: &[T]) -> DiscreteIterator<F, T>
-    where
-        F: Fn(usize) -> Vec<T>;
-
-    /// Convert a linear system into a discrete system.
-    ///
-    /// # Arguments
-    ///
-    /// * `st` - sample time
-    /// * `method` - discretization method
-    fn discretize(&self, st: T, method: Discretization) -> Option<Ss<T>>;
-}
-
-/// Discretization algorithm.
-#[derive(Clone, Copy, Debug)]
-pub enum Discretization {
-    /// Forward Euler
-    ForwardEuler,
-    /// Backward Euler
-    BackwardEuler,
-    /// Tustin (trapezoidal rule)
-    Tustin,
-}
-
-impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
+impl<T: Scalar> Ssd<T> {
     /// Time evolution for a discrete linear system.
     ///
     /// # Arguments
@@ -105,14 +73,14 @@ impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ss};
-    /// let disc_sys = Ss::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
+    /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ssd};
+    /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
     /// let evo = disc_sys.time_evolution(20, impulse, &[0., 0.]);
     /// let last = evo.last().unwrap();
     /// assert_abs_diff_eq!(0., last.state()[1], epsilon = 0.001);
     /// ```
-    fn time_evolution<F>(&self, steps: usize, input: F, x0: &[T]) -> DiscreteIterator<F, T>
+    pub fn time_evolution<F>(&self, steps: usize, input: F, x0: &[T]) -> DiscreteIterator<F, T>
     where
         F: Fn(usize) -> Vec<T>,
     {
@@ -127,7 +95,31 @@ impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
             next_state,
         }
     }
+}
 
+/// Trait for the discretization of continuous time linear systems.
+pub trait DiscreteTime<T: Scalar> {
+    /// Convert a linear system into a discrete system.
+    ///
+    /// # Arguments
+    ///
+    /// * `st` - sample time
+    /// * `method` - discretization method
+    fn discretize(&self, st: T, method: Discretization) -> Option<Ssd<T>>;
+}
+
+/// Discretization algorithm.
+#[derive(Clone, Copy, Debug)]
+pub enum Discretization {
+    /// Forward Euler
+    ForwardEuler,
+    /// Backward Euler
+    BackwardEuler,
+    /// Tustin (trapezoidal rule)
+    Tustin,
+}
+
+impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     /// Convert a linear system into a discrete system.
     ///
     /// # Arguments
@@ -145,7 +137,7 @@ impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     /// let last = evo.last().unwrap();
     /// assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
     /// ```
-    fn discretize(&self, st: T, method: Discretization) -> Option<Self> {
+    fn discretize(&self, st: T, method: Discretization) -> Option<Ssd<T>> {
         match method {
             Discretization::ForwardEuler => forward_euler(&self, st),
             Discretization::BackwardEuler => backward_euler(&self, st),
@@ -160,13 +152,13 @@ impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn forward_euler<T>(sys: &Ss<T>, st: T) -> Option<Ss<T>>
+fn forward_euler<T>(sys: &Ss<T>, st: T) -> Option<Ssd<T>>
 where
     T: Float + MulAssign + Scalar + AddAssign,
 {
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
-    Some(Ss {
+    Some(Ssd {
         a: identity + &sys.a * st,
         b: &sys.b * st,
         c: sys.c.clone(),
@@ -182,14 +174,14 @@ where
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn backward_euler<T>(sys: &Ss<T>, st: T) -> Option<Ss<T>>
+fn backward_euler<T>(sys: &Ss<T>, st: T) -> Option<Ssd<T>>
 where
     T: ComplexField + Float + Scalar + SubAssign,
 {
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
     if let Some(a) = (identity - &sys.a * st).try_inverse() {
-        Some(Ss {
+        Some(Ssd {
             b: &a * &sys.b * st,
             c: &sys.c * &a,
             d: &sys.d + &sys.c * &a * &sys.b * st,
@@ -208,7 +200,7 @@ where
 ///
 /// * `sys` - continuous linear system
 /// * `st` - sample time
-fn tustin<T>(sys: &Ss<T>, st: T) -> Option<Ss<T>>
+fn tustin<T>(sys: &Ss<T>, st: T) -> Option<Ssd<T>>
 where
     T: ComplexField + Float + Scalar,
 {
@@ -218,7 +210,7 @@ where
     let n_05 = T::from(0.5_f32).unwrap();
     if let Some(k) = (&identity - &sys.a * (n_05 * st)).try_inverse() {
         let b = &k * &sys.b * st;
-        Some(Ss {
+        Some(Ssd {
             a: &k * (&identity + &sys.a * (n_05 * st)),
             c: &sys.c * &k,
             d: &sys.d + &sys.c * &b * n_05,
@@ -238,7 +230,7 @@ where
     F: Fn(usize) -> Vec<T>,
     T: Scalar,
 {
-    sys: &'a Ss<T>,
+    sys: &'a Ssd<T>,
     time: usize,
     steps: usize,
     input: F,
@@ -341,7 +333,7 @@ mod tests {
     #[test]
     fn time_evolution() {
         let disc_sys =
-            Ss::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
+            Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
         let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
         let evo = disc_sys.time_evolution(20, impulse, &[0., 0.]);
         let last = evo.last().unwrap();
