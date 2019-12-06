@@ -5,7 +5,7 @@
 //!
 //! Functions use angular frequencies as default inputs.
 
-use crate::{transfer_function::continuous::Tf, units::RadiantsPerSecond, Eval};
+use crate::{transfer_function::continuous::Tf, units::RadiansPerSecond, Eval};
 
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
@@ -43,8 +43,8 @@ impl<T: Float + MulAdd<Output = T>> PolarIterator<T> {
     /// is not lower than the maximum frequency
     pub(crate) fn new(
         tf: Tf<T>,
-        min_freq: RadiantsPerSecond<T>,
-        max_freq: RadiantsPerSecond<T>,
+        min_freq: RadiansPerSecond<T>,
+        max_freq: RadiansPerSecond<T>,
         step: T,
     ) -> Self {
         assert!(step > T::zero());
@@ -131,8 +131,8 @@ pub trait PolarPlot<T: Float + FloatConst> {
     /// is not lower than the maximum frequency
     fn polar(
         self,
-        min_freq: RadiantsPerSecond<T>,
-        max_freq: RadiantsPerSecond<T>,
+        min_freq: RadiansPerSecond<T>,
+        max_freq: RadiansPerSecond<T>,
         step: T,
     ) -> PolarIterator<T>;
 }
@@ -145,7 +145,7 @@ mod tests {
     #[test]
     fn create_iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = PolarIterator::new(tf, RadiantsPerSecond(10.), RadiantsPerSecond(1000.), 0.1);
+        let iter = PolarIterator::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
         assert_eq!(20., iter.intervals);
         assert_eq!(1., iter.base_freq_exp);
         assert_eq!(0., iter.index);
@@ -165,7 +165,7 @@ mod tests {
     #[test]
     fn iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = PolarIterator::new(tf, RadiantsPerSecond(10.), RadiantsPerSecond(1000.), 0.1);
+        let iter = PolarIterator::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
         // 20 steps -> 21 iteration
         assert_eq!(21, iter.count());
     }

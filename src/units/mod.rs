@@ -72,24 +72,24 @@ pub struct Seconds<T: Num>(pub T);
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Hertz<T: Num>(pub T);
 
-/// Unit of measurement: Radiants per seconds [rad/s]
+/// Unit of measurement: Radians per seconds [rad/s]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub struct RadiantsPerSecond<T: Num>(pub T);
+pub struct RadiansPerSecond<T: Num>(pub T);
 
 impl_display!(Seconds);
 impl_display!(Hertz);
-impl_display!(RadiantsPerSecond);
+impl_display!(RadiansPerSecond);
 
-impl<T: Num + FloatConst> From<Hertz<T>> for RadiantsPerSecond<T> {
-    /// Convert Hertz into radiants per second.
+impl<T: Num + FloatConst> From<Hertz<T>> for RadiansPerSecond<T> {
+    /// Convert Hertz into radians per second.
     fn from(hz: Hertz<T>) -> Self {
         Self((T::PI() + T::PI()) * hz.0)
     }
 }
 
-impl<T: Num + FloatConst> From<RadiantsPerSecond<T>> for Hertz<T> {
-    /// Convert radiants per second into Hertz.
-    fn from(rps: RadiantsPerSecond<T>) -> Self {
+impl<T: Num + FloatConst> From<RadiansPerSecond<T>> for Hertz<T> {
+    /// Convert radians per second into Hertz.
+    fn from(rps: RadiansPerSecond<T>) -> Self {
         Self(rps.0 / (T::PI() + T::PI()))
     }
 }
@@ -127,20 +127,20 @@ mod tests {
     #[test]
     fn conversion() {
         let tau = 2. * std::f64::consts::PI;
-        assert_eq!(RadiantsPerSecond(tau), RadiantsPerSecond::from(Hertz(1.0)));
+        assert_eq!(RadiansPerSecond(tau), RadiansPerSecond::from(Hertz(1.0)));
 
         let hz = Hertz(2.0);
-        assert_eq!(hz, Hertz::from(RadiantsPerSecond::from(hz)));
+        assert_eq!(hz, Hertz::from(RadiansPerSecond::from(hz)));
 
-        let rps = RadiantsPerSecond(2.0);
-        assert_eq!(rps, RadiantsPerSecond::from(Hertz::from(rps)));
+        let rps = RadiansPerSecond(2.0);
+        assert_eq!(rps, RadiansPerSecond::from(Hertz::from(rps)));
     }
 
     #[quickcheck]
     fn qc_conversion_hertz(hz: f64) -> bool {
         relative_eq!(
             hz,
-            Hertz::from(RadiantsPerSecond::from(Hertz(hz))).0,
+            Hertz::from(RadiansPerSecond::from(Hertz(hz))).0,
             max_relative = 1e-15
         )
     }
@@ -149,7 +149,7 @@ mod tests {
     fn qc_conversion_rps(rps: f64) -> bool {
         relative_eq!(
             rps,
-            RadiantsPerSecond::from(Hertz::from(RadiantsPerSecond(rps))).0,
+            RadiansPerSecond::from(Hertz::from(RadiansPerSecond(rps))).0,
             max_relative = 1e-15
         )
     }

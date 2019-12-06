@@ -3,7 +3,7 @@ extern crate automatica;
 use automatica::{
     plots::bode::BodePlot,
     polynomial::Poly,
-    units::{Decibel, RadiantsPerSecond},
+    units::{Decibel, RadiansPerSecond},
     Eval, Tf,
 };
 
@@ -18,7 +18,7 @@ fn main() {
     let c = tf.eval(&Complex::new(0., 1.));
     println!("{}\n{}dB, {}°", c, c.norm().to_db(), c.arg().to_degrees());
 
-    let b = tf.bode(RadiantsPerSecond(0.1), RadiantsPerSecond(10.0), 0.1);
+    let b = tf.bode(RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
     for g in b.into_db_deg() {
         println!(
             "f: {:.3} rad/s, m: {:.3} dB, f: {:.1} °",

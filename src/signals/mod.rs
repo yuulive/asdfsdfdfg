@@ -2,7 +2,7 @@
 
 use num_traits::Float;
 
-use crate::units::{RadiantsPerSecond, Seconds};
+use crate::units::{RadiansPerSecond, Seconds};
 
 pub mod continuous {
     //! Collection of continuous signals.
@@ -34,11 +34,11 @@ pub mod continuous {
     /// # Arguments
     ///
     /// * `a` - sine amplitude
-    /// * `omega` - sine pulse in radiants per second
-    /// * `phi` - sine phase in radiants
+    /// * `omega` - sine pulse in radians per second
+    /// * `phi` - sine phase in radians
     pub fn sin_siso<T: Float>(
         a: T,
-        omega: RadiantsPerSecond<T>,
+        omega: RadiansPerSecond<T>,
         phi: T,
     ) -> impl Fn(Seconds<T>) -> Vec<T> {
         move |t| vec![a * T::sin(omega.0 * t.0 - phi)]
@@ -61,8 +61,8 @@ pub mod continuous {
 
         #[quickcheck]
         fn sin_input(t: f64) -> bool {
-            let sine = sin_siso(1., RadiantsPerSecond(0.5), 0.)(Seconds(t))[0];
-            let traslated_sine = sin_siso(1., RadiantsPerSecond(0.5), PI)(Seconds(t))[0];
+            let sine = sin_siso(1., RadiansPerSecond(0.5), 0.)(Seconds(t))[0];
+            let traslated_sine = sin_siso(1., RadiansPerSecond(0.5), PI)(Seconds(t))[0];
             relative_eq!(sine, -traslated_sine, max_relative = 1e-10)
         }
     }

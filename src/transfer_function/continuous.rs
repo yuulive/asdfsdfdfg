@@ -8,7 +8,7 @@ use crate::{
         polar::{PolarIterator, PolarPlot},
     },
     transfer_function::TfGen,
-    units::{Decibel, RadiantsPerSecond},
+    units::{Decibel, RadiansPerSecond},
     Continuous, Eval,
 };
 
@@ -36,8 +36,8 @@ impl<T: Float + MulAdd<Output = T>> Tf<T> {
 impl<T: Decibel<T> + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf<T> {
     fn bode(
         self,
-        min_freq: RadiantsPerSecond<T>,
-        max_freq: RadiantsPerSecond<T>,
+        min_freq: RadiansPerSecond<T>,
+        max_freq: RadiansPerSecond<T>,
         step: T,
     ) -> BodeIterator<T> {
         BodeIterator::new(self, min_freq, max_freq, step)
@@ -48,8 +48,8 @@ impl<T: Decibel<T> + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf
 impl<T: Float + FloatConst + MulAdd<Output = T>> PolarPlot<T> for Tf<T> {
     fn polar(
         self,
-        min_freq: RadiantsPerSecond<T>,
-        max_freq: RadiantsPerSecond<T>,
+        min_freq: RadiansPerSecond<T>,
+        max_freq: RadiansPerSecond<T>,
         step: T,
     ) -> PolarIterator<T> {
         PolarIterator::new(self, min_freq, max_freq, step)
@@ -72,7 +72,7 @@ mod tests {
     #[test]
     fn bode() {
         let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
-        let b = tf.bode(RadiantsPerSecond(0.1), RadiantsPerSecond(100.0), 0.1);
+        let b = tf.bode(RadiansPerSecond(0.1), RadiansPerSecond(100.0), 0.1);
         for g in b.into_db_deg() {
             assert!(g.magnitude() < 0.);
             assert!(g.phase() < 0.);
@@ -82,7 +82,7 @@ mod tests {
     #[test]
     fn polar() {
         let tf = Tf::new(poly!(5.), Poly::new_from_roots(&[-1., -10.]));
-        let p = tf.polar(RadiantsPerSecond(0.1), RadiantsPerSecond(10.0), 0.1);
+        let p = tf.polar(RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
         for g in p {
             assert!(g.magnitude() < 1.);
             assert!(g.phase() < 0.);
