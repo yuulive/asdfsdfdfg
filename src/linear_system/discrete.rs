@@ -3,7 +3,7 @@
 //! This module contains the methods to handle discrete systems and
 //! discretization of continuous systems.
 
-use nalgebra::{ComplexField, DMatrix, DVector, Scalar};
+use nalgebra::{ComplexField, DMatrix, DVector, RealField, Scalar};
 use num_traits::Float;
 
 use std::{
@@ -94,6 +94,22 @@ impl<T: Scalar> Ssd<T> {
             state,
             next_state,
         }
+    }
+}
+
+impl<T: ComplexField + Float + RealField + Scalar> Ssd<T> {
+    /// System stability. Checks if all A matrix eigenvalues (poles) are inside
+    /// the unit circle.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::Ssd;
+    /// let sys = Ssd::new_from_slice(2, 1, 1, &[-0.2, 0., 3., 0.1], &[1., 3.], &[-1., 0.5], &[0.1]);
+    /// assert!(sys.is_stable());
+    /// ```
+    pub fn is_stable(&self) -> bool {
+        self.poles().iter().all(|p| p.abs() < T::one())
     }
 }
 
@@ -312,6 +328,18 @@ mod tests {
         assert_relative_eq!(200.0, eq.x()[1]);
         assert_relative_eq!(100.0, eq.x()[2], max_relative = 1e-10);
         assert_relative_eq!(500.0, eq.y()[0]);
+    }
+
+    #[test]
+    fn stability() {
+        let a = &[0., 0.8, 0.4, 1., 0., 0., 0., 1., 0.7];
+        let b = &[0., 1., 0., 0., -1., 0.];
+        let c = &[1., 1.8, 1.1];
+        let d = &[-1., 1.];
+
+        let sys = Ssd::new_from_slice(3, 2, 1, a, b, c, d);
+
+        assert!(!sys.is_stable());
     }
 
     #[test]
