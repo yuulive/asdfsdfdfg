@@ -11,9 +11,9 @@ use std::{
 };
 
 use crate::{
-    linear_system::{self, continuous::Ss},
+    linear_system::{self, SsGen},
     polynomial::{MatrixOfPoly, Poly},
-    Eval,
+    Eval, Time,
 };
 
 /// Matrix of transfer functions
@@ -80,13 +80,13 @@ impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
     }
 }
 
-impl From<Ss<f64>> for TfMatrix<f64> {
+impl<T: Time> From<SsGen<f64, T>> for TfMatrix<f64> {
     /// Convert a state-space representation into a matrix of transfer functions
     ///
     /// # Arguments
     ///
     /// `ss` - state space linear system
-    fn from(ss: Ss<f64>) -> Self {
+    fn from(ss: SsGen<f64, T>) -> Self {
         let (pc, a_inv) = linear_system::leverrier(ss.a());
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
         let rest = pc.multiply(ss.d());
@@ -95,7 +95,7 @@ impl From<Ss<f64>> for TfMatrix<f64> {
     }
 }
 
-/// Implement read only indexing of transfer function matrix.
+/// Implement read only indexing of the numerator of a transfer function matrix.
 ///
 /// # Panics
 ///
@@ -108,7 +108,8 @@ impl<T> Index<[usize; 2]> for TfMatrix<T> {
     }
 }
 
-/// Implement mutable indexing of polynomial returning its coefficients.
+/// Implement mutable indexing of the numerator of a transfer function matrix
+/// returning its coefficients.
 ///
 /// # Panics
 ///
@@ -135,11 +136,11 @@ impl<T: Display + One + PartialEq + Signed + Zero> fmt::Display for TfMatrix<T> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::poly;
+    use crate::{poly, Ss, Ssd};
 
     #[test]
     fn tf_matrix_new() {
-        let sys = Ss::new_from_slice(
+        let sys = Ssd::new_from_slice(
             2,
             2,
             2,
