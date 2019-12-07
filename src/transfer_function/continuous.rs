@@ -1,5 +1,6 @@
 //! Transfer functions for continuous time systems.
 
+use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
 use crate::{
@@ -8,12 +9,33 @@ use crate::{
         polar::{PolarIterator, PolarPlot},
     },
     transfer_function::TfGen,
-    units::{Decibel, RadiansPerSecond},
+    units::{Decibel, RadiansPerSecond, Seconds},
     Continuous, Eval,
 };
 
 /// Continuous transfer function
 pub type Tf<T> = TfGen<T, Continuous>;
+
+impl<T: Float> Tf<T> {
+    /// Time delay for continuous time transfer function.
+    /// `y(t) = u(t - tau)`
+    /// `G(s) = e^(-tau * s)
+    ///
+    /// # Arguments
+    ///
+    /// * `tau` - Time delay
+    ///
+    /// # Example
+    /// ```
+    /// use num_complex::Complex;
+    /// use automatica::{units::Seconds, Tf};
+    /// let d = Tf::delay(Seconds(2.));
+    /// assert_eq!(1., d(Complex::new(0., 10.)).norm());
+    /// ```
+    pub fn delay(tau: Seconds<T>) -> impl Fn(Complex<T>) -> Complex<T> {
+        move |s| (-s * tau.0).exp()
+    }
+}
 
 impl<T: Float + MulAdd<Output = T>> Tf<T> {
     /// Static gain `G(0)`.
@@ -62,6 +84,13 @@ mod tests {
 
     use super::*;
     use crate::{poly, polynomial::Poly};
+
+    #[test]
+    fn delay() {
+        let d = Tf::delay(Seconds(2.));
+        assert_eq!(1., d(Complex::new(0., 10.)).norm());
+        assert_eq!(-1., d(Complex::new(0., 0.5)).arg());
+    }
 
     #[quickcheck]
     fn static_gain(g: f32) -> bool {

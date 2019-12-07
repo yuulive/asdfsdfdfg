@@ -15,6 +15,27 @@ use num_traits::{Float, MulAdd, Num};
 /// Discrete transfer function
 pub type Tfz<T> = TfGen<T, Discrete>;
 
+impl<T: Float> Tfz<T> {
+    /// Time delay for discrete time transfer function.
+    /// `y(k) = u(k - h)`
+    /// `G(z) = z^(-h)
+    ///
+    /// # Arguments
+    ///
+    /// * `h` - Time delay
+    ///
+    /// # Example
+    /// ```
+    /// use num_complex::Complex;
+    /// use automatica::{units::Seconds, Tfz};
+    /// let d = Tfz::delay(2);
+    /// assert_eq!(0.010000001, d(Complex::new(0., 10.0_f32)).norm());
+    /// ```
+    pub fn delay(k: i32) -> impl Fn(Complex<T>) -> Complex<T> {
+        move |z| z.powi(-k)
+    }
+}
+
 impl<T: Float + MulAdd<Output = T>> Tfz<T> {
     /// Static gain `G(1)`.
     /// Ratio between constant output and constant input.
@@ -143,6 +164,12 @@ mod tests {
     #[test]
     fn tfz() {
         let _ = Tfz::new(poly!(1.), poly!(1., 2., 3.));
+    }
+
+    #[test]
+    fn delay() {
+        let d = Tfz::delay(2);
+        assert_eq!(0.010000001, d(Complex::new(0., 10.0_f32)).norm());
     }
 
     #[test]
