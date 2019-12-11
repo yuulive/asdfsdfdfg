@@ -35,6 +35,48 @@ impl<T: Float> Tf<T> {
     pub fn delay(tau: Seconds<T>) -> impl Fn(Complex<T>) -> Complex<T> {
         move |s| (-s * tau.0).exp()
     }
+
+    /// System inital value response to step input.
+    /// `y(0) = G(s->infinity)`
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tf};
+    /// let tf = Tf::new(poly!(4.), poly!(1., 5.));
+    /// assert_eq!(0., tf.init_value());
+    /// ```
+    pub fn init_value(&self) -> T {
+        let n = self.num.degree();
+        let d = self.den.degree();
+        if n < d {
+            T::zero()
+        } else if n == d {
+            self.num.leading_coeff() / self.den.leading_coeff()
+        } else {
+            T::infinity()
+        }
+    }
+
+    /// System derivative inital value response to step input.
+    /// `y'(0) = s * G(s->infinity)`
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tf};
+    /// let tf = Tf::new(poly!(1., -3.), poly!(1., 3., 2.));
+    /// assert_eq!(-1.5, tf.init_value_der());
+    /// ```
+    pub fn init_value_der(&self) -> T {
+        let n = self.num.degree();
+        let d = self.den.degree().map(|d| d - 1);
+        if n < d {
+            T::zero()
+        } else if n == d {
+            self.num.leading_coeff() / self.den.leading_coeff()
+        } else {
+            T::infinity()
+        }
+    }
 }
 
 impl<T: Float + MulAdd<Output = T>> Tf<T> {
@@ -116,5 +158,25 @@ mod tests {
             assert!(g.magnitude() < 1.);
             assert!(g.phase() < 0.);
         }
+    }
+
+    #[test]
+    fn initial_value() {
+        let tf = Tf::new(poly!(4.), poly!(1., 5.));
+        assert_eq!(0., tf.init_value());
+        let tf = Tf::new(poly!(4., -12.), poly!(1., 5.));
+        assert_eq!(-2.4, tf.init_value());
+        let tf = Tf::new(poly!(-3., 4.), poly!(5.));
+        assert_eq!(std::f32::INFINITY, tf.init_value());
+    }
+
+    #[test]
+    fn derivative_initial_value() {
+        let tf = Tf::new(poly!(1., -3.), poly!(1., 3., 2.));
+        assert_eq!(-1.5, tf.init_value_der());
+        let tf = Tf::new(poly!(1.), poly!(1., 3., 2.));
+        assert_eq!(0., tf.init_value_der());
+        let tf = Tf::new(poly!(1., 0.5, -3.), poly!(1., 3., 2.));
+        assert_eq!(std::f32::INFINITY, tf.init_value_der());
     }
 }

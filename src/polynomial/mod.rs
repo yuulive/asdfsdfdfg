@@ -114,7 +114,7 @@ impl<T: Copy + Num + Zero> Poly<T> {
 
 /// Implementation methods for Poly struct
 impl<T: Copy + Div<Output = T> + One> Poly<T> {
-    /// Retrun the monic polynomial and the leading coefficient.
+    /// Return the monic polynomial and the leading coefficient.
     ///
     /// # Example
     /// ```
@@ -125,11 +125,27 @@ impl<T: Copy + Div<Output = T> + One> Poly<T> {
     /// assert_eq!(10., c);
     /// ```
     pub fn monic(&self) -> (Self, T) {
-        let leading_coeff = *self.coeffs.last().unwrap_or(&T::one());
-        let result: Vec<_> = self.coeffs.iter().map(|&x| x / leading_coeff).collect();
+        let lc = self.leading_coeff();
+        let result: Vec<_> = self.coeffs.iter().map(|&x| x / lc).collect();
         let monic_poly = Self { coeffs: result };
 
-        (monic_poly, leading_coeff)
+        (monic_poly, lc)
+    }
+}
+
+/// Implementation methods for Poly struct
+impl<T: Copy + One> Poly<T> {
+    /// Return the leading coefficient of the polynomial.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 2., 10.]);
+    /// let c = p.leading_coeff();
+    /// assert_eq!(10., c);
+    /// ```
+    pub fn leading_coeff(&self) -> T {
+        *self.coeffs.last().unwrap_or(&T::one())
     }
 }
 
@@ -1305,5 +1321,18 @@ mod tests {
 
         let root1 = Complex::<f64>::new(3., 0.);
         assert_eq!((root1, root1), complex_quadratic_roots(-6., 9.));
+    }
+
+    #[quickcheck]
+    fn leading_coefficient(c: f32) -> bool {
+        c == poly!(1., -5., c).leading_coeff()
+    }
+
+    #[test]
+    fn monic_poly() {
+        let p = poly!(-3., 6., 9.);
+        let (p2, c) = p.monic();
+        assert_eq!(9., c);
+        assert_eq!(1., p2.leading_coeff());
     }
 }
