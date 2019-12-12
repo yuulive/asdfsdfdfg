@@ -34,6 +34,27 @@ impl<T: Float> Tfz<T> {
     pub fn delay(k: i32) -> impl Fn(Complex<T>) -> Complex<T> {
         move |z| z.powi(-k)
     }
+
+    /// System inital value response to step input.
+    /// `y(0) = G(z->infinity)`
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let tf = Tfz::new(poly!(4.), poly!(1., 5.));
+    /// assert_eq!(0., tf.init_value());
+    /// ```
+    pub fn init_value(&self) -> T {
+        let n = self.num.degree();
+        let d = self.den.degree();
+        if n < d {
+            T::zero()
+        } else if n == d {
+            self.num.leading_coeff() / self.den.leading_coeff()
+        } else {
+            T::infinity()
+        }
+    }
 }
 
 impl<T: Float + MulAdd<Output = T>> Tfz<T> {
@@ -170,6 +191,18 @@ mod tests {
     fn delay() {
         let d = Tfz::delay(2);
         assert_eq!(0.010000001, d(Complex::new(0., 10.0_f32)).norm());
+    }
+
+    #[test]
+    fn initial_value() {
+        let tf = Tfz::new(poly!(4.), poly!(1., 5.));
+        assert_eq!(0., tf.init_value());
+
+        let tf = Tfz::new(poly!(4., 10.), poly!(1., 5.));
+        assert_eq!(2., tf.init_value());
+
+        let tf = Tfz::new(poly!(4., 1.), poly!(5.));
+        assert_eq!(std::f32::INFINITY, tf.init_value());
     }
 
     #[test]
