@@ -17,7 +17,7 @@ use std::{
     fmt::{Debug, Display, Formatter},
 };
 
-use crate::{polynomial::matrix::PolyMatrix, Eval};
+use crate::{polynomial::matrix::PolyMatrix, utils, Eval};
 
 /// Polynomial object
 ///
@@ -538,7 +538,7 @@ impl<T: Copy + Num> Add<&Poly<T>> for &Poly<T> {
     type Output = Poly<T>;
 
     fn add(self, rhs: &Poly<T>) -> Poly<T> {
-        let new_coeffs = crate::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), Add::add);
+        let new_coeffs = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), Add::add);
         Poly::new_from_coeffs(&new_coeffs)
     }
 }
@@ -660,7 +660,7 @@ impl<T: Copy + PartialEq + Sub<Output = T> + Zero> Sub for &Poly<T> {
 
     fn sub(self, rhs: Self) -> Poly<T> {
         let new_coeffs =
-            crate::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), |x, y| x - y);
+            utils::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), |x, y| x - y);
         Poly::new_from_coeffs(&new_coeffs)
     }
 }
