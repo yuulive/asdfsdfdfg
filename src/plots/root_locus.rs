@@ -35,8 +35,11 @@ impl<T: Float> RootLocusIterator<T> {
     /// Panics if the step is not strictly positive of the minimum transfer constant
     /// is not lower than the maximum transfer constant.
     pub(crate) fn new(tf: Tf<T>, min_k: T, max_k: T, step: T) -> Self {
-        assert!(step > T::zero());
-        assert!(min_k < max_k);
+        assert!(step > T::zero(), "Step value must be strictly positive.");
+        assert!(
+            min_k < max_k,
+            "Maximum transfer constant must be greater than the minimum transfer constant."
+        );
 
         let intervals = ((max_k - min_k) / step).floor();
         Self {
@@ -86,5 +89,25 @@ impl<T: ComplexField + Float + MulAdd<Output = T> + RealField + Scalar> Iterator
                 output: self.tf.root_locus(k),
             })
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::poly;
+
+    #[test]
+    #[should_panic]
+    fn fail_new1() {
+        let tf = Tf::new(poly!(1.), poly!(0., 1.));
+        RootLocusIterator::new(tf, 0.1, 0.2, 0.);
+    }
+
+    #[test]
+    #[should_panic]
+    fn fail_new2() {
+        let tf = Tf::new(poly!(1.), poly!(0., 1.));
+        RootLocusIterator::new(tf, 0.9, 0.2, 0.1);
     }
 }
