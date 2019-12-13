@@ -3,6 +3,8 @@
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
+use std::marker::PhantomData;
+
 use crate::{
     plots::{
         bode::{BodeIterator, BodePlot},
@@ -75,6 +77,86 @@ impl<T: Float> Tf<T> {
             self.num.leading_coeff() / self.den.leading_coeff()
         } else {
             T::infinity()
+        }
+    }
+
+    /// Sensitivity function for the given controller `r`.
+    /// ```text
+    ///              1
+    /// S(s) = -------------
+    ///        1 + G(s)*R(s)
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `r` - Controller
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tf};
+    /// let g = Tf::new(poly!(1.), poly!(0., 1.));
+    /// let r = Tf::new(poly!(4.), poly!(1., 1.));
+    /// let s = g.sensitivity(&r);
+    /// assert_eq!(Tf::new(poly!(0., 1., 1.), poly!(4., 1., 1.)), s);
+    /// ```
+    pub fn sensitivity(&self, r: &Tf<T>) -> Tf<T> {
+        let n = &self.num * &r.num;
+        let d = &self.den * &r.den;
+        Tf {
+            num: d.clone(),
+            den: n + d,
+            _type: PhantomData,
+        }
+    }
+
+    /// Complementary sensitivity function for the given controller `r`.
+    /// ```text
+    ///          G(s)*R(s)
+    /// F(s) = -------------
+    ///        1 + G(s)*R(s)
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `r` - Controller
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tf};
+    /// let g = Tf::new(poly!(1.), poly!(0., 1.));
+    /// let r = Tf::new(poly!(4.), poly!(1., 1.));
+    /// let f = g.compl_sensitivity(&r);
+    /// assert_eq!(Tf::new(poly!(4.), poly!(4., 1., 1.)), f);
+    /// ```
+    pub fn compl_sensitivity(&self, r: &Tf<T>) -> Tf<T> {
+        let l = self * r;
+        l.feedback_n()
+    }
+
+    /// Sensitivity to control function for the given controller `r`.
+    /// ```text
+    ///            R(s)
+    /// Q(s) = -------------
+    ///        1 + G(s)*R(s)
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `r` - Controller
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tf};
+    /// let g = Tf::new(poly!(1.), poly!(0., 1.));
+    /// let r = Tf::new(poly!(4.), poly!(1., 1.));
+    /// let q = g.control_sensitivity(&r);
+    /// assert_eq!(Tf::new(poly!(0., 4.), poly!(4., 1., 1.)), q);
+    /// ```
+    pub fn control_sensitivity(&self, r: &Tf<T>) -> Tf<T> {
+        Tf {
+            num: &r.num * &self.den,
+            den: &r.num * &self.num + &r.den * &self.den,
+            _type: PhantomData,
         }
     }
 }
@@ -178,5 +260,29 @@ mod tests {
         assert_eq!(0., tf.init_value_der());
         let tf = Tf::new(poly!(1., 0.5, -3.), poly!(1., 3., 2.));
         assert_eq!(std::f32::INFINITY, tf.init_value_der());
+    }
+
+    #[test]
+    fn complementary_sensitivity() {
+        let g = Tf::new(poly!(1.), poly!(0., 1.));
+        let r = Tf::new(poly!(4.), poly!(1., 1.));
+        let f = g.compl_sensitivity(&r);
+        assert_eq!(Tf::new(poly!(4.), poly!(4., 1., 1.)), f);
+    }
+
+    #[test]
+    fn sensitivity() {
+        let g = Tf::new(poly!(1.), poly!(0., 1.));
+        let r = Tf::new(poly!(4.), poly!(1., 1.));
+        let s = g.sensitivity(&r);
+        assert_eq!(Tf::new(poly!(0., 1., 1.), poly!(4., 1., 1.)), s);
+    }
+
+    #[test]
+    fn control_sensitivity() {
+        let g = Tf::new(poly!(1.), poly!(0., 1.));
+        let r = Tf::new(poly!(4.), poly!(1., 1.));
+        let q = g.control_sensitivity(&r);
+        assert_eq!(Tf::new(poly!(0., 4.), poly!(4., 1., 1.)), q);
     }
 }
