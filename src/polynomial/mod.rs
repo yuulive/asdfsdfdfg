@@ -801,6 +801,23 @@ impl<T: Copy + Num> Mul<T> for Poly<T> {
     }
 }
 
+/// Implementation of polynomial and float multiplication
+impl<T: Copy + Num> Mul<T> for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        let mut p = self.clone();
+        if rhs.is_zero() {
+            Self::Output::zero()
+        } else {
+            for c in &mut p.coeffs {
+                *c = *c * rhs;
+            }
+            p
+        }
+    }
+}
+
 macro_rules! impl_mul_for_poly {
     (
         $(#[$meta:meta])*
@@ -1187,6 +1204,10 @@ mod tests {
         assert_eq!(Poly::zero(), 0. * poly!(1., 0., 1.));
 
         assert_eq!(Poly::zero(), poly!(1, 0, 1) * 0);
+
+        assert_eq!(Poly::zero(), &poly!(1, 0, 1) * 0);
+
+        assert_eq!(poly!(3, 0, 3), &poly!(1, 0, 1) * 3);
     }
 
     #[test]
