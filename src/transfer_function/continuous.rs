@@ -1,5 +1,6 @@
 //! Transfer functions for continuous time systems.
 
+use nalgebra::{ComplexField, RealField, Scalar};
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
@@ -9,6 +10,7 @@ use crate::{
     plots::{
         bode::{BodeIterator, BodePlot},
         polar::{PolarIterator, PolarPlot},
+        root_locus::RootLocusIterator,
     },
     transfer_function::TfGen,
     units::{Decibel, RadiansPerSecond, Seconds},
@@ -161,6 +163,45 @@ impl<T: Float> Tf<T> {
     }
 }
 
+impl<T: ComplexField + Float + RealField + Scalar> Tf<T> {
+    /// Root locus for the given coefficient `k`
+    ///
+    /// # Arguments
+    ///
+    /// * `k` - Transfer function constant
+    ///
+    /// # Example
+    /// ```
+    /// use num_complex::Complex;
+    /// use automatica::{poly, Poly, Tf};
+    /// let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
+    /// let locus1 = l.root_locus(0.25);
+    /// assert_eq!(Complex::new(-1.5, 0.), locus1[0]);
+    /// ```
+    pub fn root_locus(&self, k: T) -> Vec<Complex<T>> {
+        let p = &(&self.num * k) + &self.den;
+        p.complex_roots()
+    }
+
+    /// Create a RootLocusIterator plot
+    ///
+    /// # Arguments
+    ///
+    /// * `min_k` - Minimum transfer constant of the plot
+    /// * `max_k` - Maximum transfer constant of the plot
+    /// * `step` - Step between each transfer constant
+    ///
+    /// `step` is linear.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the step is not strictly positive of the minimum transfer constant
+    /// is not lower than the maximum transfer constant.
+    pub fn root_locus_iter(self, min_k: T, max_k: T, step: T) -> RootLocusIterator<T> {
+        RootLocusIterator::new(self, min_k, max_k, step)
+    }
+}
+
 impl<T: Float + MulAdd<Output = T>> Tf<T> {
     /// Static gain `G(0)`.
     /// Ratio between constant output and constant input.
@@ -205,6 +246,8 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> PolarPlot<T> for Tf<T> {
 #[cfg(test)]
 mod tests {
     use num_traits::One;
+
+    use std::str::FromStr;
 
     use super::*;
     use crate::{poly, polynomial::Poly};
@@ -284,5 +327,16 @@ mod tests {
         let r = Tf::new(poly!(4.), poly!(1., 1.));
         let q = g.control_sensitivity(&r);
         assert_eq!(Tf::new(poly!(0., 4.), poly!(4., 1., 1.)), q);
+    }
+
+    #[test]
+    fn root_locus() {
+        let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
+
+        let locus1 = l.root_locus(0.25);
+        assert_eq!(Complex::from_str("-1.5").unwrap(), locus1[0]);
+
+        let locus2 = l.root_locus(-2.);
+        assert_eq!(Complex::from_str("0.").unwrap(), locus2[0]);
     }
 }

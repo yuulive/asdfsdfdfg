@@ -5,3 +5,4 @@
 
 pub mod bode;
 pub mod polar;
+pub mod root_locus;

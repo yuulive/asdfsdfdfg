@@ -7,6 +7,7 @@ examples = bode \
 		   oscillation \
 		   polar \
 		   poly \
+		   root_locus \
 		   transfer_function
 
 .PHONY : all_examples clippy doc $(examples)
