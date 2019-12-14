@@ -175,8 +175,8 @@ impl<T: ComplexField + Float + RealField + Scalar> Tf<T> {
     /// use num_complex::Complex;
     /// use automatica::{poly, Poly, Tf};
     /// let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
-    /// let locus1 = l.root_locus(0.25);
-    /// assert_eq!(Complex::new(-1.5, 0.), locus1[0]);
+    /// let locus = l.root_locus(0.25);
+    /// assert_eq!(Complex::new(-1.5, 0.), locus[0]);
     /// ```
     pub fn root_locus(&self, k: T) -> Vec<Complex<T>> {
         let p = &(&self.num * k) + &self.den;
@@ -197,6 +197,15 @@ impl<T: ComplexField + Float + RealField + Scalar> Tf<T> {
     ///
     /// Panics if the step is not strictly positive of the minimum transfer constant
     /// is not lower than the maximum transfer constant.
+    ///
+    /// # Example
+    /// ```
+    /// use num_complex::Complex;
+    /// use automatica::{poly, Poly, Tf};
+    /// let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
+    /// let locus = l.root_locus_iter(0.1, 1.0, 0.05);
+    /// assert_eq!(19, locus.count());
+    /// ```
     pub fn root_locus_iter(self, min_k: T, max_k: T, step: T) -> RootLocusIterator<T> {
         RootLocusIterator::new(self, min_k, max_k, step)
     }
@@ -338,5 +347,16 @@ mod tests {
 
         let locus2 = l.root_locus(-2.);
         assert_eq!(Complex::from_str("0.").unwrap(), locus2[0]);
+    }
+
+    #[test]
+    fn root_locus_iterations() {
+        let l = Tf::new(poly!(1.0_f32), Poly::new_from_roots(&[0., -3., -5.]));
+        let loci = l.root_locus_iter(1., 130., 1.);
+        let last = loci.last().unwrap();
+        dbg!(&last);
+        assert_eq!(130., last.k());
+        assert_eq!(3, last.output().len());
+        assert!(last.output().iter().any(|r| r.re > 0.));
     }
 }

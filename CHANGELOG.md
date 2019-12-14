@@ -5,10 +5,14 @@
 - Implementation of transfer function arithmetic operations
 - Implementation of transfer function feedback
 - Check for system stability
-- Add common input signals
-- Add transfer function static gain
+- Common input signals
+- Transfer function static gain
+- Transfer function positive and negative feedback
+- Transfer function sensitivity functions
+- Root locus plot
 ## Changed
 - Split type for continuous and discrete transfer functions
+- Split type for continuous and discrete state space representation
 
 ## [0.6.0] - 2019-11-18
 ## Added

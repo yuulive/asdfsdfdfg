@@ -13,8 +13,11 @@ pub struct RootLocusIterator<T: Float> {
     tf: Tf<T>,
     /// Transfer constant
     min_k: T,
+    /// Number of intervals to compute
     intervals: T,
+    /// Step size
     step: T,
+    /// Current index of iterator
     index: T,
 }
 
@@ -82,6 +85,8 @@ impl<T: ComplexField + Float + MulAdd<Output = T> + RealField + Scalar> Iterator
         if self.index > self.intervals {
             None
         } else {
+            // k = step * index + min_k, is used to avoid loss of precision
+            // of k += step, due to floating point addition
             let k = MulAdd::mul_add(self.step, self.index, self.min_k);
             self.index += T::one();
             Some(Self::Item {
