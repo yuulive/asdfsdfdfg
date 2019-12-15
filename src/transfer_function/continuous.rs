@@ -101,10 +101,10 @@ impl<T: Float> Tf<T> {
     /// let s = g.sensitivity(&r);
     /// assert_eq!(Tf::new(poly!(0., 1., 1.), poly!(4., 1., 1.)), s);
     /// ```
-    pub fn sensitivity(&self, r: &Tf<T>) -> Tf<T> {
+    pub fn sensitivity(&self, r: &Self) -> Self {
         let n = &self.num * &r.num;
         let d = &self.den * &r.den;
-        Tf {
+        Self {
             num: d.clone(),
             den: n + d,
             _type: PhantomData,
@@ -130,7 +130,7 @@ impl<T: Float> Tf<T> {
     /// let f = g.compl_sensitivity(&r);
     /// assert_eq!(Tf::new(poly!(4.), poly!(4., 1., 1.)), f);
     /// ```
-    pub fn compl_sensitivity(&self, r: &Tf<T>) -> Tf<T> {
+    pub fn compl_sensitivity(&self, r: &Self) -> Self {
         let l = self * r;
         l.feedback_n()
     }
@@ -154,8 +154,8 @@ impl<T: Float> Tf<T> {
     /// let q = g.control_sensitivity(&r);
     /// assert_eq!(Tf::new(poly!(0., 4.), poly!(4., 1., 1.)), q);
     /// ```
-    pub fn control_sensitivity(&self, r: &Tf<T>) -> Tf<T> {
-        Tf {
+    pub fn control_sensitivity(&self, r: &Self) -> Self {
+        Self {
             num: &r.num * &self.den,
             den: &r.num * &self.num + &r.den * &self.den,
             _type: PhantomData,

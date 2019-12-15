@@ -190,7 +190,7 @@ mod tests {
     #[test]
     fn delay() {
         let d = Tfz::delay(2);
-        assert_eq!(0.010000001, d(Complex::new(0., 10.0_f32)).norm());
+        assert_eq!(0.010_000_001, d(Complex::new(0., 10.0_f32)).norm());
     }
 
     #[test]
