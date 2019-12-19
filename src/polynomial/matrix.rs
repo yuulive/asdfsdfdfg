@@ -132,6 +132,27 @@ impl Add<PolyMatrix<f64>> for PolyMatrix<f64> {
     }
 }
 
+impl Add<PolyMatrix<f32>> for PolyMatrix<f32> {
+    type Output = Self;
+
+    fn add(mut self, mut rhs: Self) -> Self {
+        // Check which polynomial matrix has the highest degree
+        let mut result = if self.degree() < rhs.degree() {
+            for (i, c) in self.matr_coeffs.iter().enumerate() {
+                rhs[i] += c;
+            }
+            rhs
+        } else {
+            for (i, c) in rhs.matr_coeffs.iter().enumerate() {
+                self[i] += c;
+            }
+            self
+        };
+        result.trim();
+        result
+    }
+}
+
 /// Implementation of read only indexing of polynomial matrix
 /// returning its coefficients.
 ///

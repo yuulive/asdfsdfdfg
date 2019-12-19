@@ -318,7 +318,7 @@ impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
 /// a1 = -trace(A); ak = -1/k * trace(A*Bk)
 /// Bk = a_(k-1)*I + A*B_(k-1)
 #[allow(non_snake_case, clippy::cast_precision_loss)]
-pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
+pub(crate) fn leverrier_f64(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
     let size = A.nrows(); // A is a square matrix.
     let mut a = vec![1.0];
     let a1 = -A.trace();
@@ -341,6 +341,45 @@ pub(crate) fn leverrier(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
         // 64-bit wide pointers (usize is 64 bits wide, but f64's mantissa is
         // only 52 bits wide)
         ak = -(k as f64).recip() * ABk.trace();
+        a.insert(0, ak);
+    }
+    (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
+}
+
+/// Faddeev–LeVerrier algorithm
+///
+/// (https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm)
+///
+/// B(s) =       B1*s^(n-1) + B2*s^(n-2) + B3*s^(n-3) + ...
+/// a(s) = s^n + a1*s^(n-1) + a2*s^(n-2) + a3*s^(n-3) + ...
+///
+/// with B1 = I = eye(n,n)
+/// a1 = -trace(A); ak = -1/k * trace(A*Bk)
+/// Bk = a_(k-1)*I + A*B_(k-1)
+#[allow(non_snake_case, clippy::cast_precision_loss)]
+pub(crate) fn leverrier_f32(A: &DMatrix<f32>) -> (Poly<f32>, PolyMatrix<f32>) {
+    let size = A.nrows(); // A is a square matrix.
+    let mut a = vec![1.0];
+    let a1 = -A.trace();
+    a.insert(0, a1);
+
+    let B1 = DMatrix::identity(size, size); // eye(n,n)
+    let mut B = vec![B1.clone()];
+    if size == 1 {
+        return (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B));
+    }
+
+    let mut Bk = B1.clone();
+    let mut ak = a1;
+    for k in 2..=size {
+        Bk = ak * &B1 + A * &Bk;
+        B.insert(0, Bk.clone());
+
+        let ABk = A * &Bk;
+        // Casting usize to f32 causes a loss of precision on targets with
+        // 64-bit wide pointers (usize is 64 bits wide, but f32's mantissa is
+        // only 23 bits wide)
+        ak = -(k as f32).recip() * ABk.trace();
         a.insert(0, ak);
     }
     (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
@@ -615,7 +654,7 @@ mod tests {
             DMatrix::from_row_slice(3, 3, &[-7., 1., 5., 3., -7., 1., 4., 6., -6.]);
         let expected_degree2 = DMatrix::from_row_slice(3, 3, &[1., 0., 0., 0., 1., 0., 0., 0., 1.]);
 
-        let (p, poly_matrix) = leverrier(&t);
+        let (p, poly_matrix) = leverrier_f64(&t);
 
         println!("T: {}\np: {}\n", &t, &p);
         println!("B: {}", &poly_matrix);
@@ -639,7 +678,7 @@ mod tests {
         let expected_pc = Poly::new_from_coeffs(&[-3., 1.]);
         let expected_degree0 = DMatrix::from_row_slice(1, 1, &[1.]);
 
-        let (p, poly_matrix) = leverrier(&t);
+        let (p, poly_matrix) = leverrier_f32(&t);
         assert_eq!(expected_pc, p);
         assert_eq!(expected_degree0, poly_matrix[0]);
 

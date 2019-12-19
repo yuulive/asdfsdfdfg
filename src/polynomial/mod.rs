@@ -354,6 +354,16 @@ impl Poly<f64> {
     }
 }
 
+impl Poly<f32> {
+    /// Implementation of polynomial and matrix multiplication
+    pub(crate) fn multiply(&self, rhs: &DMatrix<f32>) -> PolyMatrix<f32> {
+        // It's the polynomial matrix whose coefficients are the coefficients
+        // of the polynomial times the matrix
+        let result: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
+        PolyMatrix::new_from_coeffs(&result)
+    }
+}
+
 /// Implementation methods for Poly struct
 impl<T: Copy + Mul<Output = T> + NumCast + One> Poly<T> {
     /// Calculate the derivative of the polynomial.
