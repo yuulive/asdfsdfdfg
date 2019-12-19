@@ -195,6 +195,68 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     }
 }
 
+/// Controllability matrix implementation.
+///
+/// `Mr = [B AB A^2B ... A^(n-1)B]` -> (n, mn) matrix.
+///
+/// # Arguments
+///
+/// * `n` - Number of states
+/// * `m` - Number of inputs
+/// * `a` - A matrix
+/// * `b` - B matrix
+fn controllability_impl<T: RealField + Scalar>(
+    n: usize,
+    m: usize,
+    a: &DMatrix<T>,
+    b: &DMatrix<T>,
+) -> DMatrix<T> {
+    // Create the entire matrix ahead to avoid multiple allocations.
+    let mut mr = DMatrix::<T>::zeros(n, n * m);
+    mr.columns_range_mut(0..m).copy_from(b);
+    // Create a temporary matrix for the multiplication, since the Mr matrix
+    // cannot be used both as reference and mutable reference.
+    let mut rhs = DMatrix::<T>::zeros(n, m);
+    for i in 1..=n - 1 {
+        rhs.copy_from(&mr.columns_range(((i - 1) * m)..(i * m)));
+        // Multiply A by the result of the previous step.
+        // The result is directly inserted into Mr.
+        a.mul_to(&rhs, &mut mr.columns_range_mut((i * m)..((i + 1) * m)))
+    }
+    mr
+}
+
+/// Osservability matrix implementation.
+///
+/// `Mo = [C' A'C' A'^2B ... A'^(n-1)C']` -> (n, pn) matrix.
+///
+/// # Arguments
+///
+/// * `n` - Number of states
+/// * `p` - Number of outputs
+/// * `a` - A matrix
+/// * `c` - C matrix
+fn observability_impl<T: RealField + Scalar>(
+    n: usize,
+    p: usize,
+    a: &DMatrix<T>,
+    c: &DMatrix<T>,
+) -> DMatrix<T> {
+    // Create the entire matrix ahead to avoid multiple allocations.
+    let mut mo = DMatrix::<T>::zeros(n, n * p);
+    mo.columns_range_mut(0..p).copy_from(&c.transpose());
+    // Create a temporary matrix for the multiplication, since the Mo matrix
+    // cannot be used both as reference and mutable reference.
+    let mut rhs = DMatrix::<T>::zeros(n, p);
+    for i in 1..=n - 1 {
+        rhs.copy_from(&mo.columns_range(((i - 1) * p)..(i * p)));
+        // Multiply A by the result of the previous step.
+        // The result is directly inserted into Mo;
+        a.tr_mul_to(&rhs, &mut mo.columns_range_mut((i * p)..((i + 1) * p)))
+    }
+    mo
+}
+
 impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
     /// Controllability matrix
     ///
@@ -216,19 +278,7 @@ impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
     pub fn controllability(&self) -> (usize, usize, Vec<T>) {
         let n = self.dim.states;
         let m = self.dim.inputs;
-        // Create the entire matrix ahead to avoid multiple allocations.
-        let mut mr = DMatrix::<T>::zeros(n, n * m);
-        mr.columns_range_mut(0..m).copy_from(&self.b);
-        // Create a temporary matrix for the multiplication, since the Mr matrix
-        // cannot be used both as reference and mutable reference.
-        let mut rhs = DMatrix::<T>::zeros(n, m);
-        for i in 1..=n - 1 {
-            rhs.copy_from(&mr.columns_range(((i - 1) * m)..(i * m)));
-            // Multiply A by the result of the previous step.
-            // The result is directly inserted into Mr.
-            self.a
-                .mul_to(&rhs, &mut mr.columns_range_mut((i * m)..((i + 1) * m)))
-        }
+        let mr = controllability_impl(n, m, &self.a, &self.b);
         (n, n * m, mr.data.as_vec().clone())
     }
 
@@ -252,19 +302,7 @@ impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
     pub fn osservability(&self) -> (usize, usize, Vec<T>) {
         let n = self.dim.states;
         let p = self.dim.outputs;
-        // Create the entire matrix ahead to avoid multiple allocations.
-        let mut mo = DMatrix::<T>::zeros(n, n * p);
-        mo.columns_range_mut(0..p).copy_from(&self.c.transpose());
-        // Create a temporary matrix for the multiplication, since the Mo matrix
-        // cannot be used both as reference and mutable reference.
-        let mut rhs = DMatrix::<T>::zeros(n, p);
-        for i in 1..=n - 1 {
-            rhs.copy_from(&mo.columns_range(((i - 1) * p)..(i * p)));
-            // Multiply A by the result of the previous step.
-            // The result is directly inserted into Mo;
-            self.a
-                .tr_mul_to(&rhs, &mut mo.columns_range_mut((i * p)..((i + 1) * p)))
-        }
+        let mo = observability_impl(n, p, &self.a, &self.c);
         (n, n * p, mo.data.as_vec().clone())
     }
 }
