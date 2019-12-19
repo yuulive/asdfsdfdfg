@@ -195,6 +195,80 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     }
 }
 
+impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
+    /// Controllability matrix
+    ///
+    /// `Mr = [B AB A^2B ... A^(n-1)B]` -> (n, mn) matrix.
+    ///
+    /// The return value is: `(rows, cols, vector with data in column major mode)`
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{linear_system::SsGen, Discrete};
+    /// let a = [-1., 3., 0., 2.];
+    /// let b = [1., 2.];
+    /// let c = [1., 1.];
+    /// let d = [0.];
+    /// let sys = SsGen::<_, Discrete>::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+    /// let mr = sys.controllability();
+    /// assert_eq!((2, 2, vec![1., 2., 5., 4.]), mr);
+    /// ```
+    pub fn controllability(&self) -> (usize, usize, Vec<T>) {
+        let n = self.dim.states;
+        let m = self.dim.inputs;
+        // Create the entire matrix ahead to avoid multiple allocations.
+        let mut mr = DMatrix::<T>::zeros(n, n * m);
+        mr.columns_range_mut(0..m).copy_from(&self.b);
+        // Create a temporary matrix for the multiplication, since the Mr matrix
+        // cannot be used both as reference and mutable reference.
+        let mut rhs = DMatrix::<T>::zeros(n, m);
+        for i in 1..=n - 1 {
+            rhs.copy_from(&mr.columns_range(((i - 1) * m)..(i * m)));
+            // Multiply A by the result of the previous step.
+            // The result is directly inserted into Mr.
+            self.a
+                .mul_to(&rhs, &mut mr.columns_range_mut((i * m)..((i + 1) * m)))
+        }
+        (n, n * m, mr.data.as_vec().clone())
+    }
+
+    /// Osservability matrix
+    ///
+    /// `Mo = [C' A'C' A'^2B ... A'^(n-1)C']` -> (n, pn) matrix.
+    ///
+    /// The return value is: `(rows, cols, vector with data in column major mode)`
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{linear_system::SsGen, Continuous};
+    /// let a = [-1., 3., 0., 2.];
+    /// let b = [1., 2.];
+    /// let c = [1., 1.];
+    /// let d = [0.];
+    /// let sys = SsGen::<_, Continuous>::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+    /// let mr = sys.osservability();
+    /// assert_eq!((2, 2, vec![1., 1., -1., 5.]), mr);
+    /// ```
+    pub fn osservability(&self) -> (usize, usize, Vec<T>) {
+        let n = self.dim.states;
+        let p = self.dim.outputs;
+        // Create the entire matrix ahead to avoid multiple allocations.
+        let mut mo = DMatrix::<T>::zeros(n, n * p);
+        mo.columns_range_mut(0..p).copy_from(&self.c.transpose());
+        // Create a temporary matrix for the multiplication, since the Mo matrix
+        // cannot be used both as reference and mutable reference.
+        let mut rhs = DMatrix::<T>::zeros(n, p);
+        for i in 1..=n - 1 {
+            rhs.copy_from(&mo.columns_range(((i - 1) * p)..(i * p)));
+            // Multiply A by the result of the previous step.
+            // The result is directly inserted into Mo;
+            self.a
+                .tr_mul_to(&rhs, &mut mo.columns_range_mut((i * p)..((i + 1) * p)))
+        }
+        (n, n * p, mo.data.as_vec().clone())
+    }
+}
+
 /// Faddeev–LeVerrier algorithm
 ///
 /// (https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm)
@@ -550,5 +624,29 @@ mod tests {
         assert_eq!(DMatrix::from_row_slice(2, 1, &[1., 0.]), *ss.b());
         assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), *ss.c());
         assert_eq!(DMatrix::from_row_slice(1, 1, &[0.]), *ss.d());
+    }
+
+    #[test]
+    fn controllability() {
+        let a = [-1., 3., 0., 2.];
+        let b = [1., 2.];
+        let c = [1., 1.];
+        let d = [0.];
+
+        let sys = SsGen::<_, Discrete>::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let mr = sys.controllability();
+        assert_eq!((2, 2, vec![1., 2., 5., 4.]), mr);
+    }
+
+    #[test]
+    fn osservability() {
+        let a = [-1., 3., 0., 2.];
+        let b = [1., 2.];
+        let c = [1., 1.];
+        let d = [0.];
+
+        let sys = SsGen::<_, Continuous>::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let mo = sys.osservability();
+        assert_eq!((2, 2, vec![1., 1., -1., 5.]), mo);
     }
 }

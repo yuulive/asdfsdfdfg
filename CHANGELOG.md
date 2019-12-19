@@ -10,6 +10,7 @@
 - Transfer function positive and negative feedback
 - Transfer function sensitivity functions
 - Root locus plot
+- Controllability and observability matrices
 ## Changed
 - Split type for continuous and discrete transfer functions
 - Split type for continuous and discrete state space representation
