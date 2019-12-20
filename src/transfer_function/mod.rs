@@ -180,6 +180,34 @@ impl<T: Float, U: Time> TfGen<T, U> {
             _type: PhantomData,
         }
     }
+
+    /// In place normalization of transfer function
+    ///
+    /// from:
+    /// ```text
+    ///        b_n*z^n + b_(n-1)*z^(n-1) + ... + b_1*z + b_0
+    /// G(z) = ---------------------------------------------
+    ///        a_n*z^n + a_(n-1)*z^(n-1) + ... + a_1*z + a_0
+    /// ```
+    /// to:
+    /// ```text
+    ///        b'_n*z^n + b'_(n-1)*z^(n-1) + ... + b'_1*z + b'_0
+    /// G(z) = -------------------------------------------------
+    ///          z^n + a'_(n-1)*z^(n-1) + ... + a'_1*z + a'_0
+    /// ```
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let mut tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
+    /// tfz.normalize_mut();
+    /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
+    /// assert_eq!(expected, tfz);
+    /// ```
+    pub fn normalize_mut(&mut self) {
+        let an = self.den.monic_mut();
+        self.num.div_mut(an);
+    }
 }
 
 impl<U: Time> TryFrom<SsGen<f64, U>> for TfGen<f64, U> {
@@ -525,5 +553,13 @@ mod tests {
         let tfz = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(-4., 6., -2.));
         let expected = TfGen::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
         assert_eq!(expected, tfz.normalize());
+    }
+
+    #[test]
+    fn normalization_mutable() {
+        let mut tfz = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(-4., 6., -2.));
+        tfz.normalize_mut();
+        let expected = TfGen::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
+        assert_eq!(expected, tfz);
     }
 }
