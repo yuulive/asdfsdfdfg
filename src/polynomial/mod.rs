@@ -112,6 +112,27 @@ impl<T: Copy + Num + Zero> Poly<T> {
     }
 }
 
+impl<T: Copy + Div<Output = T>> Poly<T> {
+    /// In place division with a real number
+    ///
+    /// # Arguments
+    ///
+    /// * `d` - Real number divisor
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::poly;
+    /// let mut p = poly!(3, 4, 5);
+    /// p.div_mut(2);
+    /// assert_eq!(poly!(1, 2, 2), p);
+    /// ```
+    pub fn div_mut(&mut self, d: T) {
+        for c in self.coeffs.iter_mut() {
+            *c = *c / d;
+        }
+    }
+}
+
 /// Implementation methods for Poly struct
 impl<T: Copy + Div<Output = T> + One> Poly<T> {
     /// Return the monic polynomial and the leading coefficient.
@@ -145,9 +166,7 @@ impl<T: Copy + Div<Output = T> + One> Poly<T> {
     /// ```
     pub fn monic_mut(&mut self) -> T {
         let lc = self.leading_coeff();
-        for x in self.coeffs.iter_mut() {
-            *x = *x / lc;
-        }
+        self.div_mut(lc);
         lc
     }
 }
@@ -1263,6 +1282,13 @@ mod tests {
         assert_eq!(Poly::zero(), poly!(1., 0., 1.) / inf);
 
         assert_eq!(poly!(inf, -inf, inf), poly!(1., -2.3, 1.) / 0.);
+    }
+
+    #[test]
+    fn poly_mutable_div() {
+        let mut p = poly!(3, 4, 5);
+        p.div_mut(2);
+        assert_eq!(poly!(1, 2, 2), p);
     }
 
     #[test]
