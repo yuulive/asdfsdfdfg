@@ -915,6 +915,20 @@ impl<T: Copy + Num> Div<T> for Poly<T> {
     }
 }
 
+/// Implementation of polynomial and float division
+impl<T: Copy + Num> Div<T> for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn div(self, rhs: T) -> Self::Output {
+        let mut result = self.clone();
+        for c in &mut result.coeffs {
+            *c = *c / rhs;
+        }
+        result.trim();
+        result
+    }
+}
+
 /// Implementation of the additive identity for polynomials
 ///
 /// # Example
