@@ -131,6 +131,25 @@ impl<T: Copy + Div<Output = T> + One> Poly<T> {
 
         (monic_poly, lc)
     }
+
+    /// Return the monic polynomial and the leading coefficient,
+    /// it mutates the polynomial in place.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let mut p = Poly::new_from_coeffs(&[1., 2., 10.]);
+    /// let c = p.monic_mut();
+    /// assert_eq!(Poly::new_from_coeffs(&[0.1, 0.2, 1.]), p);
+    /// assert_eq!(10., c);
+    /// ```
+    pub fn monic_mut(&mut self) -> T {
+        let lc = self.leading_coeff();
+        for x in self.coeffs.iter_mut() {
+            *x = *x / lc;
+        }
+        lc
+    }
 }
 
 /// Implementation methods for Poly struct
@@ -1379,5 +1398,13 @@ mod tests {
         let (p2, c) = p.monic();
         assert_eq!(9., c);
         assert_eq!(1., p2.leading_coeff());
+    }
+
+    #[test]
+    fn monic_mutable_poly() {
+        let mut p = poly!(-3., 6., 9.);
+        let c = p.monic_mut();
+        assert_eq!(9., c);
+        assert_eq!(1., p.leading_coeff());
     }
 }
