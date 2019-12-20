@@ -148,6 +148,38 @@ impl<T: Float, U: Time> TfGen<T, U> {
             _type: PhantomData::<U>,
         }
     }
+
+    /// Normalization of transfer function
+    ///
+    /// from:
+    /// ```text
+    ///        b_n*z^n + b_(n-1)*z^(n-1) + ... + b_1*z + b_0
+    /// G(z) = ---------------------------------------------
+    ///        a_n*z^n + a_(n-1)*z^(n-1) + ... + a_1*z + a_0
+    /// ```
+    /// to:
+    /// ```text
+    ///        b'_n*z^n + b'_(n-1)*z^(n-1) + ... + b'_1*z + b'_0
+    /// G(z) = -------------------------------------------------
+    ///          z^n + a'_(n-1)*z^(n-1) + ... + a'_1*z + a'_0
+    /// ```
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
+    /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
+    /// assert_eq!(expected, tfz.normalize());
+    /// ```
+    pub fn normalize(&self) -> Self {
+        let (den, an) = self.den.monic();
+        let num = &self.num / an;
+        Self {
+            num,
+            den,
+            _type: PhantomData,
+        }
+    }
 }
 
 impl<U: Time> TryFrom<SsGen<f64, U>> for TfGen<f64, U> {
@@ -486,5 +518,12 @@ mod tests {
     fn print() {
         let tf = TfGen::<_, Continuous>::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
         assert_eq!("1\n──────\n1 +1*s", format!("{}", tf));
+    }
+
+    #[test]
+    fn normalization() {
+        let tfz = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(-4., 6., -2.));
+        let expected = TfGen::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
+        assert_eq!(expected, tfz.normalize());
     }
 }
