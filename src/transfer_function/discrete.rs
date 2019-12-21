@@ -74,6 +74,55 @@ impl<T: Float + MulAdd<Output = T>> Tfz<T> {
     }
 }
 
+use std::collections::VecDeque;
+use std::fmt::Debug;
+use std::iter::Sum;
+use std::ops::Mul;
+//impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
+impl<T: Debug + Float + Mul<Output = T> + Sum> Tfz<T> {
+    //pub fn arma(&self) -> impl Fn(T) -> T {
+    pub fn arma(&self) -> impl FnMut(T) -> T {
+        let mut g = self.normalize();
+        let n = g.den.degree().unwrap_or(1);
+
+        // The front is the lowest order coefficient.
+        // The back is the higher order coefficient.
+        // The last coefficient is always 1.
+        // [a0, a1, a2, ..., a(n-1), 1]
+        let y_coeffs = g.den.coeffs;
+        // [b0, b1, b2, ..., bn]
+        // The numerator must be extended to the degree of the denominator
+        // and the higher degree terms (more recent) must be zero.
+        g.num.extend(n);
+        let u_coeffs = g.num.coeffs;
+
+        // The front is the oldest calculated output.
+        // [y(k-n), y(k-n+1), ..., y(k-1), y(k)]
+        let mut y = VecDeque::from(vec![T::zero(); y_coeffs.len()]);
+        // The front is the oldest input.
+        // [u(k-n), u(k-n+1), ..., u(k-1), u(k)]
+        let mut u = VecDeque::from(vec![T::zero(); u_coeffs.len()]);
+        debug_assert!(u_coeffs.len() == u.len());
+        debug_assert!(u.len() == y.len());
+
+        move |uk| {
+            u.push_back(uk);
+            u.pop_front();
+            let input: T = u_coeffs.iter().zip(&u).map(|(&i, &j)| i * j).sum();
+
+            y.push_back(T::zero());
+            y.pop_front();
+            let old_output: T = y_coeffs.iter().zip(&y).map(|(&i, &j)| i * j).sum();
+
+            let new_y = input - old_output;
+            if let Some(x) = y.back_mut() {
+                *x = new_y;
+            }
+            new_y
+        }
+    }
+}
+
 /// Discretization of a transfer function
 pub struct TfDiscretization<T: Num> {
     /// Transfer function
@@ -284,5 +333,18 @@ mod tests {
         let gz = tfz.eval(&z);
         assert_relative_eq!(32.753, gz.norm().to_db(), max_relative = 1e-4);
         assert_relative_eq!(114.20, gz.arg().to_degrees(), max_relative = 1e-4);
+    }
+
+    #[test]
+    fn arma() {
+        let tfz = Tfz::new(poly!(0.5_f32), poly!(-0.5, 1.));
+        let mut sys = tfz.arma();
+
+        assert_eq!(0.0, sys(1.));
+        assert_eq!(0.5, sys(0.));
+        assert_eq!(0.25, sys(0.));
+        assert_eq!(0.125, sys(0.));
+        assert_eq!(0.0625, sys(0.));
+        assert_eq!(0.03125, sys(0.));
     }
 }

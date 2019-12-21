@@ -26,7 +26,7 @@ use crate::{polynomial::matrix::PolyMatrix, utils, Eval};
 /// p(x) = c0 + c1*x + c2*x^2 + ...
 #[derive(Debug, PartialEq, Clone)]
 pub struct Poly<T> {
-    coeffs: Vec<T>,
+    pub(crate) coeffs: Vec<T>,
 }
 
 /// Macro shortcut to crate a polynomial from its coefficients.
