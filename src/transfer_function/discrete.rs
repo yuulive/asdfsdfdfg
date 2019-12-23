@@ -2,15 +2,17 @@
 //!
 //! The discretization can be performed with Euler or Tustin methods.
 
+use num_complex::Complex;
+use num_traits::{Float, MulAdd, Num};
+
+use std::{collections::VecDeque, fmt::Debug, iter::Sum, ops::Mul};
+
 use crate::{
     linear_system::discrete::Discretization,
     transfer_function::{continuous::Tf, TfGen},
     units::Seconds,
     Discrete, Eval,
 };
-
-use num_complex::Complex;
-use num_traits::{Float, MulAdd, Num};
 
 /// Discrete transfer function
 pub type Tfz<T> = TfGen<T, Discrete>;
@@ -74,16 +76,39 @@ impl<T: Float + MulAdd<Output = T>> Tfz<T> {
     }
 }
 
-use std::collections::VecDeque;
-use std::fmt::Debug;
-use std::iter::Sum;
-use std::ops::Mul;
-//impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
-impl<T: Debug + Float + Mul<Output = T> + Sum> Tfz<T> {
-    //pub fn arma(&self) -> impl Fn(T) -> T {
-    pub fn arma(&self) -> impl FnMut(T) -> T {
+impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
+    /// Autoregressive moving average representation of a discrete transfer function
+    /// It transforms the transfer function into time domain input-output
+    /// difference equation.
+    /// ```text
+    ///                   b_n*z^n + b_(n-1)*z^(n-1) + ... + b_1*z + b_0
+    /// Y(z) = G(z)U(z) = --------------------------------------------- U(z)
+    ///                     z^n + a_(n-1)*z^(n-1) + ... + a_1*z + a_0
+    ///
+    /// y(k) = - a_(n-1)*y(k-1) - ... - a_1*y(k-n+1) - a_0*y(k-n) +
+    ///        + b_n*u(k) + b_(n-1)*u(k-1) + ... + b_1*u(k-n+1) + b_0*u(k-n)
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `input` - Input function
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let tfz = Tfz::new(poly!(1., 2., 3.), poly!(0., 0., 0., 1.));
+    /// let mut iter = tfz.arma(|_| 1.);
+    /// assert_eq!(Some(0.), iter.next());
+    /// assert_eq!(Some(3.), iter.next());
+    /// assert_eq!(Some(5.), iter.next());
+    /// assert_eq!(Some(6.), iter.next());
+    /// ```
+    pub fn arma<F>(&self, input: F) -> ArmaIterator<F, T>
+    where
+        F: Fn(usize) -> T,
+    {
         let mut g = self.normalize();
-        let n = g.den.degree().unwrap_or(1);
+        let n = g.den.degree().unwrap_or(0);
 
         // The front is the lowest order coefficient.
         // The back is the higher order coefficient.
@@ -98,28 +123,84 @@ impl<T: Debug + Float + Mul<Output = T> + Sum> Tfz<T> {
 
         // The front is the oldest calculated output.
         // [y(k-n), y(k-n+1), ..., y(k-1), y(k)]
-        let mut y = VecDeque::from(vec![T::zero(); y_coeffs.len()]);
+        let y = VecDeque::from(vec![T::zero(); y_coeffs.len()]);
         // The front is the oldest input.
         // [u(k-n), u(k-n+1), ..., u(k-1), u(k)]
-        let mut u = VecDeque::from(vec![T::zero(); u_coeffs.len()]);
+        let u = VecDeque::from(vec![T::zero(); u_coeffs.len()]);
         debug_assert!(u_coeffs.len() == u.len());
         debug_assert!(u.len() == y.len());
 
-        move |uk| {
-            u.push_back(uk);
-            u.pop_front();
-            let input: T = u_coeffs.iter().zip(&u).map(|(&i, &j)| i * j).sum();
-
-            y.push_back(T::zero());
-            y.pop_front();
-            let old_output: T = y_coeffs.iter().zip(&y).map(|(&i, &j)| i * j).sum();
-
-            let new_y = input - old_output;
-            if let Some(x) = y.back_mut() {
-                *x = new_y;
-            }
-            new_y
+        ArmaIterator {
+            y_coeffs,
+            u_coeffs,
+            y,
+            u,
+            input,
+            k: 0,
         }
+    }
+}
+
+/// Iterator for the autoregressive moving average model of a discrete
+/// transfer function.
+#[derive(Debug)]
+pub struct ArmaIterator<F, T>
+where
+    F: Fn(usize) -> T,
+{
+    /// y coefficients
+    y_coeffs: Vec<T>,
+    /// u coefficients
+    u_coeffs: Vec<T>,
+    /// y ring buffer
+    y: VecDeque<T>,
+    /// u ring buffer
+    u: VecDeque<T>,
+    /// input function
+    input: F,
+    /// step
+    k: usize,
+}
+
+impl<F, T> Iterator for ArmaIterator<F, T>
+where
+    F: Fn(usize) -> T,
+    T: Float + Mul<Output = T> + Sum,
+{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.u.push_back((self.input)(self.k));
+        // Discard oldest input.
+        self.u.pop_front();
+        let input: T = self
+            .u_coeffs
+            .iter()
+            .zip(&self.u)
+            .map(|(&i, &j)| i * j)
+            .sum();
+
+        // Push zero in the last position shifting output values one step back
+        // in time, zero suppress last coefficient which shall be the current
+        // calculated output value.
+        self.y.push_back(T::zero());
+        // Discard oldest output.
+        self.y.pop_front();
+        let old_output: T = self
+            .y_coeffs
+            .iter()
+            .zip(&self.y)
+            .map(|(&i, &j)| i * j)
+            .sum();
+
+        // Calculate the output.
+        let new_y = input - old_output;
+        // Put the new calculated value in the last position of thw buffer.
+        if let Some(x) = self.y.back_mut() {
+            *x = new_y;
+        }
+        self.k += 1;
+        Some(new_y)
     }
 }
 
@@ -338,13 +419,13 @@ mod tests {
     #[test]
     fn arma() {
         let tfz = Tfz::new(poly!(0.5_f32), poly!(-0.5, 1.));
-        let mut sys = tfz.arma();
-
-        assert_eq!(0.0, sys(1.));
-        assert_eq!(0.5, sys(0.));
-        assert_eq!(0.25, sys(0.));
-        assert_eq!(0.125, sys(0.));
-        assert_eq!(0.0625, sys(0.));
-        assert_eq!(0.03125, sys(0.));
+        let mut iter = tfz.arma(|k| if k == 0 { 1. } else { 0. }).take(6);
+        assert_eq!(Some(0.), iter.next());
+        assert_eq!(Some(0.5), iter.next());
+        assert_eq!(Some(0.25), iter.next());
+        assert_eq!(Some(0.125), iter.next());
+        assert_eq!(Some(0.0625), iter.next());
+        assert_eq!(Some(0.03125), iter.next());
+        assert_eq!(None, iter.next());
     }
 }

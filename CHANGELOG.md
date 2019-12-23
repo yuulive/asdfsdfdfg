@@ -11,6 +11,7 @@
 - Transfer function sensitivity functions
 - Root locus plot
 - Controllability and observability matrices
+- Autoregressive moving average (ARMA) model of discrete transfer function
 ## Changed
 - Split type for continuous and discrete transfer functions
 - Split type for continuous and discrete state space representation
