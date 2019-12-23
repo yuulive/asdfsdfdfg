@@ -217,7 +217,7 @@ fn controllability_impl<T: RealField + Scalar>(
     // Create a temporary matrix for the multiplication, since the Mr matrix
     // cannot be used both as reference and mutable reference.
     let mut rhs = DMatrix::<T>::zeros(n, m);
-    for i in 1..=n - 1 {
+    for i in 1..n {
         rhs.copy_from(&mr.columns_range(((i - 1) * m)..(i * m)));
         // Multiply A by the result of the previous step.
         // The result is directly inserted into Mr.
@@ -248,7 +248,7 @@ fn observability_impl<T: RealField + Scalar>(
     // Create a temporary matrix for the multiplication, since the Mo matrix
     // cannot be used both as reference and mutable reference.
     let mut rhs = DMatrix::<T>::zeros(n, p);
-    for i in 1..=n - 1 {
+    for i in 1..n {
         rhs.copy_from(&mo.columns_range(((i - 1) * p)..(i * p)));
         // Multiply A by the result of the previous step.
         // The result is directly inserted into Mo;
