@@ -11,10 +11,10 @@ use nalgebra::{ComplexField, DMatrix, RealField, Scalar, Schur};
 use num_complex::Complex;
 use num_traits::{Float, MulAdd, Num, NumCast, One, Signed, Zero};
 
-use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Neg, Sub};
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
+    ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Neg, Rem, Sub},
 };
 
 use crate::{polynomial::matrix::PolyMatrix, utils, Eval};
@@ -967,6 +967,73 @@ impl<T: Copy + Num> Div<T> for &Poly<T> {
     }
 }
 
+impl<T: Float> Div for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn div(self, rhs: &Poly<T>) -> Self::Output {
+        poly_div_impl(self, rhs).0
+    }
+}
+
+impl<T: Float> Div for Poly<T> {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        Div::div(&self, &rhs)
+    }
+}
+
+impl<T: Float> Rem for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn rem(self, rhs: &Poly<T>) -> Self::Output {
+        poly_div_impl(self, rhs).1
+    }
+}
+
+impl<T: Float> Rem for Poly<T> {
+    type Output = Self;
+
+    fn rem(self, rhs: Self) -> Self::Output {
+        Rem::rem(&self, &rhs)
+    }
+}
+
+/// Donald Ervin Knuth, The Art of Computer Programming: Seminumerical algorithms
+/// Volume 2, third edition, section 4.6.1
+/// Algorithm D: division of polynomials over a field.
+#[allow(clippy::many_single_char_names)]
+fn poly_div_impl<T: Float>(u: &Poly<T>, v: &Poly<T>) -> (Poly<T>, Poly<T>) {
+    let (m, n) = match (u.degree(), v.degree()) {
+        (_, None) => panic!("Division by zero polynomial"),
+        (None, _) => return (Poly::zero(), Poly::zero()),
+        (Some(m), Some(n)) if m < n => return (Poly::zero(), u.clone()),
+        (Some(m), Some(n)) => (m, n),
+    };
+
+    // 1/v_n
+    let vn_rec = v.leading_coeff().recip();
+
+    let mut u_int = u.clone();
+    let mut q = Poly {
+        coeffs: vec![T::zero(); m - n + 1],
+    };
+
+    for k in (0..=m - n).rev() {
+        q[k] = u_int[n + k] * vn_rec;
+        // n+k-1..=k
+        for j in (k..n + k).rev() {
+            u_int[j] = u_int[j] - q[k] * v[j - k];
+        }
+    }
+
+    // (r_n-1, ..., r_0) = (u_n-1, ..., u_0)
+    let mut r = Poly::new_from_coeffs(&u_int.coeffs[0..n]);
+    r.trim();
+    // No need to trim q, its higher degree coefficient is always different from 0.
+    (q, r)
+}
+
 /// Implementation of the additive identity for polynomials
 ///
 /// # Example
@@ -1289,6 +1356,43 @@ mod tests {
         let mut p = poly!(3, 4, 5);
         p.div_mut(2);
         assert_eq!(poly!(1, 2, 2), p);
+    }
+
+    #[test]
+    #[should_panic]
+    fn div_panic() {
+        let _ = poly_div_impl(&poly!(6., 5., 1.), &poly!(0.));
+    }
+
+    #[test]
+    fn poly_division_impl() {
+        let d1 = poly_div_impl(&poly!(6., 5., 1.), &poly!(2., 1.));
+        assert_eq!(poly!(3., 1.), d1.0);
+        assert_eq!(poly!(0.), d1.1);
+
+        let d2 = poly_div_impl(&poly!(5., 3., 1.), &poly!(4., 6., 2.));
+        assert_eq!(poly!(0.5), d2.0);
+        assert_eq!(poly!(3.), d2.1);
+
+        let d3 = poly_div_impl(&poly!(3., 1.), &poly!(4., 6., 2.));
+        assert_eq!(poly!(0.), d3.0);
+        assert_eq!(poly!(3., 1.), d3.1);
+
+        let d4 = poly_div_impl(&poly!(0.), &poly!(4., 6., 2.));
+        assert_eq!(poly!(0.), d4.0);
+        assert_eq!(poly!(0.), d4.1);
+    }
+
+    #[test]
+    fn two_poly_div() {
+        let q = poly!(-1., 0., 0., 0., 1.) / poly!(1., 0., 1.);
+        assert_eq!(poly!(-1., 0., 1.), q);
+    }
+
+    #[test]
+    fn two_poly_rem() {
+        let r = poly!(-4., 0., -2., 1.) % poly!(-3., 1.);
+        assert_eq!(poly!(5.), r);
     }
 
     #[test]
