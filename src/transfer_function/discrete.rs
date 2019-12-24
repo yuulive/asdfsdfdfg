@@ -95,9 +95,9 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
+    /// use automatica::{poly, signals::discrete, Tfz};
     /// let tfz = Tfz::new(poly!(1., 2., 3.), poly!(0., 0., 0., 1.));
-    /// let mut iter = tfz.arma(|_| 1.);
+    /// let mut iter = tfz.arma(discrete::step(1., 0));
     /// assert_eq!(Some(0.), iter.next());
     /// assert_eq!(Some(3.), iter.next());
     /// assert_eq!(Some(5.), iter.next());
@@ -309,7 +309,7 @@ impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for TfDiscretization<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{poly, polynomial::Poly, units::Decibel, Eval};
+    use crate::{poly, polynomial::Poly, signals::discrete, units::Decibel, Eval};
     use num_complex::Complex64;
 
     #[test]
@@ -419,7 +419,7 @@ mod tests {
     #[test]
     fn arma() {
         let tfz = Tfz::new(poly!(0.5_f32), poly!(-0.5, 1.));
-        let mut iter = tfz.arma(|k| if k == 0 { 1. } else { 0. }).take(6);
+        let mut iter = tfz.arma(discrete::impulse(1., 0)).take(6);
         assert_eq!(Some(0.), iter.next());
         assert_eq!(Some(0.5), iter.next());
         assert_eq!(Some(0.25), iter.next());

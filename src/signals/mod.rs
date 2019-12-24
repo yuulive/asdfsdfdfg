@@ -86,9 +86,48 @@ pub mod discrete {
     /// # Arguments
     ///
     /// * `k` - Step size
+    /// * `time` - Time at which step occurs
+    pub fn step<T: Float>(k: T, time: usize) -> impl Fn(usize) -> T {
+        move |t| {
+            if t < time {
+                T::zero()
+            } else {
+                k
+            }
+        }
+    }
+
+    /// Step function
+    ///
+    /// # Arguments
+    ///
+    /// * `k` - Step size
+    /// * `time` - Time at which step occurs
     /// * `size` - Output size
-    pub fn step<T: Float>(k: T, size: usize) -> impl Fn(usize) -> Vec<T> {
-        move |_| vec![k; size]
+    pub fn step_vec<T: Float>(k: T, time: usize, size: usize) -> impl Fn(usize) -> Vec<T> {
+        move |t| {
+            if t < time {
+                vec![T::zero(); size]
+            } else {
+                vec![k; size]
+            }
+        }
+    }
+
+    /// Impulse function at given time
+    ///
+    /// # Arguments
+    ///
+    /// * `k` - Step size
+    /// * `time` - Impulse time
+    pub fn impulse<T: Float>(k: T, time: usize) -> impl Fn(usize) -> T {
+        move |t| {
+            if t == time {
+                k
+            } else {
+                T::zero()
+            }
+        }
     }
 
     /// Impulse function at given time
@@ -98,7 +137,7 @@ pub mod discrete {
     /// * `k` - Step size
     /// * `time` - Impulse time
     /// * `size` - Output size
-    pub fn impulse<T: Float>(k: T, time: usize, size: usize) -> impl Fn(usize) -> Vec<T> {
+    pub fn impulse_vec<T: Float>(k: T, time: usize, size: usize) -> impl Fn(usize) -> Vec<T> {
         move |t| {
             if t == time {
                 vec![k; size]
@@ -118,13 +157,30 @@ pub mod discrete {
         }
 
         #[quickcheck]
+        fn step_single_input(s: f32) -> bool {
+            let f = step(s, 2);
+            0. == f(1) && s == f(2)
+        }
+
+        #[quickcheck]
         fn step_input(s: usize) -> bool {
-            3. == step(3., 1)(s)[0]
+            let f = step_vec(3., 1, 1);
+            if s == 0 {
+                0. == f(s)[0]
+            } else {
+                3. == f(s)[0]
+            }
+        }
+
+        #[quickcheck]
+        fn impulse_single_input(i: f32) -> bool {
+            let f = impulse(i, 2);
+            0. == f(1) && i == f(2)
         }
 
         #[test]
         fn impulse_input() {
-            let mut out: Vec<_> = (0..20).map(|t| impulse(10., 15, 1)(t)[0]).collect();
+            let mut out: Vec<_> = (0..20).map(|t| impulse_vec(10., 15, 1)(t)[0]).collect();
             assert_eq!(10., out[15]);
             out.remove(15);
             assert!(out.iter().all(|&o| o == 0.))
