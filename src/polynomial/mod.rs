@@ -1021,7 +1021,7 @@ impl<T: Display + One + PartialEq + Signed + Zero> Display for Poly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.coeffs.is_empty() {
             return write!(f, "0");
-        } else if self.len() == 0 {
+        } else if self.len() == 1 {
             return write!(f, "{}", self.coeffs[0]);
         }
         let mut s = String::new();
