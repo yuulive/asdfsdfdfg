@@ -9,9 +9,12 @@
 - Transfer function static gain
 - Transfer function positive and negative feedback
 - Transfer function sensitivity functions
+- Transfer function delay
+- Equilibrium for discrete systems
 - Root locus plot
 - Controllability and observability matrices
 - Autoregressive moving average (ARMA) model of discrete transfer function
+- Polynomial division
 ## Changed
 - Split type for continuous and discrete transfer functions
 - Split type for continuous and discrete state space representation
