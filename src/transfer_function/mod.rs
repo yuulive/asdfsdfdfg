@@ -225,7 +225,7 @@ impl<U: Time> TryFrom<SsGen<f64, U>> for TfGen<f64, U> {
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
         let rest = pc.multiply(ss.d());
         let tf = g + rest;
-        if let Some(num) = MatrixOfPoly::from(tf).siso() {
+        if let Some(num) = MatrixOfPoly::from(tf).single() {
             Ok(Self::new(num.clone(), pc))
         } else {
             Err("Linear system is not Single Input Single Output")
@@ -248,7 +248,7 @@ impl<U: Time> TryFrom<SsGen<f32, U>> for TfGen<f32, U> {
         let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
         let rest = pc.multiply(ss.d());
         let tf = g + rest;
-        if let Some(num) = MatrixOfPoly::from(tf).siso() {
+        if let Some(num) = MatrixOfPoly::from(tf).single() {
             Ok(Self::new(num.clone(), pc))
         } else {
             Err("Linear system is not Single Input Single Output")

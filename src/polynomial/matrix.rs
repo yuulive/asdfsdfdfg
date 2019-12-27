@@ -236,9 +236,8 @@ impl<T> MatrixOfPoly<T> {
         }
     }
 
-    /// Extract the transfer function from the matrix if is the only one.
-    /// Use to get Single Input Single Output transfer function.
-    pub fn siso(&self) -> Option<&Poly<T>> {
+    /// Extract the polynomial from the matrix if is the only one.
+    pub(crate) fn single(&self) -> Option<&Poly<T>> {
         if self.matrix.shape() == [1, 1] {
             self.matrix.first()
         } else {
@@ -375,21 +374,21 @@ mod tests2 {
     }
 
     #[test]
-    fn siso() {
+    fn single() {
         let v = vec![Poly::new_from_coeffs(&[4.3, 5.32])];
         let mp = MatrixOfPoly::new(1, 1, v);
-        let res = mp.siso();
+        let res = mp.single();
         assert!(res.is_some());
         assert_relative_eq!(14.94, res.unwrap().eval(&2.), max_relative = 1e-10);
     }
 
     #[test]
-    fn siso_fail() {
+    fn single_fail() {
         let c = [4.3, 5.32];
         let p = Poly::new_from_coeffs(&c);
         let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
         let mp = MatrixOfPoly::new(2, 2, v);
-        let res = mp.siso();
+        let res = mp.single();
         assert!(res.is_none());
     }
 }
