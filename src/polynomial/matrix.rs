@@ -22,13 +22,13 @@ use crate::{polynomial::Poly, Eval};
 /// P(x) = C0 + C1*x + C2*x^2 + ...
 #[derive(Clone, Debug)]
 pub(crate) struct PolyMatrix<T: Scalar> {
-    pub(crate) matr_coeffs: Vec<DMatrix<T>>,
+    matr_coeffs: Vec<DMatrix<T>>,
 }
 
 /// Implementation methods for `PolyMatrix` struct
 impl<T: Scalar> PolyMatrix<T> {
     /// Degree of the polynomial matrix
-    pub(crate) fn degree(&self) -> usize {
+    fn degree(&self) -> usize {
         assert!(
             !self.matr_coeffs.is_empty(),
             "Degree is not defined on empty polynomial matrix"
