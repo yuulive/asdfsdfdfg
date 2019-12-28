@@ -152,9 +152,9 @@ where
     y_coeffs: Vec<T>,
     /// u coefficients
     u_coeffs: Vec<T>,
-    /// y ring buffer
+    /// y queue buffer
     y: VecDeque<T>,
-    /// u ring buffer
+    /// u queue buffer
     u: VecDeque<T>,
     /// input function
     input: F,
@@ -195,7 +195,7 @@ where
 
         // Calculate the output.
         let new_y = input - old_output;
-        // Put the new calculated value in the last position of thw buffer.
+        // Put the new calculated value in the last position of the buffer.
         if let Some(x) = self.y.back_mut() {
             *x = new_y;
         }
