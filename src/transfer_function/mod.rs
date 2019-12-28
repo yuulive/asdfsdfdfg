@@ -15,12 +15,12 @@ use nalgebra::{ComplexField, RealField, Scalar};
 use num_complex::Complex;
 use num_traits::{Float, Inv, MulAdd, One, Signed, Zero};
 
-use std::convert::TryFrom;
-use std::marker::PhantomData;
-use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::{
+    convert::TryFrom,
     fmt,
     fmt::{Debug, Display, Formatter},
+    marker::PhantomData,
+    ops::{Add, Div, Mul, Neg, Sub},
 };
 
 use crate::{
@@ -91,6 +91,16 @@ impl<T: Clone, U: Time> Inv for &TfGen<T, U> {
             den: self.num.clone(),
             _type: PhantomData::<U>,
         }
+    }
+}
+
+impl<T: Clone, U: Time> Inv for TfGen<T, U> {
+    type Output = Self;
+
+    /// Compute the reciprocal of a transfer function.
+    fn inv(mut self) -> Self::Output {
+        self.inv_mut();
+        self
     }
 }
 
@@ -262,7 +272,11 @@ impl<T: Float, U: Time> Neg for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     fn neg(self) -> Self::Output {
-        Self::Output::new(-&self.num, self.den.clone())
+        Self::Output {
+            num: -&self.num,
+            den: self.den.clone(),
+            _type: PhantomData,
+        }
     }
 }
 
@@ -271,8 +285,9 @@ impl<T: Float, U: Time> Neg for &TfGen<T, U> {
 impl<T: Float, U: Time> Neg for TfGen<T, U> {
     type Output = Self;
 
-    fn neg(self) -> Self::Output {
-        Neg::neg(&self)
+    fn neg(mut self) -> Self::Output {
+        self.num = -self.num;
+        self
     }
 }
 
@@ -298,8 +313,16 @@ impl<T: Float, U: Time> Add for &TfGen<T, U> {
 impl<T: Float, U: Time> Add for TfGen<T, U> {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self {
-        Add::add(&self, &rhs)
+    fn add(mut self, rhs: Self) -> Self {
+        if self.den == rhs.den {
+            self.num = self.num + rhs.num;
+            self
+        } else {
+            // first modify numerator.
+            self.num = &self.num * &rhs.den + &self.den * &rhs.num;
+            self.den = self.den * rhs.den;
+            self
+        }
     }
 }
 
@@ -325,8 +348,16 @@ impl<T: Float, U: Time> Sub for &TfGen<T, U> {
 impl<T: Float, U: Time> Sub for TfGen<T, U> {
     type Output = Self;
 
-    fn sub(self, rhs: Self) -> Self {
-        Sub::sub(&self, &rhs)
+    fn sub(mut self, rhs: Self) -> Self {
+        if self.den == rhs.den {
+            self.num = self.num - rhs.num;
+            self
+        } else {
+            // first modify numerator.
+            self.num = &self.num * &rhs.den - &self.den * &rhs.num;
+            self.den = self.den * rhs.den;
+            self
+        }
     }
 }
 
@@ -345,8 +376,10 @@ impl<T: Float, U: Time> Mul for &TfGen<T, U> {
 impl<T: Float, U: Time> Mul for TfGen<T, U> {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self {
-        Mul::mul(&self, &rhs)
+    fn mul(mut self, rhs: Self) -> Self {
+        self.num = self.num * rhs.num;
+        self.den = self.den * rhs.den;
+        self
     }
 }
 
@@ -366,8 +399,10 @@ impl<T: Float, U: Time> Div for &TfGen<T, U> {
 impl<T: Float, U: Time> Div for TfGen<T, U> {
     type Output = Self;
 
-    fn div(self, rhs: Self) -> Self {
-        Div::div(&self, &rhs)
+    fn div(mut self, rhs: Self) -> Self {
+        self.num = self.num * rhs.den;
+        self.den = self.den * rhs.num;
+        self
     }
 }
 
@@ -420,7 +455,7 @@ mod tests {
         let num2 = poly!(-4.2, -3.12, 0.0012);
         let den2 = poly!(1., 2., 3.);
         let mut tf2 = TfGen::new(num2.clone(), den2.clone());
-        assert_eq!(tf2, tf1.inv());
+        assert_eq!(tf2, (&tf1).inv());
         tf2.inv_mut();
         assert_eq!(tf2, tf1);
     }
