@@ -228,10 +228,11 @@ where
     let identity = DMatrix::identity(states, states);
     // Casting is safe for both f32 and f64, representation is exact.
     let n_05 = T::from(0.5_f32).unwrap();
-    if let Some(k) = (&identity - &sys.a * (n_05 * st)).try_inverse() {
+    let a_05_st = &sys.a * (n_05 * st);
+    if let Some(k) = (&identity - &a_05_st).try_inverse() {
         let b = &k * &sys.b * st;
         Some(Ssd {
-            a: &k * (&identity + &sys.a * (n_05 * st)),
+            a: &k * (&identity + &a_05_st),
             c: &sys.c * &k,
             d: &sys.d + &sys.c * &b * n_05,
             b,
