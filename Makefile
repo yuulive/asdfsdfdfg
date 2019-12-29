@@ -1,6 +1,7 @@
 RUNEXAMPLE = cargo run --example
 
-examples = bode \
+examples = arma_channel \
+		   bode \
 		   discrete \
 		   discretization \
 		   linear_system \

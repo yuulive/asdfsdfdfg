@@ -139,6 +139,40 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
             k: 0,
         }
     }
+
+    /// Channel test
+    pub fn arma_channel(&self, input: Receiver<T>) -> ArmaChannelIterator<T> {
+        let mut g = self.normalize();
+        let n = g.den.degree().unwrap_or(0);
+
+        // The front is the lowest order coefficient.
+        // The back is the higher order coefficient.
+        // The last coefficient is always 1.
+        // [a0, a1, a2, ..., a(n-1), 1]
+        let y_coeffs = g.den.coeffs;
+        // [b0, b1, b2, ..., bn]
+        // The numerator must be extended to the degree of the denominator
+        // and the higher degree terms (more recent) must be zero.
+        g.num.extend(n);
+        let u_coeffs = g.num.coeffs;
+
+        // The front is the oldest calculated output.
+        // [y(k-n), y(k-n+1), ..., y(k-1), y(k)]
+        let y = VecDeque::from(vec![T::zero(); y_coeffs.len()]);
+        // The front is the oldest input.
+        // [u(k-n), u(k-n+1), ..., u(k-1), u(k)]
+        let u = VecDeque::from(vec![T::zero(); u_coeffs.len()]);
+        debug_assert!(u_coeffs.len() == u.len());
+        debug_assert!(u.len() == y.len());
+
+        ArmaChannelIterator {
+            y_coeffs,
+            u_coeffs,
+            y,
+            u,
+            input,
+        }
+    }
 }
 
 /// Iterator for the autoregressive moving average model of a discrete
@@ -200,6 +234,67 @@ where
             *x = new_y;
         }
         self.k += 1;
+        Some(new_y)
+    }
+}
+
+use std::sync::mpsc::Receiver;
+/// Iterator for the autoregressive moving average model of a discrete
+/// transfer function.
+#[derive(Debug)]
+pub struct ArmaChannelIterator<T> {
+    /// y coefficients
+    y_coeffs: Vec<T>,
+    /// u coefficients
+    u_coeffs: Vec<T>,
+    /// y queue buffer
+    y: VecDeque<T>,
+    /// u queue buffer
+    u: VecDeque<T>,
+    /// input function
+    input: Receiver<T>,
+}
+
+impl<T> Iterator for ArmaChannelIterator<T>
+where
+    T: Float + Mul<Output = T> + Sum,
+{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Ok(data) = self.input.recv() {
+            self.u.push_back(data);
+        } else {
+            return None;
+        }
+        // Discard oldest input.
+        self.u.pop_front();
+        let input: T = self
+            .u_coeffs
+            .iter()
+            .zip(&self.u)
+            .map(|(&i, &j)| i * j)
+            .sum();
+
+        // Push zero in the last position shifting output values one step back
+        // in time, zero suppress last coefficient which shall be the current
+        // calculated output value.
+        self.y.push_back(T::zero());
+        // Discard oldest output.
+        self.y.pop_front();
+        let old_output: T = self
+            .y_coeffs
+            .iter()
+            .zip(&self.y)
+            .map(|(&i, &j)| i * j)
+            .sum();
+
+        // Calculate the output.
+        let new_y = input - old_output;
+        // Put the new calculated value in the last position of the buffer.
+        if let Some(x) = self.y.back_mut() {
+            *x = new_y;
+        }
         Some(new_y)
     }
 }
