@@ -76,6 +76,42 @@ impl<T: Float + MulAdd<Output = T>> Tfz<T> {
     }
 }
 
+/// Macro defining the common behaviour when creating the arma iterator.
+///
+/// # Arguments
+///
+/// * `self` - `self` parameter keyword
+/// * `y_coeffs` - vector containing the coefficients of the output
+/// * `u_coeffs` - vector containing the coefficients of the input
+/// * `y` - queue containing the calculated outputs
+/// * `u` - queue containing the supplied inputs
+macro_rules! arma {
+    ($self:ident, $y_coeffs:ident, $u_coeffs:ident, $y:ident, $u:ident) => {{
+        let mut g = $self.normalize();
+        let n = g.den.degree().unwrap_or(0);
+
+        // The front is the lowest order coefficient.
+        // The back is the higher order coefficient.
+        // The last coefficient is always 1.
+        // [a0, a1, a2, ..., a(n-1), 1]
+        $y_coeffs = g.den.coeffs;
+        // [b0, b1, b2, ..., bn]
+        // The numerator must be extended to the degree of the denominator
+        // and the higher degree terms (more recent) must be zero.
+        g.num.extend(n);
+        $u_coeffs = g.num.coeffs;
+
+        // The front is the oldest calculated output.
+        // [y(k-n), y(k-n+1), ..., y(k-1), y(k)]
+        $y = VecDeque::from(vec![T::zero(); $y_coeffs.len()]);
+        // The front is the oldest input.
+        // [u(k-n), u(k-n+1), ..., u(k-1), u(k)]
+        $u = VecDeque::from(vec![T::zero(); $u_coeffs.len()]);
+        debug_assert!($u_coeffs.len() == $u.len());
+        debug_assert!($u.len() == $y.len());
+    }};
+}
+
 impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     /// Autoregressive moving average representation of a discrete transfer function
     /// It transforms the transfer function into time domain input-output
@@ -103,34 +139,17 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     /// assert_eq!(Some(5.), iter.next());
     /// assert_eq!(Some(6.), iter.next());
     /// ```
-    pub fn arma<F>(&self, input: F) -> ArmaIterator<F, T>
+    pub fn arma<F>(&self, input: F) -> ArmaFunction<F, T>
     where
         F: Fn(usize) -> T,
     {
-        let mut g = self.normalize();
-        let n = g.den.degree().unwrap_or(0);
+        let y_coeffs: Vec<_>;
+        let u_coeffs: Vec<_>;
+        let y: VecDeque<_>;
+        let u: VecDeque<_>;
+        arma!(self, y_coeffs, u_coeffs, y, u);
 
-        // The front is the lowest order coefficient.
-        // The back is the higher order coefficient.
-        // The last coefficient is always 1.
-        // [a0, a1, a2, ..., a(n-1), 1]
-        let y_coeffs = g.den.coeffs;
-        // [b0, b1, b2, ..., bn]
-        // The numerator must be extended to the degree of the denominator
-        // and the higher degree terms (more recent) must be zero.
-        g.num.extend(n);
-        let u_coeffs = g.num.coeffs;
-
-        // The front is the oldest calculated output.
-        // [y(k-n), y(k-n+1), ..., y(k-1), y(k)]
-        let y = VecDeque::from(vec![T::zero(); y_coeffs.len()]);
-        // The front is the oldest input.
-        // [u(k-n), u(k-n+1), ..., u(k-1), u(k)]
-        let u = VecDeque::from(vec![T::zero(); u_coeffs.len()]);
-        debug_assert!(u_coeffs.len() == u.len());
-        debug_assert!(u.len() == y.len());
-
-        ArmaIterator {
+        ArmaFunction {
             y_coeffs,
             u_coeffs,
             y,
@@ -140,48 +159,57 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
         }
     }
 
-    /// Channel test
-    pub fn arma_channel<I>(&self, input: I) -> ArmaChannelIterator<I, T>
+    /// Autoregressive moving average representation of a discrete transfer function
+    /// It transforms the transfer function into time domain input-output
+    /// difference equation.
+    /// ```text
+    ///                   b_n*z^n + b_(n-1)*z^(n-1) + ... + b_1*z + b_0
+    /// Y(z) = G(z)U(z) = --------------------------------------------- U(z)
+    ///                     z^n + a_(n-1)*z^(n-1) + ... + a_1*z + a_0
+    ///
+    /// y(k) = - a_(n-1)*y(k-1) - ... - a_1*y(k-n+1) - a_0*y(k-n) +
+    ///        + b_n*u(k) + b_(n-1)*u(k-1) + ... + b_1*u(k-n+1) + b_0*u(k-n)
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `iter` - Iterator supplying the input data to the model
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, signals::discrete, Tfz};
+    /// let tfz = Tfz::new(poly!(1., 2., 3.), poly!(0., 0., 0., 1.));
+    /// let mut iter = tfz.arma_iter(std::iter::repeat(1.));
+    /// assert_eq!(Some(0.), iter.next());
+    /// assert_eq!(Some(3.), iter.next());
+    /// assert_eq!(Some(5.), iter.next());
+    /// assert_eq!(Some(6.), iter.next());
+    /// ```
+    pub fn arma_iter<I>(&self, iter: I) -> ArmaIterator<I, T>
     where
         I: Iterator<Item = T>,
     {
-        let mut g = self.normalize();
-        let n = g.den.degree().unwrap_or(0);
+        let y_coeffs: Vec<_>;
+        let u_coeffs: Vec<_>;
+        let y: VecDeque<_>;
+        let u: VecDeque<_>;
+        arma!(self, y_coeffs, u_coeffs, y, u);
 
-        // The front is the lowest order coefficient.
-        // The back is the higher order coefficient.
-        // The last coefficient is always 1.
-        // [a0, a1, a2, ..., a(n-1), 1]
-        let y_coeffs = g.den.coeffs;
-        // [b0, b1, b2, ..., bn]
-        // The numerator must be extended to the degree of the denominator
-        // and the higher degree terms (more recent) must be zero.
-        g.num.extend(n);
-        let u_coeffs = g.num.coeffs;
-
-        // The front is the oldest calculated output.
-        // [y(k-n), y(k-n+1), ..., y(k-1), y(k)]
-        let y = VecDeque::from(vec![T::zero(); y_coeffs.len()]);
-        // The front is the oldest input.
-        // [u(k-n), u(k-n+1), ..., u(k-1), u(k)]
-        let u = VecDeque::from(vec![T::zero(); u_coeffs.len()]);
-        debug_assert!(u_coeffs.len() == u.len());
-        debug_assert!(u.len() == y.len());
-
-        ArmaChannelIterator {
+        ArmaIterator {
             y_coeffs,
             u_coeffs,
             y,
             u,
-            input,
+            iter,
         }
     }
 }
 
 /// Iterator for the autoregressive moving average model of a discrete
 /// transfer function.
+/// The input is supplied through a function.
 #[derive(Debug)]
-pub struct ArmaIterator<F, T>
+pub struct ArmaFunction<F, T>
 where
     F: Fn(usize) -> T,
 {
@@ -199,7 +227,46 @@ where
     k: usize,
 }
 
-impl<F, T> Iterator for ArmaIterator<F, T>
+/// Macro containing the common iteration steps of the ARMA model
+///
+/// # Arguments
+///
+/// * `self` - `self` keyword parameter
+macro_rules! arma_iter {
+    ($self:ident) => {{
+        // Discard oldest input.
+        $self.u.pop_front();
+        let input: T = $self
+            .u_coeffs
+            .iter()
+            .zip(&$self.u)
+            .map(|(&i, &j)| i * j)
+            .sum();
+
+        // Push zero in the last position shifting output values one step back
+        // in time, zero suppress last coefficient which shall be the current
+        // calculated output value.
+        $self.y.push_back(T::zero());
+        // Discard oldest output.
+        $self.y.pop_front();
+        let old_output: T = $self
+            .y_coeffs
+            .iter()
+            .zip(&$self.y)
+            .map(|(&i, &j)| i * j)
+            .sum();
+
+        // Calculate the output.
+        let new_y = input - old_output;
+        // Put the new calculated value in the last position of the buffer.
+        if let Some(x) = $self.y.back_mut() {
+            *x = new_y;
+        }
+        Some(new_y)
+    }};
+}
+
+impl<F, T> Iterator for ArmaFunction<F, T>
 where
     F: Fn(usize) -> T,
     T: Float + Mul<Output = T> + Sum,
@@ -208,43 +275,16 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         self.u.push_back((self.input)(self.k));
-        // Discard oldest input.
-        self.u.pop_front();
-        let input: T = self
-            .u_coeffs
-            .iter()
-            .zip(&self.u)
-            .map(|(&i, &j)| i * j)
-            .sum();
-
-        // Push zero in the last position shifting output values one step back
-        // in time, zero suppress last coefficient which shall be the current
-        // calculated output value.
-        self.y.push_back(T::zero());
-        // Discard oldest output.
-        self.y.pop_front();
-        let old_output: T = self
-            .y_coeffs
-            .iter()
-            .zip(&self.y)
-            .map(|(&i, &j)| i * j)
-            .sum();
-
-        // Calculate the output.
-        let new_y = input - old_output;
-        // Put the new calculated value in the last position of the buffer.
-        if let Some(x) = self.y.back_mut() {
-            *x = new_y;
-        }
         self.k += 1;
-        Some(new_y)
+        arma_iter!(self)
     }
 }
 
 /// Iterator for the autoregressive moving average model of a discrete
 /// transfer function.
+/// The input is supplied through an iterator.
 #[derive(Debug)]
-pub struct ArmaChannelIterator<I, T> {
+pub struct ArmaIterator<I, T> {
     /// y coefficients
     y_coeffs: Vec<T>,
     /// u coefficients
@@ -253,11 +293,11 @@ pub struct ArmaChannelIterator<I, T> {
     y: VecDeque<T>,
     /// u queue buffer
     u: VecDeque<T>,
-    /// input function
-    input: I,
+    /// input iterator
+    iter: I,
 }
 
-impl<I, T> Iterator for ArmaChannelIterator<I, T>
+impl<I, T> Iterator for ArmaIterator<I, T>
 where
     I: Iterator<Item = T>,
     T: Float + Mul<Output = T> + Sum,
@@ -265,40 +305,12 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(data) = self.input.next() {
+        if let Some(data) = self.iter.next() {
             self.u.push_back(data);
         } else {
             return None;
         }
-        // Discard oldest input.
-        self.u.pop_front();
-        let input: T = self
-            .u_coeffs
-            .iter()
-            .zip(&self.u)
-            .map(|(&i, &j)| i * j)
-            .sum();
-
-        // Push zero in the last position shifting output values one step back
-        // in time, zero suppress last coefficient which shall be the current
-        // calculated output value.
-        self.y.push_back(T::zero());
-        // Discard oldest output.
-        self.y.pop_front();
-        let old_output: T = self
-            .y_coeffs
-            .iter()
-            .zip(&self.y)
-            .map(|(&i, &j)| i * j)
-            .sum();
-
-        // Calculate the output.
-        let new_y = input - old_output;
-        // Put the new calculated value in the last position of the buffer.
-        if let Some(x) = self.y.back_mut() {
-            *x = new_y;
-        }
-        Some(new_y)
+        arma_iter!(self)
     }
 }
 
