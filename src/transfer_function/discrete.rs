@@ -141,7 +141,10 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     }
 
     /// Channel test
-    pub fn arma_channel(&self, input: Receiver<T>) -> ArmaChannelIterator<T> {
+    pub fn arma_channel<I>(&self, input: I) -> ArmaChannelIterator<I, T>
+    where
+        I: Iterator<Item = T>,
+    {
         let mut g = self.normalize();
         let n = g.den.degree().unwrap_or(0);
 
@@ -238,11 +241,10 @@ where
     }
 }
 
-use std::sync::mpsc::Receiver;
 /// Iterator for the autoregressive moving average model of a discrete
 /// transfer function.
 #[derive(Debug)]
-pub struct ArmaChannelIterator<T> {
+pub struct ArmaChannelIterator<I, T> {
     /// y coefficients
     y_coeffs: Vec<T>,
     /// u coefficients
@@ -252,17 +254,18 @@ pub struct ArmaChannelIterator<T> {
     /// u queue buffer
     u: VecDeque<T>,
     /// input function
-    input: Receiver<T>,
+    input: I,
 }
 
-impl<T> Iterator for ArmaChannelIterator<T>
+impl<I, T> Iterator for ArmaChannelIterator<I, T>
 where
+    I: Iterator<Item = T>,
     T: Float + Mul<Output = T> + Sum,
 {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Ok(data) = self.input.recv() {
+        if let Some(data) = self.input.next() {
             self.u.push_back(data);
         } else {
             return None;
