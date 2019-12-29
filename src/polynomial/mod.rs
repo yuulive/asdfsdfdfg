@@ -1312,7 +1312,9 @@ mod tests {
     #[test]
     #[should_panic]
     fn poly_sub_panic() {
-        let _ = poly!(1, 2, 3) - 3_u32;
+        let p = poly!(1, 2, 3) - 3_u32;
+        // The assert is used only to avoid code optimization in release mode.
+        assert_eq!(p.coeffs, vec![]);
     }
 
     #[test]
