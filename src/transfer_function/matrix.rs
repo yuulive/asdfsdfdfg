@@ -87,9 +87,9 @@ impl<T: Time> From<SsGen<f64, T>> for TfMatrix<f64> {
     ///
     /// `ss` - state space linear system
     fn from(ss: SsGen<f64, T>) -> Self {
-        let (pc, a_inv) = linear_system::leverrier_f64(ss.a());
-        let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
-        let rest = pc.multiply(ss.d());
+        let (pc, a_inv) = linear_system::leverrier_f64(&ss.a);
+        let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
+        let rest = pc.multiply(&ss.d);
         let tf = g + rest;
         Self::new(MatrixOfPoly::from(tf), pc)
     }
@@ -102,9 +102,9 @@ impl<T: Time> From<SsGen<f32, T>> for TfMatrix<f32> {
     ///
     /// `ss` - state space linear system
     fn from(ss: SsGen<f32, T>) -> Self {
-        let (pc, a_inv) = linear_system::leverrier_f32(ss.a());
-        let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
-        let rest = pc.multiply(ss.d());
+        let (pc, a_inv) = linear_system::leverrier_f32(&ss.a);
+        let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
+        let rest = pc.multiply(&ss.d);
         let tf = g + rest;
         Self::new(MatrixOfPoly::from(tf), pc)
     }

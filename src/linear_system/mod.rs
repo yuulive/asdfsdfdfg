@@ -38,13 +38,13 @@ use crate::{
 #[derive(Debug)]
 pub struct SsGen<T: Scalar, U: Time> {
     /// A matrix
-    a: DMatrix<T>,
+    pub(crate) a: DMatrix<T>,
     /// B matrix
-    b: DMatrix<T>,
+    pub(crate) b: DMatrix<T>,
     /// C matrix
-    c: DMatrix<T>,
+    pub(crate) c: DMatrix<T>,
     /// D matrix
-    d: DMatrix<T>,
+    pub(crate) d: DMatrix<T>,
     /// Dimensions
     dim: Dim,
     /// Tag for continuous or discrete time
@@ -125,26 +125,6 @@ impl<T: Scalar, U: Time> SsGen<T, U> {
             },
             time: PhantomData,
         }
-    }
-
-    /// Get the A matrix
-    pub(crate) fn a(&self) -> &DMatrix<T> {
-        &self.a
-    }
-
-    /// Get the C matrix
-    pub(crate) fn b(&self) -> &DMatrix<T> {
-        &self.b
-    }
-
-    /// Get the C matrix
-    pub(crate) fn c(&self) -> &DMatrix<T> {
-        &self.c
-    }
-
-    /// Get the D matrix
-    pub(crate) fn d(&self) -> &DMatrix<T> {
-        &self.d
     }
 
     /// Get the dimensions of the system (states, inputs, outputs).
@@ -697,10 +677,10 @@ mod tests {
 
         let ss = SsGen::try_from(tf).unwrap();
 
-        assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -1., 1., -1.]), *ss.a());
-        assert_eq!(DMatrix::from_row_slice(2, 1, &[1., 0.]), *ss.b());
-        assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), *ss.c());
-        assert_eq!(DMatrix::from_row_slice(1, 1, &[0.]), *ss.d());
+        assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -1., 1., -1.]), ss.a);
+        assert_eq!(DMatrix::from_row_slice(2, 1, &[1., 0.]), ss.b);
+        assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), ss.c);
+        assert_eq!(DMatrix::from_row_slice(1, 1, &[0.]), ss.d);
     }
 
     #[test]

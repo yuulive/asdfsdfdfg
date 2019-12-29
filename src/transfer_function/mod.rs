@@ -231,9 +231,9 @@ impl<U: Time> TryFrom<SsGen<f64, U>> for TfGen<f64, U> {
     ///
     /// `ss` - state space linear system
     fn try_from(ss: SsGen<f64, U>) -> Result<Self, Self::Error> {
-        let (pc, a_inv) = linear_system::leverrier_f64(ss.a());
-        let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
-        let rest = pc.multiply(ss.d());
+        let (pc, a_inv) = linear_system::leverrier_f64(&ss.a);
+        let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
+        let rest = pc.multiply(&ss.d);
         let tf = g + rest;
         if let Some(num) = MatrixOfPoly::from(tf).single() {
             Ok(Self::new(num.clone(), pc))
@@ -254,9 +254,9 @@ impl<U: Time> TryFrom<SsGen<f32, U>> for TfGen<f32, U> {
     ///
     /// `ss` - state space linear system
     fn try_from(ss: SsGen<f32, U>) -> Result<Self, Self::Error> {
-        let (pc, a_inv) = linear_system::leverrier_f32(ss.a());
-        let g = a_inv.left_mul(ss.c()).right_mul(ss.b());
-        let rest = pc.multiply(ss.d());
+        let (pc, a_inv) = linear_system::leverrier_f32(&ss.a);
+        let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
+        let rest = pc.multiply(&ss.d);
         let tf = g + rest;
         if let Some(num) = MatrixOfPoly::from(tf).single() {
             Ok(Self::new(num.clone(), pc))

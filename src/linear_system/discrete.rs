@@ -352,10 +352,10 @@ mod tests {
 
         let ss = Ssd::try_from(tf).unwrap();
 
-        assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -3., 1., -4.]), *ss.a());
-        assert_eq!(DMatrix::from_row_slice(2, 1, &[-2., -4.]), *ss.b());
-        assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), *ss.c());
-        assert_eq!(DMatrix::from_row_slice(1, 1, &[1.]), *ss.d());
+        assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -3., 1., -4.]), ss.a);
+        assert_eq!(DMatrix::from_row_slice(2, 1, &[-2., -4.]), ss.b);
+        assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), ss.c);
+        assert_eq!(DMatrix::from_row_slice(1, 1, &[1.]), ss.d);
     }
 
     #[test]
