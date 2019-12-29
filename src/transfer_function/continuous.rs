@@ -107,7 +107,7 @@ impl<T: Float> Tf<T> {
         Self {
             num: d.clone(),
             den: n + d,
-            _type: PhantomData,
+            time: PhantomData,
         }
     }
 
@@ -158,7 +158,7 @@ impl<T: Float> Tf<T> {
         Self {
             num: &r.num * &self.den,
             den: &r.num * &self.num + &r.den * &self.den,
-            _type: PhantomData,
+            time: PhantomData,
         }
     }
 }

@@ -37,7 +37,7 @@ pub struct TfGen<T, U: Time> {
     /// Transfer function denominator
     den: Poly<T>,
     /// Tag to disambiguate continuous and discrete
-    _type: PhantomData<U>,
+    time: PhantomData<U>,
 }
 
 /// Implementation of transfer function methods
@@ -58,7 +58,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
         Self {
             num,
             den,
-            _type: PhantomData::<U>,
+            time: PhantomData::<U>,
         }
     }
 
@@ -89,7 +89,7 @@ impl<T: Clone, U: Time> Inv for &TfGen<T, U> {
         Self::Output {
             num: self.den.clone(),
             den: self.num.clone(),
-            _type: PhantomData::<U>,
+            time: PhantomData::<U>,
         }
     }
 }
@@ -139,7 +139,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
         Self {
             num: self.num.clone(),
             den: &self.den + &self.num,
-            _type: PhantomData::<U>,
+            time: PhantomData::<U>,
         }
     }
 
@@ -155,7 +155,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
         Self {
             num: self.num.clone(),
             den: &self.den - &self.num,
-            _type: PhantomData::<U>,
+            time: PhantomData::<U>,
         }
     }
 
@@ -187,7 +187,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
         Self {
             num,
             den,
-            _type: PhantomData,
+            time: PhantomData,
         }
     }
 
@@ -275,7 +275,7 @@ impl<T: Float, U: Time> Neg for &TfGen<T, U> {
         Self::Output {
             num: -&self.num,
             den: self.den.clone(),
-            _type: PhantomData,
+            time: PhantomData,
         }
     }
 }
