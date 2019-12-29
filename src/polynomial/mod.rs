@@ -127,7 +127,7 @@ impl<T: Copy + Div<Output = T>> Poly<T> {
     /// assert_eq!(poly!(1, 2, 2), p);
     /// ```
     pub fn div_mut(&mut self, d: T) {
-        for c in self.coeffs.iter_mut() {
+        for c in &mut self.coeffs {
             *c = *c / d;
         }
     }
@@ -555,7 +555,7 @@ impl<T: Copy + Neg<Output = T>> Neg for Poly<T> {
     type Output = Self;
 
     fn neg(mut self) -> Self::Output {
-        for c in self.coeffs.iter_mut() {
+        for c in &mut self.coeffs {
             *c = Neg::neg(*c);
         }
         self

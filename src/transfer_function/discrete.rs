@@ -541,8 +541,8 @@ mod tests {
 
     #[test]
     fn arma_iter() {
-        let tfz = Tfz::new(poly!(0.5_f32), poly!(-0.5, 1.));
         use std::iter;
+        let tfz = Tfz::new(poly!(0.5_f32), poly!(-0.5, 1.));
         let mut iter = tfz.arma_iter(iter::once(1.).chain(iter::repeat(0.)).take(6));
         assert_eq!(Some(0.), iter.next());
         assert_eq!(Some(0.5), iter.next());
