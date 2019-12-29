@@ -310,6 +310,7 @@ impl<T: Float, U: Time> Add for &TfGen<T, U> {
 }
 
 /// Implementation of transfer function addition
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Add for TfGen<T, U> {
     type Output = Self;
 
@@ -345,6 +346,7 @@ impl<T: Float, U: Time> Sub for &TfGen<T, U> {
 }
 
 /// Implementation of transfer function subtraction
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Sub for TfGen<T, U> {
     type Output = Self;
 
@@ -396,6 +398,7 @@ impl<T: Float, U: Time> Div for &TfGen<T, U> {
 }
 
 /// Implementation of transfer function division
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Div for TfGen<T, U> {
     type Output = Self;
 
