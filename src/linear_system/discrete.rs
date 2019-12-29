@@ -22,7 +22,8 @@ pub type Ssd<T> = SsGen<T, Discrete>;
 /// Implementation of the methods for the state-space
 impl<T: ComplexField + Scalar> Ssd<T> {
     /// Calculate the equilibrium point for discrete time systems,
-    /// given the input condition
+    /// given the input condition.
+    /// Input vector must have the same number of inputs of the system.
     /// ```text
     /// x = (I-A)^-1 * B * u
     /// y = (C * (I-A)^-1 * B + D) * u
@@ -47,7 +48,10 @@ impl<T: ComplexField + Scalar> Ssd<T> {
     /// assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
     /// ```
     pub fn equilibrium(&self, u: &[T]) -> Option<Equilibrium<T>> {
-        assert_eq!(u.len(), self.b.ncols(), "Wrong number of inputs.");
+        if u.len() != self.dim.inputs() {
+            eprintln!("Wrong number of inputs.");
+            return None;
+        }
         let u = DVector::from_row_slice(u);
         // x = A*x + B*u -> (I-A)*x = B*u
         let bu = &self.b * &u;
