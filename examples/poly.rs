@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate automatica;
 
-use crate::automatica::polynomial::Poly;
+use crate::automatica::Poly;
 
 fn main() {
     let p = poly!(1., -2., 3.);

@@ -1,8 +1,8 @@
 extern crate automatica;
 
-use automatica::{signals::continuous, units::Seconds, Eval, Ss, TfMatrix};
-
 use num_complex::Complex;
+
+use automatica::{signals::continuous, units::Seconds, Eval, Ss, TfMatrix};
 
 fn main() {
     let a = [-1., 1., -1., 0.25];

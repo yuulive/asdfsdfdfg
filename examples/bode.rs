@@ -1,14 +1,13 @@
 extern crate automatica;
 
-use automatica::{
-    plots::bode::BodePlot,
-    polynomial::Poly,
-    units::{Decibel, RadiansPerSecond},
-    Eval, Tf,
-};
-
 use num_complex::Complex;
 use num_traits::One;
+
+use automatica::{
+    plots::bode::BodePlot,
+    units::{Decibel, RadiansPerSecond},
+    Eval, Poly, Tf,
+};
 
 fn main() {
     let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
