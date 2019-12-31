@@ -1,11 +1,9 @@
 //! # PID (Proportional-integral-derivative) controller
 //!
-//! # Example
-//! ```
-//! use automatica::controller::pid::Pid;
-//! let pid = Pid::new_ideal(10., 5., 2.);
-//! let transfer_function = pid.tf();
-//! ```
+//! Common industrial controllers.
+//! * real PID
+//! * ideal PID
+//! * automatic calculation of the corrisponding transfer function
 
 use crate::{polynomial::Poly, transfer_function::continuous::Tf};
 

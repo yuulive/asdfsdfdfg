@@ -1,4 +1,15 @@
-//! Transfer functions for continuous time systems.
+//! # Transfer functions for continuous time systems.
+//!
+//! Specialized struct and methods for continuous time transfer functions
+//! * time delay
+//! * initial value and initial derivative value
+//! * sensitivity function
+//! * complementary sensitivity function
+//! * control sensitivity function
+//! * root locus plot
+//! * bode plot
+//! * polar plot
+//! * static gain
 
 use nalgebra::{ComplexField, RealField, Scalar};
 use num_complex::Complex;

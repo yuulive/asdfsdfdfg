@@ -1,9 +1,19 @@
 //! # Polynomials
 //!
-//! `Poly` implements usual addition, subtraction and multiplication between
-//! polynomials, operations with scalars are supported also.
-//!
-//! Methods for roots finding, companion matrix and evaluation are implemented.
+//! Polynomial implementation
+//! * builder from coefficients or roots
+//! * degree
+//! * extend by adding 0 coefficients to higher order terms
+//! * arithmetic operations between polynomials (addition, subtraction,
+//!   multiplication, division, reminder, negation)
+//! * arithmetic operations with floats (addition, subtraction,
+//!   multiplication, division)
+//! * transformation to monic form
+//! * roots finding (real and complex) using eigenvalues of the companion matrix
+//! * differentiation and integration
+//! * evaluation using real or complex numbers
+//! * coefficient indexing
+//! * zero and unit polynomials
 
 pub mod matrix;
 
@@ -23,7 +33,7 @@ use crate::{polynomial::matrix::PolyMatrix, utils, Eval};
 ///
 /// Contains the vector of coefficients form the lowest to the highest degree
 ///
-/// p(x) = c0 + c1*x + c2*x^2 + ...
+/// `p(x) = c0 + c1*x + c2*x^2 + ...`
 #[derive(Debug, PartialEq, Clone)]
 pub struct Poly<T> {
     pub(crate) coeffs: Vec<T>,

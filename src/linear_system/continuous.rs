@@ -1,4 +1,7 @@
-//! # Continuous time Linear system
+//! # Continuous time linear system
+//!
+//! The time evolution of the system is performed through ODE (ordinary
+//! differential equation) [solvers](../solver/index.html).
 
 use nalgebra::{ComplexField, DVector, RealField, Scalar};
 use num_traits::Float;

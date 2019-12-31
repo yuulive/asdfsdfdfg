@@ -1,4 +1,7 @@
-//! Root locus plot
+//! # Root locus plot
+//!
+//! Trajectories of the poles when the system is put in feedback with a pure
+//! constant controller
 
 use nalgebra::{ComplexField, RealField, Scalar};
 use num_complex::Complex;

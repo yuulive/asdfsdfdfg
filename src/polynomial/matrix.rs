@@ -210,7 +210,7 @@ impl<T: Display + Scalar + Zero> Display for PolyMatrix<T> {
 ///
 /// Contains the matrix of polynomials
 ///
-/// P(x) = [[P1, P2], [P3, P4]]
+/// `P(x) = [[P1, P2], [P3, P4]]`
 #[derive(Debug)]
 pub struct MatrixOfPoly<T> {
     pub(crate) matrix: Array2<Poly<T>>,

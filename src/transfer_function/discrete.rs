@@ -1,6 +1,16 @@
-//! # Transfer function discretization
+//! # Transfer functions for discrete time systems.
 //!
-//! The discretization can be performed with Euler or Tustin methods.
+//! Specialized struct and methods for discrete time transfer functions
+//! * time delay
+//! * initial value
+//! * static gain
+//! * ARMA (autoregressive moving average) time evaluation method
+//!
+//! This module contains the discretization struct of a continuous time
+//! transfer function
+//! * forward Euler mehtod
+//! * backward Euler method
+//! * Tustin (trapezoidal) method
 
 use num_complex::Complex;
 use num_traits::{Float, MulAdd, Num};

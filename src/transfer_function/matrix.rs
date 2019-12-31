@@ -1,4 +1,10 @@
-//! Matrix of transfer functions
+//! # Matrix of transfer functions
+//!
+//! `TfMatrix` allow the definition of a matrix of transfer functions. The
+//! numerators are stored in a matrix, while the denominator is stored once,
+//! since it is equal for every transfer function.
+//! * evaluation of a vector of inputs
+//! * conversion from a generic state space representation
 
 use ndarray::{Array2, Axis, Zip};
 use num_complex::Complex;

@@ -1,7 +1,12 @@
 //! # Frequency response plots
 //!
-//! Plots are implemented as iterators with logarithmic steps between returned
-//! values.
+//! [Bode plot](bode/index.html)
+//!
+//! [Polar plot](polar/index.html)
+//!
+//! [Root locus](root_locus/index.html)
+//!
+//! Plots are implemented as iterators.
 
 pub mod bode;
 pub mod polar;

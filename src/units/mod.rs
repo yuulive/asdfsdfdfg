@@ -1,7 +1,13 @@
 //! # Units of measurement
 //!
 //! List of strongly typed units of measurement. It avoids the use of primitive
-//! types.
+//! types (newtype pattern)
+//! * decibel
+//! * seconds
+//! * Hertz
+//! * radians per second
+//!
+//! Conversion between units are available.
 
 use std::{
     convert::From,

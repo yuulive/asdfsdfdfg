@@ -1,11 +1,20 @@
 //! # Transfer function and matrices of transfer functions
 //!
-//! `Tf` contains the numerator and the denominator separately. Zeroes an poles
-//! can be calculated.
+//! This module contains the generic methods for transfer functions
+//! * calculation of zeros and poles (real and complex)
+//! * arithmetic operations (addition, subtraction, multiplication, division,
+//!   negation, inversion)
+//! * positive and negative feedback
+//! * conversion from a generic state-space representation of a single input
+//!   single output system
+//! * evaluation of the transfer function at the given complex number
 //!
-//! `TfMatrix` allow the definition of a matrix of transfer functions. The
-//! numerators are stored in a matrix, while the denominator is stored once,
-//! since it is equal for every transfer function.
+//! [continuous](continuous/index.html) module contains the specialized
+//! structs and methods for continuous systems.
+//!
+//! [discrete](discrete/index.html) module contains the specialized structs and
+//! methods for discrete systems.
+//!
 
 pub mod continuous;
 pub mod discrete;

@@ -2,25 +2,23 @@
 //!
 //! ## State-Space representation
 //!
-//! [State space representation](linear_system/struct.Ss.html)
+//! [Generic state space](linear_system/index.html)
 //!
-//! [Equilibrium](linear_system/struct.Equilibrium.html)
-//!
-//! ### System time evolution
-//!
-//! [Solvers](linear_system/solver/index.html)
-//!
-//! ## Discrete system
+//! [Continuous](linear_system/continuous/index.html)
 //!
 //! [Discrete](linear_system/discrete/index.html)
 //!
-//! [Transfer function discretization](transfer_function/discrete_tf/index.html)
+//! [Solvers](linear_system/solver/index.html)
 //!
 //! ## Transfer function representation
 //!
-//! [Transfer function](transfer_function/struct.Tf.html)
+//! [Generic transfer function](transfer_function/index.html)
 //!
-//! [Matrix of transfer functions](transfer_function/struct.TfMatrix.html)
+//! [Continuous](transfer_function/continuous/index.html)
+//!
+//! [Discrete](transfer_function/discrete/index.html)
+//!
+//! [Matrix of transfer functions](transfer_function/matrix/index.html)
 //!
 //! ## Plots
 //!
@@ -28,15 +26,27 @@
 //!
 //! [Polar plot](plots/polar/index.html)
 //!
+//! [Root locus](plots/root_locus/index.html)
+//!
 //! ## Controllers
 //!
 //! [Pid](controller/pid/struct.Pid.html)
 //!
 //! ## Polynomials
 //!
-//! [Polynomials](polynomial/struct.Poly.html)
+//! [Polynomials](polynomial/index.html)
 //!
-//! [Matrix of polynomials](polynomial/struct.MatrixOfPoly.html)
+//! [Matrix of polynomials](polynomial/matrix/index.html)
+//!
+//! ## Units of measurement
+//!
+//! [Units](units/index.html)
+//!
+//! ## Signals
+//!
+//! [Continuous](signals/continuous/index.html)
+//!
+//! [Discrete](signals/discrete/index.html)
 
 #![warn(missing_docs)]
 

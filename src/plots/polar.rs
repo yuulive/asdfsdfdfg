@@ -1,4 +1,4 @@
-//! Polar plot
+//! # Polar plot
 //!
 //! Polar plot returns the iterator providing the complex numbers at the given
 //! angular frequencies.

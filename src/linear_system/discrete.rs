@@ -1,7 +1,13 @@
 //! # Discrete linear system
 //!
-//! This module contains the methods to handle discrete systems and
-//! discretization of continuous systems.
+//! Time evolution of the system is performed through successive
+//! matrix multiplications.
+//!
+//! This module contains the algorithm for the discretization of
+//! [continuous](../continuous/index.html) systems:
+//! * forward Euler method
+//! * backward Euler method
+//! * Tustin (trapezoidal) method
 
 use nalgebra::{ComplexField, DMatrix, DVector, RealField, Scalar};
 use num_traits::Float;

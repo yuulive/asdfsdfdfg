@@ -1,11 +1,21 @@
 //! # Linear system
 //!
-//! This module contains the state-space representation of the linear system.
+//! This module contains the state-space representation of a linear system.
+//! * poles calculation
+//! * controllability matrix
+//! * observability matrix
+//! * conversion from a generic transfer function
+//! * calculation the equilibrium point of the system.
+//! * system stability
 //!
-//! It is possible to calculate the equilibrium point of the system.
+//! [continuous](continuous/index.html) module contains the specialized
+//! structs and methods for continuous systems.
 //!
-//! The time evolution of the system is defined through iterator, created by
-//! different solvers.
+//! [discrete](discrete/index.html) module contains the specialized structs and
+//! methods for discrete systems.
+//!
+//! The [solver](solver/index.html) module contains the methods for the time
+//! evaluation of continuous systems.
 
 pub mod continuous;
 pub mod discrete;
