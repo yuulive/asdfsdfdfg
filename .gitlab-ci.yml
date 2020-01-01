@@ -9,7 +9,8 @@ stages:
 
 variables:
   CARGO_HOME_BIN: $HOME/.cargo/bin
-  TARGET: target/
+  TARGET: target
+  COVER: cover
 
 .build_template: &build_definition
   stage: build
@@ -54,13 +55,13 @@ cover:
   cache:
     key: cover
     paths:
-      - cover/tarpaulin
+      - $COVER
       - $TARGET
   before_script:
     - apt-get update
     - apt-get install -y --no-install-recommends libssl-dev pkg-config cmake zlib1g-dev
     # Copy the tarpaulin binary into the ~/.cargo/bin/ directory.
-    - mv cover/tarpaulin $CARGO_HOME_BIN || true
+    - mv $COVER/cargo-tarpaulin $CARGO_HOME_BIN || true
     # Check if cargo-tarpaulin is already installed.
     - cargo install cargo-tarpaulin || true
   script:
@@ -68,8 +69,8 @@ cover:
     - cargo tarpaulin -v --exclude-files cargo -o Html
   after_script:
     # Copy the tarpaulin binary into the current working directory for caching.
-    - mkdir -p cover/
-    - mv $CARGO_HOME_BIN/tarpaulin cover/ || true
+    - mkdir -p $COVER/
+    - mv --update $CARGO_HOME_BIN/cargo-tarpaulin $COVER/ || true
   coverage: '/\d+\.\d+\% coverage/'
   artifacts:
     paths:
