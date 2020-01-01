@@ -8,14 +8,15 @@ stages:
   - doc
 
 variables:
-  CARGO_HOME_BIN: $CI_PROJECT_DIR/cargo/bin
-  TARGET: target
+  CARGO_HOME_BIN: $HOME/.cargo/bin/
+  TARGET: target/
 
 .build_template: &build_definition
   stage: build
   script:
     - "rustc --version && cargo --version"
     - cargo build --verbose
+    - cargo build --verbose --release
 
 build:
   <<: *build_definition
@@ -44,6 +45,7 @@ test:
   script:
     - "rustc --version && cargo --version"
     - cargo test --verbose
+    - cargo test --verbose --release
 
 cover:
   stage: test
@@ -52,16 +54,19 @@ cover:
   cache:
     key: cover
     paths:
-      - $CARGO_HOME_BIN
+      - cover/tarpaulin
       - $TARGET
   before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends libssl-dev pkg-config cmake zlib1g-dev
     # Check if cargo-tarpaulin is present in $CARGO_HOME_BIN
-    - "apt-get update && apt-get -y install libssl-dev pkg-config cmake zlib1g-dev"
+    - mv cover/tarpaulin $CARGO_HOME_BIN
     - cargo install cargo-tarpaulin || true
-    - rm -rf cargo/registry || true
   script:
     - "rustc --version && cargo --version"
     - cargo tarpaulin -v --exclude-files cargo -o Html
+  after_script:
+    - "mkdir -p cover/ && mv $CARGO_HOME_BIN/tarpaulin cover/"
   coverage: '/\d+\.\d+\% coverage/'
   artifacts:
     paths:
