@@ -8,7 +8,7 @@ stages:
   - doc
 
 variables:
-  CARGO_HOME_BIN: $HOME/.cargo/bin/
+  CARGO_HOME_BIN: $HOME/.cargo/bin
   TARGET: target/
 
 .build_template: &build_definition
@@ -59,14 +59,17 @@ cover:
   before_script:
     - apt-get update
     - apt-get install -y --no-install-recommends libssl-dev pkg-config cmake zlib1g-dev
-    # Check if cargo-tarpaulin is present in $CARGO_HOME_BIN
-    - mv cover/tarpaulin $CARGO_HOME_BIN
+    # Copy the tarpaulin binary into the ~/.cargo/bin/ directory.
+    - mv cover/tarpaulin $CARGO_HOME_BIN || true
+    # Check if cargo-tarpaulin is already installed.
     - cargo install cargo-tarpaulin || true
   script:
     - "rustc --version && cargo --version"
     - cargo tarpaulin -v --exclude-files cargo -o Html
   after_script:
-    - "mkdir -p cover/ && mv $CARGO_HOME_BIN/tarpaulin cover/"
+    # Copy the tarpaulin binary into the current working directory for caching.
+    - mkdir -p cover/
+    - mv $CARGO_HOME_BIN/tarpaulin cover/ || true
   coverage: '/\d+\.\d+\% coverage/'
   artifacts:
     paths:
