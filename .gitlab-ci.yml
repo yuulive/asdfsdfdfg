@@ -8,7 +8,7 @@ stages:
   - doc
 
 variables:
-  CARGO_HOME_BIN: $HOME/.cargo/bin
+  CARGO_HOME_BIN: ~/.cargo/bin
   TARGET: target
   COVER: cover
 
