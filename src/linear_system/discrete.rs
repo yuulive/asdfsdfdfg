@@ -105,6 +105,37 @@ impl<T: Scalar> Ssd<T> {
             next_state,
         }
     }
+
+    /// Time evolution for a discrete linear system.
+    ///
+    /// # Arguments
+    ///
+    /// * `iter` - input data
+    /// * `x0` - initial state
+    ///
+    /// # Example
+    /// ```
+    /// use std::iter;
+    /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ssd};
+    /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
+    /// let impulse = iter::once(vec![1.]).chain(iter::repeat(vec![0.])).take(20);
+    /// let evo = disc_sys.time_evolution_iter(impulse, &[0., 0.]);
+    /// let last = evo.last().unwrap();
+    /// assert!(last[0] < 0.001);
+    /// ```
+    pub fn time_evolution_iter<I>(&self, iter: I, x0: &[T]) -> DiscreteIterator2<I, T>
+    where
+        I: Iterator<Item = Vec<T>>,
+    {
+        let state = DVector::from_column_slice(x0);
+        let next_state = DVector::from_column_slice(x0);
+        DiscreteIterator2 {
+            sys: &self,
+            state,
+            next_state,
+            iter,
+        }
+    }
 }
 
 impl<T: ComplexField + Float + RealField + Scalar> Ssd<T> {
@@ -251,6 +282,7 @@ where
 }
 
 /// Struct to hold the iterator for the evolution of the discrete linear system.
+/// It uses function to supply inputs.
 #[derive(Debug)]
 pub struct DiscreteIterator<'a, F, T>
 where
@@ -263,14 +295,6 @@ where
     input: F,
     state: DVector<T>,
     next_state: DVector<T>,
-}
-
-/// Struct to hold the result of the discrete linear system evolution.
-#[derive(Debug)]
-pub struct TimeEvolution<T> {
-    time: usize,
-    state: Vec<T>,
-    output: Vec<T>,
 }
 
 impl<'a, F, T> Iterator for DiscreteIterator<'a, F, T>
@@ -299,6 +323,47 @@ where
             })
         }
     }
+}
+
+/// Struct to hold the iterator for the evolution of the discrete linear system.
+/// It uses iterators to supply inputs.
+#[derive(Debug)]
+pub struct DiscreteIterator2<'a, I, T>
+where
+    I: Iterator<Item = Vec<T>>,
+    T: Scalar,
+{
+    sys: &'a Ssd<T>,
+    state: DVector<T>,
+    next_state: DVector<T>,
+    iter: I,
+}
+
+impl<'a, I, T> Iterator for DiscreteIterator2<'a, I, T>
+where
+    I: Iterator<Item = Vec<T>>,
+    T: AddAssign + Float + MulAssign + Scalar,
+{
+    type Item = Vec<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let u_vec = self.iter.next()?;
+        let u = DVector::from_vec(u_vec);
+        // Copy `next_state` of the previous iteration into
+        // the current `state`.
+        std::mem::swap(&mut self.state, &mut self.next_state);
+        self.next_state = &self.sys.a * &self.state + &self.sys.b * &u;
+        let output = &self.sys.c * &self.state + &self.sys.d * &u;
+        Some(output.as_slice().to_vec())
+    }
+}
+
+/// Struct to hold the result of the discrete linear system evolution.
+#[derive(Debug)]
+pub struct TimeEvolution<T> {
+    time: usize,
+    state: Vec<T>,
+    output: Vec<T>,
 }
 
 impl<T> TimeEvolution<T> {
@@ -379,6 +444,17 @@ mod tests {
         assert_eq!(20, last.time());
         assert_abs_diff_eq!(0., last.state()[1], epsilon = 0.001);
         assert_abs_diff_eq!(0., last.output()[0], epsilon = 0.001);
+    }
+
+    #[test]
+    fn time_evolution_iter() {
+        use std::iter;
+        let disc_sys =
+            Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
+        let impulse = iter::once(vec![1.]).chain(iter::repeat(vec![0.])).take(20);
+        let evo = disc_sys.time_evolution_iter(impulse, &[0., 0.]);
+        let last = evo.last().unwrap();
+        assert!(last[0] < 0.001);
     }
 
     #[test]
