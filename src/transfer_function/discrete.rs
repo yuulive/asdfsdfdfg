@@ -189,13 +189,13 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     /// ```
     /// use automatica::{poly, signals::discrete, Tfz};
     /// let tfz = Tfz::new(poly!(1., 2., 3.), poly!(0., 0., 0., 1.));
-    /// let mut iter = tfz.arma_iter(std::iter::repeat(1.));
+    /// let mut iter = tfz.arma_from_iter(std::iter::repeat(1.));
     /// assert_eq!(Some(0.), iter.next());
     /// assert_eq!(Some(3.), iter.next());
     /// assert_eq!(Some(5.), iter.next());
     /// assert_eq!(Some(6.), iter.next());
     /// ```
-    pub fn arma_iter<I>(&self, iter: I) -> ArmaIterator<I, T>
+    pub fn arma_from_iter<I>(&self, iter: I) -> ArmaIterator<I, T>
     where
         I: Iterator<Item = T>,
     {
@@ -553,7 +553,7 @@ mod tests {
     fn arma_iter() {
         use std::iter;
         let tfz = Tfz::new(poly!(0.5_f32), poly!(-0.5, 1.));
-        let mut iter = tfz.arma_iter(iter::once(1.).chain(iter::repeat(0.)).take(6));
+        let mut iter = tfz.arma_from_iter(iter::once(1.).chain(iter::repeat(0.)).take(6));
         assert_eq!(Some(0.), iter.next());
         assert_eq!(Some(0.5), iter.next());
         assert_eq!(Some(0.25), iter.next());

@@ -36,7 +36,7 @@ fn main() {
     println!("Discretization method: {:?}", method);
     println!("{}", &disc);
 
-    let te = disc.time_evolution(steps, discrete::step_vec(1., 0, 1), &[0., 0.]);
+    let te = disc.evolution(steps, discrete::step_vec(1., 0, 1), &[0., 0.]);
     if false {
         for i in te {
             println!("{:.1};{:.5}", i.time(), i.output()[0],);

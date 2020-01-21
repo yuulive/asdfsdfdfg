@@ -19,7 +19,7 @@ fn main() {
         }
     });
 
-    let arma = tf.arma_iter(recv.iter());
+    let arma = tf.arma_from_iter(recv.iter());
     for y in arma {
         println!("{}", y);
     }
