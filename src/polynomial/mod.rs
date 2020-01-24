@@ -1560,4 +1560,76 @@ mod tests {
         assert_eq!(9., c);
         assert_eq!(1., p.leading_coeff());
     }
+
+    #[test]
+    fn my_roots_finder() {
+        let roots = &[10., 2., 1. / 3.];
+        let poly = Poly::new_from_roots(roots);
+        let rf = RootsFinder::new(poly);
+        let actual = roots_finder(rf);
+
+        dbg!(roots);
+        dbg!(actual);
+        assert!(true);
+    }
+}
+
+#[derive(Debug)]
+struct RootsFinder<T> {
+    poly: Poly<T>,
+    der: Poly<T>,
+    solution: Vec<Complex<T>>,
+    iterations: u32,
+}
+
+use num_traits::FloatConst;
+impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
+    fn new(poly: Poly<T>) -> Self {
+        let degree = poly.degree().unwrap_or(0);
+        let mut solution: Vec<Complex<T>> = vec![Complex::zero(); degree];
+        let der = poly.derive();
+        // Calculate the roots of unity.
+        // exp(2*k*PI*i/n)
+        for d in 0..degree {
+            let d_f = T::from(d).unwrap();
+            let degree_f = T::from(degree).unwrap();
+            let r = (T::one() + T::one()) * d_f * FloatConst::PI() / degree_f;
+            let r = Complex::i() * r;
+            solution[d] = r.exp();
+        }
+        // dbg!(&solution);
+        Self {
+            poly,
+            der,
+            solution,
+            iterations: 30,
+        }
+    }
+}
+
+fn roots_finder<T>(mut rf: RootsFinder<T>) -> Vec<Complex<T>>
+where
+    T: Debug + Float + MulAdd<Output = T>,
+{
+    println!("{:?}", &rf);
+    let n_roots = rf.poly.degree().unwrap_or(0);
+    for _k in 0..rf.iterations {
+        for i in 0..n_roots {
+            let n_xki = rf.poly.eval(&rf.solution[i]) / rf.der.eval(&rf.solution[i]);
+            // dbg!(&n_xki);
+            let a_xki: Complex<T> = (0..n_roots)
+                .filter(|&j_| j_ != i)
+                .map(|j| {
+                    let den = rf.solution[i] - rf.solution[j];
+                    den.inv() * T::one()
+                })
+                .sum();
+            // dbg!(&a_xki);
+            // Overriding the root before updating the other decrease the time
+            // the algorithm converges.
+            rf.solution[i] = rf.solution[i] - n_xki / (Complex::<T>::one() - n_xki * a_xki);
+        }
+        // dbg!(&rf.solution);
+    }
+    rf.solution
 }
