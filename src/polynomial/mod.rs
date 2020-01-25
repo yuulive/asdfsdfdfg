@@ -1563,7 +1563,7 @@ mod tests {
 
     #[test]
     fn my_roots_finder() {
-        let roots = &[10., 2., 1. / 3.];
+        let roots = &[10.0_f32, 10., 0., -2., 1. / 3.];
         let poly = Poly::new_from_roots(roots);
         let rf = RootsFinder::new(poly);
         let actual = roots_finder(rf);
@@ -1585,18 +1585,10 @@ struct RootsFinder<T> {
 use num_traits::FloatConst;
 impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
     fn new(poly: Poly<T>) -> Self {
-        let degree = poly.degree().unwrap_or(0);
-        let mut solution: Vec<Complex<T>> = vec![Complex::zero(); degree];
         let der = poly.derive();
-        // Calculate the roots of unity.
-        // exp(2*k*PI*i/n)
-        for d in 0..degree {
-            let d_f = T::from(d).unwrap();
-            let degree_f = T::from(degree).unwrap();
-            let r = (T::one() + T::one()) * d_f * FloatConst::PI() / degree_f;
-            let r = Complex::i() * r;
-            solution[d] = r.exp();
-        }
+
+        let solution = init(poly.clone());
+
         // dbg!(&solution);
         Self {
             poly,
@@ -1605,6 +1597,58 @@ impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
             iterations: 30,
         }
     }
+}
+
+fn init<T>(poly: Poly<T>) -> Vec<Complex<T>>
+where
+    T: Debug + Float + FloatConst + NumCast,
+{
+    // set = Vec<(k as usize, k as Float, ln(c_k) as Float)>
+    let set: Vec<(usize, T, T)> = poly
+        .coeffs
+        .iter()
+        .enumerate()
+        .map(|(k, c)| (k, T::from(k).unwrap(), c.abs().ln()))
+        .collect();
+    // dbg!(&set);
+    // Convex hull
+    // ch = Vec<(k as usize, k as Float)>
+    let ch = convex_hull(set);
+    // dbg!(&ch);
+    // r = Vec<(k_(i+1) - k_i as usize, r as Float)>
+    let r: Vec<(usize, T)> = ch
+        .windows(2)
+        .map(|w| {
+            // w[1] = k_(i+1), w[0] = k_i
+            let tmp = (poly.coeffs[w[0].0] / poly.coeffs[w[1].0]).abs();
+            (w[1].0 - w[0].0, tmp.powf((w[1].1 - w[0].1).recip()))
+        })
+        .collect();
+    // dbg!(&r);
+    // initial values
+    let initial: Vec<Complex<T>> = r
+        .iter()
+        .flat_map(|&(n_k, r)| {
+            let n_k_f = T::from(n_k).unwrap();
+            (0..n_k).map(move |i| {
+                let i_f = T::from(i).unwrap();
+                let ex = (T::one() + T::one()) * i_f * FloatConst::PI() / n_k_f;
+                let ex = Complex::i() * ex;
+                // dbg!(ex);
+                ex.exp() * r
+            })
+        })
+        .collect();
+    // dbg!(&initial);
+    initial
+}
+
+fn convex_hull<T>(set: Vec<(usize, T, T)>) -> Vec<(usize, T)>
+where
+    T: Float,
+{
+    // It shall be sorted by k.
+    set.iter().map(|&(a, b, _c)| (a, b)).collect()
 }
 
 fn roots_finder<T>(mut rf: RootsFinder<T>) -> Vec<Complex<T>>
