@@ -1604,8 +1604,23 @@ impl<T: Debug + Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T
             iterations: 30,
         }
     }
+
+    /// Define the maximum number of iterations
+    ///
+    /// # Arguments
+    ///
+    /// * `iterations` - maximum number of iterations.
+    fn with_max_iterations(&mut self, iterations: u32) -> &Self {
+        self.iterations = iterations;
+        self
+    }
 }
 
+/// Simple initialization of roots
+///
+/// # Arguments
+///
+/// * `poly` - polynomial whose roots have to be found.
 fn init_simple<T>(poly: Poly<T>) -> Vec<Complex<T>>
 where
     T: Debug + Float + FloatConst + MulAdd<Output = T> + NumCast,
