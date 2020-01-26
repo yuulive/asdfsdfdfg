@@ -1595,7 +1595,7 @@ impl<T: Debug + Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T
         let der = poly.derive();
 
         // Set the initial root approximation.
-        let solution = init(poly.clone());
+        let solution = init(&poly);
 
         Self {
             poly,
@@ -1621,7 +1621,8 @@ impl<T: Debug + Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T
 /// # Arguments
 ///
 /// * `poly` - polynomial whose roots have to be found.
-fn init_simple<T>(poly: Poly<T>) -> Vec<Complex<T>>
+#[allow(dead_code)]
+fn init_simple<T>(poly: &Poly<T>) -> Vec<Complex<T>>
 where
     T: Debug + Float + FloatConst + MulAdd<Output = T> + NumCast,
 {
@@ -1657,7 +1658,7 @@ where
 /// # Arguments
 ///
 /// * `poly` - polynomial whose roots have to be found.
-fn init<T>(poly: Poly<T>) -> Vec<Complex<T>>
+fn init<T>(poly: &Poly<T>) -> Vec<Complex<T>>
 where
     T: Debug + Float + FloatConst + NumCast,
 {
