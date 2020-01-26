@@ -291,9 +291,9 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// use automatica::polynomial::Poly;
     /// let roots = &[0., -1., 1.];
     /// let p = Poly::new_from_roots(roots);
-    /// assert_eq!(roots, p.roots().unwrap().as_slice());
+    /// assert_eq!(roots, p.real_roots().unwrap().as_slice());
     /// ```
-    pub fn roots(&self) -> Option<Vec<T>> {
+    pub fn real_roots(&self) -> Option<Vec<T>> {
         if self.degree() == Some(2) {
             if let Some(r) = quadratic_roots(self[1] / self[2], self[0] / self[2]) {
                 Some(vec![r.0, r.1])
@@ -1392,13 +1392,23 @@ mod tests {
 
         assert!(vec![-2., -2.]
             .iter()
-            .zip(Poly::new_from_roots(&[-2., -2.]).roots().unwrap().iter())
+            .zip(
+                Poly::new_from_roots(&[-2., -2.])
+                    .real_roots()
+                    .unwrap()
+                    .iter()
+            )
             .map(|(x, y): (&f64, &f64)| (x - y).abs())
             .all(|x| x < 0.000_001));
 
         assert!(vec![1.0_f32, 2., 3.]
             .iter()
-            .zip(Poly::new_from_roots(&[1., 2., 3.]).roots().unwrap().iter())
+            .zip(
+                Poly::new_from_roots(&[1., 2., 3.])
+                    .real_roots()
+                    .unwrap()
+                    .iter()
+            )
             .map(|(x, y): (&f32, &f32)| (x - y).abs())
             .all(|x| x < 0.000_01));
 
@@ -1734,7 +1744,7 @@ mod tests {
     fn poly_roots() {
         let roots = &[0., -1., 1.];
         let p = Poly::new_from_roots(roots);
-        assert_eq!(roots, p.roots().unwrap().as_slice());
+        assert_eq!(roots, p.real_roots().unwrap().as_slice());
     }
 
     #[test]

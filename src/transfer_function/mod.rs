@@ -115,8 +115,8 @@ impl<T: Clone, U: Time> Inv for TfGen<T, U> {
 
 impl<T: ComplexField + Debug + Float + RealField + Scalar, U: Time> TfGen<T, U> {
     /// Calculate the poles of the transfer function
-    pub fn poles(&self) -> Option<Vec<T>> {
-        self.den.roots()
+    pub fn real_poles(&self) -> Option<Vec<T>> {
+        self.den.real_roots()
     }
 
     /// Calculate the poles of the transfer function
@@ -125,8 +125,8 @@ impl<T: ComplexField + Debug + Float + RealField + Scalar, U: Time> TfGen<T, U> 
     }
 
     /// Calculate the zeros of the transfer function
-    pub fn zeros(&self) -> Option<Vec<T>> {
-        self.num.roots()
+    pub fn real_zeros(&self) -> Option<Vec<T>> {
+        self.num.real_roots()
     }
 
     /// Calculate the zeros of the transfer function
@@ -475,7 +475,7 @@ mod tests {
     #[test]
     fn poles() {
         let tf = TfGen::<_, Continuous>::new(poly!(1.), poly!(6., -5., 1.));
-        assert_eq!(Some(vec![2., 3.]), tf.poles());
+        assert_eq!(Some(vec![2., 3.]), tf.real_poles());
     }
 
     #[test]
@@ -491,7 +491,7 @@ mod tests {
     #[test]
     fn zeros() {
         let tf = TfGen::<_, Discrete>::new(poly!(1.), poly!(6., -5., 1.));
-        assert_eq!(Some(vec![]), tf.zeros());
+        assert_eq!(Some(vec![]), tf.real_zeros());
     }
 
     #[test]
