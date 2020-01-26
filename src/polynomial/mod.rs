@@ -285,6 +285,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     }
 
     /// Calculate the real roots of the polynomial
+    /// using companion matrix eigenvalues decomposition.
     ///
     /// # Example
     /// ```
@@ -312,6 +313,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     }
 
     /// Calculate the complex roots of the polynomial
+    /// using companion matrix eigenvalues decomposition.
     ///
     /// # Example
     /// ```
@@ -333,6 +335,30 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
             };
             let schur = Schur::new(comp);
             schur.complex_eigenvalues().as_slice().to_vec()
+        }
+    }
+}
+
+impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
+    /// Calculate the complex roots of the polynomial
+    /// using companion Aberth-Ehrlich method.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
+    /// let i = num_complex::Complex::i();
+    /// assert_eq!(vec![-i, i], p.iterative_roots());
+    /// ```
+    pub fn iterative_roots(&self) -> Vec<Complex<T>> {
+        if self.degree() == Some(2) {
+            let b = self[1] / self[2];
+            let c = self[0] / self[2];
+            let (r1, r2) = complex_quadratic_roots(b, c);
+            vec![r1, r2]
+        } else {
+            let rf = RootsFinder::new(self.clone());
+            rf.roots_finder()
         }
     }
 }
@@ -524,7 +550,7 @@ struct RootsFinder<T> {
     iterations: u32,
 }
 
-impl<T: Debug + Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
+impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
     /// Create a RootsFinder structure
     ///
     /// # Arguments
@@ -534,12 +560,12 @@ impl<T: Debug + Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T
         let der = poly.derive();
 
         // Set the initial root approximation.
-        let solution = init(&poly);
+        let initial_guess = init(&poly);
 
         Self {
             poly,
             der,
-            solution,
+            solution: initial_guess,
             iterations: 30,
         }
     }
@@ -552,6 +578,44 @@ impl<T: Debug + Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T
     fn with_max_iterations(&mut self, iterations: u32) -> &Self {
         self.iterations = iterations;
         self
+    }
+
+    /// Algorithm to find all the complex roots of a polynomial.
+    fn roots_finder(mut self) -> Vec<Complex<T>>
+    where
+        T: Float + MulAdd<Output = T>,
+    {
+        let n_roots = self.poly.degree().unwrap_or(0);
+        let mut done = vec![false; n_roots];
+
+        for _k in 0..self.iterations {
+            if done.iter().all(|&d| d) {
+                break;
+            }
+
+            for i in 0..n_roots {
+                let solution_i = *self.solution.get(i).unwrap();
+                let n_xki = self.poly.eval(&solution_i) / self.der.eval(&solution_i);
+                let a_xki: Complex<T> = (0..n_roots)
+                    .filter(|&j_| j_ != i)
+                    .map(|j| {
+                        let den = solution_i - self.solution.get(j).unwrap();
+                        den.inv() * T::one()
+                    })
+                    .sum();
+
+                // Overriding the root before updating the other decrease the time
+                // the algorithm converges.
+                let new = solution_i - n_xki / (Complex::<T>::one() - n_xki * a_xki);
+                *done.get_mut(i).unwrap() = if solution_i == new {
+                    true
+                } else {
+                    *self.solution.get_mut(i).unwrap() = new;
+                    false
+                };
+            }
+        }
+        self.solution
     }
 }
 
@@ -599,7 +663,7 @@ where
 /// * `poly` - polynomial whose roots have to be found.
 fn init<T>(poly: &Poly<T>) -> Vec<Complex<T>>
 where
-    T: Debug + Float + FloatConst + NumCast,
+    T: Float + FloatConst + NumCast,
 {
     // set = Vec<(k as usize, k as Float, ln(c_k) as Float)>
     let set: Vec<(usize, T, T)> = poly
@@ -646,7 +710,7 @@ where
 /// * `set` - set of points.
 fn convex_hull_top<T>(set: Vec<(usize, T, T)>) -> Vec<(usize, T)>
 where
-    T: Debug + Float,
+    T: Float,
 {
     let mut stack = Vec::<(usize, T, T)>::new();
     stack.push(set[0]);
@@ -688,48 +752,6 @@ where
     let first = (p1.0 - p0.0, p1.1 - p0.1);
     let second = (p2.0 - p0.0, p2.1 - p0.1);
     first.0 * second.1 - second.0 * first.1
-}
-
-/// Algorithm to find all the complex roots of a polynomial.
-///
-/// # Arguments
-///
-/// * `rf` - `RootsFinder` structure.
-fn roots_finder<T>(mut rf: RootsFinder<T>) -> Vec<Complex<T>>
-where
-    T: Debug + Float + MulAdd<Output = T>,
-{
-    let n_roots = rf.poly.degree().unwrap_or(0);
-    let mut done = vec![false; n_roots];
-
-    for _k in 0..rf.iterations {
-        if done.iter().all(|&d| d) {
-            break;
-        }
-
-        for i in 0..n_roots {
-            let solution_i = *rf.solution.get(i).unwrap();
-            let n_xki = rf.poly.eval(&solution_i) / rf.der.eval(&solution_i);
-            let a_xki: Complex<T> = (0..n_roots)
-                .filter(|&j_| j_ != i)
-                .map(|j| {
-                    let den = solution_i - rf.solution.get(j).unwrap();
-                    den.inv() * T::one()
-                })
-                .sum();
-
-            // Overriding the root before updating the other decrease the time
-            // the algorithm converges.
-            let new = solution_i - n_xki / (Complex::<T>::one() - n_xki * a_xki);
-            *done.get_mut(i).unwrap() = if solution_i == new {
-                true
-            } else {
-                *rf.solution.get_mut(i).unwrap() = new;
-                false
-            };
-        }
-    }
-    rf.solution
 }
 
 /// Implement read only indexing of polynomial returning its coefficients.
@@ -1797,7 +1819,7 @@ mod tests {
         let roots = &[10.0_f32, 10. / 323.4, 1., -2., 3.];
         let poly = Poly::new_from_roots(roots);
         let rf = RootsFinder::new(poly);
-        let actual = roots_finder(rf);
+        let actual = rf.roots_finder();
 
         assert!(true);
     }
