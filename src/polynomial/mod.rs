@@ -581,6 +581,19 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
     }
 
     /// Algorithm to find all the complex roots of a polynomial.
+    /// Iterative method that finds roots simultaneously.
+    ///
+    /// O. Aberth, Iteration Methods for Finding all Zeros of a Polynomial Simultaneously,
+    /// Math. Comput. 27, 122 (1973) 339–344.
+    ///
+    /// D. A. Bini, Numerical computation of polynomial zeros by means of Aberth’s method,
+    /// Baltzer Journals, June 5, 1996
+    ///
+    /// D. A. Bini, L. Robol, Solving secular and polynomial equations: A multiprecision algorithm,
+    /// Journal of Computational and Applied Mathematics (2013)
+    ///
+    /// W. S. Luk, Finding roots of real polynomial simultaneously by means of Bairstow's method,
+    /// BIT 35 (1995), 001-003
     fn roots_finder(mut self) -> Vec<Complex<T>>
     where
         T: Float + MulAdd<Output = T>,
