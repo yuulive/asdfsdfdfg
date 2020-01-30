@@ -1337,7 +1337,7 @@ impl<T: Copy + Num> Zero for Poly<T> {
 /// let one = Poly::<u8>::one();
 /// assert!(one.is_one());
 /// ```
-impl<T: AddAssign + Copy + Num> One for Poly<T> {
+impl<T: Copy + Num> One for Poly<T> {
     fn one() -> Self {
         Self {
             coeffs: vec![T::one()],
@@ -1349,9 +1349,33 @@ impl<T: AddAssign + Copy + Num> One for Poly<T> {
     }
 }
 
-impl<T: Debug + Float + FloatConst> Poly<T> {
-    fn mul_fft(mut self, mut rhs: Self) -> Self {
+impl<T: Float + FloatConst> Poly<T> {
+    /// Polynomial multiplication through fast Fourier transform.
+    ///
+    /// # Arguments
+    ///
+    /// * `rhs` - right hand side of multiplication
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::poly;
+    /// let a = poly![1., 0., 3.];
+    /// let b = poly![1., 0., 3.];
+    /// let expected = &a * &b;
+    /// let actual = a.mul_fft(b);
+    /// assert_eq!(expected, actual);
+    /// ```
+    pub fn mul_fft(mut self, mut rhs: Self) -> Self {
         // Handle zero polynomial.
+        if self.is_zero() || rhs.is_zero() {
+            return Self::zero();
+        }
+        if self.is_one() {
+            return rhs;
+        } else if rhs.is_one() {
+            return self;
+        }
         // Both inputs shall have the same length.
         let res_degree = self.len() + rhs.len() - 1;
         self.extend(res_degree);
@@ -1370,7 +1394,6 @@ impl<T: Debug + Float + FloatConst> Poly<T> {
         // DFFT of the inputs.
         let a_fft = fft(a);
         let b_fft = fft(b);
-        dbg!(&a_fft, &b_fft);
         // Multiply the two transforms.
         let y_fft = utils::zip_with(&a_fft, &b_fft, |a, b| a * b).collect();
         // IFFT of the result.
@@ -2039,29 +2062,28 @@ mod tests {
     #[test]
     fn fft_iterative() {
         let one = Complex::one();
-        let a = vec![one * 1., one * 2., one * 3.];
+        let a = vec![one * 1., one * 0., one * 1.];
+        // `a` is extended to for elements
         let f = iterative_fft(a, Transform::Direct);
-        dbg!(f);
-        // panic!();
+        let expected = vec![one * 2., one * 0., one * 2., one * 0.];
+        assert_eq!(expected, f);
     }
 
     #[test]
     fn fft_ifft() {
         let one = Complex::one();
-        let a = vec![one * 1., one * 2., one * 3.];
-        let f = fft(a);
+        let a = vec![one * 1., one * 0., one * 1., one * 0.];
+        let f = fft(a.clone());
         let a2 = ifft(f);
-        dbg!(a2);
-        // panic!();
+        assert_eq!(a, a2);
     }
 
     #[test]
     fn multiply_fft() {
-        let a = poly![1., 2., 3.];
-        let b = poly![1., 2., 3.];
+        let a = poly![1., 0., 3.];
+        let b = poly![1., 0., 3.];
         let expected = &a * &b;
         let actual = a.mul_fft(b);
-        dbg!(expected, actual);
-        // panic!();
+        assert_eq!(expected, actual);
     }
 }
