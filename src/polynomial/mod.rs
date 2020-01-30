@@ -2034,8 +2034,7 @@ mod tests {
         let poly = Poly::new_from_roots(roots);
         let rf = RootsFinder::new(poly);
         let actual = rf.roots_finder();
-
-        assert!(true);
+        assert_eq!(roots.len(), actual.len());
     }
 
     #[test]
