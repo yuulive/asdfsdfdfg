@@ -15,6 +15,8 @@
 - Controllability and observability matrices
 - Autoregressive moving average (ARMA) model of discrete transfer function
 - Polynomial division
+- Polynomial root finding using iterative Aberth-Ehrlich method.
+- Polynomial multiplication using fast fourier transform
 ## Changed
 - Split type for continuous and discrete transfer functions
 - Split type for continuous and discrete state space representation
