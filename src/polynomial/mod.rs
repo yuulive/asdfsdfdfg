@@ -1349,8 +1349,13 @@ impl<T: AddAssign + Copy + Num> One for Poly<T> {
     }
 }
 
-impl<T: Float + FloatConst> Poly<T> {
-    fn mul_fft(self, rhs: Self) -> Self {
+impl<T: Debug + Float + FloatConst> Poly<T> {
+    fn mul_fft(mut self, mut rhs: Self) -> Self {
+        // Handle zero polynomial.
+        // Both inputs shall have the same length.
+        let res_degree = self.len() + rhs.len() - 1;
+        self.extend(res_degree);
+        rhs.extend(res_degree);
         // Convert the inputs into complex number vectors.
         let a: Vec<Complex<T>> = self
             .coeffs
@@ -1362,10 +1367,10 @@ impl<T: Float + FloatConst> Poly<T> {
             .iter()
             .map(|&x| std::convert::From::from(x))
             .collect();
-        // Both inputs shall have the same length (power of two).
         // DFFT of the inputs.
         let a_fft = fft(a);
         let b_fft = fft(b);
+        dbg!(&a_fft, &b_fft);
         // Multiply the two transforms.
         let y_fft = utils::zip_with(&a_fft, &b_fft, |a, b| a * b).collect();
         // IFFT of the result.
