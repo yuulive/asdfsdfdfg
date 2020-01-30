@@ -2086,4 +2086,25 @@ mod tests {
         let actual = a.mul_fft(b);
         assert_eq!(expected, actual);
     }
+
+    #[test]
+    fn multiply_fft_one() {
+        let a = poly![1., 0., 3.];
+        let b = Poly::one();
+        let actual = a.clone().mul_fft(b);
+        assert_eq!(a, actual);
+
+        let c = Poly::one();
+        let d = poly![1., 0., 3.];
+        let actual = c.mul_fft(d.clone());
+        assert_eq!(d, actual);
+    }
+
+    #[test]
+    fn multiply_fft_zero() {
+        let a = poly![1., 0., 3.];
+        let b = Poly::zero();
+        let actual = a.mul_fft(b);
+        assert_eq!(Poly::zero(), actual);
+    }
 }
