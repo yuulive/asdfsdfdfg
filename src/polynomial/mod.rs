@@ -715,7 +715,7 @@ where
 
     // Convex hull
     // ch = Vec<(k as usize, k as Float)>
-    let ch = convex_hull_top(set);
+    let ch = convex_hull_top(&set);
 
     // r = Vec<(k_(i+1) - k_i as usize, r as Float)>
     let r: Vec<(usize, T)> = ch
@@ -748,7 +748,7 @@ where
 /// # Arguments
 ///
 /// * `set` - set of points.
-fn convex_hull_top<T>(set: Vec<(usize, T, T)>) -> Vec<(usize, T)>
+fn convex_hull_top<T>(set: &[(usize, T, T)]) -> Vec<(usize, T)>
 where
     T: Float,
 {
@@ -1450,7 +1450,7 @@ fn log2(n: usize) -> usize {
 /// * `a` - vector
 /// * `bits` - number of lower bit on which the permutation shall act
 #[allow(non_snake_case)]
-fn bit_reverse_copy<T: Copy + Zero>(a: Vec<T>, bits: usize) -> Vec<T> {
+fn bit_reverse_copy<T: Copy + Zero>(a: &[T], bits: usize) -> Vec<T> {
     let l = a.len();
     let mut A = vec![T::zero(); l];
 
@@ -1543,7 +1543,7 @@ where
     debug_assert!(n.is_power_of_two());
     let bits = log2(n);
 
-    let mut A = bit_reverse_copy(a, bits);
+    let mut A = bit_reverse_copy(&a, bits);
 
     let sign = match dir {
         Transform::Direct => T::one(),
@@ -2080,7 +2080,7 @@ mod tests {
     fn reverse_copy() {
         let a = vec![0, 1, 2, 3, 4, 5, 6, 7];
         let l = log2(a.len());
-        let b = bit_reverse_copy(a, l);
+        let b = bit_reverse_copy(&a, l);
         let a = vec![0, 4, 2, 6, 1, 5, 3, 7];
         assert_eq!(a, b);
     }
