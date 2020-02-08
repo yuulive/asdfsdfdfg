@@ -188,9 +188,9 @@ mod tests {
     fn create_iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
         let iter = BodeIterator::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
-        assert_eq!(20., iter.intervals);
+        assert_relative_eq!(20., iter.intervals);
         assert_eq!(RadiansPerSecond(1.), iter.base_freq);
-        assert_eq!(0., iter.index);
+        assert_relative_eq!(0., iter.index);
     }
 
     #[test]
@@ -215,8 +215,8 @@ mod tests {
         };
         assert_eq!(f, p.angular_frequency());
         assert_relative_eq!(19.0986, p.frequency().0, max_relative = 0.00001);
-        assert_eq!(mag, p.magnitude());
-        assert_eq!(ph, p.phase());
+        assert_relative_eq!(mag, p.magnitude());
+        assert_relative_eq!(ph, p.phase());
     }
 
     #[test]

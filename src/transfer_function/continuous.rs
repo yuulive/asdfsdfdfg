@@ -275,14 +275,14 @@ mod tests {
     #[test]
     fn delay() {
         let d = Tf::delay(Seconds(2.));
-        assert_eq!(1., d(Complex::new(0., 10.)).norm());
-        assert_eq!(-1., d(Complex::new(0., 0.5)).arg());
+        assert_relative_eq!(1., d(Complex::new(0., 10.)).norm());
+        assert_relative_eq!(-1., d(Complex::new(0., 0.5)).arg());
     }
 
     #[quickcheck]
     fn static_gain(g: f32) -> bool {
         let tf = Tf::new(poly!(g, -3.), poly!(1., 5., -0.5));
-        g == tf.static_gain()
+        relative_eq!(g, tf.static_gain())
     }
 
     #[test]
@@ -308,21 +308,21 @@ mod tests {
     #[test]
     fn initial_value() {
         let tf = Tf::new(poly!(4.), poly!(1., 5.));
-        assert_eq!(0., tf.init_value());
+        assert_relative_eq!(0., tf.init_value());
         let tf = Tf::new(poly!(4., -12.), poly!(1., 5.));
-        assert_eq!(-2.4, tf.init_value());
+        assert_relative_eq!(-2.4, tf.init_value());
         let tf = Tf::new(poly!(-3., 4.), poly!(5.));
-        assert_eq!(std::f32::INFINITY, tf.init_value());
+        assert_relative_eq!(std::f32::INFINITY, tf.init_value());
     }
 
     #[test]
     fn derivative_initial_value() {
         let tf = Tf::new(poly!(1., -3.), poly!(1., 3., 2.));
-        assert_eq!(-1.5, tf.init_value_der());
+        assert_relative_eq!(-1.5, tf.init_value_der());
         let tf = Tf::new(poly!(1.), poly!(1., 3., 2.));
-        assert_eq!(0., tf.init_value_der());
+        assert_relative_eq!(0., tf.init_value_der());
         let tf = Tf::new(poly!(1., 0.5, -3.), poly!(1., 3., 2.));
-        assert_eq!(std::f32::INFINITY, tf.init_value_der());
+        assert_relative_eq!(std::f32::INFINITY, tf.init_value_der());
     }
 
     #[test]
@@ -366,7 +366,7 @@ mod tests {
         let loci = l.root_locus_iter(1., 130., 1.);
         let last = loci.last().unwrap();
         dbg!(&last);
-        assert_eq!(130., last.k());
+        assert_relative_eq!(130., last.k());
         assert_eq!(3, last.output().len());
         assert!(last.output().iter().any(|r| r.re > 0.));
     }

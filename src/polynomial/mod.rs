@@ -2040,23 +2040,23 @@ mod tests {
 
     #[quickcheck]
     fn leading_coefficient(c: f32) -> bool {
-        c == poly!(1., -5., c).leading_coeff()
+        relative_eq!(c, poly!(1., -5., c).leading_coeff())
     }
 
     #[test]
     fn monic_poly() {
         let p = poly!(-3., 6., 9.);
         let (p2, c) = p.monic();
-        assert_eq!(9., c);
-        assert_eq!(1., p2.leading_coeff());
+        assert_relative_eq!(9., c);
+        assert_relative_eq!(1., p2.leading_coeff());
     }
 
     #[test]
     fn monic_mutable_poly() {
         let mut p = poly!(-3., 6., 9.);
         let c = p.monic_mut();
-        assert_eq!(9., c);
-        assert_eq!(1., p.leading_coeff());
+        assert_relative_eq!(9., c);
+        assert_relative_eq!(1., p.leading_coeff());
     }
 
     #[test]

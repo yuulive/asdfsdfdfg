@@ -183,16 +183,16 @@ mod tests {
     #[test]
     fn pulse_damp() {
         let c = Complex::from_str("4+3i").unwrap();
-        assert_eq!(5., pulse(c));
-        assert_eq!(-0.8, damp(c));
+        assert_relative_eq!(5., pulse(c));
+        assert_relative_eq!(-0.8, damp(c));
 
         let i = Complex::from_str("i").unwrap();
-        assert_eq!(1., pulse(i));
-        assert_eq!(0., damp(i));
+        assert_relative_eq!(1., pulse(i));
+        assert_relative_eq!(0., damp(i));
 
         let zero = Complex::from_str("0").unwrap();
-        assert_eq!(0., pulse(zero));
-        assert_eq!(-1., damp(zero));
+        assert_relative_eq!(0., pulse(zero));
+        assert_relative_eq!(-1., damp(zero));
     }
 
     #[test]

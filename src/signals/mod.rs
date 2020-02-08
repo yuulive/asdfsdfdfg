@@ -51,12 +51,12 @@ pub mod continuous {
 
         #[quickcheck]
         fn zero_input(s: f64) -> bool {
-            0. == zero(1)(Seconds(s))[0]
+            relative_eq!(0., zero(1)(Seconds(s))[0])
         }
 
         #[quickcheck]
         fn step_input(s: f64) -> bool {
-            3. == step(3., 1)(Seconds(s))[0]
+            relative_eq!(3., step(3., 1)(Seconds(s))[0])
         }
 
         #[quickcheck]
@@ -153,35 +153,35 @@ pub mod discrete {
 
         #[quickcheck]
         fn zero_input(s: usize) -> bool {
-            0. == zero(1)(s)[0]
+            relative_eq!(0., zero(1)(s)[0])
         }
 
         #[quickcheck]
         fn step_single_input(s: f32) -> bool {
             let f = step(s, 2);
-            0. == f(1) && s == f(2)
+            relative_eq!(0., f(1)) && relative_eq!(s, f(2))
         }
 
         #[quickcheck]
         fn step_input(s: usize) -> bool {
             let f = step_vec(3., 1, 1);
             if s == 0 {
-                0. == f(s)[0]
+                relative_eq!(0., f(s)[0])
             } else {
-                3. == f(s)[0]
+                relative_eq!(3., f(s)[0])
             }
         }
 
         #[quickcheck]
         fn impulse_single_input(i: f32) -> bool {
             let f = impulse(i, 2);
-            0. == f(1) && i == f(2)
+            relative_eq!(0., f(1)) && relative_eq!(i, f(2))
         }
 
         #[test]
         fn impulse_input() {
             let mut out: Vec<_> = (0..20).map(|t| impulse_vec(10., 15, 1)(t)[0]).collect();
-            assert_eq!(10., out[15]);
+            assert_relative_eq!(10., out[15]);
             out.remove(15);
             assert!(out.iter().all(|&o| o == 0.))
         }

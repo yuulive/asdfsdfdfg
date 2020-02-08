@@ -440,25 +440,25 @@ mod tests {
     #[test]
     fn delay() {
         let d = Tfz::delay(2);
-        assert_eq!(0.010_000_001, d(Complex::new(0., 10.0_f32)).norm());
+        assert_relative_eq!(0.010_000_001, d(Complex::new(0., 10.0_f32)).norm());
     }
 
     #[test]
     fn initial_value() {
         let tf = Tfz::new(poly!(4.), poly!(1., 5.));
-        assert_eq!(0., tf.init_value());
+        assert_relative_eq!(0., tf.init_value());
 
         let tf = Tfz::new(poly!(4., 10.), poly!(1., 5.));
-        assert_eq!(2., tf.init_value());
+        assert_relative_eq!(2., tf.init_value());
 
         let tf = Tfz::new(poly!(4., 1.), poly!(5.));
-        assert_eq!(std::f32::INFINITY, tf.init_value());
+        assert_relative_eq!(std::f32::INFINITY, tf.init_value());
     }
 
     #[test]
     fn static_gain() {
         let tf = Tfz::new(poly!(5., -3.), poly!(2., 5., -6.));
-        assert_eq!(2., tf.static_gain());
+        assert_relative_eq!(2., tf.static_gain());
     }
 
     #[test]
