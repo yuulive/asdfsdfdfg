@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## [0.7.0] - 2020-02-08
 ## Added
 - Implementation of transfer function arithmetic operations
 - Implementation of transfer function feedback
