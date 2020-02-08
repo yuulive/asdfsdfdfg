@@ -1,9 +1,10 @@
 extern crate automatica;
 
-use automatica::{linear_system::Ss, transfer_function::Tf, units::Seconds};
+use automatica::{signals::continuous, units::Seconds, Ss, Tf};
 
 use std::convert::TryFrom;
 
+#[allow(clippy::many_single_char_names)]
 fn main() {
     // Mass (m), spring (k), dumper (f)
     // external force (u)
@@ -38,16 +39,16 @@ fn main() {
     );
 
     // Free movement.
-    let null_input = |_: Seconds<f64>| vec![0.];
+    let null_input = continuous::zero(1);
     let x0 = &[1., 0.];
 
     // Solvers.
-    let rk2: Vec<_> = stiff_sys.rk2(null_input, x0, Seconds(0.1), 5).collect();
+    let rk2: Vec<_> = stiff_sys.rk2(&null_input, x0, Seconds(0.1), 5).collect();
     let rkf45: Vec<_> = stiff_sys
-        .rkf45(null_input, x0, Seconds(0.1), Seconds(5.), 1e-3)
+        .rkf45(&null_input, x0, Seconds(0.1), Seconds(5.), 1e-3)
         .collect();
     let radau: Vec<_> = stiff_sys
-        .radau(null_input, x0, Seconds(0.1), 70, 1e-3)
+        .radau(&null_input, x0, Seconds(0.1), 70, 1e-3)
         .collect();
 
     println!(

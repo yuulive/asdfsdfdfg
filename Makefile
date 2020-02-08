@@ -1,12 +1,14 @@
 RUNEXAMPLE = cargo run --example
 
-examples = bode \
+examples = arma_channel \
+		   bode \
 		   discrete \
 		   discretization \
 		   linear_system \
 		   oscillation \
 		   polar \
 		   poly \
+		   root_locus \
 		   transfer_function
 
 .PHONY : all_examples clippy doc $(examples)

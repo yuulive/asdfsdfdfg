@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## [0.7.0] - 2020-02-08
+## Added
+- Implementation of transfer function arithmetic operations
+- Implementation of transfer function feedback
+- Check for system stability
+- Common input signals
+- Transfer function static gain
+- Transfer function positive and negative feedback
+- Transfer function sensitivity functions
+- Transfer function delay
+- Equilibrium for discrete systems
+- Root locus plot
+- Controllability and observability matrices
+- Autoregressive moving average (ARMA) model of discrete transfer function
+- Polynomial division
+- Polynomial root finding using iterative Aberth-Ehrlich method.
+- Polynomial multiplication using fast fourier transform
+## Changed
+- Split type for continuous and discrete transfer functions
+- Split type for continuous and discrete state space representation
+
 ## [0.6.0] - 2019-11-18
 ## Added
 - Increased the quantity of tests and documentation tests

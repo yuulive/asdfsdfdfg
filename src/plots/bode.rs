@@ -6,8 +6,8 @@
 //! inverse of the poles and zeros time constants.
 
 use crate::{
-    transfer_function::Tf,
-    units::{Decibel, Hertz, RadiantsPerSecond},
+    transfer_function::continuous::Tf,
+    units::{Decibel, Hertz, RadiansPerSecond},
     Eval,
 };
 
@@ -24,7 +24,7 @@ pub struct BodeIterator<T: Float> {
     /// Step between frequencies
     step: T,
     /// Start frequency
-    base_freq: RadiantsPerSecond<T>,
+    base_freq: RadiansPerSecond<T>,
     /// Current data index
     index: T,
 }
@@ -47,8 +47,8 @@ impl<T: Decibel<T> + Float + MulAdd<Output = T>> BodeIterator<T> {
     /// is not lower than the maximum frequency
     pub(crate) fn new(
         tf: Tf<T>,
-        min_freq: RadiantsPerSecond<T>,
-        max_freq: RadiantsPerSecond<T>,
+        min_freq: RadiansPerSecond<T>,
+        max_freq: RadiansPerSecond<T>,
         step: T,
     ) -> Self {
         assert!(step > T::zero());
@@ -61,7 +61,7 @@ impl<T: Decibel<T> + Float + MulAdd<Output = T>> BodeIterator<T> {
             tf,
             intervals,
             step,
-            base_freq: RadiantsPerSecond(min),
+            base_freq: RadiansPerSecond(min),
             index: T::zero(),
         }
     }
@@ -80,7 +80,7 @@ impl<T: Decibel<T> + Float + MulAdd<Output = T>> BodeIterator<T> {
 #[derive(Debug, PartialEq)]
 pub struct Bode<T: Float> {
     /// Angular frequency (rad)
-    angular_frequency: RadiantsPerSecond<T>,
+    angular_frequency: RadiansPerSecond<T>,
     /// Magnitude (absolute value or dB)
     magnitude: T,
     /// Phase (rad or degrees)
@@ -90,7 +90,7 @@ pub struct Bode<T: Float> {
 /// Implementation of Bode methods
 impl<T: Float + FloatConst> Bode<T> {
     /// Get the angular frequency
-    pub fn angular_frequency(&self) -> RadiantsPerSecond<T> {
+    pub fn angular_frequency(&self) -> RadiansPerSecond<T> {
         self.angular_frequency
     }
 
@@ -126,7 +126,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for BodeIterator<T> {
             //self.index += T::one();
             self.index = self.index + T::one();
             Some(Bode {
-                angular_frequency: RadiantsPerSecond(omega),
+                angular_frequency: RadiansPerSecond(omega),
                 magnitude: g.norm(),
                 phase: g.arg(),
             })
@@ -152,8 +152,8 @@ pub trait BodePlot<T: Float + FloatConst> {
     /// is not lower than the maximum frequency
     fn bode(
         self,
-        min_freq: RadiantsPerSecond<T>,
-        max_freq: RadiantsPerSecond<T>,
+        min_freq: RadiansPerSecond<T>,
+        max_freq: RadiansPerSecond<T>,
         step: T,
     ) -> BodeIterator<T>;
 
@@ -187,25 +187,25 @@ mod tests {
     #[test]
     fn create_iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = BodeIterator::new(tf, RadiantsPerSecond(10.), RadiantsPerSecond(1000.), 0.1);
-        assert_eq!(20., iter.intervals);
-        assert_eq!(RadiantsPerSecond(1.), iter.base_freq);
-        assert_eq!(0., iter.index);
+        let iter = BodeIterator::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        assert_relative_eq!(20., iter.intervals);
+        assert_eq!(RadiansPerSecond(1.), iter.base_freq);
+        assert_relative_eq!(0., iter.index);
     }
 
     #[test]
     fn create_iterator_db_deg() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = BodeIterator::new(tf, RadiantsPerSecond(10.), RadiantsPerSecond(1000.), 0.1);
+        let iter = BodeIterator::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
         let iter2 = iter.into_db_deg();
         let res = iter2.last().unwrap();
-        assert_eq!(RadiantsPerSecond(1000.), res.angular_frequency());
+        assert_eq!(RadiansPerSecond(1000.), res.angular_frequency());
         assert_relative_eq!(-90.0, res.phase(), max_relative = 0.001);
     }
 
     #[test]
     fn polar_struct() {
-        let f = RadiantsPerSecond(120.);
+        let f = RadiansPerSecond(120.);
         let mag = 3.;
         let ph = std::f64::consts::PI;
         let p = Bode {
@@ -215,14 +215,14 @@ mod tests {
         };
         assert_eq!(f, p.angular_frequency());
         assert_relative_eq!(19.0986, p.frequency().0, max_relative = 0.00001);
-        assert_eq!(mag, p.magnitude());
-        assert_eq!(ph, p.phase());
+        assert_relative_eq!(mag, p.magnitude());
+        assert_relative_eq!(ph, p.phase());
     }
 
     #[test]
     fn iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = BodeIterator::new(tf, RadiantsPerSecond(10.), RadiantsPerSecond(1000.), 0.1);
+        let iter = BodeIterator::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
         // 20 steps -> 21 iteration
         assert_eq!(21, iter.count());
     }

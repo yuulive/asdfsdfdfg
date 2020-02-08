@@ -1,33 +1,42 @@
-//! # Polynomials and matrices of polynomials
+//! # Polynomials
 //!
-//! `Poly` implements usual addition, subtraction and multiplication between
-//! polynomials, operations with scalars are supported also.
-//!
-//! Methods for roots finding, companion matrix and evaluation are implemented.
-//!
-//! `MatrixOfPoly` allows the definition of matrices of polynomials.
+//! Polynomial implementation
+//! * builder from coefficients or roots
+//! * degree
+//! * extend by adding 0 coefficients to higher order terms
+//! * arithmetic operations between polynomials (addition, subtraction,
+//!   multiplication, division, reminder, negation)
+//! * arithmetic operations with floats (addition, subtraction,
+//!   multiplication, division)
+//! * transformation to monic form
+//! * roots finding (real and complex) using eigenvalues of the companion matrix
+//! * differentiation and integration
+//! * evaluation using real or complex numbers
+//! * coefficient indexing
+//! * zero and unit polynomials
 
-use crate::Eval;
+pub mod matrix;
 
-use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub};
+use nalgebra::{ComplexField, DMatrix, RealField, Scalar, Schur};
+use num_complex::Complex;
+use num_traits::{Float, FloatConst, MulAdd, Num, NumCast, One, Signed, Zero};
+
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
+    ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Neg, Rem, Sub},
 };
 
-use nalgebra::{ComplexField, DMatrix, RealField, Scalar, Schur};
-use ndarray::{Array, Array2};
-use num_complex::Complex;
-use num_traits::{Float, MulAdd, Num, NumAssignOps, NumCast, One, Signed, Zero};
+use crate::{polynomial::matrix::PolyMatrix, utils, Eval};
 
 /// Polynomial object
 ///
 /// Contains the vector of coefficients form the lowest to the highest degree
 ///
-/// p(x) = c0 + c1*x + c2*x^2 + ...
+/// `p(x) = c0 + c1*x + c2*x^2 + ...`
 #[derive(Debug, PartialEq, Clone)]
 pub struct Poly<T> {
-    coeffs: Vec<T>,
+    pub(crate) coeffs: Vec<T>,
 }
 
 /// Macro shortcut to crate a polynomial from its coefficients.
@@ -113,9 +122,30 @@ impl<T: Copy + Num + Zero> Poly<T> {
     }
 }
 
+impl<T: Copy + Div<Output = T>> Poly<T> {
+    /// In place division with a real number
+    ///
+    /// # Arguments
+    ///
+    /// * `d` - Real number divisor
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::poly;
+    /// let mut p = poly!(3, 4, 5);
+    /// p.div_mut(2);
+    /// assert_eq!(poly!(1, 2, 2), p);
+    /// ```
+    pub fn div_mut(&mut self, d: T) {
+        for c in &mut self.coeffs {
+            *c = *c / d;
+        }
+    }
+}
+
 /// Implementation methods for Poly struct
 impl<T: Copy + Div<Output = T> + One> Poly<T> {
-    /// Retrun the monic polynomial and the leading coefficient.
+    /// Return the monic polynomial and the leading coefficient.
     ///
     /// # Example
     /// ```
@@ -126,11 +156,44 @@ impl<T: Copy + Div<Output = T> + One> Poly<T> {
     /// assert_eq!(10., c);
     /// ```
     pub fn monic(&self) -> (Self, T) {
-        let leading_coeff = *self.coeffs.last().unwrap_or(&T::one());
-        let result: Vec<_> = self.coeffs.iter().map(|&x| x / leading_coeff).collect();
+        let lc = self.leading_coeff();
+        let result: Vec<_> = self.coeffs.iter().map(|&x| x / lc).collect();
         let monic_poly = Self { coeffs: result };
 
-        (monic_poly, leading_coeff)
+        (monic_poly, lc)
+    }
+
+    /// Return the monic polynomial and the leading coefficient,
+    /// it mutates the polynomial in place.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let mut p = Poly::new_from_coeffs(&[1., 2., 10.]);
+    /// let c = p.monic_mut();
+    /// assert_eq!(Poly::new_from_coeffs(&[0.1, 0.2, 1.]), p);
+    /// assert_eq!(10., c);
+    /// ```
+    pub fn monic_mut(&mut self) -> T {
+        let lc = self.leading_coeff();
+        self.div_mut(lc);
+        lc
+    }
+}
+
+/// Implementation methods for Poly struct
+impl<T: Copy + One> Poly<T> {
+    /// Return the leading coefficient of the polynomial.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 2., 10.]);
+    /// let c = p.leading_coeff();
+    /// assert_eq!(10., c);
+    /// ```
+    pub fn leading_coeff(&self) -> T {
+        *self.coeffs.last().unwrap_or(&T::one())
     }
 }
 
@@ -158,6 +221,7 @@ impl<T: Copy + PartialEq + Zero> Poly<T> {
     }
 
     /// Trim the zeros coefficients of high degree terms.
+    /// It will not leave an empty `coeffs` vector: zero poly is returned.
     fn trim(&mut self) {
         // TODO try to use assert macro.
         //.rposition(|&c| relative_ne!(c, 0.0, epsilon = epsilon, max_relative = max_relative))
@@ -221,15 +285,16 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     }
 
     /// Calculate the real roots of the polynomial
+    /// using companion matrix eigenvalues decomposition.
     ///
     /// # Example
     /// ```
     /// use automatica::polynomial::Poly;
     /// let roots = &[0., -1., 1.];
     /// let p = Poly::new_from_roots(roots);
-    /// assert_eq!(roots, p.roots().unwrap().as_slice());
+    /// assert_eq!(roots, p.real_roots().unwrap().as_slice());
     /// ```
-    pub fn roots(&self) -> Option<Vec<T>> {
+    pub fn real_roots(&self) -> Option<Vec<T>> {
         if self.degree() == Some(2) {
             if let Some(r) = quadratic_roots(self[1] / self[2], self[0] / self[2]) {
                 Some(vec![r.0, r.1])
@@ -248,6 +313,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     }
 
     /// Calculate the complex roots of the polynomial
+    /// using companion matrix eigenvalues decomposition.
     ///
     /// # Example
     /// ```
@@ -258,10 +324,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// ```
     pub fn complex_roots(&self) -> Vec<Complex<T>> {
         if self.degree() == Some(2) {
-            let b = self[1] / self[2];
-            let c = self[0] / self[2];
-            let (r1, r2) = complex_quadratic_roots(b, c);
-            vec![r1, r2]
+            self.complex_deg2_roots()
         } else {
             let comp = match self.companion() {
                 Some(comp) => comp,
@@ -270,6 +333,60 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
             let schur = Schur::new(comp);
             schur.complex_eigenvalues().as_slice().to_vec()
         }
+    }
+}
+
+impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
+    /// Calculate the complex roots of the polynomial
+    /// using companion Aberth-Ehrlich method.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
+    /// let i = num_complex::Complex::i();
+    /// assert_eq!(vec![-i, i], p.iterative_roots());
+    /// ```
+    pub fn iterative_roots(&self) -> Vec<Complex<T>> {
+        if self.degree() == Some(2) {
+            self.complex_deg2_roots()
+        } else {
+            let rf = RootsFinder::new(self.clone());
+            rf.roots_finder()
+        }
+    }
+
+    /// Calculate the complex roots of the polynomial using companion
+    /// Aberth-Ehrlich method, with the given iteration limit.
+    ///
+    /// # Arguments
+    ///
+    /// * `max_iter` - maximum number of iterations for the algorithm
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
+    /// let i = num_complex::Complex::i();
+    /// assert_eq!(vec![-i, i], p.iterative_roots_with_max(10));
+    /// ```
+    pub fn iterative_roots_with_max(&self, max_iter: u32) -> Vec<Complex<T>> {
+        if self.degree() == Some(2) {
+            self.complex_deg2_roots()
+        } else {
+            let rf = RootsFinder::new(self.clone()).with_max_iterations(max_iter);
+            rf.roots_finder()
+        }
+    }
+}
+
+/// Calculate the complex roots of a polynomial of degree 2.
+impl<T: Float> Poly<T> {
+    fn complex_deg2_roots(&self) -> Vec<Complex<T>> {
+        let b = self[1] / self[2];
+        let c = self[0] / self[2];
+        let (r1, r2) = complex_quadratic_roots(b, c);
+        vec![r1, r2]
     }
 }
 
@@ -332,6 +449,16 @@ pub(crate) fn quadratic_roots<T: Float>(b: T, c: T) -> Option<(T, T)> {
 impl Poly<f64> {
     /// Implementation of polynomial and matrix multiplication
     pub(crate) fn multiply(&self, rhs: &DMatrix<f64>) -> PolyMatrix<f64> {
+        // It's the polynomial matrix whose coefficients are the coefficients
+        // of the polynomial times the matrix
+        let result: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
+        PolyMatrix::new_from_coeffs(&result)
+    }
+}
+
+impl Poly<f32> {
+    /// Implementation of polynomial and matrix multiplication
+    pub(crate) fn multiply(&self, rhs: &DMatrix<f32>) -> PolyMatrix<f32> {
         // It's the polynomial matrix whose coefficients are the coefficients
         // of the polynomial times the matrix
         let result: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
@@ -411,7 +538,7 @@ where
     T: Copy + NumCast,
 {
     /// Evaluate the polynomial using Horner's method. The evaluation is safe
-    /// is the polynomial coefficient can be casted the type `N`.
+    /// if the polynomial coefficient can be casted the type `N`.
     ///
     /// # Arguments
     ///
@@ -435,6 +562,239 @@ where
             .rev()
             .fold(N::zero(), |acc, &c| acc.mul_add(*x, N::from(c).unwrap()))
     }
+}
+
+/// Structure to hold the computational data for polynomial root finding.
+#[derive(Debug)]
+struct RootsFinder<T> {
+    /// Polynomial
+    poly: Poly<T>,
+    /// Polynomial derivative
+    der: Poly<T>,
+    /// Solution, roots of the polynomial
+    solution: Vec<Complex<T>>,
+    /// Maximum iterations of the algorithm
+    iterations: u32,
+}
+
+impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
+    /// Create a RootsFinder structure
+    ///
+    /// # Arguments
+    ///
+    /// * `poly` - polynomial whose roots have to be found.
+    fn new(poly: Poly<T>) -> Self {
+        let der = poly.derive();
+
+        // Set the initial root approximation.
+        let initial_guess = init(&poly);
+
+        Self {
+            poly,
+            der,
+            solution: initial_guess,
+            iterations: 30,
+        }
+    }
+
+    /// Define the maximum number of iterations
+    ///
+    /// # Arguments
+    ///
+    /// * `iterations` - maximum number of iterations.
+    fn with_max_iterations(mut self, iterations: u32) -> Self {
+        self.iterations = iterations;
+        self
+    }
+
+    /// Algorithm to find all the complex roots of a polynomial.
+    /// Iterative method that finds roots simultaneously.
+    ///
+    /// O. Aberth, Iteration Methods for Finding all Zeros of a Polynomial Simultaneously,
+    /// Math. Comput. 27, 122 (1973) 339–344.
+    ///
+    /// D. A. Bini, Numerical computation of polynomial zeros by means of Aberth’s method,
+    /// Baltzer Journals, June 5, 1996
+    ///
+    /// D. A. Bini, L. Robol, Solving secular and polynomial equations: A multiprecision algorithm,
+    /// Journal of Computational and Applied Mathematics (2013)
+    ///
+    /// W. S. Luk, Finding roots of real polynomial simultaneously by means of Bairstow's method,
+    /// BIT 35 (1995), 001-003
+    fn roots_finder(mut self) -> Vec<Complex<T>>
+    where
+        T: Float + MulAdd<Output = T>,
+    {
+        let n_roots = self.poly.degree().unwrap_or(0);
+        let mut done = vec![false; n_roots];
+
+        for _k in 0..self.iterations {
+            if done.iter().all(|&d| d) {
+                break;
+            }
+
+            for i in 0..n_roots {
+                let solution_i = *self.solution.get(i).unwrap();
+                let n_xki = self.poly.eval(&solution_i) / self.der.eval(&solution_i);
+                let a_xki: Complex<T> = (0..n_roots)
+                    .filter_map(|j| {
+                        if j == i {
+                            None
+                        } else {
+                            let den = solution_i - self.solution.get(j).unwrap();
+                            Some(den.inv() * T::one())
+                        }
+                    })
+                    .sum();
+
+                // Overriding the root before updating the other decrease the time
+                // the algorithm converges.
+                let new = solution_i - n_xki / (Complex::<T>::one() - n_xki * a_xki);
+                *done.get_mut(i).unwrap() = if solution_i == new {
+                    true
+                } else {
+                    *self.solution.get_mut(i).unwrap() = new;
+                    false
+                };
+            }
+        }
+        self.solution
+    }
+}
+
+/// Simple initialization of roots
+///
+/// # Arguments
+///
+/// * `poly` - polynomial whose roots have to be found.
+#[allow(dead_code)]
+fn init_simple<T>(poly: &Poly<T>) -> Vec<Complex<T>>
+where
+    T: Debug + Float + FloatConst + MulAdd<Output = T> + NumCast,
+{
+    // Convert degree from usize to float
+    let n = poly.degree().unwrap_or(1);
+    let n_f = T::from(n).unwrap();
+
+    // Calculate the center of the circle.
+    let a_n = poly.leading_coeff();
+    let a_n_1 = poly[poly.len() - 2];
+    let c = -a_n_1 / n_f / a_n;
+
+    // Calculate the radius of the circle.
+    let r = poly.eval(&c).abs().powf(n_f.recip());
+
+    // Pre-compute the constants of the exponent.
+    let phi = T::one() * FloatConst::FRAC_PI_2() / n_f;
+    let tau = (T::one() + T::one()) * FloatConst::PI();
+
+    let initial: Vec<Complex<T>> = (1..=n)
+        .map(|j| {
+            let j_f = T::from(j).unwrap();
+            let ex = tau * j_f / n_f + phi;
+            let ex = Complex::i() * ex;
+            ex.exp() * r + c
+        })
+        .collect();
+    initial
+}
+
+/// Generate the initial approximation of the polynomial roots.
+///
+/// # Arguments
+///
+/// * `poly` - polynomial whose roots have to be found.
+fn init<T>(poly: &Poly<T>) -> Vec<Complex<T>>
+where
+    T: Float + FloatConst + NumCast,
+{
+    // set = Vec<(k as usize, k as Float, ln(c_k) as Float)>
+    let set: Vec<(usize, T, T)> = poly
+        .coeffs
+        .iter()
+        .enumerate()
+        .map(|(k, c)| (k, T::from(k).unwrap(), c.abs().ln()))
+        .collect();
+
+    // Convex hull
+    // ch = Vec<(k as usize, k as Float)>
+    let ch = convex_hull_top(&set);
+
+    // r = Vec<(k_(i+1) - k_i as usize, r as Float)>
+    let r: Vec<(usize, T)> = ch
+        .windows(2)
+        .map(|w| {
+            // w[1] = k_(i+1), w[0] = k_i
+            let tmp = (poly.coeffs[w[0].0] / poly.coeffs[w[1].0]).abs();
+            (w[1].0 - w[0].0, tmp.powf((w[1].1 - w[0].1).recip()))
+        })
+        .collect();
+
+    // Initial values
+    let tau = (T::one() + T::one()) * FloatConst::PI();
+    let initial: Vec<Complex<T>> = r
+        .iter()
+        .flat_map(|&(n_k, r)| {
+            let n_k_f = T::from(n_k).unwrap();
+            (0..n_k).map(move |i| {
+                let i_f = T::from(i).unwrap();
+                let ex = tau * i_f / n_k_f;
+                (Complex::i() * ex).exp() * r
+            })
+        })
+        .collect();
+    initial
+}
+
+/// Calculate the upper convex hull of the given set of points.
+///
+/// # Arguments
+///
+/// * `set` - set of points.
+fn convex_hull_top<T>(set: &[(usize, T, T)]) -> Vec<(usize, T)>
+where
+    T: Float,
+{
+    let mut stack = Vec::<(usize, T, T)>::new();
+    stack.push(set[0]);
+    stack.push(set[1]);
+
+    for p in set.iter().skip(2) {
+        loop {
+            let length = stack.len();
+            // There shall be at least 2 elements in the stack.
+            if length < 2 {
+                break;
+            }
+            let next_to_top = stack.get(length - 2).unwrap();
+            let top = stack.last().unwrap();
+
+            let c = cross_product((next_to_top.1, next_to_top.2), (top.1, top.2), (p.1, p.2));
+            // Remove the top if it is not a strict turn to the right.
+            if c < T::zero() {
+                break;
+            } else {
+                stack.pop();
+            }
+        }
+        stack.push(*p);
+    }
+
+    let res: Vec<_> = stack.iter().map(|&(a, b, _c)| (a, b)).collect();
+    // It is be sorted by k.
+    res
+}
+
+/// Compute the cross product of (p1 - p0) and (p2 - p0)
+///
+/// `(p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)`
+fn cross_product<T>(p0: (T, T), p1: (T, T), p2: (T, T)) -> T
+where
+    T: Copy + Mul<Output = T> + Sub<Output = T>,
+{
+    let first = (p1.0 - p0.0, p1.1 - p0.1);
+    let second = (p2.0 - p0.0, p2.1 - p0.1);
+    first.0 * second.1 - second.0 * first.1
 }
 
 /// Implement read only indexing of polynomial returning its coefficients.
@@ -476,8 +836,30 @@ impl<T> IndexMut<usize> for Poly<T> {
     }
 }
 
+/// Implementation of polynomial negation
+impl<T: Copy + Neg<Output = T>> Neg for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn neg(self) -> Self::Output {
+        let c: Vec<_> = self.coeffs.iter().map(|&i| -i).collect();
+        Poly { coeffs: c }
+    }
+}
+
+/// Implementation of polynomial negation
+impl<T: Copy + Neg<Output = T>> Neg for Poly<T> {
+    type Output = Self;
+
+    fn neg(mut self) -> Self::Output {
+        for c in &mut self.coeffs {
+            *c = Neg::neg(*c);
+        }
+        self
+    }
+}
+
 /// Implementation of polynomial addition
-impl<T: Copy + Num> Add<Poly<T>> for Poly<T> {
+impl<T: Copy + Num> Add for Poly<T> {
     type Output = Self;
 
     fn add(mut self, mut rhs: Self) -> Self {
@@ -500,11 +882,11 @@ impl<T: Copy + Num> Add<Poly<T>> for Poly<T> {
 }
 
 /// Implementation of polynomial addition
-impl<T: Copy + Num> Add<&Poly<T>> for &Poly<T> {
+impl<T: Copy + Num> Add for &Poly<T> {
     type Output = Poly<T>;
 
     fn add(self, rhs: &Poly<T>) -> Poly<T> {
-        let new_coeffs = crate::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), Add::add);
+        let new_coeffs = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), Add::add);
         Poly::new_from_coeffs(&new_coeffs)
     }
 }
@@ -626,7 +1008,7 @@ impl<T: Copy + PartialEq + Sub<Output = T> + Zero> Sub for &Poly<T> {
 
     fn sub(self, rhs: Self) -> Poly<T> {
         let new_coeffs =
-            crate::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), |x, y| x - y);
+            utils::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), |x, y| x - y);
         Poly::new_from_coeffs(&new_coeffs)
     }
 }
@@ -747,6 +1129,8 @@ impl<T: Copy + Mul<Output = T> + PartialEq + Zero> Mul for Poly<T> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
+        // Can't reuse arguments to avoid additional allocations.
+        // The to arguments can't mutate during the loops.
         Mul::mul(&self, &rhs)
     }
 }
@@ -763,6 +1147,23 @@ impl<T: Copy + Num> Mul<T> for Poly<T> {
                 *c = *c * rhs;
             }
             self
+        }
+    }
+}
+
+/// Implementation of polynomial and float multiplication
+impl<T: Copy + Num> Mul<T> for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        let mut p = self.clone();
+        if rhs.is_zero() {
+            Self::Output::zero()
+        } else {
+            for c in &mut p.coeffs {
+                *c = *c * rhs;
+            }
+            p
         }
     }
 }
@@ -854,6 +1255,88 @@ impl<T: Copy + Num> Div<T> for Poly<T> {
     }
 }
 
+/// Implementation of polynomial and float division
+impl<T: Copy + Num> Div<T> for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn div(self, rhs: T) -> Self::Output {
+        let mut result = self.clone();
+        for c in &mut result.coeffs {
+            *c = *c / rhs;
+        }
+        result.trim();
+        result
+    }
+}
+
+impl<T: Float> Div for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn div(self, rhs: &Poly<T>) -> Self::Output {
+        poly_div_impl(self.clone(), rhs).0
+    }
+}
+
+impl<T: Float> Div for Poly<T> {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        poly_div_impl(self, &rhs).0
+    }
+}
+
+impl<T: Float> Rem for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn rem(self, rhs: &Poly<T>) -> Self::Output {
+        poly_div_impl(self.clone(), rhs).1
+    }
+}
+
+impl<T: Float> Rem for Poly<T> {
+    type Output = Self;
+
+    fn rem(self, rhs: Self) -> Self::Output {
+        poly_div_impl(self, &rhs).1
+    }
+}
+
+/// Donald Ervin Knuth, The Art of Computer Programming: Seminumerical algorithms
+/// Volume 2, third edition, section 4.6.1
+/// Algorithm D: division of polynomials over a field.
+#[allow(clippy::many_single_char_names)]
+fn poly_div_impl<T: Float>(mut u: Poly<T>, v: &Poly<T>) -> (Poly<T>, Poly<T>) {
+    let (m, n) = match (u.degree(), v.degree()) {
+        (_, None) => panic!("Division by zero polynomial"),
+        (None, _) => return (Poly::zero(), Poly::zero()),
+        (Some(m), Some(n)) if m < n => return (Poly::zero(), u.clone()),
+        (Some(m), Some(n)) => (m, n),
+    };
+
+    // 1/v_n
+    let vn_rec = v.leading_coeff().recip();
+
+    let mut q = Poly {
+        coeffs: vec![T::zero(); m - n + 1],
+    };
+
+    for k in (0..=m - n).rev() {
+        q[k] = u[n + k] * vn_rec;
+        // n+k-1..=k
+        for j in (k..n + k).rev() {
+            u[j] = u[j] - q[k] * v[j - k];
+        }
+    }
+
+    // (r_n-1, ..., r_0) = (u_n-1, ..., u_0)
+    // reuse u coefficients.
+    u.coeffs.truncate(n);
+    // Trim take care of the case n=0.
+    u.trim();
+    // No need to trim q, its higher degree coefficient is always different from 0.
+    (q, u)
+}
+
 /// Implementation of the additive identity for polynomials
 ///
 /// # Example
@@ -863,7 +1346,7 @@ impl<T: Copy + Num> Div<T> for Poly<T> {
 /// let zero = Poly::<u8>::zero();
 /// assert!(zero.is_zero());
 /// ```
-impl<T: Copy + Num + Zero> Zero for Poly<T> {
+impl<T: Copy + Num> Zero for Poly<T> {
     fn zero() -> Self {
         Self {
             coeffs: vec![T::zero()],
@@ -884,7 +1367,7 @@ impl<T: Copy + Num + Zero> Zero for Poly<T> {
 /// let one = Poly::<u8>::one();
 /// assert!(one.is_one());
 /// ```
-impl<T: AddAssign + Copy + Num> One for Poly<T> {
+impl<T: Copy + Num> One for Poly<T> {
     fn one() -> Self {
         Self {
             coeffs: vec![T::one()],
@@ -893,6 +1376,208 @@ impl<T: AddAssign + Copy + Num> One for Poly<T> {
 
     fn is_one(&self) -> bool {
         self.coeffs.len() == 1 && self.coeffs[0] == T::one()
+    }
+}
+
+impl<T: Float + FloatConst> Poly<T> {
+    /// Polynomial multiplication through fast Fourier transform.
+    ///
+    /// # Arguments
+    ///
+    /// * `rhs` - right hand side of multiplication
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::poly;
+    /// let a = poly![1., 0., 3.];
+    /// let b = poly![1., 0., 3.];
+    /// let expected = &a * &b;
+    /// let actual = a.mul_fft(b);
+    /// assert_eq!(expected, actual);
+    /// ```
+    pub fn mul_fft(mut self, mut rhs: Self) -> Self {
+        // Handle zero polynomial.
+        if self.is_zero() || rhs.is_zero() {
+            return Self::zero();
+        }
+        if self.is_one() {
+            return rhs;
+        } else if rhs.is_one() {
+            return self;
+        }
+        // Both inputs shall have the same length.
+        let res_degree = self.len() + rhs.len() - 1;
+        self.extend(res_degree);
+        rhs.extend(res_degree);
+        // Convert the inputs into complex number vectors.
+        let a: Vec<Complex<T>> = self
+            .coeffs
+            .iter()
+            .map(|&x| std::convert::From::from(x))
+            .collect();
+        let b: Vec<Complex<T>> = rhs
+            .coeffs
+            .iter()
+            .map(|&x| std::convert::From::from(x))
+            .collect();
+        // DFFT of the inputs.
+        let a_fft = fft(a);
+        let b_fft = fft(b);
+        // Multiply the two transforms.
+        let y_fft = utils::zip_with(&a_fft, &b_fft, |a, b| a * b).collect();
+        // IFFT of the result.
+        let y = ifft(y_fft);
+        // Extract the real parts of the result.
+        let coeffs = y.iter().map(|c| c.re).collect();
+        let mut res = Self { coeffs };
+        res.trim();
+        res
+    }
+}
+
+/// Integer logarithm of a power of two.
+///
+/// # Arguments
+///
+/// * `n` - power of two
+fn log2(n: usize) -> usize {
+    // core::mem::size_of::<usize>() * 8 - 1 - n.leading_zeros() as usize
+    n.trailing_zeros() as usize
+}
+
+/// Reorder the elements of the vector using a bit inversion permutation.
+///
+/// # Arguments
+///
+/// * `a` - vector
+/// * `bits` - number of lower bit on which the permutation shall act
+#[allow(non_snake_case)]
+fn bit_reverse_copy<T: Copy + Zero>(a: &[T], bits: usize) -> Vec<T> {
+    let l = a.len();
+    let mut A = vec![T::zero(); l];
+
+    for k in 0..l {
+        let r = rev(k, bits);
+        *A.get_mut(r).unwrap() = *a.get(k).unwrap();
+    }
+    A
+}
+
+/// Reverse the last `l` bits of `k`.
+///
+/// # Arguments
+///
+/// * `k` - number on which the permutation acts.
+/// * `l` - number of lower bits to reverse.
+fn rev(k: usize, l: usize) -> usize {
+    let mut r: usize = 0;
+    for shift in 0..l {
+        // Extract the "shift-th" bit.
+        let bit = (k >> shift) & 1;
+        // Push the bit to the back of the result.
+        r = (r << 1) | bit;
+    }
+    r
+}
+
+/// Direct Fast Fourier Transform.
+///
+/// # Arguments
+///
+/// * `a` - vector
+fn fft<T>(a: Vec<Complex<T>>) -> Vec<Complex<T>>
+where
+    T: Float + FloatConst + NumCast,
+{
+    iterative_fft(a, Transform::Direct)
+}
+
+/// Inverse Fast Fourier Transform.
+///
+/// # Arguments
+///
+/// * `y` - vector
+fn ifft<T>(y: Vec<Complex<T>>) -> Vec<Complex<T>>
+where
+    T: Float + FloatConst + NumCast,
+{
+    iterative_fft(y, Transform::Inverse)
+}
+
+/// Extend the vector to a length that is the nex power of two.
+///
+/// # Arguments
+///
+/// * `a` - vector
+fn extend_two_power_of_two<T: Copy + Zero>(mut a: Vec<T>) -> Vec<T> {
+    let n = a.len();
+    if n.is_power_of_two() {
+        a
+    } else {
+        let pot = n.next_power_of_two();
+        a.resize(pot, T::zero());
+        a
+    }
+}
+
+/// Type of Fourier transform.
+#[derive(Clone, Copy)]
+enum Transform {
+    /// Direct fast Fourier transform.
+    Direct,
+    /// Inverse fast Fourier transform.
+    Inverse,
+}
+
+/// Iterative fast Fourier transform algorithm.
+/// T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein, Introduction to Algorithms, 3rd edition, 2009
+///
+/// # Arguments
+///
+/// * `a` - input vector for the transform
+/// * `dir` - transform "direction" (direct or inverse)
+#[allow(non_snake_case)]
+fn iterative_fft<T>(a: Vec<Complex<T>>, dir: Transform) -> Vec<Complex<T>>
+where
+    T: Float + FloatConst + NumCast,
+{
+    let a = extend_two_power_of_two(a);
+    let n = a.len();
+    debug_assert!(n.is_power_of_two());
+    let bits = log2(n);
+
+    let mut A = bit_reverse_copy(&a, bits);
+
+    let sign = match dir {
+        Transform::Direct => T::one(),
+        Transform::Inverse => -T::one(),
+    };
+    let tau = (T::one() + T::one()) * FloatConst::PI();
+
+    for s in 1..=bits {
+        let m = 1 << s;
+        let m_f = T::from(m).unwrap();
+        let exp = sign * tau / m_f;
+        let w_n = Complex::from_polar(&T::one(), &exp);
+        for k in (0..n).step_by(m) {
+            let mut w = Complex::one();
+            for j in 0..=m / 2 - 1 {
+                let t = A[k + j + m / 2] * w;
+                let u = A[k + j];
+                A[k + j] = u + t;
+                A[k + j + m / 2] = u - t;
+                w = w * w_n;
+            }
+        }
+    }
+
+    match dir {
+        Transform::Direct => A,
+        Transform::Inverse => {
+            let n_f = T::from(n).unwrap();
+            A.iter().map(|x| x / n_f).collect()
+        }
     }
 }
 
@@ -908,7 +1593,7 @@ impl<T: Display + One + PartialEq + Signed + Zero> Display for Poly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.coeffs.is_empty() {
             return write!(f, "0");
-        } else if self.len() == 0 {
+        } else if self.len() == 1 {
             return write!(f, "{}", self.coeffs[0]);
         }
         let mut s = String::new();
@@ -974,13 +1659,23 @@ mod tests {
 
         assert!(vec![-2., -2.]
             .iter()
-            .zip(Poly::new_from_roots(&[-2., -2.]).roots().unwrap().iter())
+            .zip(
+                Poly::new_from_roots(&[-2., -2.])
+                    .real_roots()
+                    .unwrap()
+                    .iter()
+            )
             .map(|(x, y): (&f64, &f64)| (x - y).abs())
             .all(|x| x < 0.000_001));
 
         assert!(vec![1.0_f32, 2., 3.]
             .iter()
-            .zip(Poly::new_from_roots(&[1., 2., 3.]).roots().unwrap().iter())
+            .zip(
+                Poly::new_from_roots(&[1., 2., 3.])
+                    .real_roots()
+                    .unwrap()
+                    .iter()
+            )
             .map(|(x, y): (&f32, &f32)| (x - y).abs())
             .all(|x| x < 0.000_01));
 
@@ -1071,6 +1766,13 @@ mod tests {
     }
 
     #[test]
+    fn poly_neg() {
+        let p1 = poly!(1., 2.34, -4.2229);
+        let p2 = -&p1;
+        assert_eq!(p1, -p2);
+    }
+
+    #[test]
     fn poly_add() {
         assert_eq!(poly!(4., 4., 4.), poly!(1., 2., 3.) + poly!(3., 2., 1.));
 
@@ -1118,7 +1820,9 @@ mod tests {
     #[test]
     #[should_panic]
     fn poly_sub_panic() {
-        let _ = poly!(1, 2, 3) - 3_u32;
+        let p = poly!(1, 2, 3) - 3_u32;
+        // The assert is used only to avoid code optimization in release mode.
+        assert_eq!(p.coeffs, vec![]);
     }
 
     #[test]
@@ -1146,6 +1850,10 @@ mod tests {
         assert_eq!(Poly::zero(), 0. * poly!(1., 0., 1.));
 
         assert_eq!(Poly::zero(), poly!(1, 0, 1) * 0);
+
+        assert_eq!(Poly::zero(), &poly!(1, 0, 1) * 0);
+
+        assert_eq!(poly!(3, 0, 3), &poly!(1, 0, 1) * 3);
     }
 
     #[test]
@@ -1158,6 +1866,54 @@ mod tests {
         assert_eq!(Poly::zero(), poly!(1., 0., 1.) / inf);
 
         assert_eq!(poly!(inf, -inf, inf), poly!(1., -2.3, 1.) / 0.);
+    }
+
+    #[test]
+    fn poly_mutable_div() {
+        let mut p = poly!(3, 4, 5);
+        p.div_mut(2);
+        assert_eq!(poly!(1, 2, 2), p);
+    }
+
+    #[test]
+    #[should_panic]
+    fn div_panic() {
+        let _ = poly_div_impl(poly!(6., 5., 1.), &poly!(0.));
+    }
+
+    #[test]
+    fn poly_division_impl() {
+        let d1 = poly_div_impl(poly!(6., 5., 1.), &poly!(2., 1.));
+        assert_eq!(poly!(3., 1.), d1.0);
+        assert_eq!(poly!(0.), d1.1);
+
+        let d2 = poly_div_impl(poly!(5., 3., 1.), &poly!(4., 6., 2.));
+        assert_eq!(poly!(0.5), d2.0);
+        assert_eq!(poly!(3.), d2.1);
+
+        let d3 = poly_div_impl(poly!(3., 1.), &poly!(4., 6., 2.));
+        assert_eq!(poly!(0.), d3.0);
+        assert_eq!(poly!(3., 1.), d3.1);
+
+        let d4 = poly_div_impl(poly!(0.), &poly!(4., 6., 2.));
+        assert_eq!(poly!(0.), d4.0);
+        assert_eq!(poly!(0.), d4.1);
+
+        let d5 = poly_div_impl(poly!(4., 6., 2.), &poly!(2.));
+        assert_eq!(poly!(2., 3., 1.), d5.0);
+        assert_eq!(poly!(0.), d5.1);
+    }
+
+    #[test]
+    fn two_poly_div() {
+        let q = poly!(-1., 0., 0., 0., 1.) / poly!(1., 0., 1.);
+        assert_eq!(poly!(-1., 0., 1.), q);
+    }
+
+    #[test]
+    fn two_poly_rem() {
+        let r = poly!(-4., 0., -2., 1.) % poly!(-3., 1.);
+        assert_eq!(poly!(5.), r);
     }
 
     #[test]
@@ -1255,7 +2011,7 @@ mod tests {
     fn poly_roots() {
         let roots = &[0., -1., 1.];
         let p = Poly::new_from_roots(roots);
-        assert_eq!(roots, p.roots().unwrap().as_slice());
+        assert_eq!(roots, p.real_roots().unwrap().as_slice());
     }
 
     #[test]
@@ -1281,362 +2037,104 @@ mod tests {
         let root1 = Complex::<f64>::new(3., 0.);
         assert_eq!((root1, root1), complex_quadratic_roots(-6., 9.));
     }
-}
 
-/// Polynomial matrix object
-///
-/// Contains the vector of coefficients form the lowest to the highest degree
-///
-/// P(x) = C0 + C1*x + C2*x^2 + ...
-#[derive(Clone, Debug)]
-pub(crate) struct PolyMatrix<T: Scalar> {
-    pub(crate) matr_coeffs: Vec<DMatrix<T>>,
-}
-
-/// Implementation methods for `PolyMatrix` struct
-impl<T: Scalar> PolyMatrix<T> {
-    /// Degree of the polynomial matrix
-    pub(crate) fn degree(&self) -> usize {
-        assert!(
-            !self.matr_coeffs.is_empty(),
-            "Degree is not defined on empty polynomial matrix"
-        );
-        self.matr_coeffs.len() - 1
-    }
-}
-
-/// Implementation methods for `PolyMatrix` struct
-impl<T: Scalar + Zero> PolyMatrix<T> {
-    /// Create a new polynomial matrix given a slice of matrix coefficients.
-    ///
-    /// # Arguments
-    ///
-    /// * `coeffs` - slice of matrix coefficients
-    pub(crate) fn new_from_coeffs(matr_coeffs: &[DMatrix<T>]) -> Self {
-        let shape = matr_coeffs[0].shape();
-        assert!(matr_coeffs.iter().all(|c| c.shape() == shape));
-        let mut pm = Self {
-            matr_coeffs: matr_coeffs.into(),
-        };
-        pm.trim();
-        debug_assert!(!pm.matr_coeffs.is_empty());
-        pm
-    }
-
-    /// Trim the zeros coefficients of high degree terms
-    fn trim(&mut self) {
-        let rows = self.matr_coeffs[0].nrows();
-        let cols = self.matr_coeffs[0].ncols();
-        let zero = DMatrix::zeros(rows, cols);
-        if let Some(p) = self.matr_coeffs.iter().rposition(|c| c != &zero) {
-            self.matr_coeffs.truncate(p + 1);
-        } else {
-            self.matr_coeffs.resize(1, zero);
-        }
-    }
-}
-
-impl<T: Scalar + Zero + One + Add + AddAssign + Mul + MulAssign> PolyMatrix<T> {
-    /// Implementation of polynomial matrix and matrix multiplication
-    ///
-    /// PolyMatrix * DMatrix
-    pub(crate) fn right_mul(&self, rhs: &DMatrix<T>) -> Self {
-        let result: Vec<_> = self.matr_coeffs.iter().map(|x| x * rhs).collect();
-        Self::new_from_coeffs(&result)
-    }
-
-    /// Implementation of matrix and polynomial matrix multiplication
-    ///
-    /// DMatrix * PolyMatrix
-    pub(crate) fn left_mul(&self, lhs: &DMatrix<T>) -> Self {
-        let res: Vec<_> = self.matr_coeffs.iter().map(|r| lhs * r).collect();
-        Self::new_from_coeffs(&res)
-    }
-}
-
-impl<T: NumAssignOps + Float + Scalar> Eval<DMatrix<Complex<T>>> for PolyMatrix<T> {
-    fn eval(&self, s: &DMatrix<Complex<T>>) -> DMatrix<Complex<T>> {
-        // transform matr_coeffs in complex numbers matrices
-        //
-        // ┌     ┐ ┌       ┐ ┌       ┐ ┌     ┐ ┌       ┐ ┌         ┐
-        // │P1 P2│=│a01 a02│+│a11 a12│*│s1 s2│+│a21 a22│*│s1^2 s2^2│
-        // │P3 P4│ │a03 a04│ │a13 a14│ │s1 s2│ │a23 a24│ │s1^2 s2^2│
-        // └     ┘ └       ┘ └       ┘ └     ┘ └       ┘ └         ┘
-        // `*` is the element by element multiplication
-        // If i have a 2x2 matr_coeff the result shall be a 2x2 matrix,
-        // because otherwise i will sum P1 and P2 (P3 and P4)
-        let rows = self.matr_coeffs[0].nrows();
-        let cols = self.matr_coeffs[0].ncols();
-
-        let mut result = DMatrix::from_element(rows, cols, Complex::<T>::zero());
-
-        for mc in self.matr_coeffs.iter().rev() {
-            let mcplx = mc.map(|x| Complex::<T>::new(x, T::zero()));
-            result = result.component_mul(s) + mcplx;
-        }
-        result
-    }
-}
-
-/// Implementation of polynomial matrices addition
-impl Add<PolyMatrix<f64>> for PolyMatrix<f64> {
-    type Output = Self;
-
-    fn add(mut self, mut rhs: Self) -> Self {
-        // Check which polynomial matrix has the highest degree
-        let mut result = if self.degree() < rhs.degree() {
-            for (i, c) in self.matr_coeffs.iter().enumerate() {
-                rhs[i] += c;
-            }
-            rhs
-        } else {
-            for (i, c) in rhs.matr_coeffs.iter().enumerate() {
-                self[i] += c;
-            }
-            self
-        };
-        result.trim();
-        result
-    }
-}
-
-/// Implementation of read only indexing of polynomial matrix
-/// returning its coefficients.
-///
-/// # Panics
-///
-/// Panics for out of bounds access.
-impl<T: Scalar> Index<usize> for PolyMatrix<T> {
-    type Output = DMatrix<T>;
-
-    fn index(&self, i: usize) -> &DMatrix<T> {
-        &self.matr_coeffs[i]
-    }
-}
-
-/// Implementation of mutable indexing of polynomial matrix
-/// returning its coefficients.
-///
-/// # Panics
-///
-/// Panics for out of bounds access.
-impl<T: Scalar> IndexMut<usize> for PolyMatrix<T> {
-    fn index_mut(&mut self, i: usize) -> &mut DMatrix<T> {
-        &mut self.matr_coeffs[i]
-    }
-}
-
-/// Implementation of polynomial matrix printing
-impl<T: Display + Scalar + Zero> Display for PolyMatrix<T> {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        if self.degree() == 0 {
-            return write!(f, "{}", self.matr_coeffs[0]);
-        }
-        let mut s = String::new();
-        let mut sep = "";
-        for (i, c) in self.matr_coeffs.iter().enumerate() {
-            if c.iter().all(|&x| x == T::zero()) {
-                continue;
-            }
-            s.push_str(sep);
-            if i == 0 {
-                s.push_str(&format!("{}", c));
-            } else if i == 1 {
-                s.push_str(&format!("+{}*s", c));
-            } else {
-                s.push_str(&format!("+{}*s^{}", c, i));
-            }
-            sep = " ";
-        }
-
-        write!(f, "{}", s)
-    }
-}
-
-/// Polynomial matrix object
-///
-/// Contains the matrix of polynomials
-///
-/// P(x) = [[P1, P2], [P3, P4]]
-#[derive(Debug)]
-pub struct MatrixOfPoly<T> {
-    pub(crate) matrix: Array2<Poly<T>>,
-}
-
-/// Implementation methods for MP struct
-impl<T> MatrixOfPoly<T> {
-    /// Create a new polynomial matrix given a vector of polynomials.
-    ///
-    /// # Arguments
-    ///
-    /// * `rows` - number of rows of the matrix
-    /// * `cols` - number of columns of the matrix
-    /// * `data` - vector of polynomials in row major order
-    ///
-    /// # Panics
-    ///
-    /// Panics if the matrix cannot be build from given arguments.
-    fn new(rows: usize, cols: usize, data: Vec<Poly<T>>) -> Self {
-        Self {
-            matrix: Array::from_shape_vec((rows, cols), data)
-                .expect("Input data do not allow to create the matrix"),
-        }
-    }
-
-    /// Extract the transfer function from the matrix if is the only one.
-    /// Use to get Single Input Single Output transfer function.
-    pub fn siso(&self) -> Option<&Poly<T>> {
-        if self.matrix.shape() == [1, 1] {
-            self.matrix.first()
-        } else {
-            None
-        }
-    }
-}
-
-/// Implement conversion between different representations.
-impl<T: Scalar + Zero> From<PolyMatrix<T>> for MatrixOfPoly<T> {
-    fn from(pm: PolyMatrix<T>) -> Self {
-        let coeffs = pm.matr_coeffs; // vector of matrices
-        let rows = coeffs[0].nrows();
-        let cols = coeffs[0].ncols();
-
-        // Each vector contains the corresponding matrix in coeffs,
-        // so each vector contains the coefficients of the polynomial
-        // with the same order (increasing).
-        let vectorized_coeffs: Vec<Vec<_>> = coeffs
-            .iter()
-            .map(|c| c.transpose().as_slice().to_vec())
-            .collect();
-
-        // Crate a vector containing the vector of coefficients a single
-        // polynomial in row major mode with respect to the initial
-        // vector of matrices.
-        let mut tmp: Vec<Vec<T>> = vec![vec![]; rows * cols];
-        for order in vectorized_coeffs {
-            for (i, value) in order.into_iter().enumerate() {
-                tmp[i].push(value);
-            }
-        }
-
-        let polys: Vec<Poly<T>> = tmp.iter().map(|p| Poly::new_from_coeffs(&p)).collect();
-        Self::new(rows, cols, polys)
-    }
-}
-
-/// Implementation of matrix of polynomials printing
-impl<T: Display + Signed> Display for MatrixOfPoly<T> {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}", self.matrix)
-    }
-}
-
-#[cfg(test)]
-mod tests2 {
-    use super::*;
-
-    #[test]
-    fn trim_empty() {
-        let v = vec![DMatrix::<f32>::zeros(1, 2), DMatrix::zeros(1, 2)];
-        let pm = PolyMatrix::new_from_coeffs(&v);
-        assert_eq!(DMatrix::zeros(1, 2), pm.matr_coeffs[0]);
+    #[quickcheck]
+    fn leading_coefficient(c: f32) -> bool {
+        relative_eq!(c, poly!(1., -5., c).leading_coeff())
     }
 
     #[test]
-    fn right_mul() {
-        let v = vec![
-            DMatrix::from_row_slice(2, 2, &[1.0_f32, 2., 3., 4.]),
-            DMatrix::from_row_slice(2, 2, &[1., 0., 0., 1.]),
-        ];
-        let pm = PolyMatrix::new_from_coeffs(&v);
-        let res = pm.right_mul(&DMatrix::from_row_slice(2, 2, &[5., 0., 0., 5.]));
-        assert_eq!(
-            DMatrix::from_row_slice(2, 2, &[5., 10., 15., 20.]),
-            res.matr_coeffs[0]
-        );
-        dbg!(&res);
+    fn monic_poly() {
+        let p = poly!(-3., 6., 9.);
+        let (p2, c) = p.monic();
+        assert_relative_eq!(9., c);
+        assert_relative_eq!(1., p2.leading_coeff());
     }
 
     #[test]
-    fn left_mul() {
-        let v = vec![
-            DMatrix::from_row_slice(2, 2, &[1.0_f32, 2., 3., 4.]),
-            DMatrix::from_row_slice(2, 2, &[1., 0., 0., 1.]),
-        ];
-        let pm = PolyMatrix::new_from_coeffs(&v);
-        let res = pm.left_mul(&DMatrix::from_row_slice(2, 2, &[5., 0., 0., 5.]));
-        assert_eq!(DMatrix::from_row_slice(2, 2, &[5., 10., 15., 20.]), res[0]);
+    fn monic_mutable_poly() {
+        let mut p = poly!(-3., 6., 9.);
+        let c = p.monic_mut();
+        assert_relative_eq!(9., c);
+        assert_relative_eq!(1., p.leading_coeff());
     }
 
     #[test]
-    fn eval() {
-        let v = vec![
-            DMatrix::from_row_slice(2, 2, &[1.0_f32, 2., 3., 4.]),
-            DMatrix::from_row_slice(2, 2, &[1., 0., 0., 1.]),
-        ];
-        let pm = PolyMatrix::new_from_coeffs(&v);
-        let res = pm.eval(&DMatrix::from_row_slice(
-            2,
-            2,
-            &[
-                Complex::new(5., 0.),
-                Complex::zero(),
-                Complex::zero(),
-                Complex::new(0., 5.),
-            ],
-        ));
-        assert_eq!(
-            DMatrix::from_row_slice(
-                2,
-                2,
-                &[
-                    Complex::new(6., 0.),
-                    Complex::new(2., 0.),
-                    Complex::new(3., 0.),
-                    Complex::new(4., 5.)
-                ]
-            ),
-            res
-        );
+    fn my_roots_finder() {
+        let roots = &[10.0_f32, 10. / 323.4, 1., -2., 3.];
+        let poly = Poly::new_from_roots(roots);
+        let rf = RootsFinder::new(poly);
+        let actual = rf.roots_finder();
+        assert_eq!(roots.len(), actual.len());
     }
 
     #[test]
-    fn add() {
-        let v = vec![
-            DMatrix::from_row_slice(2, 2, &[1.0_f64, 2., 3., 4.]),
-            DMatrix::from_row_slice(2, 2, &[1., 0., 0., 1.]),
-        ];
-        let pm = PolyMatrix::new_from_coeffs(&v);
-        let res = pm.clone() + pm;
-        assert_eq!(DMatrix::from_row_slice(2, 2, &[2., 4., 6., 8.]), res[0]);
+    fn reverse_bit() {
+        assert_eq!(0, rev(0, 3));
+        assert_eq!(4, rev(1, 3));
+        assert_eq!(2, rev(2, 3));
+        assert_eq!(6, rev(3, 3));
+        assert_eq!(1, rev(4, 3));
+        assert_eq!(5, rev(5, 3));
+        assert_eq!(3, rev(6, 3));
+        assert_eq!(7, rev(7, 3));
     }
 
     #[test]
-    fn mp_creation() {
-        let c = [4.3, 5.32];
-        let p = Poly::new_from_coeffs(&c);
-        let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
-        let mp = MatrixOfPoly::new(2, 2, v);
-        let expected = "[[4.3 +5.32*s, 4.3 +5.32*s],\n [4.3 +5.32*s, 4.3 +5.32*s]]";
-        assert_eq!(expected, format!("{}", &mp));
+    fn reverse_copy() {
+        let a = vec![0, 1, 2, 3, 4, 5, 6, 7];
+        let l = log2(a.len());
+        let b = bit_reverse_copy(&a, l);
+        let a = vec![0, 4, 2, 6, 1, 5, 3, 7];
+        assert_eq!(a, b);
     }
 
     #[test]
-    fn siso() {
-        let v = vec![Poly::new_from_coeffs(&[4.3, 5.32])];
-        let mp = MatrixOfPoly::new(1, 1, v);
-        let res = mp.siso();
-        assert!(res.is_some());
-        assert_relative_eq!(14.94, res.unwrap().eval(&2.), max_relative = 1e-10);
+    fn fft_iterative() {
+        let one = Complex::one();
+        let a = vec![one * 1., one * 0., one * 1.];
+        // `a` is extended to for elements
+        let f = iterative_fft(a, Transform::Direct);
+        let expected = vec![one * 2., one * 0., one * 2., one * 0.];
+        assert_eq!(expected, f);
     }
 
     #[test]
-    fn siso_fail() {
-        let c = [4.3, 5.32];
-        let p = Poly::new_from_coeffs(&c);
-        let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
-        let mp = MatrixOfPoly::new(2, 2, v);
-        let res = mp.siso();
-        assert!(res.is_none());
+    fn fft_ifft() {
+        let one = Complex::one();
+        let a = vec![one * 1., one * 0., one * 1., one * 0.];
+        let f = fft(a.clone());
+        let a2 = ifft(f);
+        assert_eq!(a, a2);
+    }
+
+    #[test]
+    fn multiply_fft() {
+        let a = poly![1., 0., 3.];
+        let b = poly![1., 0., 3.];
+        let expected = &a * &b;
+        let actual = a.mul_fft(b);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn multiply_fft_one() {
+        let a = poly![1., 0., 3.];
+        let b = Poly::one();
+        let actual = a.clone().mul_fft(b);
+        assert_eq!(a, actual);
+
+        let c = Poly::one();
+        let d = poly![1., 0., 3.];
+        let actual = c.mul_fft(d.clone());
+        assert_eq!(d, actual);
+    }
+
+    #[test]
+    fn multiply_fft_zero() {
+        let a = poly![1., 0., 3.];
+        let b = Poly::zero();
+        let actual = a.mul_fft(b);
+        assert_eq!(Poly::zero(), actual);
     }
 }

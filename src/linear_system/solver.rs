@@ -12,16 +12,16 @@
 //! `Radau` is an implicit Runge-Kutta-Radau of order 3 with 2 steps, it is
 //! suitable for stiff systems.
 
-use crate::{linear_system::Ss, units::Seconds};
+use approx::{AbsDiffEq, RelativeEq};
+use nalgebra::{ComplexField, DMatrix, DVector, Dynamic, Scalar, LU};
+use num_traits::{Float, Signed};
 
 use std::{
     marker::Sized,
     ops::{AddAssign, MulAssign, SubAssign},
 };
 
-use approx::{AbsDiffEq, RelativeEq};
-use nalgebra::{ComplexField, DMatrix, DVector, Dynamic, Scalar, LU};
-use num_traits::{Float, Signed};
+use crate::{linear_system::continuous::Ss, units::Seconds};
 
 /// Define the order of the Runge-Kutta method.
 #[derive(Debug)]

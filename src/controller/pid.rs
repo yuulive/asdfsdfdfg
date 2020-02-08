@@ -1,13 +1,11 @@
 //! # PID (Proportional-integral-derivative) controller
 //!
-//! # Example
-//! ```
-//! use automatica::controller::pid::Pid;
-//! let pid = Pid::new_ideal(10., 5., 2.);
-//! let transfer_function = pid.tf();
-//! ```
+//! Common industrial controllers.
+//! * real PID
+//! * ideal PID
+//! * automatic calculation of the corrisponding transfer function
 
-use crate::{polynomial::Poly, transfer_function::Tf};
+use crate::{polynomial::Poly, transfer_function::continuous::Tf};
 
 use num_traits::Float;
 
@@ -93,7 +91,7 @@ impl<T: Float> Pid<T> {
     /// # Example
     /// ```
     /// #[macro_use] extern crate automatica;
-    /// use automatica::{controller::pid::Pid, transfer_function::Tf};
+    /// use automatica::{controller::pid::Pid, Tf};
     /// let pid = Pid::new_ideal(2., 2., 0.5);
     /// let tf = Tf::new(poly![1., 2., 1.], poly![0., 1.]);
     /// assert_eq!(tf, pid.tf());
@@ -142,7 +140,7 @@ mod pid_tests {
         );
         let pid = Pid::new(2., 2., 0.5, 5.);
         let r = pid.tf();
-        assert_eq!(Some(vec![0., -10.]), r.poles());
+        assert_eq!(Some(vec![0., -10.]), r.real_poles());
         let l = &g * &r;
         let critical_freq = 0.8;
         let c = l.eval(&Complex64::new(0., critical_freq));
