@@ -637,10 +637,13 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
                 let solution_i = *self.solution.get(i).unwrap();
                 let n_xki = self.poly.eval(&solution_i) / self.der.eval(&solution_i);
                 let a_xki: Complex<T> = (0..n_roots)
-                    .filter(|&j_| j_ != i)
-                    .map(|j| {
-                        let den = solution_i - self.solution.get(j).unwrap();
-                        den.inv() * T::one()
+                    .filter_map(|j| {
+                        if j == i {
+                            None
+                        } else {
+                            let den = solution_i - self.solution.get(j).unwrap();
+                            Some(den.inv() * T::one())
+                        }
                     })
                     .sum();
 
