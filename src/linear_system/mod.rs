@@ -299,7 +299,7 @@ impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
 
 /// Faddeev–LeVerrier algorithm
 ///
-/// (https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm)
+/// [Wikipedia](https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm)
 ///
 /// B(s) =       B1*s^(n-1) + B2*s^(n-2) + B3*s^(n-3) + ...
 /// a(s) = s^n + a1*s^(n-1) + a2*s^(n-2) + a3*s^(n-3) + ...
@@ -338,7 +338,7 @@ pub(crate) fn leverrier_f64(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
 
 /// Faddeev–LeVerrier algorithm
 ///
-/// (https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm)
+/// [Wikipedia](https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm)
 ///
 /// B(s) =       B1*s^(n-1) + B2*s^(n-2) + B3*s^(n-3) + ...
 /// a(s) = s^n + a1*s^(n-1) + a2*s^(n-2) + a3*s^(n-3) + ...
