@@ -324,10 +324,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// ```
     pub fn complex_roots(&self) -> Vec<Complex<T>> {
         if self.degree() == Some(2) {
-            let b = self[1] / self[2];
-            let c = self[0] / self[2];
-            let (r1, r2) = complex_quadratic_roots(b, c);
-            vec![r1, r2]
+            self.complex_deg2_roots()
         } else {
             let comp = match self.companion() {
                 Some(comp) => comp,
@@ -352,14 +349,44 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
     /// ```
     pub fn iterative_roots(&self) -> Vec<Complex<T>> {
         if self.degree() == Some(2) {
-            let b = self[1] / self[2];
-            let c = self[0] / self[2];
-            let (r1, r2) = complex_quadratic_roots(b, c);
-            vec![r1, r2]
+            self.complex_deg2_roots()
         } else {
             let rf = RootsFinder::new(self.clone());
             rf.roots_finder()
         }
+    }
+
+    /// Calculate the complex roots of the polynomial using companion
+    /// Aberth-Ehrlich method, with the given iteration limit.
+    ///
+    /// # Arguments
+    ///
+    /// * `max_iter` - maximum number of iterations for the algorithm
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
+    /// let i = num_complex::Complex::i();
+    /// assert_eq!(vec![-i, i], p.iterative_roots_with_max(10));
+    /// ```
+    pub fn iterative_roots_with_max(&self, max_iter: u32) -> Vec<Complex<T>> {
+        if self.degree() == Some(2) {
+            self.complex_deg2_roots()
+        } else {
+            let rf = RootsFinder::new(self.clone()).with_max_iterations(max_iter);
+            rf.roots_finder()
+        }
+    }
+}
+
+/// Calculate the complex roots of a polynomial of degree 2.
+impl<T: Float> Poly<T> {
+    fn complex_deg2_roots(&self) -> Vec<Complex<T>> {
+        let b = self[1] / self[2];
+        let c = self[0] / self[2];
+        let (r1, r2) = complex_quadratic_roots(b, c);
+        vec![r1, r2]
     }
 }
 
@@ -575,7 +602,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
     /// # Arguments
     ///
     /// * `iterations` - maximum number of iterations.
-    fn with_max_iterations(&mut self, iterations: u32) -> &Self {
+    fn with_max_iterations(mut self, iterations: u32) -> Self {
         self.iterations = iterations;
         self
     }
