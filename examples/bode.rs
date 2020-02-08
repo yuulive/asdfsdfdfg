@@ -9,6 +9,7 @@ use automatica::{
     Eval, Poly, Tf,
 };
 
+#[allow(clippy::non_ascii_literal)]
 fn main() {
     let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
 

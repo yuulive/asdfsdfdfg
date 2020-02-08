@@ -5,6 +5,7 @@ use automatica::{Eval, Tf};
 
 use num_complex::Complex64;
 
+#[allow(clippy::non_ascii_literal)]
 fn main() {
     let tf = Tf::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
 
