@@ -1522,6 +1522,7 @@ fn extend_two_power_of_two<T: Copy + Zero>(mut a: Vec<T>) -> Vec<T> {
 }
 
 /// Type of Fourier transform.
+#[derive(Clone, Copy)]
 enum Transform {
     /// Direct fast Fourier transform.
     Direct,
