@@ -4,6 +4,7 @@ use automatica::{signals::continuous, units::Seconds, Ss, Tf};
 
 use std::convert::TryFrom;
 
+#[allow(clippy::many_single_char_names)]
 fn main() {
     // Mass (m), spring (k), dumper (f)
     // external force (u)

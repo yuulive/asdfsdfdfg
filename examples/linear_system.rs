@@ -4,6 +4,7 @@ use num_complex::Complex;
 
 use automatica::{signals::continuous, units::Seconds, Eval, Ss, TfMatrix};
 
+#[allow(clippy::many_single_char_names)]
 fn main() {
     let a = [-1., 1., -1., 0.25];
     let b = [1., 0.25];
