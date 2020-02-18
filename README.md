@@ -49,6 +49,10 @@ Calculate the magnitude and phase for a single transfer function in an interval 
 
 Polar plot of a transfer function.
 
+### Root locus
+
+Change the root of a system with the variation of the feedback gain.
+
 ## Controllers
 
 PID (Proportional-integral-derivative) controller, both ideal and real.
@@ -59,6 +63,7 @@ Polynomial creation from coefficients or roots.
 Polynomial evaluation with Horner method.  
 (Mutable) Indexing of polynomial coefficients.  
 Polynomials addition, subtraction and multiplication.  
+Polynomials multiplication with fast fourier transform.  
 Polynomial and scalar addition, subtraction, multiplication and division.  
 Polynomial roots finding (real and complex).  
 Creation of a matrix of polynomials.
