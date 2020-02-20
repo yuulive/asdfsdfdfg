@@ -284,7 +284,7 @@ impl<T: Display + Signed> Display for MatrixOfPoly<T> {
 }
 
 #[cfg(test)]
-mod tests2 {
+mod tests {
     use super::*;
 
     #[test]
