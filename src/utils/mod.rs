@@ -3,7 +3,7 @@
 use num_complex::Complex;
 use num_traits::Float;
 
-/// Calcualte the natural pulse of a complex number, it corresponds to its modulus.
+/// Calculate the natural pulse of a complex number, it corresponds to its modulus.
 ///
 /// # Arguments
 ///
@@ -20,7 +20,7 @@ pub fn pulse<T: Float>(c: Complex<T>) -> T {
     c.norm()
 }
 
-/// Calcualte the damp of a complex number, it corresponds to the cosine of the
+/// Calculate the damp of a complex number, it corresponds to the cosine of the
 /// angle between the segment joining the complex number to the origin and the
 /// real negative semiaxis.
 ///
