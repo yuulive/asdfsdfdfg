@@ -15,7 +15,7 @@ use nalgebra::{ComplexField, RealField, Scalar};
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
-use std::marker::PhantomData;
+use std::{cmp::Ordering, marker::PhantomData};
 
 use crate::{
     plots::{
@@ -63,12 +63,10 @@ impl<T: Float> Tf<T> {
     pub fn init_value(&self) -> T {
         let n = self.num.degree();
         let d = self.den.degree();
-        if n < d {
-            T::zero()
-        } else if n == d {
-            self.num.leading_coeff() / self.den.leading_coeff()
-        } else {
-            T::infinity()
+        match n.cmp(&d) {
+            Ordering::Less => T::zero(),
+            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Greater => T::infinity(),
         }
     }
 
@@ -84,12 +82,10 @@ impl<T: Float> Tf<T> {
     pub fn init_value_der(&self) -> T {
         let n = self.num.degree();
         let d = self.den.degree().map(|d| d - 1);
-        if n < d {
-            T::zero()
-        } else if n == d {
-            self.num.leading_coeff() / self.den.leading_coeff()
-        } else {
-            T::infinity()
+        match n.cmp(&d) {
+            Ordering::Less => T::zero(),
+            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Greater => T::infinity(),
         }
     }
 

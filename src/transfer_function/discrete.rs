@@ -15,7 +15,7 @@
 use num_complex::Complex;
 use num_traits::{Float, MulAdd, Num};
 
-use std::{collections::VecDeque, fmt::Debug, iter::Sum, ops::Mul};
+use std::{cmp::Ordering, collections::VecDeque, fmt::Debug, iter::Sum, ops::Mul};
 
 use crate::{
     linear_system::discrete::Discretization,
@@ -59,12 +59,10 @@ impl<T: Float> Tfz<T> {
     pub fn init_value(&self) -> T {
         let n = self.num.degree();
         let d = self.den.degree();
-        if n < d {
-            T::zero()
-        } else if n == d {
-            self.num.leading_coeff() / self.den.leading_coeff()
-        } else {
-            T::infinity()
+        match n.cmp(&d) {
+            Ordering::Less => T::zero(),
+            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Greater => T::infinity(),
         }
     }
 }
