@@ -1592,7 +1592,7 @@ where
         let w_n = Complex::from_polar(&T::one(), &exp);
         for k in (0..n).step_by(m) {
             let mut w = Complex::one();
-            for j in 0..=m / 2 - 1 {
+            for j in 0..m / 2 {
                 let t = A[k + j + m / 2] * w;
                 let u = A[k + j];
                 A[k + j] = u + t;
