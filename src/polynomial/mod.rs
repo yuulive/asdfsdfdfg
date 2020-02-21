@@ -926,7 +926,7 @@ impl<T: Add<Output = T> + Copy> Add<T> for Poly<T> {
     type Output = Self;
 
     fn add(self, rhs: T) -> Self {
-        let mut result = self.clone();
+        let mut result = self;
         result[0] = result[0] + rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
@@ -1048,7 +1048,7 @@ impl<T: Copy + Sub<Output = T>> Sub<T> for Poly<T> {
     type Output = Self;
 
     fn sub(self, rhs: T) -> Self {
-        let mut result = self.clone();
+        let mut result = self;
         result[0] = result[0] - rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
@@ -1276,7 +1276,7 @@ impl<T: Copy + Num> Div<T> for Poly<T> {
     type Output = Self;
 
     fn div(self, rhs: T) -> Self {
-        let mut result = self.clone();
+        let mut result = self;
         for c in &mut result.coeffs {
             *c = *c / rhs;
         }
@@ -1339,7 +1339,7 @@ fn poly_div_impl<T: Float>(mut u: Poly<T>, v: &Poly<T>) -> (Poly<T>, Poly<T>) {
     let (m, n) = match (u.degree(), v.degree()) {
         (_, None) => panic!("Division by zero polynomial"),
         (None, _) => return (Poly::zero(), Poly::zero()),
-        (Some(m), Some(n)) if m < n => return (Poly::zero(), u.clone()),
+        (Some(m), Some(n)) if m < n => return (Poly::zero(), u),
         (Some(m), Some(n)) => (m, n),
     };
 
