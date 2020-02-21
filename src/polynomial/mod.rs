@@ -338,7 +338,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
 
 impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
     /// Calculate the complex roots of the polynomial
-    /// using companion Aberth-Ehrlich method.
+    /// using Aberth-Ehrlich method.
     ///
     /// # Example
     /// ```
@@ -377,6 +377,36 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
             let rf = RootsFinder::new(self.clone()).with_max_iterations(max_iter);
             rf.roots_finder()
         }
+    }
+}
+
+impl<T: Copy + Zero> Poly<T> {
+    /// Remove the (multiple) zero roots from a polynomial. It returns the number
+    /// of roots in zero and the polynomial without them.
+    ///
+    /// # Arguments
+    ///
+    /// * `poly` - polynomial whose zero roots have to be removed
+    fn find_zero_roots(&self) -> (usize, Self) {
+        // Return the number of zero roots and the polynomial without them.
+        let zeros = self.coeffs.iter().take_while(|c| c.is_zero()).count();
+        let p = Self {
+            coeffs: self.coeffs().split_off(zeros),
+        };
+        (zeros, p)
+    }
+
+    /// Remove the (multiple) zero roots from a polynomial in place.
+    /// It returns the number of roots in zero.
+    ///
+    /// # Arguments
+    ///
+    /// * `poly` - polynomial whose zero roots have to be removed
+    fn find_zero_roots_mut(&mut self) -> usize {
+        // Return the number of zero roots and the polynomial without them.
+        let zeros = self.coeffs.iter().take_while(|c| c.is_zero()).count();
+        self.coeffs = self.coeffs().split_off(zeros);
+        zeros
     }
 }
 
@@ -2136,5 +2166,21 @@ mod tests {
         let b = Poly::zero();
         let actual = a.mul_fft(b);
         assert_eq!(Poly::zero(), actual);
+    }
+
+    #[test]
+    fn zero_roots() {
+        let p = Poly::new_from_coeffs(&[0, 0, 1, 0, 2]);
+        let (z, p2) = p.find_zero_roots();
+        assert_eq!(2, z);
+        assert_eq!(Poly::new_from_coeffs(&[1, 0, 2]), p2);
+    }
+
+    #[test]
+    fn zero_roots_mut() {
+        let mut p = Poly::new_from_coeffs(&[0, 0, 1, 0, 2]);
+        let z = p.find_zero_roots_mut();
+        assert_eq!(2, z);
+        assert_eq!(Poly::new_from_coeffs(&[1, 0, 2]), p);
     }
 }
