@@ -1567,7 +1567,7 @@ enum Transform {
 ///
 /// * `a` - input vector for the transform
 /// * `dir` - transform "direction" (direct or inverse)
-#[allow(non_snake_case)]
+#[allow(clippy::many_single_char_names, non_snake_case)]
 fn iterative_fft<T>(a: Vec<Complex<T>>, dir: Transform) -> Vec<Complex<T>>
 where
     T: Float + FloatConst + NumCast,
