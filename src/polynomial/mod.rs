@@ -383,13 +383,8 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
 impl<T: Copy + Zero> Poly<T> {
     /// Remove the (multiple) zero roots from a polynomial. It returns the number
     /// of roots in zero and the polynomial without them.
-    ///
-    /// # Arguments
-    ///
-    /// * `poly` - polynomial whose zero roots have to be removed
     fn find_zero_roots(&self) -> (usize, Self) {
-        // Return the number of zero roots and the polynomial without them.
-        let zeros = self.coeffs.iter().take_while(|c| c.is_zero()).count();
+        let zeros = self.zero_roots_count();
         let p = Self {
             coeffs: self.coeffs().split_off(zeros),
         };
@@ -398,15 +393,19 @@ impl<T: Copy + Zero> Poly<T> {
 
     /// Remove the (multiple) zero roots from a polynomial in place.
     /// It returns the number of roots in zero.
+    fn find_zero_roots_mut(&mut self) -> usize {
+        let zeros = self.zero_roots_count();
+        self.coeffs.drain(..zeros);
+        zeros
+    }
+
+    /// Count the first zero elements of the vector of coefficients.
     ///
     /// # Arguments
     ///
-    /// * `poly` - polynomial whose zero roots have to be removed
-    fn find_zero_roots_mut(&mut self) -> usize {
-        // Return the number of zero roots and the polynomial without them.
-        let zeros = self.coeffs.iter().take_while(|c| c.is_zero()).count();
-        self.coeffs = self.coeffs().split_off(zeros);
-        zeros
+    /// * `vec` - slice of coefficients
+    fn zero_roots_count(&self) -> usize {
+        self.coeffs.iter().take_while(|c| c.is_zero()).count()
     }
 }
 
