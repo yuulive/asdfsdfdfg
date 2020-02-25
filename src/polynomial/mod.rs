@@ -2050,49 +2050,6 @@ mod tests {
         assert!(Poly::<usize>::one().is_one());
     }
 
-    #[test]
-    fn roots() {
-        let root1 = -1.;
-        let root2 = -2.;
-        assert_eq!(Some((root1, root2)), quadratic_roots(3., 2.));
-
-        assert_eq!(None, quadratic_roots(-6., 10.));
-
-        let root3 = 3.;
-        assert_eq!(Some((root3, root3)), quadratic_roots(-6., 9.));
-    }
-
-    #[test]
-    fn poly_roots() {
-        let roots = &[0., -1., 1.];
-        let p = Poly::new_from_roots(roots);
-        assert_eq!(roots, p.real_roots().unwrap().as_slice());
-    }
-
-    #[test]
-    fn poly_complx_roots() {
-        let p = Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * poly!(2., 1.);
-        assert_eq!(p.complex_roots().len(), 3);
-    }
-
-    #[test]
-    fn complex_roots() {
-        let root1 = Complex::<f64>::new(-1., 0.);
-        let root2 = Complex::<f64>::new(-2., 0.);
-        assert_eq!((root1, root2), complex_quadratic_roots(3., 2.));
-
-        let root1 = Complex::<f64>::new(-0., -1.);
-        let root2 = Complex::<f64>::new(-0., 1.);
-        assert_eq!((root1, root2), complex_quadratic_roots(0., 1.));
-
-        let root1 = Complex::<f64>::new(3., -1.);
-        let root2 = Complex::<f64>::new(3., 1.);
-        assert_eq!((root1, root2), complex_quadratic_roots(-6., 10.));
-
-        let root1 = Complex::<f64>::new(3., 0.);
-        assert_eq!((root1, root1), complex_quadratic_roots(-6., 9.));
-    }
-
     #[quickcheck]
     fn leading_coefficient(c: f32) -> bool {
         relative_eq!(c, poly!(1., -5., c).leading_coeff())
@@ -2113,41 +2070,12 @@ mod tests {
         assert_relative_eq!(9., c);
         assert_relative_eq!(1., p.leading_coeff());
     }
+}
 
-    #[test]
-    fn iterative_roots_finder() {
-        let roots = &[10.0_f32, 10. / 323.4, 1., -2., 3.];
-        let poly = Poly::new_from_roots(roots);
-        let rf = RootsFinder::new(poly);
-        let actual = rf.roots_finder();
-        assert_eq!(roots.len(), actual.len());
-    }
-
-    #[test]
-    fn iterative_roots_none() {
-        let p: Poly<f32> = Poly::zero();
-        let res = p.iterative_roots();
-        assert_eq!(0, res.len());
-        assert!(res.is_empty());
-    }
-
-    #[test]
-    fn iterative_roots_0() {
-        let p = poly!(5.3);
-        let res = p.iterative_roots();
-        assert_eq!(0, res.len());
-        assert!(res.is_empty());
-    }
-
-    #[test]
-    fn iterative_roots_1() {
-        let root = -12.4;
-        let p = poly!(3.0 * root, 3.0);
-        let res = p.iterative_roots();
-        assert_eq!(1, res.len());
-        let expected: Complex<f64> = From::from(-root);
-        assert_eq!(expected, res[0]);
-    }
+#[cfg(test)]
+mod tests_fft {
+    use super::*;
+    use num_complex::Complex;
 
     #[test]
     fn reverse_bit() {
@@ -2217,6 +2145,90 @@ mod tests {
         let b = Poly::zero();
         let actual = a.mul_fft(b);
         assert_eq!(Poly::zero(), actual);
+    }
+}
+
+#[cfg(test)]
+mod tests_roots {
+    use super::*;
+    use num_complex::Complex;
+
+    #[test]
+    fn roots() {
+        let root1 = -1.;
+        let root2 = -2.;
+        assert_eq!(Some((root1, root2)), quadratic_roots(3., 2.));
+
+        assert_eq!(None, quadratic_roots(-6., 10.));
+
+        let root3 = 3.;
+        assert_eq!(Some((root3, root3)), quadratic_roots(-6., 9.));
+    }
+
+    #[test]
+    fn poly_roots() {
+        let roots = &[0., -1., 1.];
+        let p = Poly::new_from_roots(roots);
+        assert_eq!(roots, p.real_roots().unwrap().as_slice());
+    }
+
+    #[test]
+    fn poly_complx_roots() {
+        let p = Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * poly!(2., 1.);
+        assert_eq!(p.complex_roots().len(), 3);
+    }
+
+    #[test]
+    fn complex_roots() {
+        let root1 = Complex::<f64>::new(-1., 0.);
+        let root2 = Complex::<f64>::new(-2., 0.);
+        assert_eq!((root1, root2), complex_quadratic_roots(3., 2.));
+
+        let root1 = Complex::<f64>::new(-0., -1.);
+        let root2 = Complex::<f64>::new(-0., 1.);
+        assert_eq!((root1, root2), complex_quadratic_roots(0., 1.));
+
+        let root1 = Complex::<f64>::new(3., -1.);
+        let root2 = Complex::<f64>::new(3., 1.);
+        assert_eq!((root1, root2), complex_quadratic_roots(-6., 10.));
+
+        let root1 = Complex::<f64>::new(3., 0.);
+        assert_eq!((root1, root1), complex_quadratic_roots(-6., 9.));
+    }
+
+    #[test]
+    fn iterative_roots_finder() {
+        let roots = &[10.0_f32, 10. / 323.4, 1., -2., 3.];
+        let poly = Poly::new_from_roots(roots);
+        let rf = RootsFinder::new(poly);
+        let actual = rf.roots_finder();
+        assert_eq!(roots.len(), actual.len());
+    }
+
+    #[test]
+    fn iterative_roots_none() {
+        let p: Poly<f32> = Poly::zero();
+        let res = p.iterative_roots();
+        assert_eq!(0, res.len());
+        assert!(res.is_empty());
+    }
+
+    #[test]
+    fn iterative_roots_0() {
+        let p = poly!(5.3);
+        let res = p.iterative_roots();
+        assert_eq!(0, res.len());
+        assert!(res.is_empty());
+    }
+
+    #[test]
+    fn iterative_roots_1() {
+        let root = -12.4;
+        let p = poly!(3.0 * root, 3.0);
+        let res = p.iterative_roots();
+        assert_eq!(1, res.len());
+        let expected: Complex<f64> = From::from(-root);
+        assert_eq!(expected, res[0]);
     }
 
     #[test]
