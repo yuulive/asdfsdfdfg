@@ -440,7 +440,7 @@ impl<T: Float> Poly<T> {
     fn real_deg2_roots(&self) -> Option<Vec<T>> {
         let b = self[1] / self[2];
         let c = self[0] / self[2];
-        let (r1, r2) = quadratic_roots(b, c)?;
+        let (r1, r2) = real_quadratic_roots(b, c)?;
         Some(vec![r1, r2])
     }
 }
@@ -482,7 +482,7 @@ pub(crate) fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Comp
 /// * `b` - first degree coefficient
 /// * `c` - zero degree coefficient
 #[allow(clippy::many_single_char_names)]
-pub(crate) fn quadratic_roots<T: Float>(b: T, c: T) -> Option<(T, T)> {
+pub(crate) fn real_quadratic_roots<T: Float>(b: T, c: T) -> Option<(T, T)> {
     let b_ = b / T::from(2.0_f32).unwrap(); // Safe cast, it's exact.
     let d = b_.powi(2) - c; // Discriminant
     let (r1, r2) = if d.is_zero() {
@@ -2157,12 +2157,12 @@ mod tests_roots {
     fn roots() {
         let root1 = -1.;
         let root2 = -2.;
-        assert_eq!(Some((root1, root2)), quadratic_roots(3., 2.));
+        assert_eq!(Some((root1, root2)), real_quadratic_roots(3., 2.));
 
-        assert_eq!(None, quadratic_roots(-6., 10.));
+        assert_eq!(None, real_quadratic_roots(-6., 10.));
 
         let root3 = 3.;
-        assert_eq!(Some((root3, root3)), quadratic_roots(-6., 9.));
+        assert_eq!(Some((root3, root3)), real_quadratic_roots(-6., 9.));
     }
 
     #[test]
