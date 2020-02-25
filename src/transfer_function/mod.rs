@@ -491,7 +491,7 @@ mod tests {
     #[test]
     fn zeros() {
         let tf = TfGen::<_, Discrete>::new(poly!(1.), poly!(6., -5., 1.));
-        assert_eq!(Some(vec![]), tf.real_zeros());
+        assert_eq!(None, tf.real_zeros());
     }
 
     #[test]

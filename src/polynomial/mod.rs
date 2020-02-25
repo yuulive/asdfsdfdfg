@@ -295,20 +295,19 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// assert_eq!(roots, p.real_roots().unwrap().as_slice());
     /// ```
     pub fn real_roots(&self) -> Option<Vec<T>> {
-        if self.degree() == Some(2) {
-            if let Some(r) = quadratic_roots(self[1] / self[2], self[0] / self[2]) {
-                Some(vec![r.0, r.1])
-            } else {
-                None
+        match self.degree() {
+            Some(0) | None => None,
+            Some(1) => self.real_deg1_root(),
+            Some(2) => self.real_deg2_roots(),
+            _ => {
+                // Build the companion matrix
+                let comp = match self.companion() {
+                    Some(comp) => comp,
+                    _ => return Some(vec![]),
+                };
+                let schur = Schur::new(comp);
+                schur.eigenvalues().map(|e| e.as_slice().to_vec())
             }
-        } else {
-            // Build the companion matrix
-            let comp = match self.companion() {
-                Some(comp) => comp,
-                _ => return Some(vec![]),
-            };
-            let schur = Schur::new(comp);
-            schur.eigenvalues().map(|e| e.as_slice().to_vec())
         }
     }
 
@@ -323,15 +322,18 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// assert_eq!(vec![-i, i], p.complex_roots());
     /// ```
     pub fn complex_roots(&self) -> Vec<Complex<T>> {
-        if self.degree() == Some(2) {
-            self.complex_deg2_roots()
-        } else {
-            let comp = match self.companion() {
-                Some(comp) => comp,
-                _ => return vec![],
-            };
-            let schur = Schur::new(comp);
-            schur.complex_eigenvalues().as_slice().to_vec()
+        match self.degree() {
+            Some(0) | None => Vec::new(),
+            Some(1) => self.complex_deg1_root(),
+            Some(2) => self.complex_deg2_roots(),
+            _ => {
+                let comp = match self.companion() {
+                    Some(comp) => comp,
+                    _ => return Vec::new(),
+                };
+                let schur = Schur::new(comp);
+                schur.complex_eigenvalues().as_slice().to_vec()
+            }
         }
     }
 }
@@ -348,11 +350,14 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
     /// assert_eq!(vec![-i, i], p.iterative_roots());
     /// ```
     pub fn iterative_roots(&self) -> Vec<Complex<T>> {
-        if self.degree() == Some(2) {
-            self.complex_deg2_roots()
-        } else {
-            let rf = RootsFinder::new(self.clone());
-            rf.roots_finder()
+        match self.degree() {
+            Some(0) | None => Vec::new(),
+            Some(1) => self.complex_deg1_root(),
+            Some(2) => self.complex_deg2_roots(),
+            _ => {
+                let rf = RootsFinder::new(self.clone());
+                rf.roots_finder()
+            }
         }
     }
 
@@ -371,11 +376,14 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
     /// assert_eq!(vec![-i, i], p.iterative_roots_with_max(10));
     /// ```
     pub fn iterative_roots_with_max(&self, max_iter: u32) -> Vec<Complex<T>> {
-        if self.degree() == Some(2) {
-            self.complex_deg2_roots()
-        } else {
-            let rf = RootsFinder::new(self.clone()).with_max_iterations(max_iter);
-            rf.roots_finder()
+        match self.degree() {
+            Some(0) | None => Vec::new(),
+            Some(1) => self.complex_deg1_root(),
+            Some(2) => self.complex_deg2_roots(),
+            _ => {
+                let rf = RootsFinder::new(self.clone()).with_max_iterations(max_iter);
+                rf.roots_finder()
+            }
         }
     }
 }
@@ -409,13 +417,31 @@ impl<T: Copy + Zero> Poly<T> {
     }
 }
 
-/// Calculate the complex roots of a polynomial of degree 2.
 impl<T: Float> Poly<T> {
+    /// Calculate the complex roots of a polynomial of degree 1.
+    fn complex_deg1_root(&self) -> Vec<Complex<T>> {
+        vec![From::from(-self[0] / self[1])]
+    }
+
+    /// Calculate the complex roots of a polynomial of degree 2.
     fn complex_deg2_roots(&self) -> Vec<Complex<T>> {
         let b = self[1] / self[2];
         let c = self[0] / self[2];
         let (r1, r2) = complex_quadratic_roots(b, c);
         vec![r1, r2]
+    }
+
+    /// Calculate the real roots of a polynomial of degree 1.
+    fn real_deg1_root(&self) -> Option<Vec<T>> {
+        Some(vec![-self[0] / self[1]])
+    }
+
+    /// Calculate the real roots of a polynomial of degree 2.
+    fn real_deg2_roots(&self) -> Option<Vec<T>> {
+        let b = self[1] / self[2];
+        let c = self[0] / self[2];
+        let (r1, r2) = quadratic_roots(b, c)?;
+        Some(vec![r1, r2])
     }
 }
 
@@ -2089,12 +2115,38 @@ mod tests {
     }
 
     #[test]
-    fn my_roots_finder() {
+    fn iterative_roots_finder() {
         let roots = &[10.0_f32, 10. / 323.4, 1., -2., 3.];
         let poly = Poly::new_from_roots(roots);
         let rf = RootsFinder::new(poly);
         let actual = rf.roots_finder();
         assert_eq!(roots.len(), actual.len());
+    }
+
+    #[test]
+    fn iterative_roots_none() {
+        let p: Poly<f32> = Poly::zero();
+        let res = p.iterative_roots();
+        assert_eq!(0, res.len());
+        assert!(res.is_empty());
+    }
+
+    #[test]
+    fn iterative_roots_0() {
+        let p = poly!(5.3);
+        let res = p.iterative_roots();
+        assert_eq!(0, res.len());
+        assert!(res.is_empty());
+    }
+
+    #[test]
+    fn iterative_roots_1() {
+        let root = -12.4;
+        let p = poly!(3.0 * root, 3.0);
+        let res = p.iterative_roots();
+        assert_eq!(1, res.len());
+        let expected: Complex<f64> = From::from(-root);
+        assert_eq!(expected, res[0]);
     }
 
     #[test]
