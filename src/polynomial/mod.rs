@@ -300,11 +300,8 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
             Some(1) => self.real_deg1_root(),
             Some(2) => self.real_deg2_roots(),
             _ => {
-                // Build the companion matrix
-                let comp = match self.companion() {
-                    Some(comp) => comp,
-                    _ => return Some(vec![]),
-                };
+                // Build the companion matrix.
+                let comp = self.companion()?;
                 let schur = Schur::new(comp);
                 schur.eigenvalues().map(|e| e.as_slice().to_vec())
             }
