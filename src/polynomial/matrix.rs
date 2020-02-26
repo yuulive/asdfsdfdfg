@@ -367,7 +367,7 @@ mod tests {
     fn mp_creation() {
         let c = [4.3, 5.32];
         let p = Poly::new_from_coeffs(&c);
-        let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
+        let v = vec![p.clone(), p.clone(), p.clone(), p];
         let mp = MatrixOfPoly::new(2, 2, v);
         let expected = "[[4.3 +5.32*s, 4.3 +5.32*s],\n [4.3 +5.32*s, 4.3 +5.32*s]]";
         assert_eq!(expected, format!("{}", &mp));
@@ -386,7 +386,7 @@ mod tests {
     fn single_fail() {
         let c = [4.3, 5.32];
         let p = Poly::new_from_coeffs(&c);
-        let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
+        let v = vec![p.clone(), p.clone(), p.clone(), p];
         let mp = MatrixOfPoly::new(2, 2, v);
         let res = mp.single();
         assert!(res.is_none());

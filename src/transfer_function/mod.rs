@@ -473,10 +473,10 @@ mod tests {
     fn tf_inversion() {
         let num1 = poly!(1., 2., 3.);
         let den1 = poly!(-4.2, -3.12, 0.0012);
-        let tf1 = TfGen::<_, Discrete>::new(num1.clone(), den1.clone());
+        let tf1 = TfGen::<_, Discrete>::new(num1, den1);
         let num2 = poly!(-4.2, -3.12, 0.0012);
         let den2 = poly!(1., 2., 3.);
-        let mut tf2 = TfGen::new(num2.clone(), den2.clone());
+        let mut tf2 = TfGen::new(num2, den2);
         assert_eq!(tf2, (&tf1).inv());
         tf2.inv_mut();
         assert_eq!(tf2, tf1);
