@@ -2151,7 +2151,7 @@ mod tests_roots {
     use num_complex::Complex;
 
     #[test]
-    fn roots() {
+    fn quadratic_roots_with_real_values() {
         let root1 = -1.;
         let root2 = -2.;
         assert_eq!(Some((root1, root2)), real_quadratic_roots(3., 2.));
@@ -2163,20 +2163,36 @@ mod tests_roots {
     }
 
     #[test]
-    fn poly_roots() {
+    fn real_1_root_eigen() {
+        let p = poly!(10., -2.);
+        let r = p.real_roots().unwrap();
+        assert_eq!(r.len(), 1);
+        assert_relative_eq!(5., r[0]);
+    }
+
+    #[test]
+    fn real_3_roots_eigen() {
         let roots = &[0., -1., 1.];
         let p = Poly::new_from_roots(roots);
         assert_eq!(roots, p.real_roots().unwrap().as_slice());
     }
 
     #[test]
-    fn poly_complx_roots() {
+    fn complex_1_root_eigen() {
+        let p = poly!(10., -2.);
+        let r = p.complex_roots();
+        assert_eq!(r.len(), 1);
+        assert_eq!(Complex::new(5., 0.), r[0]);
+    }
+
+    #[test]
+    fn complex_3_roots_eigen() {
         let p = Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * poly!(2., 1.);
         assert_eq!(p.complex_roots().len(), 3);
     }
 
     #[test]
-    fn complex_roots() {
+    fn complex_2_roots() {
         let root1 = Complex::<f64>::new(-1., 0.);
         let root2 = Complex::<f64>::new(-2., 0.);
         assert_eq!((root1, root2), complex_quadratic_roots(3., 2.));
@@ -2203,15 +2219,12 @@ mod tests_roots {
     }
 
     #[test]
-    fn iterative_roots_none() {
+    fn none_roots_iterative() {
         let p: Poly<f32> = Poly::zero();
         let res = p.iterative_roots();
         assert_eq!(0, res.len());
         assert!(res.is_empty());
-    }
 
-    #[test]
-    fn iterative_roots_0() {
         let p = poly!(5.3);
         let res = p.iterative_roots();
         assert_eq!(0, res.len());
@@ -2219,7 +2232,7 @@ mod tests_roots {
     }
 
     #[test]
-    fn iterative_roots_1() {
+    fn complex_1_roots_iterative() {
         let root = -12.4;
         let p = poly!(3.0 * root, 3.0);
         let res = p.iterative_roots();
@@ -2229,7 +2242,64 @@ mod tests_roots {
     }
 
     #[test]
-    fn zero_roots() {
+    fn complex_2_roots_iterative() {
+        let p = poly!(6., 5., 1.);
+        let res = p.iterative_roots();
+        assert_eq!(2, res.len());
+        let expected1: Complex<f64> = From::from(-3.);
+        let expected2: Complex<f64> = From::from(-2.);
+        assert_eq!(expected2, res[0]);
+        assert_eq!(expected1, res[1]);
+    }
+
+    #[test]
+    fn complex_3_roots_iterative() {
+        let p = Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * poly!(2., 1.);
+        assert_eq!(p.iterative_roots().len(), 3);
+    }
+
+    #[test]
+    fn none_roots_iterative_with_max() {
+        let p: Poly<f32> = Poly::zero();
+        let res = p.iterative_roots_with_max(5);
+        assert_eq!(0, res.len());
+        assert!(res.is_empty());
+
+        let p = poly!(5.3);
+        let res = p.iterative_roots_with_max(6);
+        assert_eq!(0, res.len());
+        assert!(res.is_empty());
+    }
+
+    #[test]
+    fn complex_1_roots_iterative_with_max() {
+        let root = -12.4;
+        let p = poly!(3.0 * root, 3.0);
+        let res = p.iterative_roots_with_max(5);
+        assert_eq!(1, res.len());
+        let expected: Complex<f64> = From::from(-root);
+        assert_eq!(expected, res[0]);
+    }
+
+    #[test]
+    fn complex_2_roots_iterative_with_max() {
+        let p = poly!(6., 5., 1.);
+        let res = p.iterative_roots_with_max(6);
+        assert_eq!(2, res.len());
+        let expected1: Complex<f64> = From::from(-3.);
+        let expected2: Complex<f64> = From::from(-2.);
+        assert_eq!(expected2, res[0]);
+        assert_eq!(expected1, res[1]);
+    }
+
+    #[test]
+    fn complex_3_roots_iterative_with_max() {
+        let p = Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * poly!(2., 1.);
+        assert_eq!(p.iterative_roots_with_max(7).len(), 3);
+    }
+
+    #[test]
+    fn remove_zero_roots() {
         let p = Poly::new_from_coeffs(&[0, 0, 1, 0, 2]);
         let (z, p2) = p.find_zero_roots();
         assert_eq!(2, z);
@@ -2237,7 +2307,7 @@ mod tests_roots {
     }
 
     #[test]
-    fn zero_roots_mut() {
+    fn remove_zero_roots_mut() {
         let mut p = Poly::new_from_coeffs(&[0, 0, 1, 0, 2]);
         let z = p.find_zero_roots_mut();
         assert_eq!(2, z);
