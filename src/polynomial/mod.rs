@@ -72,6 +72,7 @@ impl<T: Copy> Poly<T> {
     /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
     /// assert_eq!(vec![1., 2., 3.], p.coeffs());
     /// ```
+    #[must_use]
     pub fn coeffs(&self) -> Vec<T> {
         self.coeffs.clone()
     }
@@ -87,6 +88,7 @@ impl<T: Copy + Num + Zero> Poly<T> {
     /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
     /// assert_eq!(Some(2), p.degree());
     /// ```
+    #[must_use]
     pub fn degree(&self) -> Option<usize> {
         assert!(
             !self.coeffs.is_empty(),
@@ -155,6 +157,7 @@ impl<T: Copy + Div<Output = T> + One> Poly<T> {
     /// assert_eq!(Poly::new_from_coeffs(&[0.1, 0.2, 1.]), p2);
     /// assert_eq!(10., c);
     /// ```
+    #[must_use]
     pub fn monic(&self) -> (Self, T) {
         let lc = self.leading_coeff();
         let result: Vec<_> = self.coeffs.iter().map(|&x| x / lc).collect();
@@ -192,6 +195,7 @@ impl<T: Copy + One> Poly<T> {
     /// let c = p.leading_coeff();
     /// assert_eq!(10., c);
     /// ```
+    #[must_use]
     pub fn leading_coeff(&self) -> T {
         *self.coeffs.last().unwrap_or(&T::one())
     }
@@ -294,6 +298,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// let p = Poly::new_from_roots(roots);
     /// assert_eq!(roots, p.real_roots().unwrap().as_slice());
     /// ```
+    #[must_use]
     pub fn real_roots(&self) -> Option<Vec<T>> {
         match self.degree() {
             Some(0) | None => None,
@@ -318,6 +323,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// let i = num_complex::Complex::i();
     /// assert_eq!(vec![-i, i], p.complex_roots());
     /// ```
+    #[must_use]
     pub fn complex_roots(&self) -> Vec<Complex<T>> {
         match self.degree() {
             Some(0) | None => Vec::new(),
@@ -346,6 +352,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
     /// let i = num_complex::Complex::i();
     /// assert_eq!(vec![-i, i], p.iterative_roots());
     /// ```
+    #[must_use]
     pub fn iterative_roots(&self) -> Vec<Complex<T>> {
         match self.degree() {
             Some(0) | None => Vec::new(),
@@ -372,6 +379,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
     /// let i = num_complex::Complex::i();
     /// assert_eq!(vec![-i, i], p.iterative_roots_with_max(10));
     /// ```
+    #[must_use]
     pub fn iterative_roots_with_max(&self, max_iter: u32) -> Vec<Complex<T>> {
         match self.degree() {
             Some(0) | None => Vec::new(),
@@ -534,6 +542,7 @@ impl<T: Copy + Mul<Output = T> + NumCast + One> Poly<T> {
     ///
     /// Panics when the exponent of the term (`usize`) cannot be converted
     /// to `T`.
+    #[must_use]
     pub fn derive(&self) -> Self {
         let derive_coeffs: Vec<_> = self
             .coeffs
@@ -1448,6 +1457,7 @@ impl<T: Float + FloatConst> Poly<T> {
     /// let actual = a.mul_fft(b);
     /// assert_eq!(expected, actual);
     /// ```
+    #[must_use]
     pub fn mul_fft(mut self, mut rhs: Self) -> Self {
         // Handle zero polynomial.
         if self.is_zero() || rhs.is_zero() {

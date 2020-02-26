@@ -60,6 +60,7 @@ impl<T: Float> Tf<T> {
     /// let tf = Tf::new(poly!(4.), poly!(1., 5.));
     /// assert_eq!(0., tf.init_value());
     /// ```
+    #[must_use]
     pub fn init_value(&self) -> T {
         let n = self.num.degree();
         let d = self.den.degree();
@@ -79,6 +80,7 @@ impl<T: Float> Tf<T> {
     /// let tf = Tf::new(poly!(1., -3.), poly!(1., 3., 2.));
     /// assert_eq!(-1.5, tf.init_value_der());
     /// ```
+    #[must_use]
     pub fn init_value_der(&self) -> T {
         let n = self.num.degree();
         let d = self.den.degree().map(|d| d - 1);
@@ -108,6 +110,7 @@ impl<T: Float> Tf<T> {
     /// let s = g.sensitivity(&r);
     /// assert_eq!(Tf::new(poly!(0., 1., 1.), poly!(4., 1., 1.)), s);
     /// ```
+    #[must_use]
     pub fn sensitivity(&self, r: &Self) -> Self {
         let n = &self.num * &r.num;
         let d = &self.den * &r.den;
@@ -137,6 +140,7 @@ impl<T: Float> Tf<T> {
     /// let f = g.compl_sensitivity(&r);
     /// assert_eq!(Tf::new(poly!(4.), poly!(4., 1., 1.)), f);
     /// ```
+    #[must_use]
     pub fn compl_sensitivity(&self, r: &Self) -> Self {
         let l = self * r;
         l.feedback_n()
@@ -161,6 +165,7 @@ impl<T: Float> Tf<T> {
     /// let q = g.control_sensitivity(&r);
     /// assert_eq!(Tf::new(poly!(0., 4.), poly!(4., 1., 1.)), q);
     /// ```
+    #[must_use]
     pub fn control_sensitivity(&self, r: &Self) -> Self {
         Self {
             num: &r.num * &self.den,
@@ -230,6 +235,7 @@ impl<T: Float + MulAdd<Output = T>> Tf<T> {
     /// let tf = Tf::new(poly!(4., -3.),poly!(2., 5., -0.5));
     /// assert_eq!(2., tf.static_gain());
     /// ```
+    #[must_use]
     pub fn static_gain(&self) -> T {
         self.eval(&T::zero())
     }

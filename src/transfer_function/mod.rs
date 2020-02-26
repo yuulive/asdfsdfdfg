@@ -61,6 +61,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     /// Panics
     ///
     /// If either numerator of denominator is zero the method panics.
+    #[must_use]
     pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
         assert!(!num.is_zero());
         assert!(!den.is_zero());
@@ -72,11 +73,13 @@ impl<T: Float, U: Time> TfGen<T, U> {
     }
 
     /// Extract transfer function numerator
+    #[must_use]
     pub fn num(&self) -> &Poly<T> {
         &self.num
     }
 
     /// Extract transfer function denominator
+    #[must_use]
     pub fn den(&self) -> &Poly<T> {
         &self.den
     }
@@ -115,21 +118,25 @@ impl<T: Clone, U: Time> Inv for TfGen<T, U> {
 
 impl<T: ComplexField + Debug + Float + RealField + Scalar, U: Time> TfGen<T, U> {
     /// Calculate the poles of the transfer function
+    #[must_use]
     pub fn real_poles(&self) -> Option<Vec<T>> {
         self.den.real_roots()
     }
 
     /// Calculate the poles of the transfer function
+    #[must_use]
     pub fn complex_poles(&self) -> Vec<Complex<T>> {
         self.den.complex_roots()
     }
 
     /// Calculate the zeros of the transfer function
+    #[must_use]
     pub fn real_zeros(&self) -> Option<Vec<T>> {
         self.num.real_roots()
     }
 
     /// Calculate the zeros of the transfer function
+    #[must_use]
     pub fn complex_zeros(&self) -> Vec<Complex<T>> {
         self.num.complex_roots()
     }
@@ -144,6 +151,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     ///         1 + L(s)
     /// ```
     /// where `self = L(s)`
+    #[must_use]
     pub fn feedback_n(&self) -> Self {
         Self {
             num: self.num.clone(),
@@ -160,6 +168,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     ///         1 - L(s)
     /// ```
     /// where `self = L(s)`
+    #[must_use]
     pub fn feedback_p(&self) -> Self {
         Self {
             num: self.num.clone(),
@@ -190,6 +199,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
     /// assert_eq!(expected, tfz.normalize());
     /// ```
+    #[must_use]
     pub fn normalize(&self) -> Self {
         let (den, an) = self.den.monic();
         let num = &self.num / an;

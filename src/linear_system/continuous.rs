@@ -70,6 +70,7 @@ impl<T: ComplexField + Float + RealField> Ss<T> {
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// assert!(sys.is_stable());
     /// ```
+    #[must_use]
     pub fn is_stable(&self) -> bool {
         self.poles().iter().all(|p| p.re.is_negative())
     }

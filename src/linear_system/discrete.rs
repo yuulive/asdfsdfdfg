@@ -149,6 +149,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Ssd<T> {
     /// let sys = Ssd::new_from_slice(2, 1, 1, &[-0.2, 0., 3., 0.1], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// assert!(sys.is_stable());
     /// ```
+    #[must_use]
     pub fn is_stable(&self) -> bool {
         self.poles().iter().all(|p| p.abs() < T::one())
     }
@@ -368,16 +369,19 @@ pub struct TimeEvolution<T> {
 
 impl<T> TimeEvolution<T> {
     /// Get the time of the current step
+    #[must_use]
     pub fn time(&self) -> usize {
         self.time
     }
 
     /// Get the current state of the system
+    #[must_use]
     pub fn state(&self) -> &Vec<T> {
         &self.state
     }
 
     /// Get the current output of the system
+    #[must_use]
     pub fn output(&self) -> &Vec<T> {
         &self.output
     }

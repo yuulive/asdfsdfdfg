@@ -75,16 +75,19 @@ pub struct Dim {
 /// Implementation of the methods for the Dim struct.
 impl Dim {
     /// Get the number of states.
+    #[must_use]
     pub fn states(&self) -> usize {
         self.states
     }
 
     /// Get the number of inputs.
+    #[must_use]
     pub fn inputs(&self) -> usize {
         self.inputs
     }
 
     /// Get the number of outputs.
+    #[must_use]
     pub fn outputs(&self) -> usize {
         self.outputs
     }
@@ -146,6 +149,7 @@ impl<T: Scalar, U: Time> SsGen<T, U> {
     /// let sys = Ssd::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// let dimensions = sys.dim();
     /// ```
+    #[must_use]
     pub fn dim(&self) -> Dim {
         self.dim
     }
@@ -164,6 +168,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// assert_eq!(-2., poles[0].re);
     /// assert_eq!(-7., poles[1].re);
     /// ```
+    #[must_use]
     pub fn poles(&self) -> Vec<Complex<T>> {
         if self.a.nrows() == 2 {
             let m00 = self.a[(0, 0)];
@@ -265,6 +270,7 @@ impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
     /// let mr = sys.controllability();
     /// assert_eq!((2, 2, vec![1., 2., 5., 4.]), mr);
     /// ```
+    #[must_use]
     pub fn controllability(&self) -> (usize, usize, Vec<T>) {
         let n = self.dim.states;
         let m = self.dim.inputs;
@@ -289,6 +295,7 @@ impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
     /// let mr = sys.osservability();
     /// assert_eq!((2, 2, vec![1., 1., -1., 5.]), mr);
     /// ```
+    #[must_use]
     pub fn osservability(&self) -> (usize, usize, Vec<T>) {
         let n = self.dim.states;
         let p = self.dim.outputs;
@@ -488,11 +495,13 @@ impl<T: Scalar> Equilibrium<T> {
     }
 
     /// Retrieve state coordinates for equilibrium
+    #[must_use]
     pub fn x(&self) -> &[T] {
         self.x.as_slice()
     }
 
     /// Retrieve output coordinates for equilibrium
+    #[must_use]
     pub fn y(&self) -> &[T] {
         self.y.as_slice()
     }

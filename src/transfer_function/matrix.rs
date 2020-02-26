@@ -46,6 +46,7 @@ impl<T> TfMatrix<T> {
 
 impl<T: Clone> TfMatrix<T> {
     /// Retrive the characteristic polynomial of the system.
+    #[must_use]
     pub fn den(&self) -> Poly<T> {
         self.den.clone()
     }

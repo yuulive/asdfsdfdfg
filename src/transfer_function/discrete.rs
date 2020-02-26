@@ -56,6 +56,7 @@ impl<T: Float> Tfz<T> {
     /// let tf = Tfz::new(poly!(4.), poly!(1., 5.));
     /// assert_eq!(0., tf.init_value());
     /// ```
+    #[must_use]
     pub fn init_value(&self) -> T {
         let n = self.num.degree();
         let d = self.den.degree();
@@ -79,6 +80,7 @@ impl<T: Float + MulAdd<Output = T>> Tfz<T> {
     /// let tf = Tfz::new(poly!(5., -3.),poly!(2., 5., -6.));
     /// assert_eq!(2., tf.static_gain());
     /// ```
+    #[must_use]
     pub fn static_gain(&self) -> T {
         self.eval(&T::one())
     }
