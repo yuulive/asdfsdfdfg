@@ -30,7 +30,7 @@ pub struct BodeIterator<T: Float> {
 }
 
 impl<T: Decibel<T> + Float + MulAdd<Output = T>> BodeIterator<T> {
-    /// Create a BodeIterator struct
+    /// Create a `BodeIterator` struct
     ///
     /// # Arguments
     ///
@@ -66,7 +66,7 @@ impl<T: Decibel<T> + Float + MulAdd<Output = T>> BodeIterator<T> {
         }
     }
 
-    /// Convert BodeIterator into decibels and degrees
+    /// Convert `BodeIterator` into decibels and degrees
     pub fn into_db_deg(self) -> impl Iterator<Item = Bode<T>> {
         self.map(|g| Bode {
             magnitude: g.magnitude.to_db(),
@@ -136,7 +136,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for BodeIterator<T> {
 
 /// Trait for the implementation of Bode plot for a linear system.
 pub trait BodePlot<T: Float + FloatConst> {
-    /// Create a BodeIterator struct
+    /// Create a `BodeIterator` struct
     ///
     /// # Arguments
     ///
@@ -157,7 +157,7 @@ pub trait BodePlot<T: Float + FloatConst> {
         step: T,
     ) -> BodeIterator<T>;
 
-    /// Create a BodeIterator struct
+    /// Create a `BodeIterator` struct
     ///
     /// # Arguments
     ///

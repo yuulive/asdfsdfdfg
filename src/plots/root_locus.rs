@@ -25,7 +25,7 @@ pub struct RootLocusIterator<T: Float> {
 }
 
 impl<T: Float> RootLocusIterator<T> {
-    /// Create a RootLocusIterator struct
+    /// Create a `RootLocusIterator` struct
     ///
     /// # Arguments
     ///

@@ -639,7 +639,7 @@ struct RootsFinder<T> {
 }
 
 impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
-    /// Create a RootsFinder structure
+    /// Create a `RootsFinder` structure
     ///
     /// # Arguments
     ///

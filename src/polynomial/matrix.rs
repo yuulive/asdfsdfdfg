@@ -71,7 +71,7 @@ impl<T: Scalar + Zero> PolyMatrix<T> {
 impl<T: Scalar + Zero + One + Add + AddAssign + Mul + MulAssign> PolyMatrix<T> {
     /// Implementation of polynomial matrix and matrix multiplication
     ///
-    /// PolyMatrix * DMatrix
+    /// `PolyMatrix` * `DMatrix`
     pub(crate) fn right_mul(&self, rhs: &DMatrix<T>) -> Self {
         let result: Vec<_> = self.matr_coeffs.iter().map(|x| x * rhs).collect();
         Self::new_from_coeffs(&result)
@@ -79,7 +79,7 @@ impl<T: Scalar + Zero + One + Add + AddAssign + Mul + MulAssign> PolyMatrix<T> {
 
     /// Implementation of matrix and polynomial matrix multiplication
     ///
-    /// DMatrix * PolyMatrix
+    /// `DMatrix` * `PolyMatrix`
     pub(crate) fn left_mul(&self, lhs: &DMatrix<T>) -> Self {
         let res: Vec<_> = self.matr_coeffs.iter().map(|r| lhs * r).collect();
         Self::new_from_coeffs(&res)

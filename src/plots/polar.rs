@@ -26,7 +26,7 @@ pub struct PolarIterator<T: Float> {
 }
 
 impl<T: Float + MulAdd<Output = T>> PolarIterator<T> {
-    /// Create a PolarIterator struct
+    /// Create a `PolarIterator` struct
     ///
     /// # Arguments
     ///
@@ -115,7 +115,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for PolarIterator<T> {
 
 /// Trait for the implementation of polar plot for a linear system.
 pub trait PolarPlot<T: Float + FloatConst> {
-    /// Create a PolarIterator struct
+    /// Create a `PolarIterator` struct
     ///
     /// # Arguments
     ///

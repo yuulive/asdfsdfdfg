@@ -195,7 +195,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Tf<T> {
         p.complex_roots()
     }
 
-    /// Create a RootLocusIterator plot
+    /// Create a `RootLocusIterator` plot
     ///
     /// # Arguments
     ///
