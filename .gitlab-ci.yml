@@ -8,8 +8,8 @@ stages:
   - doc
 
 variables:
-  CARGO_HOME_BIN: ~/.cargo/bin
-  TARGET: target
+  # CARGO_HOME_BIN: ~/.cargo/bin
+  # TARGET: target
 
 .build_template: &build_definition
   stage: build
@@ -20,27 +20,27 @@ variables:
 
 build:
   <<: *build_definition
-  cache:
-    key: buildDefault
-    paths:
-      - $TARGET
+  # cache:
+  #   key: buildDefault
+  #   paths:
+  #     - $TARGET
 
 build:latest:
   <<: *build_definition
   image: 'rust:alpine'
-  cache:
-    key: buildLatest
-    paths:
-      - $TARGET
+  # cache:
+  #   key: buildLatest
+  #   paths:
+  #     - $TARGET
   allow_failure: true
 
 test:
   stage: test
   image: 'rust:latest'
-  cache:
-    key: test
-    paths:
-      - $TARGET
+  # cache:
+  #   key: test
+  #   paths:
+  #     - $TARGET
   needs: ["build"]
   script:
     - "rustc --version && cargo --version"
@@ -51,10 +51,10 @@ cover:
   stage: test
   # Tarpaulin do not work in Alpine image.
   image: 'rust:latest'
-  cache:
-    key: cover
-    paths:
-      - $TARGET
+  # cache:
+  #   key: cover
+  #   paths:
+  #     - $TARGET
   before_script:
     - apt-get update
     - apt-get install -y --no-install-recommends libssl-dev pkg-config cmake zlib1g-dev
@@ -71,11 +71,11 @@ cover:
 examples:
   stage: examples
   image: 'rust:latest'
-  cache:
-    key: test
-    policy: pull
-    paths:
-      - $TARGET
+  # cache:
+  #   key: test
+  #   policy: pull
+  #   paths:
+  #     - $TARGET
   script:
     - "rustc --version && cargo --version"
     - make all_examples
@@ -85,7 +85,7 @@ pages:
   stage: doc
   script:
     - cargo doc --no-deps
-    - cp -R target/doc public
+    - cp -R $TARGET/doc public
     - echo '<meta http-equiv="refresh" content="0; url=automatica/index.html">' > public/index.html
   artifacts:
     paths:
