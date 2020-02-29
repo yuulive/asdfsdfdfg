@@ -140,7 +140,7 @@ mod pid_tests {
         );
         let pid = Pid::new(2., 2., 0.5, 5.);
         let r = pid.tf();
-        assert_eq!(Some(vec![0., -10.]), r.real_poles());
+        assert_eq!(Some(vec![-10., 0.]), r.real_poles());
         let l = &g * &r;
         let critical_freq = 0.8;
         let c = l.eval(&Complex64::new(0., critical_freq));

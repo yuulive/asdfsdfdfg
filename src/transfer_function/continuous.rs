@@ -359,7 +359,8 @@ mod tests {
         assert_eq!(Complex::from_str("-1.5").unwrap(), locus1[0]);
 
         let locus2 = l.root_locus(-2.);
-        assert_eq!(Complex::from_str("0.").unwrap(), locus2[0]);
+        assert_eq!(Complex::from_str("-3.").unwrap(), locus2[0]);
+        assert_eq!(Complex::from_str("0.").unwrap(), locus2[1]);
     }
 
     #[test]

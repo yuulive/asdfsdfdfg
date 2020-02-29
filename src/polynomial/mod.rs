@@ -294,23 +294,25 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// # Example
     /// ```
     /// use automatica::polynomial::Poly;
-    /// let roots = &[0., -1., 1.];
+    /// let roots = &[-1., 1., 0.];
     /// let p = Poly::new_from_roots(roots);
     /// assert_eq!(roots, p.real_roots().unwrap().as_slice());
     /// ```
     #[must_use]
     pub fn real_roots(&self) -> Option<Vec<T>> {
-        match self.degree() {
+        let (zeros, cropped) = self.find_zero_roots();
+        let roots = match cropped.degree() {
             Some(0) | None => None,
-            Some(1) => self.real_deg1_root(),
-            Some(2) => self.real_deg2_roots(),
+            Some(1) => cropped.real_deg1_root(),
+            Some(2) => cropped.real_deg2_roots(),
             _ => {
                 // Build the companion matrix.
-                let comp = self.companion()?;
+                let comp = cropped.companion()?;
                 let schur = Schur::new(comp);
                 schur.eigenvalues().map(|e| e.as_slice().to_vec())
             }
-        }
+        };
+        roots.map(|r| extend_roots(r, zeros))
     }
 
     /// Calculate the complex roots of the polynomial
@@ -325,19 +327,21 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
     /// ```
     #[must_use]
     pub fn complex_roots(&self) -> Vec<Complex<T>> {
-        match self.degree() {
+        let (zeros, cropped) = self.find_zero_roots();
+        let roots = match cropped.degree() {
             Some(0) | None => Vec::new(),
-            Some(1) => self.complex_deg1_root(),
-            Some(2) => self.complex_deg2_roots(),
+            Some(1) => cropped.complex_deg1_root(),
+            Some(2) => cropped.complex_deg2_roots(),
             _ => {
-                let comp = match self.companion() {
+                let comp = match cropped.companion() {
                     Some(comp) => comp,
                     _ => return Vec::new(),
                 };
                 let schur = Schur::new(comp);
                 schur.complex_eigenvalues().as_slice().to_vec()
             }
-        }
+        };
+        extend_roots(roots, zeros)
     }
 }
 
@@ -354,15 +358,17 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
     /// ```
     #[must_use]
     pub fn iterative_roots(&self) -> Vec<Complex<T>> {
-        match self.degree() {
+        let (zeros, cropped) = self.find_zero_roots();
+        let roots = match cropped.degree() {
             Some(0) | None => Vec::new(),
-            Some(1) => self.complex_deg1_root(),
-            Some(2) => self.complex_deg2_roots(),
+            Some(1) => cropped.complex_deg1_root(),
+            Some(2) => cropped.complex_deg2_roots(),
             _ => {
-                let rf = RootsFinder::new(self.clone());
+                let rf = RootsFinder::new(cropped.clone());
                 rf.roots_finder()
             }
-        }
+        };
+        extend_roots(roots, zeros)
     }
 
     /// Calculate the complex roots of the polynomial using companion
@@ -381,22 +387,38 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
     /// ```
     #[must_use]
     pub fn iterative_roots_with_max(&self, max_iter: u32) -> Vec<Complex<T>> {
-        match self.degree() {
+        let (zeros, cropped) = self.find_zero_roots();
+        let roots = match cropped.degree() {
             Some(0) | None => Vec::new(),
-            Some(1) => self.complex_deg1_root(),
-            Some(2) => self.complex_deg2_roots(),
+            Some(1) => cropped.complex_deg1_root(),
+            Some(2) => cropped.complex_deg2_roots(),
             _ => {
-                let rf = RootsFinder::new(self.clone()).with_max_iterations(max_iter);
+                let rf = RootsFinder::new(cropped.clone()).with_max_iterations(max_iter);
                 rf.roots_finder()
             }
-        }
+        };
+        extend_roots(roots, zeros)
     }
 }
 
-impl<T: Copy + Zero> Poly<T> {
+/// Extend a vector of roots of type `T` with `zeros` `Zero` elements.
+///
+/// # Arguments
+///
+/// * `roots` - Vector of roots
+/// * `zeros` - Number of zeros to add
+fn extend_roots<T: Clone + Zero>(mut roots: Vec<T>, zeros: usize) -> Vec<T> {
+    roots.extend(std::iter::repeat(T::zero()).take(zeros));
+    roots
+}
+
+impl<T: Copy + Num + Zero> Poly<T> {
     /// Remove the (multiple) zero roots from a polynomial. It returns the number
     /// of roots in zero and the polynomial without them.
     fn find_zero_roots(&self) -> (usize, Self) {
+        if self.is_zero() {
+            return (0, Poly::zero());
+        }
         let zeros = self.zero_roots_count();
         let p = Self {
             coeffs: self.coeffs().split_off(zeros),
@@ -406,7 +428,11 @@ impl<T: Copy + Zero> Poly<T> {
 
     /// Remove the (multiple) zero roots from a polynomial in place.
     /// It returns the number of roots in zero.
+    #[allow(dead_code)]
     fn find_zero_roots_mut(&mut self) -> usize {
+        if self.is_zero() {
+            return 0;
+        }
         let zeros = self.zero_roots_count();
         self.coeffs.drain(..zeros);
         zeros
@@ -2182,7 +2208,7 @@ mod tests_roots {
 
     #[test]
     fn real_3_roots_eigen() {
-        let roots = &[0., -1., 1.];
+        let roots = &[-1., 1., 0.];
         let p = Poly::new_from_roots(roots);
         assert_eq!(roots, p.real_roots().unwrap().as_slice());
     }
@@ -2266,6 +2292,16 @@ mod tests_roots {
     fn complex_3_roots_iterative() {
         let p = Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * poly!(2., 1.);
         assert_eq!(p.iterative_roots().len(), 3);
+    }
+
+    #[test]
+    fn complex_3_roots_with_zeros_iterative() {
+        let p = Poly::new_from_coeffs(&[0.0_f32, 0., 1.]) * poly!(2., 1.);
+        let mut roots = p.iterative_roots();
+        assert_eq!(roots.len(), 3);
+        assert_eq!(*roots.last().unwrap(), Complex::zero());
+        roots.pop();
+        assert_eq!(*roots.last().unwrap(), Complex::zero());
     }
 
     #[test]
