@@ -80,7 +80,7 @@ pub trait Eval<T> {
     /// # Arguments
     ///
     /// * `x` - Value at which the polynomial is evaluated
-    fn eval(&self, x: &T) -> T;
+    fn eval(&self, x: T) -> T;
 }
 
 /// Trait to tag Continuous or Discrete types

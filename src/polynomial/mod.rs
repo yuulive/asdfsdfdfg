@@ -640,14 +640,14 @@ where
     /// use automatica::{Eval, polynomial::Poly};
     /// use num_complex::Complex;
     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
-    /// assert_eq!(18., p.eval(&3.));
-    /// assert_eq!(Complex::new(-18., 0.), p.eval(&Complex::new(0., 3.)));
+    /// assert_eq!(18., p.eval(3.));
+    /// assert_eq!(Complex::new(-18., 0.), p.eval(Complex::new(0., 3.)));
     /// ```
-    fn eval(&self, x: &N) -> N {
+    fn eval(&self, x: N) -> N {
         self.coeffs
             .iter()
             .rev()
-            .fold(N::zero(), |acc, &c| acc.mul_add(*x, N::from(c).unwrap()))
+            .fold(N::zero(), |acc, &c| acc.mul_add(x, N::from(c).unwrap()))
     }
 }
 
@@ -722,7 +722,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
 
             for i in 0..n_roots {
                 let solution_i = *self.solution.get(i).unwrap();
-                let n_xki = self.poly.eval(&solution_i) / self.der.eval(&solution_i);
+                let n_xki = self.poly.eval(solution_i) / self.der.eval(solution_i);
                 let a_xki: Complex<T> = (0..n_roots)
                     .filter_map(|j| {
                         if j == i {
@@ -769,7 +769,7 @@ where
     let c = -a_n_1 / n_f / a_n;
 
     // Calculate the radius of the circle.
-    let r = poly.eval(&c).abs().powf(n_f.recip());
+    let r = poly.eval(c).abs().powf(n_f.recip());
 
     // Pre-compute the constants of the exponent.
     let phi = T::one() * FloatConst::FRAC_PI_2() / n_f;
@@ -1819,25 +1819,25 @@ mod tests {
     #[test]
     fn poly_eval() {
         let p = poly!(1., 2., 3.);
-        assert_abs_diff_eq!(86., p.eval(&5.), epsilon = 0.);
+        assert_abs_diff_eq!(86., p.eval(5.), epsilon = 0.);
 
-        assert_abs_diff_eq!(0., Poly::<f64>::zero().eval(&6.4), epsilon = 0.);
+        assert_abs_diff_eq!(0., Poly::<f64>::zero().eval(6.4), epsilon = 0.);
 
         let p2 = poly!(3, 4, 1);
-        assert_eq!(143, p2.eval(&10));
+        assert_eq!(143, p2.eval(10));
     }
 
     #[test]
     #[should_panic]
     fn poly_f64_eval_panic() {
         let p = poly!(1.0e200, 2., 3.);
-        p.eval(&5.0_f32);
+        p.eval(5.0_f32);
     }
 
     #[test]
     fn poly_i32_eval() {
         let p = poly!(1.5, 2., 3.);
-        assert_eq!(86, p.eval(&5));
+        assert_eq!(86, p.eval(5));
     }
 
     #[test]
@@ -1845,11 +1845,11 @@ mod tests {
         let p = poly!(1., 1., 1.);
         let c = Complex::new(1.0, 1.0);
         let res = Complex::new(2.0, 3.0);
-        assert_eq!(res, p.eval(&c));
+        assert_eq!(res, p.eval(c));
 
         assert_eq!(
             Complex::zero(),
-            Poly::<f64>::new_from_coeffs(&[]).eval(&Complex::new(2., 3.))
+            Poly::<f64>::new_from_coeffs(&[]).eval(Complex::new(2., 3.))
         );
     }
 
