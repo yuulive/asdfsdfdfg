@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+## Added
+- Documentation of the specification of the library
+## Changed
+- Improvements on polynomial roots finders and increment of related tests
+- General source code linting
 
 ## [0.7.0] - 2020-02-08
 ## Added
