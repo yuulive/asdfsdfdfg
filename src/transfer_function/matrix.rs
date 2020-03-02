@@ -53,7 +53,7 @@ impl<T: Clone> TfMatrix<T> {
 }
 
 impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
-    fn eval(&self, s: Vec<Complex<T>>) -> Vec<Complex<T>> {
+    fn eval_ref(&self, s: &Vec<Complex<T>>) -> Vec<Complex<T>> {
         //
         // ┌  ┐ ┌┌         ┐ ┌     ┐┐┌  ┐
         // │y1│=││1/pc 1/pc│*│n1 n2│││s1│
@@ -78,7 +78,7 @@ impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
             .apply(|mut res_row, matrix_row| {
                 // Zip the row of the result matrix.
                 Zip::from(&mut res_row)
-                    .and(&s) // The vector of the input.
+                    .and(s) // The vector of the input.
                     .and(matrix_row) // The row of the numerator matrix.
                     .apply(|r, s, n| *r = n.eval(*s).fdiv(self.den.eval(*s)));
             });

@@ -420,8 +420,8 @@ fn tu<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
 
 /// Implementation of the evaluation of a transfer function discretization
 impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for TfDiscretization<T> {
-    fn eval(&self, z: Complex<T>) -> Complex<T> {
-        let s = (self.conversion)(z, self.ts);
+    fn eval_ref(&self, z: &Complex<T>) -> Complex<T> {
+        let s = (self.conversion)(*z, self.ts);
         self.tf.eval(s)
     }
 }

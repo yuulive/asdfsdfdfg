@@ -97,7 +97,7 @@ fn main() {
 
     println!("\nEvaluate transfer function in ω = 0.9");
     let u = vec![Complex::new(0.0, 0.9)];
-    let y = tf_matrix.eval(u.clone());
+    let y = tf_matrix.eval_ref(&u);
     println!("u:\n{:?}\ny:\n{:?}", &u, &y);
 
     println!(

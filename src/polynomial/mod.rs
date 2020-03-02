@@ -643,11 +643,11 @@ where
     /// assert_eq!(18., p.eval(3.));
     /// assert_eq!(Complex::new(-18., 0.), p.eval(Complex::new(0., 3.)));
     /// ```
-    fn eval(&self, x: N) -> N {
+    fn eval_ref(&self, x: &N) -> N {
         self.coeffs
             .iter()
             .rev()
-            .fold(N::zero(), |acc, &c| acc.mul_add(x, N::from(c).unwrap()))
+            .fold(N::zero(), |acc, &c| acc.mul_add(*x, N::from(c).unwrap()))
     }
 }
 

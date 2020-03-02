@@ -87,7 +87,7 @@ impl<T: Scalar + Zero + One + Add + AddAssign + Mul + MulAssign> PolyMatrix<T> {
 }
 
 impl<T: NumAssignOps + Float + Scalar> Eval<DMatrix<Complex<T>>> for PolyMatrix<T> {
-    fn eval(&self, s: DMatrix<Complex<T>>) -> DMatrix<Complex<T>> {
+    fn eval_ref(&self, s: &DMatrix<Complex<T>>) -> DMatrix<Complex<T>> {
         // transform matr_coeffs in complex numbers matrices
         //
         // ┌     ┐ ┌       ┐ ┌       ┐ ┌     ┐ ┌       ┐ ┌         ┐
