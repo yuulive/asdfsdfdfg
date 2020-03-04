@@ -619,21 +619,50 @@ impl<T: Copy + Div<Output = T> + NumCast> Poly<T> {
 }
 
 /// Evaluate the polynomial at the given real or complex number
+// impl<N, T> Eval<N> for Poly<T>
+// where
+//     N: Copy + MulAdd<Output = N> + NumCast + Zero,
+//     T: Copy + NumCast,
+// {
+//     /// Evaluate the polynomial using Horner's method. The evaluation is safe
+//     /// if the polynomial coefficient can be casted the type `N`.
+//     ///
+//     /// # Arguments
+//     ///
+//     /// * `x` - Value at which the polynomial is evaluated.
+//     ///
+//     /// # Panics
+//     ///
+//     /// The method panics if the conversion from `T` to type `N` fails.
+//     ///
+//     /// # Example
+//     /// ```
+//     /// use automatica::{Eval, polynomial::Poly};
+//     /// use num_complex::Complex;
+//     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
+//     /// assert_eq!(18., p.eval(3.));
+//     /// assert_eq!(Complex::new(-18., 0.), p.eval(Complex::new(0., 3.)));
+//     /// ```
+//     fn eval_ref(&self, x: &N) -> N {
+//         self.coeffs
+//             .iter()
+//             .rev()
+//             .fold(N::zero(), |acc, &c| acc.mul_add(*x, N::from(c).unwrap()))
+//     }
+// }
 impl<N, T> Eval<N> for Poly<T>
 where
-    N: Copy + MulAdd<Output = N> + NumCast + Zero,
-    T: Copy + NumCast,
+    N: Add<T, Output = N> + Copy + Mul<Output = N> + Zero,
+    T: Copy,
 {
-    /// Evaluate the polynomial using Horner's method. The evaluation is safe
-    /// if the polynomial coefficient can be casted the type `N`.
+    // The current implementation relies on the ability to add type N and T.
+    // When the trait MulAdd<N,T> for N=Complex<T>, mul_add may be used.
+
+    /// Evaluate the polynomial using Horner's method.
     ///
     /// # Arguments
     ///
     /// * `x` - Value at which the polynomial is evaluated.
-    ///
-    /// # Panics
-    ///
-    /// The method panics if the conversion from `T` to type `N` fails.
     ///
     /// # Example
     /// ```
@@ -647,7 +676,7 @@ where
         self.coeffs
             .iter()
             .rev()
-            .fold(N::zero(), |acc, &c| acc.mul_add(*x, N::from(c).unwrap()))
+            .fold(N::zero(), |acc, &c| acc * *x + c)
     }
 }
 
@@ -1828,19 +1857,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn poly_f64_eval_panic() {
-        let p = poly!(1.0e200, 2., 3.);
-        p.eval(5.0_f32);
-    }
-
-    #[test]
-    fn poly_i32_eval() {
-        let p = poly!(1.5, 2., 3.);
-        assert_eq!(86, p.eval(5));
-    }
-
-    #[test]
     fn poly_cmplx_eval() {
         let p = poly!(1., 1., 1.);
         let c = Complex::new(1.0, 1.0);
@@ -2103,6 +2119,24 @@ mod tests {
         assert_relative_eq!(9., c);
         assert_relative_eq!(1., p.leading_coeff());
     }
+}
+
+mod compile_fail_test {
+    /// ```compile_fail
+    /// use automatica::{poly, Eval};
+    /// let p = poly!(1.0e200, 2., 3.);
+    /// p.eval(5.0_f32);
+    /// ```
+    #[allow(dead_code)]
+    fn a() {}
+
+    /// ``` compile_fail
+    /// use automatica::{poly, Eval};
+    /// let p = poly!(1.5, 2., 3.);
+    /// assert_eq!(86, p.eval(5));
+    /// ```
+    #[allow(dead_code)]
+    fn b() {}
 }
 
 #[cfg(test)]
