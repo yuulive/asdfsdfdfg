@@ -430,15 +430,15 @@ impl<T: Float, U: Time> Div for TfGen<T, U> {
 
 /// Implementation of the evaluation of a transfer function with complex numbers.
 impl<T: Float + MulAdd<Output = T>, U: Time> Eval<Complex<T>> for TfGen<T, U> {
-    fn eval(&self, s: &Complex<T>) -> Complex<T> {
-        self.num.eval(s) / self.den.eval(s)
+    fn eval_ref(&self, s: &Complex<T>) -> Complex<T> {
+        self.num.eval_ref(s) / self.den.eval_ref(s)
     }
 }
 
 /// Implementation of the evaluation of a transfer function with real numbers.
 impl<T: Float + MulAdd<Output = T>, U: Time> Eval<T> for TfGen<T, U> {
-    fn eval(&self, s: &T) -> T {
-        self.num.eval(s) / self.den.eval(s)
+    fn eval_ref(&self, s: &T) -> T {
+        self.num.eval_ref(s) / self.den.eval_ref(s)
     }
 }
 

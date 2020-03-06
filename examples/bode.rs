@@ -15,7 +15,7 @@ fn main() {
 
     println!("T:\n{}", tf);
 
-    let c = tf.eval(&Complex::new(0., 1.));
+    let c = tf.eval(Complex::new(0., 1.));
     println!("{}\n{}dB, {}°", c, c.norm().to_db(), c.arg().to_degrees());
 
     let b = tf.bode(RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);

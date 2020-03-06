@@ -87,7 +87,7 @@ impl<T: Scalar + Zero + One + Add + AddAssign + Mul + MulAssign> PolyMatrix<T> {
 }
 
 impl<T: NumAssignOps + Float + Scalar> Eval<DMatrix<Complex<T>>> for PolyMatrix<T> {
-    fn eval(&self, s: &DMatrix<Complex<T>>) -> DMatrix<Complex<T>> {
+    fn eval_ref(&self, s: &DMatrix<Complex<T>>) -> DMatrix<Complex<T>> {
         // transform matr_coeffs in complex numbers matrices
         //
         // ┌     ┐ ┌       ┐ ┌       ┐ ┌     ┐ ┌       ┐ ┌         ┐
@@ -104,7 +104,7 @@ impl<T: NumAssignOps + Float + Scalar> Eval<DMatrix<Complex<T>>> for PolyMatrix<
 
         for mc in self.matr_coeffs.iter().rev() {
             let mcplx = mc.map(|x| Complex::<T>::new(x, T::zero()));
-            result = result.component_mul(s) + mcplx;
+            result = result.component_mul(&s) + mcplx;
         }
         result
     }
@@ -327,7 +327,7 @@ mod tests {
             DMatrix::from_row_slice(2, 2, &[1., 0., 0., 1.]),
         ];
         let pm = PolyMatrix::new_from_coeffs(&v);
-        let res = pm.eval(&DMatrix::from_row_slice(
+        let res = pm.eval(DMatrix::from_row_slice(
             2,
             2,
             &[
@@ -379,7 +379,7 @@ mod tests {
         let mp = MatrixOfPoly::new(1, 1, v);
         let res = mp.single();
         assert!(res.is_some());
-        assert_relative_eq!(14.94, res.unwrap().eval(&2.), max_relative = 1e-10);
+        assert_relative_eq!(14.94, res.unwrap().eval(2.), max_relative = 1e-10);
     }
 
     #[test]

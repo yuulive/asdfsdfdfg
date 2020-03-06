@@ -82,7 +82,7 @@ impl<T: Float + MulAdd<Output = T>> Tfz<T> {
     /// ```
     #[must_use]
     pub fn static_gain(&self) -> T {
-        self.eval(&T::one())
+        self.eval(T::one())
     }
 }
 
@@ -376,7 +376,7 @@ impl<T: Float> TfDiscretization<T> {
     ///     Poly::new_from_coeffs(&[1., 0.1]),
     /// );
     /// let tfz = TfDiscretization::discretize(tf, Seconds(1.), Discretization::BackwardEuler);
-    /// let gz = tfz.eval(&Complex64::i());
+    /// let gz = tfz.eval(Complex64::i());
     /// ```
     pub fn discretize(tf: Tf<T>, ts: Seconds<T>, method: Discretization) -> Self {
         let conv = match method {
@@ -420,9 +420,9 @@ fn tu<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
 
 /// Implementation of the evaluation of a transfer function discretization
 impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for TfDiscretization<T> {
-    fn eval(&self, z: &Complex<T>) -> Complex<T> {
+    fn eval_ref(&self, z: &Complex<T>) -> Complex<T> {
         let s = (self.conversion)(*z, self.ts);
-        self.tf.eval(&s)
+        self.tf.eval(s)
     }
 }
 
@@ -480,7 +480,7 @@ mod tests {
             Poly::new_from_coeffs(&[1., 0.1]),
         );
         let z = 0.5 * Complex64::i();
-        let g = tf.eval(&z);
+        let g = tf.eval(z);
         assert_relative_eq!(20.159, g.norm().to_db(), max_relative = 1e-4);
         assert_relative_eq!(75.828, g.arg().to_degrees(), max_relative = 1e-4);
     }
@@ -497,7 +497,7 @@ mod tests {
         let s = (tfz.conversion)(z, ts);
         assert_eq!(Complex64::new(-1.0, 0.5), s);
 
-        let gz = tfz.eval(&z);
+        let gz = tfz.eval(z);
         assert_relative_eq!(27.175, gz.norm().to_db(), max_relative = 1e-4);
         assert_relative_eq!(147.77, gz.arg().to_degrees(), max_relative = 1e-4);
     }
@@ -514,7 +514,7 @@ mod tests {
         let s = (tfz.conversion)(z, ts);
         assert_eq!(Complex64::new(1.0, 2.0), s);
 
-        let gz = tfz.eval(&z);
+        let gz = tfz.eval(z);
         assert_relative_eq!(32.220, gz.norm().to_db(), max_relative = 1e-4);
         assert_relative_eq!(50.884, gz.arg().to_degrees(), max_relative = 1e-4);
     }
@@ -531,7 +531,7 @@ mod tests {
         let s = (tfz.conversion)(z, ts);
         assert_eq!(Complex64::new(-1.2, 1.6), s);
 
-        let gz = tfz.eval(&z);
+        let gz = tfz.eval(z);
         assert_relative_eq!(32.753, gz.norm().to_db(), max_relative = 1e-4);
         assert_relative_eq!(114.20, gz.arg().to_degrees(), max_relative = 1e-4);
     }

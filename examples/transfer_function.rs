@@ -11,7 +11,7 @@ fn main() {
 
     println!("T:\n{}", tf);
 
-    let c = tf.eval(&Complex64::new(0., 0.9));
+    let c = tf.eval(Complex64::new(0., 0.9));
     println!("\nEvaluation at s = 0 + 0.9i:");
     println!(
         "{}\n{}dB, {}°",

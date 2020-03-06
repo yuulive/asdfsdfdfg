@@ -53,7 +53,7 @@ impl<T: Clone> TfMatrix<T> {
 }
 
 impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
-    fn eval(&self, s: &Vec<Complex<T>>) -> Vec<Complex<T>> {
+    fn eval_ref(&self, s: &Vec<Complex<T>>) -> Vec<Complex<T>> {
         //
         // ┌  ┐ ┌┌         ┐ ┌     ┐┐┌  ┐
         // │y1│=││1/pc 1/pc│*│n1 n2│││s1│
@@ -80,7 +80,7 @@ impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
                 Zip::from(&mut res_row)
                     .and(s) // The vector of the input.
                     .and(matrix_row) // The row of the numerator matrix.
-                    .apply(|r, s, n| *r = n.eval(s).fdiv(self.den.eval(s)));
+                    .apply(|r, s, n| *r = n.eval(*s).fdiv(self.den.eval(*s)));
             });
 
         res.sum_axis(Axis(1)).to_vec()
@@ -192,7 +192,7 @@ mod tests {
         );
         let tfm = TfMatrix::from(sys);
         let i = Complex::<f64>::i();
-        let res = tfm.eval(&vec![i, i]);
+        let res = tfm.eval(vec![i, i]);
         assert_relative_eq!(res[0].re, 4.4, max_relative = 1e-15);
         assert_relative_eq!(res[0].im, -3.2, max_relative = 1e-15);
         assert_relative_eq!(res[1].re, 8.2, max_relative = 1e-15);

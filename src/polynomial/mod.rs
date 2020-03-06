@@ -619,35 +619,64 @@ impl<T: Copy + Div<Output = T> + NumCast> Poly<T> {
 }
 
 /// Evaluate the polynomial at the given real or complex number
+// impl<N, T> Eval<N> for Poly<T>
+// where
+//     N: Copy + MulAdd<Output = N> + NumCast + Zero,
+//     T: Copy + NumCast,
+// {
+//     /// Evaluate the polynomial using Horner's method. The evaluation is safe
+//     /// if the polynomial coefficient can be casted the type `N`.
+//     ///
+//     /// # Arguments
+//     ///
+//     /// * `x` - Value at which the polynomial is evaluated.
+//     ///
+//     /// # Panics
+//     ///
+//     /// The method panics if the conversion from `T` to type `N` fails.
+//     ///
+//     /// # Example
+//     /// ```
+//     /// use automatica::{Eval, polynomial::Poly};
+//     /// use num_complex::Complex;
+//     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
+//     /// assert_eq!(18., p.eval(3.));
+//     /// assert_eq!(Complex::new(-18., 0.), p.eval(Complex::new(0., 3.)));
+//     /// ```
+//     fn eval_ref(&self, x: &N) -> N {
+//         self.coeffs
+//             .iter()
+//             .rev()
+//             .fold(N::zero(), |acc, &c| acc.mul_add(*x, N::from(c).unwrap()))
+//     }
+// }
 impl<N, T> Eval<N> for Poly<T>
 where
-    N: Copy + MulAdd<Output = N> + NumCast + Zero,
-    T: Copy + NumCast,
+    N: Add<T, Output = N> + Copy + Mul<Output = N> + Zero,
+    T: Copy,
 {
-    /// Evaluate the polynomial using Horner's method. The evaluation is safe
-    /// if the polynomial coefficient can be casted the type `N`.
+    // The current implementation relies on the ability to add type N and T.
+    // When the trait MulAdd<N,T> for N=Complex<T>, mul_add may be used.
+
+    /// Evaluate the polynomial using Horner's method.
     ///
     /// # Arguments
     ///
     /// * `x` - Value at which the polynomial is evaluated.
-    ///
-    /// # Panics
-    ///
-    /// The method panics if the conversion from `T` to type `N` fails.
     ///
     /// # Example
     /// ```
     /// use automatica::{Eval, polynomial::Poly};
     /// use num_complex::Complex;
     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
-    /// assert_eq!(18., p.eval(&3.));
-    /// assert_eq!(Complex::new(-18., 0.), p.eval(&Complex::new(0., 3.)));
+    /// assert_eq!(18., p.eval(3.));
+    /// assert_eq!(Complex::new(-18., 0.), p.eval(Complex::new(0., 3.)));
     /// ```
-    fn eval(&self, x: &N) -> N {
+    fn eval_ref(&self, x: &N) -> N {
         self.coeffs
             .iter()
             .rev()
-            .fold(N::zero(), |acc, &c| acc.mul_add(*x, N::from(c).unwrap()))
+            .fold(N::zero(), |acc, &c| acc * *x + c)
     }
 }
 
@@ -722,7 +751,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
 
             for i in 0..n_roots {
                 let solution_i = *self.solution.get(i).unwrap();
-                let n_xki = self.poly.eval(&solution_i) / self.der.eval(&solution_i);
+                let n_xki = self.poly.eval(solution_i) / self.der.eval(solution_i);
                 let a_xki: Complex<T> = (0..n_roots)
                     .filter_map(|j| {
                         if j == i {
@@ -769,7 +798,7 @@ where
     let c = -a_n_1 / n_f / a_n;
 
     // Calculate the radius of the circle.
-    let r = poly.eval(&c).abs().powf(n_f.recip());
+    let r = poly.eval(c).abs().powf(n_f.recip());
 
     // Pre-compute the constants of the exponent.
     let phi = T::one() * FloatConst::FRAC_PI_2() / n_f;
@@ -1819,25 +1848,12 @@ mod tests {
     #[test]
     fn poly_eval() {
         let p = poly!(1., 2., 3.);
-        assert_abs_diff_eq!(86., p.eval(&5.), epsilon = 0.);
+        assert_abs_diff_eq!(86., p.eval(5.), epsilon = 0.);
 
-        assert_abs_diff_eq!(0., Poly::<f64>::zero().eval(&6.4), epsilon = 0.);
+        assert_abs_diff_eq!(0., Poly::<f64>::zero().eval(6.4), epsilon = 0.);
 
         let p2 = poly!(3, 4, 1);
-        assert_eq!(143, p2.eval(&10));
-    }
-
-    #[test]
-    #[should_panic]
-    fn poly_f64_eval_panic() {
-        let p = poly!(1.0e200, 2., 3.);
-        p.eval(&5.0_f32);
-    }
-
-    #[test]
-    fn poly_i32_eval() {
-        let p = poly!(1.5, 2., 3.);
-        assert_eq!(86, p.eval(&5));
+        assert_eq!(143, p2.eval(10));
     }
 
     #[test]
@@ -1845,11 +1861,11 @@ mod tests {
         let p = poly!(1., 1., 1.);
         let c = Complex::new(1.0, 1.0);
         let res = Complex::new(2.0, 3.0);
-        assert_eq!(res, p.eval(&c));
+        assert_eq!(res, p.eval(c));
 
         assert_eq!(
             Complex::zero(),
-            Poly::<f64>::new_from_coeffs(&[]).eval(&Complex::new(2., 3.))
+            Poly::<f64>::new_from_coeffs(&[]).eval(Complex::new(2., 3.))
         );
     }
 
@@ -2103,6 +2119,24 @@ mod tests {
         assert_relative_eq!(9., c);
         assert_relative_eq!(1., p.leading_coeff());
     }
+}
+
+mod compile_fail_test {
+    /// ```compile_fail
+    /// use automatica::{poly, Eval};
+    /// let p = poly!(1.0e200, 2., 3.);
+    /// p.eval(5.0_f32);
+    /// ```
+    #[allow(dead_code)]
+    fn a() {}
+
+    /// ``` compile_fail
+    /// use automatica::{poly, Eval};
+    /// let p = poly!(1.5, 2., 3.);
+    /// assert_eq!(86, p.eval(5));
+    /// ```
+    #[allow(dead_code)]
+    fn b() {}
 }
 
 #[cfg(test)]

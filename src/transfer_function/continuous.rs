@@ -237,7 +237,7 @@ impl<T: Float + MulAdd<Output = T>> Tf<T> {
     /// ```
     #[must_use]
     pub fn static_gain(&self) -> T {
-        self.eval(&T::zero())
+        self.eval(T::zero())
     }
 }
 
