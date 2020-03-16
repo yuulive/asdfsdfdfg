@@ -1007,16 +1007,24 @@ impl<T: Copy + Num> Add for &Poly<T> {
     }
 }
 
-/// Implementation of polynomial and float addition
+/// Implementation of polynomial and real number addition
 impl<T: Add<Output = T> + Copy> Add<T> for Poly<T> {
     type Output = Self;
 
-    fn add(self, rhs: T) -> Self {
-        let mut result = self;
-        result[0] = result[0] + rhs;
+    fn add(mut self, rhs: T) -> Self {
+        self[0] = self[0] + rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
-        result
+        self
+    }
+}
+
+/// Implementation of polynomial and real number addition
+impl<T: Add<Output = T> + Copy> Add<T> for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn add(self, rhs: T) -> Self::Output {
+        self.clone().add(rhs)
     }
 }
 
@@ -1030,6 +1038,14 @@ macro_rules! impl_add_for_poly {
             type Output = Poly<Self>;
 
             fn add(self, rhs: Poly<Self>) -> Poly<Self> {
+                rhs + self
+            }
+        }
+        $(#[$meta])*
+        impl Add<&Poly<$f>> for $f {
+            type Output = Poly<Self>;
+
+            fn add(self, rhs: &Poly<Self>) -> Poly<Self> {
                 rhs + self
             }
         }
@@ -1129,16 +1145,24 @@ impl<T: Copy + PartialEq + Sub<Output = T> + Zero> Sub for &Poly<T> {
     }
 }
 
-/// Implementation of polynomial and float subtraction
+/// Implementation of polynomial and real number subtraction
 impl<T: Copy + Sub<Output = T>> Sub<T> for Poly<T> {
     type Output = Self;
 
-    fn sub(self, rhs: T) -> Self {
-        let mut result = self;
-        result[0] = result[0] - rhs;
+    fn sub(mut self, rhs: T) -> Self {
+        self[0] = self[0] - rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
-        result
+        self
+    }
+}
+
+/// Implementation of polynomial and real number subtraction
+impl<T: Copy + Sub<Output = T>> Sub<T> for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn sub(self, rhs: T) -> Self::Output {
+        self.clone().sub(rhs)
     }
 }
 
@@ -1152,11 +1176,15 @@ macro_rules! impl_sub_for_poly {
             type Output = Poly<Self>;
 
             fn sub(self, rhs: Poly<Self>) -> Poly<Self> {
-                let mut result = rhs.clone();
-                // Non need for trimming since the addition of a float doesn't
-                // modify the coefficients of order higher than zero.
-                result[0] = self - result[0];
-                result
+                rhs.neg().add(self)
+            }
+        }
+        $(#[$meta])*
+        impl Sub<&Poly<$f>> for $f {
+            type Output = Poly<Self>;
+
+            fn sub(self, rhs: &Poly<Self>) -> Poly<Self> {
+                self.sub(rhs.clone())
             }
         }
     };
@@ -1175,48 +1203,24 @@ impl_sub_for_poly!(
     i8
 );
 impl_sub_for_poly!(
-    /// Implementation of u8 and polynomial subtraction
-    u8
-);
-impl_sub_for_poly!(
     /// Implementation of i16 and polynomial subtraction
     i16
-);
-impl_sub_for_poly!(
-    /// Implementation of u16 and polynomial subtraction
-    u16
 );
 impl_sub_for_poly!(
     /// Implementation of i32 and polynomial subtraction
     i32
 );
 impl_sub_for_poly!(
-    /// Implementation of u32 and polynomial subtraction
-    u32
-);
-impl_sub_for_poly!(
     /// Implementation of i64 and polynomial subtraction
     i64
-);
-impl_sub_for_poly!(
-    /// Implementation of u64 and polynomial subtraction
-    u64
 );
 impl_sub_for_poly!(
     /// Implementation of i128 and polynomial subtraction
     i128
 );
 impl_sub_for_poly!(
-    /// Implementation of u128 and polynomial subtraction
-    u128
-);
-impl_sub_for_poly!(
     /// Implementation of isize and polynomial subtraction
     isize
-);
-impl_sub_for_poly!(
-    /// Implementation of usize and polynomial subtraction
-    usize
 );
 
 /// Implementation of polynomial multiplication
@@ -1272,15 +1276,7 @@ impl<T: Copy + Num> Mul<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn mul(self, rhs: T) -> Self::Output {
-        let mut p = self.clone();
-        if rhs.is_zero() {
-            Self::Output::zero()
-        } else {
-            for c in &mut p.coeffs {
-                *c = *c * rhs;
-            }
-            p
-        }
+        self.clone().mul(rhs)
     }
 }
 
@@ -1294,6 +1290,14 @@ macro_rules! impl_mul_for_poly {
             type Output = Poly<Self>;
 
             fn mul(self, rhs: Poly<Self>) -> Poly<Self> {
+                rhs * self
+            }
+        }
+        $(#[$meta])*
+        impl Mul<&Poly<$f>> for $f {
+            type Output = Poly<Self>;
+
+            fn mul(self, rhs: &Poly<Self>) -> Poly<Self> {
                 rhs * self
             }
         }
@@ -1357,34 +1361,29 @@ impl_mul_for_poly!(
     usize
 );
 
-/// Implementation of polynomial and float division
+/// Implementation of polynomial and real number division
 impl<T: Copy + Num> Div<T> for Poly<T> {
     type Output = Self;
 
-    fn div(self, rhs: T) -> Self {
-        let mut result = self;
-        for c in &mut result.coeffs {
+    fn div(mut self, rhs: T) -> Self {
+        for c in &mut self.coeffs {
             *c = *c / rhs;
         }
-        result.trim();
-        result
+        self.trim();
+        self
     }
 }
 
-/// Implementation of polynomial and float division
+/// Implementation of polynomial and real number division
 impl<T: Copy + Num> Div<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn div(self, rhs: T) -> Self::Output {
-        let mut result = self.clone();
-        for c in &mut result.coeffs {
-            *c = *c / rhs;
-        }
-        result.trim();
-        result
+        self.clone().div(rhs)
     }
 }
 
+/// Implementation of division between polynomials
 impl<T: Float> Div for &Poly<T> {
     type Output = Poly<T>;
 
@@ -1393,6 +1392,7 @@ impl<T: Float> Div for &Poly<T> {
     }
 }
 
+/// Implementation of division between polynomials
 impl<T: Float> Div for Poly<T> {
     type Output = Self;
 
@@ -1899,6 +1899,12 @@ mod tests {
     }
 
     #[test]
+    fn poly_add_real_number() {
+        assert_eq!(poly!(5, 4, 3), 1 + &poly!(4, 4, 3));
+        assert_eq!(poly!(6, 4, 3), &poly!(5, 4, 3) + 1);
+    }
+
+    #[test]
     #[allow(clippy::eq_op)]
     fn poly_sub() {
         assert_eq!(poly!(-2., 0., 2.), poly!(1., 2., 3.) - poly!(3., 2., 1.));
@@ -1914,11 +1920,17 @@ mod tests {
 
         assert_eq!(poly!(-10., 1.), poly!(2., 1.) - 12.);
 
-        assert_eq!(poly!(-1., 1.), 1. - poly!(2., 1.));
+        assert_eq!(poly!(-1., -1.), 1. - poly!(2., 1.));
 
-        assert_eq!(poly!(-1_i8, 1), 1_i8 - poly!(2, 1));
+        assert_eq!(poly!(-1_i8, -1), 1_i8 - poly!(2, 1));
 
         assert_eq!(poly!(-10, 1), poly!(2, 1) - 12);
+    }
+
+    #[test]
+    fn poly_sub_real_number() {
+        assert_eq!(poly!(-3, -4, -3), 1 - &poly!(4, 4, 3));
+        assert_eq!(poly!(4, 4, 3), &poly!(5, 4, 3) - 1);
     }
 
     #[test]
@@ -1958,6 +1970,12 @@ mod tests {
         assert_eq!(Poly::zero(), &poly!(1, 0, 1) * 0);
 
         assert_eq!(poly!(3, 0, 3), &poly!(1, 0, 1) * 3);
+    }
+
+    #[test]
+    fn poly_mul_real_number() {
+        assert_eq!(poly!(4, 4, 3), 1 * &poly!(4, 4, 3));
+        assert_eq!(poly!(10, 8, 6), &poly!(5, 4, 3) * 2);
     }
 
     #[test]

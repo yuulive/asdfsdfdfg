@@ -6,6 +6,8 @@
 ## Changed
 - Improvements on polynomial roots finders and increment of related tests
 - General source code linting
+## Fixed
+- Subtraction between a real number and a polynomial
 
 ## [0.7.0] - 2020-02-08
 ## Added
