@@ -1,3 +1,8 @@
+# Glossary
+by value -> parameter ownership moved into method
+by ref -> method takes reference of parameter
+in place -> parameter is passed by mutable reference
+
 # Polynomial
 
 - Real coefficients
@@ -11,17 +16,17 @@
 - Monic representation and leading coefficient (in place, by ref)
 - Polynomial derivative (by ref)
 - Polynomial integral (by ref)
-- Evaluation (scalar and complex numbers) (by ref)
-- Negation of polynomial (by ref, in place)
-- Addition between polynomials (in place, by ref)
-- Subtraction between polynomials  (in place, by ref)
-- Multiplication between polynomials (convolution and fast fourier transform) (in place, by ref)
+- Evaluation (scalar and complex numbers) (by value, by ref)
+- Negation of polynomial (by value, by ref)
+- Addition between polynomials (by value, by ref)
+- Subtraction between polynomials  (by value, by ref)
+- Multiplication between polynomials (convolution and fast fourier transform) (by value, by ref)
 - Division between polynomials (by value, by ref)
 - Remainder between polynomials (by value, by ref)
-- Addition with scalar (commutative) (by value)
-- Subtraction with scalar (commutative) (by value)
+- Addition with scalar (commutative) (by value, by ref)
+- Subtraction with scalar (commutative) (by value, by ref)
 - Multiplication with scalar (commutative) (by value, by ref)
-- Division with scalar (in place, by value, by ref)
+- Division with scalar (by value, by ref)
 - Zero polynomial (additive identity)
 - One polynomial (multiplicative identity)
 - Polynomial formatting
