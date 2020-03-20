@@ -6,9 +6,22 @@ use automatica::{poly, Eval, Poly};
 use num_traits::One;
 
 #[test]
-fn test_name() {
-    let p = poly!(1., 2., 3.);
-    assert_eq!(1., p.eval(0.));
+fn maximum_minimum() {
+    let cubic = Poly::<f32>::new_from_roots(&[-1., 0., 1.]);
+    let slope = cubic.derive();
+    let mut stationary = slope.real_roots().unwrap();
+    stationary.sort_by(|x, y| x.partial_cmp(y).unwrap());
+
+    // Test roots of derivative.
+    assert_relative_eq!(-0.57735, stationary[0], max_relative = 1e-5);
+    assert_relative_eq!(0.57735, stationary[1], max_relative = 1e-5);
+
+    let curvature = slope.derive();
+
+    // Local maximum.
+    assert!(curvature.eval(stationary[0]).is_sign_negative());
+    // Local minimum.
+    assert!(curvature.eval(stationary[1]).is_sign_positive());
 }
 
 #[test]
