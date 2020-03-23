@@ -172,6 +172,12 @@ pub mod discrete {
             }
         }
 
+        #[test]
+        fn step_input_at_zero() {
+            let f = step_vec(3., 1, 1);
+            assert_relative_eq!(0., f(0)[0]);
+        }
+
         #[quickcheck]
         fn impulse_single_input(i: f32) -> bool {
             let f = impulse(i, 2);
