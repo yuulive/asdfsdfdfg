@@ -238,18 +238,15 @@ where
 {
     let states = sys.dim.states;
     let identity = DMatrix::identity(states, states);
-    if let Some(a) = (identity - &sys.a * st).try_inverse() {
-        Some(Ssd {
-            b: &a * &sys.b * st,
-            c: &sys.c * &a,
-            d: &sys.d + &sys.c * &a * &sys.b * st,
-            a,
-            dim: sys.dim,
-            time: PhantomData,
-        })
-    } else {
-        None
-    }
+    let a = (identity - &sys.a * st).try_inverse()?;
+    Some(Ssd {
+        b: &a * &sys.b * st,
+        c: &sys.c * &a,
+        d: &sys.d + &sys.c * &a * &sys.b * st,
+        a,
+        dim: sys.dim,
+        time: PhantomData,
+    })
 }
 
 /// Discretization using Tustin Method.
@@ -267,19 +264,16 @@ where
     // Casting is safe for both f32 and f64, representation is exact.
     let n_05 = T::from(0.5_f32).unwrap();
     let a_05_st = &sys.a * (n_05 * st);
-    if let Some(k) = (&identity - &a_05_st).try_inverse() {
-        let b = &k * &sys.b * st;
-        Some(Ssd {
-            a: &k * (&identity + &a_05_st),
-            c: &sys.c * &k,
-            d: &sys.d + &sys.c * &b * n_05,
-            b,
-            dim: sys.dim,
-            time: PhantomData,
-        })
-    } else {
-        None
-    }
+    let k = (&identity - &a_05_st).try_inverse()?;
+    let b = &k * &sys.b * st;
+    Some(Ssd {
+        a: &k * (&identity + &a_05_st),
+        c: &sys.c * &k,
+        d: &sys.d + &sys.c * &b * n_05,
+        b,
+        dim: sys.dim,
+        time: PhantomData,
+    })
 }
 
 /// Struct to hold the iterator for the evolution of the discrete linear system.
@@ -408,6 +402,9 @@ mod tests {
         assert_relative_eq!(200.0, eq.x()[1]);
         assert_relative_eq!(100.0, eq.x()[2], max_relative = 1e-10);
         assert_relative_eq!(500.0, eq.y()[0]);
+
+        // Test wrong number of inputs.
+        assert!(sys.equilibrium(&[0., 0., 0.]).is_none());
     }
 
     #[test]
@@ -471,6 +468,13 @@ mod tests {
     }
 
     #[test]
+    fn discretization_tustin_fail() {
+        let sys = Ss::new_from_slice(2, 1, 1, &[-3., 5., 4., -4.], &[0., 1.], &[1., 1.], &[0.]);
+        let disc_sys = sys.discretize(2., Discretization::Tustin);
+        assert!(disc_sys.is_none());
+    }
+
+    #[test]
     fn discretization_euler_backward() {
         let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
         let disc_sys = sys.discretize(0.1, Discretization::BackwardEuler).unwrap();
@@ -478,6 +482,13 @@ mod tests {
         let evo = disc_sys.evolution(50, |_| vec![1.], &[0., 0.]);
         let last = evo.last().unwrap();
         assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
+    }
+
+    #[test]
+    fn discretization_euler_backward_fail() {
+        let sys = Ss::new_from_slice(2, 1, 1, &[-3., 5., 4., -4.], &[0., 1.], &[1., 1.], &[0.]);
+        let disc_sys = sys.discretize(1., Discretization::BackwardEuler);
+        assert!(disc_sys.is_none());
     }
 
     #[test]

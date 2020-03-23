@@ -743,3 +743,59 @@ impl<T: Float> Radau<T> {
         &self.output
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn runge_kutta_struct() {
+        let t = Seconds(3.);
+        let s = vec![2., 3.];
+        let o = vec![-5., -4.];
+
+        let rk = Rk {
+            time: t,
+            state: s.clone(),
+            output: o.clone(),
+        };
+        assert_eq!(t, rk.time());
+        assert_eq!(&s, rk.state());
+        assert_eq!(&o, rk.output());
+    }
+
+    #[test]
+    fn runge_kutta_fehlberg_struct() {
+        let t = Seconds(3.);
+        let s = vec![2., 3.];
+        let o = vec![-5., -4.];
+        let e = 0.5;
+
+        let rkf = Rkf45 {
+            time: t,
+            state: s.clone(),
+            output: o.clone(),
+            error: e,
+        };
+        assert_eq!(t, rkf.time());
+        assert_eq!(&s, rkf.state());
+        assert_eq!(&o, rkf.output());
+        assert_eq!(e, rkf.error());
+    }
+
+    #[test]
+    fn radau_struct() {
+        let t = Seconds(12.);
+        let s = vec![2., 2.4];
+        let o = vec![-5.33, -4.];
+
+        let rd = Radau {
+            time: t,
+            state: s.clone(),
+            output: o.clone(),
+        };
+        assert_eq!(t, rd.time());
+        assert_eq!(&s, rd.state());
+        assert_eq!(&o, rd.output());
+    }
+}
