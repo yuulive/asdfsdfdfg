@@ -1384,6 +1384,10 @@ impl<T: Copy + Num> Div<T> for &Poly<T> {
 }
 
 /// Implementation of division between polynomials
+///
+/// Panics
+///
+/// This method panics if the denominator is zero.
 impl<T: Float> Div for &Poly<T> {
     type Output = Poly<T>;
 
@@ -1393,6 +1397,10 @@ impl<T: Float> Div for &Poly<T> {
 }
 
 /// Implementation of division between polynomials
+///
+/// Panics
+///
+/// This method panics if the denominator is zero.
 impl<T: Float> Div for Poly<T> {
     type Output = Self;
 
@@ -1401,6 +1409,11 @@ impl<T: Float> Div for Poly<T> {
     }
 }
 
+/// Implementation of reminder between polynomials.
+///
+/// Panics
+///
+/// This method panics if the denominator is zero.
 impl<T: Float> Rem for &Poly<T> {
     type Output = Poly<T>;
 
@@ -1409,6 +1422,11 @@ impl<T: Float> Rem for &Poly<T> {
     }
 }
 
+/// Implementation of reminder between polynomials.
+///
+/// Panics
+///
+/// This method panics if the denominator is zero.
 impl<T: Float> Rem for Poly<T> {
     type Output = Self;
 
@@ -1420,6 +1438,10 @@ impl<T: Float> Rem for Poly<T> {
 /// Donald Ervin Knuth, The Art of Computer Programming: Seminumerical algorithms
 /// Volume 2, third edition, section 4.6.1
 /// Algorithm D: division of polynomials over a field.
+///
+/// Panics
+///
+/// This method panics if the denominator is zero.
 #[allow(clippy::many_single_char_names)]
 fn poly_div_impl<T: Float>(mut u: Poly<T>, v: &Poly<T>) -> (Poly<T>, Poly<T>) {
     let (m, n) = match (u.degree(), v.degree()) {
@@ -1744,6 +1766,13 @@ mod tests {
     use num_complex::Complex;
 
     #[test]
+    fn poly_formatting() {
+        assert_eq!("0", format!("{}", Poly::<i16>::zero()));
+        assert_eq!("0", format!("{}", Poly::<i16>::new_from_coeffs(&[])));
+        assert_eq!("1 +2*s^3 -4*s^4", format!("{}", poly!(1, 0, 0, 2, -4)));
+    }
+
+    #[test]
     fn poly_creation_coeffs() {
         let c = [4.3, 5.32];
         assert_eq!(c, Poly::new_from_coeffs(&c).coeffs.as_slice());
@@ -2033,8 +2062,20 @@ mod tests {
     }
 
     #[test]
+    fn two_poly_div_ref() {
+        let q = &poly!(-1., 0., 0., 0., 1.) / &poly!(1., 0., 1.);
+        assert_eq!(poly!(-1., 0., 1.), q);
+    }
+
+    #[test]
     fn two_poly_rem() {
         let r = poly!(-4., 0., -2., 1.) % poly!(-3., 1.);
+        assert_eq!(poly!(5.), r);
+    }
+
+    #[test]
+    fn two_poly_rem_ref() {
+        let r = &poly!(-4., 0., -2., 1.) % &poly!(-3., 1.);
         assert_eq!(poly!(5.), r);
     }
 
@@ -2136,6 +2177,12 @@ mod tests {
         let c = p.monic_mut();
         assert_relative_eq!(9., c);
         assert_relative_eq!(1., p.leading_coeff());
+    }
+
+    #[test]
+    fn failing_companion() {
+        let p = Poly::<f32>::zero();
+        assert_eq!(None, p.companion());
     }
 }
 
@@ -2410,5 +2457,7 @@ mod tests_roots {
         let z = p.find_zero_roots_mut();
         assert_eq!(2, z);
         assert_eq!(Poly::new_from_coeffs(&[1, 0, 2]), p);
+
+        assert_eq!(0, Poly::<i8>::zero().find_zero_roots_mut());
     }
 }
