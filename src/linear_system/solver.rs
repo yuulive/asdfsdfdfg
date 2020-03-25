@@ -765,6 +765,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::float_cmp)]
     fn runge_kutta_fehlberg_struct() {
         let t = Seconds(3.);
         let s = vec![2., 3.];

@@ -629,6 +629,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::eq_op)]
     fn tf_div2() {
         let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2., 3.), poly!(1., 5.));
         let actual = &tf1 / &tf1;
