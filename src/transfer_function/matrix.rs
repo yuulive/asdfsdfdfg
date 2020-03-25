@@ -39,7 +39,7 @@ impl<T> TfMatrix<T> {
     ///
     /// * `num` - Polynomial matrix
     /// * `den` - Characteristic polynomial of the system
-    pub(crate) fn new(num: MatrixOfPoly<T>, den: Poly<T>) -> Self {
+    fn new(num: MatrixOfPoly<T>, den: Poly<T>) -> Self {
         Self { num, den }
     }
 }

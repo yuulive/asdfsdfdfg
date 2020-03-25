@@ -57,7 +57,7 @@ macro_rules! poly {
 /// Implementation methods for Poly struct
 impl<T> Poly<T> {
     /// Length of the polynomial coefficients
-    pub(crate) fn len(&self) -> usize {
+    fn len(&self) -> usize {
         self.coeffs.len()
     }
 }

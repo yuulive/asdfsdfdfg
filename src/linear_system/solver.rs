@@ -25,7 +25,7 @@ use crate::{linear_system::continuous::Ss, units::Seconds};
 
 /// Define the order of the Runge-Kutta method.
 #[derive(Debug)]
-pub(crate) enum Order {
+pub(super) enum Order {
     /// Runge-Kutta method of order 2.
     Rk2,
     /// Runge-Kutta method of order 4.
@@ -72,7 +72,7 @@ where
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `order` - order of the solver
-    pub(crate) fn new(
+    pub(super) fn new(
         sys: &'a Ss<T>,
         u: F,
         x0: &[T],
@@ -287,7 +287,7 @@ where
     /// * `h` - integration time interval
     /// * `limit` - time limit of the evaluation
     /// * `tol` - error tolerance
-    pub(crate) fn new(
+    pub(super) fn new(
         sys: &'a Ss<T>,
         u: F,
         x0: &[T],
@@ -549,7 +549,7 @@ where
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `tol` - tolerance of implicit solution finding
-    pub(crate) fn new(sys: &'a Ss<T>, u: F, x0: &[T], h: Seconds<T>, n: usize, tol: T) -> Self {
+    pub(super) fn new(sys: &'a Ss<T>, u: F, x0: &[T], h: Seconds<T>, n: usize, tol: T) -> Self {
         let start = DVector::from_vec(u(Seconds(T::zero())));
         let state = DVector::from_column_slice(x0);
         let output = &sys.c * &state + &sys.d * &start;

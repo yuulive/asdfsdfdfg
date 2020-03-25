@@ -48,13 +48,13 @@ use crate::{
 #[derive(Debug)]
 pub struct SsGen<T: Scalar, U: Time> {
     /// A matrix
-    pub(crate) a: DMatrix<T>,
+    pub(super) a: DMatrix<T>,
     /// B matrix
-    pub(crate) b: DMatrix<T>,
+    pub(super) b: DMatrix<T>,
     /// C matrix
-    pub(crate) c: DMatrix<T>,
+    pub(super) c: DMatrix<T>,
     /// D matrix
-    pub(crate) d: DMatrix<T>,
+    pub(super) d: DMatrix<T>,
     /// Dimensions
     dim: Dim,
     /// Tag for continuous or discrete time
@@ -315,7 +315,7 @@ impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
 /// a1 = -trace(A); ak = -1/k * trace(A*Bk)
 /// Bk = a_(k-1)*I + A*B_(k-1)
 #[allow(non_snake_case, clippy::cast_precision_loss)]
-pub(crate) fn leverrier_f64(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
+pub(super) fn leverrier_f64(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
     let size = A.nrows(); // A is a square matrix.
     let mut a = vec![1.0];
     let a1 = -A.trace();
@@ -354,7 +354,7 @@ pub(crate) fn leverrier_f64(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
 /// a1 = -trace(A); ak = -1/k * trace(A*Bk)
 /// Bk = a_(k-1)*I + A*B_(k-1)
 #[allow(non_snake_case, clippy::cast_precision_loss)]
-pub(crate) fn leverrier_f32(A: &DMatrix<f32>) -> (Poly<f32>, PolyMatrix<f32>) {
+pub(super) fn leverrier_f32(A: &DMatrix<f32>) -> (Poly<f32>, PolyMatrix<f32>) {
     let size = A.nrows(); // A is a square matrix.
     let mut a = vec![1.0];
     let a1 = -A.trace();
@@ -490,7 +490,7 @@ impl<T: Scalar> Equilibrium<T> {
     ///
     /// * `x` - State equilibrium
     /// * `y` - Output equilibrium
-    pub(crate) fn new(x: DVector<T>, y: DVector<T>) -> Self {
+    fn new(x: DVector<T>, y: DVector<T>) -> Self {
         Self { x, y }
     }
 
