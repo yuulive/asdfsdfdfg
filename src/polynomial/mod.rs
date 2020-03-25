@@ -364,7 +364,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
             Some(1) => cropped.complex_deg1_root(),
             Some(2) => cropped.complex_deg2_roots(),
             _ => {
-                let rf = RootsFinder::new(cropped.clone());
+                let rf = RootsFinder::new(cropped);
                 rf.roots_finder()
             }
         };
@@ -393,7 +393,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
             Some(1) => cropped.complex_deg1_root(),
             Some(2) => cropped.complex_deg2_roots(),
             _ => {
-                let rf = RootsFinder::new(cropped.clone()).with_max_iterations(max_iter);
+                let rf = RootsFinder::new(cropped).with_max_iterations(max_iter);
                 rf.roots_finder()
             }
         };
