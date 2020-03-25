@@ -477,9 +477,12 @@ mod tests {
         let num2 = poly!(-4.2, -3.12, 0.0012);
         let den2 = poly!(1., 2., 3.);
         let mut tf2 = TfGen::new(num2, den2);
+
         assert_eq!(tf2, (&tf1).inv());
         tf2.inv_mut();
         assert_eq!(tf2, tf1);
+
+        assert_eq!(tf2.inv(), tf1.inv());
     }
 
     #[test]
@@ -555,6 +558,19 @@ mod tests {
     }
 
     #[test]
+    fn tf_add3() {
+        let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(3., -4.));
+        let tf2 = TfGen::new(poly!(3.), poly!(1., 5.));
+        let tf3 = TfGen::new(poly!(0., 4.), poly!(3., 11., -20.));
+        let actual = &(&tf1 + &tf2) + &tf3;
+        let expected = TfGen::new(poly!(10., -1., 10.), poly!(3., 11., -20.));
+        assert_eq!(expected, actual);
+
+        let actual2 = (tf1 + tf2) + tf3;
+        assert_eq!(actual, actual2);
+    }
+
+    #[test]
     fn tf_sub1() {
         let tf1 = TfGen::<_, Continuous>::new(poly!(-1., 9.), poly!(4., -1.));
         let tf2 = TfGen::new(poly!(3.), poly!(4., -1.));
@@ -570,6 +586,19 @@ mod tests {
         let actual = tf1 - tf2;
         let expected = TfGen::new(poly!(-6., 7., -6.), poly!(8., 4., -12.));
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tf_sub3() {
+        let tf1 = TfGen::<_, Discrete>::new(poly!(1., -2.), poly!(4., -4.));
+        let tf2 = TfGen::new(poly!(2.), poly!(2., 3.));
+        let tf3 = TfGen::new(poly!(0., 2.), poly!(8., 4., -12.));
+        let actual = &(&tf1 - &tf2) - &tf3;
+        let expected = TfGen::new(poly!(-6., 5., -6.), poly!(8., 4., -12.));
+        assert_eq!(expected, actual);
+
+        let actual2 = (tf1 - tf2) - tf3;
+        assert_eq!(actual, actual2);
     }
 
     #[test]
@@ -591,11 +620,19 @@ mod tests {
     }
 
     #[test]
-    fn tf_div() {
+    fn tf_div1() {
         let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2., 3.), poly!(1., 5.));
         let tf2 = TfGen::new(poly!(3.), poly!(1., 6., 5.));
         let actual = tf2 / tf1;
         let expected = TfGen::new(poly!(3., 15.), poly!(1., 8., 20., 28., 15.));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tf_div2() {
+        let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let actual = &tf1 / &tf1;
+        let expected = TfGen::new(poly!(1., 7., 13., 15.), poly!(1., 7., 13., 15.));
         assert_eq!(expected, actual);
     }
 

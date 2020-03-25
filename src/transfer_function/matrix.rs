@@ -171,12 +171,12 @@ mod tests {
             &[1., 2., 3., 4.],
             &[1., 0., 0., 1.],
         );
-        let tfm = TfMatrix::from(sys);
+        let tfm = TfMatrix::<f32>::from(sys);
         assert_eq!(tfm[[0, 0]], poly!(6., 5., 1.));
         assert_eq!(tfm[[0, 1]], poly!(9., 5.));
         assert_eq!(tfm[[1, 0]], poly!(8., 4.));
         assert_eq!(tfm[[1, 1]], poly!(21., 14., 1.));
-        assert_eq!(tfm.den, poly!(2., 3., 1.));
+        assert_eq!(tfm.den(), poly!(2., 3., 1.));
     }
 
     #[test]
@@ -197,6 +197,22 @@ mod tests {
         assert_relative_eq!(res[0].im, -3.2, max_relative = 1e-15);
         assert_relative_eq!(res[1].re, 8.2, max_relative = 1e-15);
         assert_relative_eq!(res[1].im, -6.6, max_relative = 1e-15);
+    }
+
+    #[test]
+    fn tf_matrix_index_mut() {
+        let sys = Ss::new_from_slice(
+            2,
+            2,
+            2,
+            &[-2., 0., 0., -1.],
+            &[0., 1., 1., 2.],
+            &[1., 2., 3., 4.],
+            &[1., 0., 0., 1.],
+        );
+        let mut tfm = TfMatrix::from(sys);
+        tfm[[0, 0]] = poly!(1., 2., 3.);
+        assert_eq!(poly!(1., 2., 3.), tfm[[0, 0]]);
     }
 
     #[test]
