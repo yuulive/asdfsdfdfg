@@ -104,12 +104,12 @@ macro_rules! arma {
         // The back is the higher order coefficient.
         // The last coefficient is always 1.
         // [a0, a1, a2, ..., a(n-1), 1]
-        $y_coeffs = g.den.coeffs;
+        $y_coeffs = g.den.coeffs();
         // [b0, b1, b2, ..., bn]
         // The numerator must be extended to the degree of the denominator
         // and the higher degree terms (more recent) must be zero.
         g.num.extend(n);
-        $u_coeffs = g.num.coeffs;
+        $u_coeffs = g.num.coeffs();
 
         // The front is the oldest calculated output.
         // [y(k-n), y(k-n+1), ..., y(k-1), y(k)]

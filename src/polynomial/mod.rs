@@ -36,7 +36,7 @@ use crate::{polynomial::matrix::PolyMatrix, utils, Eval};
 /// `p(x) = c0 + c1*x + c2*x^2 + ...`
 #[derive(Debug, PartialEq, Clone)]
 pub struct Poly<T> {
-    pub(crate) coeffs: Vec<T>,
+    coeffs: Vec<T>,
 }
 
 /// Macro shortcut to crate a polynomial from its coefficients.
@@ -60,11 +60,25 @@ impl<T> Poly<T> {
     fn len(&self) -> usize {
         self.coeffs.len()
     }
+
+    /// Return the coefficients of the polynomial as a slice
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let c = &[1., 2., 3.];
+    /// let p = Poly::new_from_coeffs(c);
+    /// assert_eq!(c, p.as_slice());
+    /// ```
+    #[must_use]
+    pub fn as_slice(&self) -> &[T] {
+        &self.coeffs
+    }
 }
 
 /// Implementation methods for Poly struct
 impl<T: Copy> Poly<T> {
-    /// Vector of the polynomial's coefficients
+    /// Vector copy of the polynomial's coefficients
     ///
     /// # Example
     /// ```
@@ -1801,6 +1815,13 @@ mod tests {
         let int = [1, 2, 3, 4, 5];
         let p = Poly::new_from_coeffs(&int);
         assert_eq!(int, p.coeffs().as_slice());
+    }
+
+    #[test]
+    fn as_slice() {
+        let int = [1, 2, 3, 4, 5];
+        let p = Poly::new_from_coeffs(&int);
+        assert_eq!(int, p.as_slice());
     }
 
     #[test]
