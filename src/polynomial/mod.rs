@@ -705,6 +705,8 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
         // Set the initial root approximation.
         let initial_guess = init(&poly);
 
+        debug_assert!(poly.degree().unwrap_or(0) == initial_guess.len());
+
         Self {
             poly,
             der,
@@ -741,7 +743,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
     where
         T: Float + MulAdd<Output = T>,
     {
-        let n_roots = self.poly.degree().unwrap_or(0);
+        let n_roots = self.solution.len();
         let mut done = vec![false; n_roots];
 
         for _k in 0..self.iterations {
@@ -750,15 +752,15 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
             }
 
             for i in 0..n_roots {
-                let solution_i = *self.solution.get(i).unwrap();
+                let solution_i = self.solution[i];
                 let n_xki = self.poly.eval(solution_i) / self.der.eval(solution_i);
                 let a_xki: Complex<T> = (0..n_roots)
                     .filter_map(|j| {
                         if j == i {
                             None
                         } else {
-                            let den = solution_i - self.solution.get(j).unwrap();
-                            Some(den.inv() * T::one())
+                            let den = solution_i - self.solution[j];
+                            Some(den.inv())
                         }
                     })
                     .sum();
@@ -766,10 +768,10 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
                 // Overriding the root before updating the other decrease the time
                 // the algorithm converges.
                 let new = solution_i - n_xki / (Complex::<T>::one() - n_xki * a_xki);
-                *done.get_mut(i).unwrap() = if solution_i == new {
+                done[i] = if solution_i == new {
                     true
                 } else {
-                    *self.solution.get_mut(i).unwrap() = new;
+                    self.solution[i] = new;
                     false
                 };
             }
@@ -820,6 +822,10 @@ where
 /// # Arguments
 ///
 /// * `poly` - polynomial whose roots have to be found.
+///
+/// # Panics
+///
+/// Panics if the conversion from usize to T (float) fails.
 fn init<T>(poly: &Poly<T>) -> Vec<Complex<T>>
 where
     T: Float + FloatConst + NumCast,
