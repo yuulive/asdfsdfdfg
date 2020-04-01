@@ -2029,6 +2029,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::identity_op)]
     fn poly_mul_real_number() {
         assert_eq!(poly!(4, 4, 3), 1 * &poly!(4, 4, 3));
         assert_eq!(poly!(10, 8, 6), &poly!(5, 4, 3) * 2);
