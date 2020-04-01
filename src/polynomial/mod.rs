@@ -1589,9 +1589,9 @@ impl<T: Float + FloatConst> Poly<T> {
         let y = ifft(y_fft);
         // Extract the real parts of the result.
         let coeffs = y.iter().map(|c| c.re).collect();
-        let mut res = Self { coeffs };
-        res.trim();
-        res
+        let mut result = Self { coeffs };
+        result.trim();
+        result
     }
 }
 
