@@ -239,51 +239,35 @@ impl<T: Float, U: Time> TfGen<T, U> {
     }
 }
 
-impl<U: Time> TryFrom<SsGen<f64, U>> for TfGen<f64, U> {
-    type Error = &'static str;
+macro_rules! from_ss_to_tr {
+    ($ty:ty, $laverrier:expr) => {
+        impl<U: Time> TryFrom<SsGen<$ty, U>> for TfGen<$ty, U> {
+            type Error = &'static str;
 
-    /// Convert a state-space representation into transfer functions.
-    /// Conversion is available for Single Input Single Output system.
-    /// If fails if the system is not SISO
-    ///
-    /// # Arguments
-    ///
-    /// `ss` - state space linear system
-    fn try_from(ss: SsGen<f64, U>) -> Result<Self, Self::Error> {
-        let (pc, a_inv) = linear_system::leverrier_f64(&ss.a);
-        let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
-        let rest = pc.multiply(&ss.d);
-        let tf = g + rest;
-        if let Some(num) = MatrixOfPoly::from(tf).single() {
-            Ok(Self::new(num.clone(), pc))
-        } else {
-            Err("Linear system is not Single Input Single Output")
+            /// Convert a state-space representation into transfer functions.
+            /// Conversion is available for Single Input Single Output system.
+            /// If fails if the system is not SISO
+            ///
+            /// # Arguments
+            ///
+            /// `ss` - state space linear system
+            fn try_from(ss: SsGen<$ty, U>) -> Result<Self, Self::Error> {
+                let (pc, a_inv) = $laverrier(&ss.a);
+                let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
+                let rest = pc.multiply(&ss.d);
+                let tf = g + rest;
+                if let Some(num) = MatrixOfPoly::from(tf).single() {
+                    Ok(Self::new(num.clone(), pc))
+                } else {
+                    Err("Linear system is not Single Input Single Output")
+                }
+            }
         }
-    }
+    };
 }
 
-impl<U: Time> TryFrom<SsGen<f32, U>> for TfGen<f32, U> {
-    type Error = &'static str;
-
-    /// Convert a state-space representation into transfer functions.
-    /// Conversion is available for Single Input Single Output system.
-    /// If fails if the system is not SISO
-    ///
-    /// # Arguments
-    ///
-    /// `ss` - state space linear system
-    fn try_from(ss: SsGen<f32, U>) -> Result<Self, Self::Error> {
-        let (pc, a_inv) = linear_system::leverrier_f32(&ss.a);
-        let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
-        let rest = pc.multiply(&ss.d);
-        let tf = g + rest;
-        if let Some(num) = MatrixOfPoly::from(tf).single() {
-            Ok(Self::new(num.clone(), pc))
-        } else {
-            Err("Linear system is not Single Input Single Output")
-        }
-    }
-}
+from_ss_to_tr!(f64, linear_system::leverrier_f64);
+from_ss_to_tr!(f32, linear_system::leverrier_f32);
 
 /// Implementation of transfer function negation.
 /// Negative sign is transferred to the numerator.
