@@ -304,83 +304,51 @@ impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
     }
 }
 
-/// Faddeev–LeVerrier algorithm
-///
-/// [Wikipedia](https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm)
-///
-/// B(s) =       B1*s^(n-1) + B2*s^(n-2) + B3*s^(n-3) + ...
-/// a(s) = s^n + a1*s^(n-1) + a2*s^(n-2) + a3*s^(n-3) + ...
-///
-/// with B1 = I = eye(n,n)
-/// a1 = -trace(A); ak = -1/k * trace(A*Bk)
-/// Bk = a_(k-1)*I + A*B_(k-1)
-#[allow(non_snake_case, clippy::cast_precision_loss)]
-pub(super) fn leverrier_f64(A: &DMatrix<f64>) -> (Poly<f64>, PolyMatrix<f64>) {
-    let size = A.nrows(); // A is a square matrix.
-    let mut a = vec![1.0];
-    let a1 = -A.trace();
-    a.insert(0, a1);
+macro_rules! leverrier {
+    ($ty:ty, $name:ident) => {
+        /// Faddeev-LeVerrier algorithm
+        ///
+        /// [Wikipedia](https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm)
+        ///
+        /// B(s) =       B1*s^(n-1) + B2*s^(n-2) + B3*s^(n-3) + ...
+        /// a(s) = s^n + a1*s^(n-1) + a2*s^(n-2) + a3*s^(n-3) + ...
+        ///
+        /// with B1 = I = eye(n,n)
+        /// a1 = -trace(A); ak = -1/k * trace(A*Bk)
+        /// Bk = a_(k-1)*I + A*B_(k-1)
+        #[allow(non_snake_case, clippy::cast_precision_loss)]
+        pub(super) fn $name(A: &DMatrix<$ty>) -> (Poly<$ty>, PolyMatrix<$ty>) {
+            let size = A.nrows(); // A is a square matrix.
+            let mut a = vec![1.0];
+            let a1 = -A.trace();
+            a.insert(0, a1);
 
-    let B1 = DMatrix::identity(size, size); // eye(n,n)
-    let mut B = vec![B1.clone()];
-    if size == 1 {
-        return (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B));
-    }
+            let B1 = DMatrix::identity(size, size); // eye(n,n)
+            let mut B = vec![B1.clone()];
+            if size == 1 {
+                return (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B));
+            }
 
-    let mut Bk = B1.clone();
-    let mut ak = a1;
-    for k in 2..=size {
-        Bk = ak * &B1 + A * &Bk;
-        B.insert(0, Bk.clone());
+            let mut Bk = B1.clone();
+            let mut ak = a1;
+            for k in 2..=size {
+                Bk = ak * &B1 + A * &Bk;
+                B.insert(0, Bk.clone());
 
-        let ABk = A * &Bk;
-        // Casting usize to f64 causes a loss of precision on targets with
-        // 64-bit wide pointers (usize is 64 bits wide, but f64's mantissa is
-        // only 52 bits wide)
-        ak = -(k as f64).recip() * ABk.trace();
-        a.insert(0, ak);
-    }
-    (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
+                let ABk = A * &Bk;
+                // Casting usize to $ty causes a loss of precision on targets with
+                // 64-bit wide pointers (usize is 64 bits wide, but $ty's mantissa is
+                // only 52 bits wide for f64 and 23 bits wide for f32)
+                ak = -(k as $ty).recip() * ABk.trace();
+                a.insert(0, ak);
+            }
+            (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
+        }
+    };
 }
 
-/// Faddeev–LeVerrier algorithm
-///
-/// [Wikipedia](https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm)
-///
-/// B(s) =       B1*s^(n-1) + B2*s^(n-2) + B3*s^(n-3) + ...
-/// a(s) = s^n + a1*s^(n-1) + a2*s^(n-2) + a3*s^(n-3) + ...
-///
-/// with B1 = I = eye(n,n)
-/// a1 = -trace(A); ak = -1/k * trace(A*Bk)
-/// Bk = a_(k-1)*I + A*B_(k-1)
-#[allow(non_snake_case, clippy::cast_precision_loss)]
-pub(super) fn leverrier_f32(A: &DMatrix<f32>) -> (Poly<f32>, PolyMatrix<f32>) {
-    let size = A.nrows(); // A is a square matrix.
-    let mut a = vec![1.0];
-    let a1 = -A.trace();
-    a.insert(0, a1);
-
-    let B1 = DMatrix::identity(size, size); // eye(n,n)
-    let mut B = vec![B1.clone()];
-    if size == 1 {
-        return (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B));
-    }
-
-    let mut Bk = B1.clone();
-    let mut ak = a1;
-    for k in 2..=size {
-        Bk = ak * &B1 + A * &Bk;
-        B.insert(0, Bk.clone());
-
-        let ABk = A * &Bk;
-        // Casting usize to f32 causes a loss of precision on targets with
-        // 64-bit wide pointers (usize is 64 bits wide, but f32's mantissa is
-        // only 23 bits wide)
-        ak = -(k as f32).recip() * ABk.trace();
-        a.insert(0, ak);
-    }
-    (Poly::new_from_coeffs(&a), PolyMatrix::new_from_coeffs(&B))
-}
+leverrier!(f64, leverrier_f64);
+leverrier!(f32, leverrier_f32);
 
 impl<T: Float + Scalar + ComplexField + RealField, U: Time> TryFrom<TfGen<T, U>> for SsGen<T, U> {
     type Error = &'static str;
