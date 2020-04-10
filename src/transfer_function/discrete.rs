@@ -269,9 +269,9 @@ macro_rules! arma_iter {
         // Calculate the output.
         let new_y = input - old_output;
         // Put the new calculated value in the last position of the buffer.
-        if let Some(x) = $self.y.back_mut() {
-            *x = new_y;
-        }
+        // `back_mut` returns None if the Deque is empty, this should never happen.
+        debug_assert!(!$self.y.is_empty());
+        *$self.y.back_mut()? = new_y;
         Some(new_y)
     }};
 }
@@ -315,11 +315,7 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(data) = self.iter.next() {
-            self.u.push_back(data);
-        } else {
-            return None;
-        }
+        self.u.push_back(self.iter.next()?);
         arma_iter!(self)
     }
 }
