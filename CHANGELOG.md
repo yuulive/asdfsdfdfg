@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## [0.8.0] Unreleased
 ## Added
 - Documentation of the specification of the library
+- Evaluation of polynomial and transfer functions now take reference values too
 ## Changed
 - Improvements on polynomial roots finders and increment of related tests
 - General source code linting
