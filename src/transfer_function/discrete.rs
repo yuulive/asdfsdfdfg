@@ -97,28 +97,37 @@ impl<T: Float + MulAdd<Output = T>> Tfz<T> {
 /// * `u` - queue containing the supplied inputs
 macro_rules! arma {
     ($self:ident, $y_coeffs:ident, $u_coeffs:ident, $y:ident, $u:ident) => {{
-        let mut g = $self.normalize();
-        let n = g.den.degree().unwrap_or(0);
+        let g = $self.normalize();
+        let n_n = g.num.degree().unwrap_or(0);
+        let n_d = g.den.degree().unwrap_or(0);
+        let n = n_n.max(n_d);
 
         // The front is the lowest order coefficient.
         // The back is the higher order coefficient.
-        // The last coefficient is always 1.
+        // The higher degree terms are the more recent.
+        // The last coefficient is always 1, because g is normalized.
         // [a0, a1, a2, ..., a(n-1), 1]
-        $y_coeffs = g.den.coeffs();
-        // [b0, b1, b2, ..., bn]
-        // The numerator must be extended to the degree of the denominator
-        // and the higher degree terms (more recent) must be zero.
-        g.num.extend(n);
+        let mut output_coefficients = g.den.coeffs();
+        // Remove the last coefficient by truncating the vector by one.
+        // This is done because the last coefficient of the denominator corresponds
+        // to the currently calculated output.
+        output_coefficients.truncate(n_d);
+        // [a0, a1, a2, ..., a(n-1)]
+        $y_coeffs = output_coefficients;
+        // [b0, b1, b2, ..., bm]
         $u_coeffs = g.num.coeffs();
 
+        // The coefficients do not need to be extended with zeros,
+        // when the coffiecients are 'zipped' with the VecDeque, the zip stops at the
+        // shortest iterator.
+
+        let length = n + 1;
         // The front is the oldest calculated output.
         // [y(k-n), y(k-n+1), ..., y(k-1), y(k)]
-        $y = VecDeque::from(vec![T::zero(); $y_coeffs.len()]);
+        $y = VecDeque::from(vec![T::zero(); length]);
         // The front is the oldest input.
         // [u(k-n), u(k-n+1), ..., u(k-1), u(k)]
-        $u = VecDeque::from(vec![T::zero(); $u_coeffs.len()]);
-        debug_assert!($u_coeffs.len() == $u.len());
-        debug_assert!($u.len() == $y.len());
+        $u = VecDeque::from(vec![T::zero(); length]);
     }};
 }
 
@@ -243,14 +252,16 @@ where
 ///
 /// * `self` - `self` keyword parameter
 macro_rules! arma_iter {
-    ($self:ident) => {{
+    ($self:ident, $current_input:ident) => {{
+        // Push the current input into the most recent position of the input buffer.
+        $self.u.push_back($current_input);
         // Discard oldest input.
         $self.u.pop_front();
         let input: T = $self
             .u_coeffs
             .iter()
             .zip(&$self.u)
-            .map(|(&i, &j)| i * j)
+            .map(|(&c, &u)| c * u)
             .sum();
 
         // Push zero in the last position shifting output values one step back
@@ -263,7 +274,7 @@ macro_rules! arma_iter {
             .y_coeffs
             .iter()
             .zip(&$self.y)
-            .map(|(&i, &j)| i * j)
+            .map(|(&c, &y)| c * y)
             .sum();
 
         // Calculate the output.
@@ -284,9 +295,9 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.u.push_back((self.input)(self.k));
+        let current_input = (self.input)(self.k);
         self.k += 1;
-        arma_iter!(self)
+        arma_iter!(self, current_input)
     }
 }
 
@@ -315,8 +326,8 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.u.push_back(self.iter.next()?);
-        arma_iter!(self)
+        let current_input = self.iter.next()?;
+        arma_iter!(self, current_input)
     }
 }
 
