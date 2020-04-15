@@ -123,8 +123,9 @@ impl<T: Scalar> Ssd<T> {
     /// let last = evo.last().unwrap();
     /// assert!(last[0] < 0.001);
     /// ```
-    pub fn evolution_from_iter<I>(&self, iter: I, x0: &[T]) -> DiscreteIterator2<I, T>
+    pub fn evolution_from_iter<I, II>(&self, iter: II, x0: &[T]) -> DiscreteIterator2<I, T>
     where
+        II: IntoIterator<Item = Vec<T>, IntoIter = I>,
         I: Iterator<Item = Vec<T>>,
     {
         let state = DVector::from_column_slice(x0);
@@ -133,7 +134,7 @@ impl<T: Scalar> Ssd<T> {
             sys: &self,
             state,
             next_state,
-            iter,
+            iter: iter.into_iter(),
         }
     }
 }

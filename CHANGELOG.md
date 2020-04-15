@@ -7,6 +7,7 @@
 ## Changed
 - Improvements on polynomial roots finders and increment of related tests
 - General source code linting
+- Use IntoIterator trait as interface in methods that require an iterator
 ## Fixed
 - Subtraction between a real number and a polynomial
 

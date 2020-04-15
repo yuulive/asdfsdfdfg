@@ -204,8 +204,9 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     /// assert_eq!(Some(5.), iter.next());
     /// assert_eq!(Some(6.), iter.next());
     /// ```
-    pub fn arma_from_iter<I>(&self, iter: I) -> ArmaIterator<I, T>
+    pub fn arma_from_iter<I, II>(&self, iter: II) -> ArmaIterator<I, T>
     where
+        II: IntoIterator<Item = T, IntoIter = I>,
         I: Iterator<Item = T>,
     {
         let y_coeffs: Vec<_>;
@@ -219,7 +220,7 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
             u_coeffs,
             y,
             u,
-            iter,
+            iter: iter.into_iter(),
         }
     }
 }
@@ -305,7 +306,10 @@ where
 /// transfer function.
 /// The input is supplied through an iterator.
 #[derive(Debug)]
-pub struct ArmaIterator<I, T> {
+pub struct ArmaIterator<I, T>
+where
+    I: Iterator,
+{
     /// y coefficients
     y_coeffs: Vec<T>,
     /// u coefficients
