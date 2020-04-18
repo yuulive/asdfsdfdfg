@@ -238,6 +238,30 @@ impl<T: Copy + PartialEq + Zero> Poly<T> {
         p
     }
 
+    /// Create a new polynomial given a iterator of real coefficients.
+    /// It trims any leading zeros in the high order coefficients.
+    ///
+    /// # Arguments
+    ///
+    /// * `coeffs` - iterator of coefficients
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs_iter(1..4);
+    /// ```
+    pub fn new_from_coeffs_iter<II>(coeffs: II) -> Self
+    where
+        II: IntoIterator<Item = T>,
+    {
+        let mut p = Self {
+            coeffs: coeffs.into_iter().collect(),
+        };
+        p.trim();
+        debug_assert!(!p.coeffs.is_empty());
+        p
+    }
+
     /// Trim the zeros coefficients of high degree terms.
     /// It will not leave an empty `coeffs` vector: zero poly is returned.
     fn trim(&mut self) {
@@ -268,6 +292,32 @@ impl<T: AddAssign + Copy + Num + Neg<Output = T>> Poly<T> {
     /// ```
     pub fn new_from_roots(roots: &[T]) -> Self {
         let mut p = roots.iter().fold(Self::one(), |acc, &r| {
+            acc * Self {
+                coeffs: vec![-r, T::one()],
+            }
+        });
+        p.trim();
+        debug_assert!(!p.coeffs.is_empty());
+        p
+    }
+
+    /// Create a new polynomial given an iterator of real roots
+    /// It trims any leading zeros in the high order coefficients.
+    ///
+    /// # Arguments
+    ///
+    /// * `roots` - iterator of roots
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_roots_iter((1..4));
+    /// ```
+    pub fn new_from_roots_iter<II>(roots: II) -> Self
+    where
+        II: IntoIterator<Item = T>,
+    {
+        let mut p = roots.into_iter().fold(Self::one(), |acc, r| {
             acc * Self {
                 coeffs: vec![-r, T::one()],
             }
@@ -1812,6 +1862,11 @@ mod tests {
 
         let float = [0.1_f32, 0.34, 3.43];
         assert_eq!(float, Poly::new_from_coeffs(&float).coeffs.as_slice());
+
+        assert_eq!(
+            Poly::new_from_coeffs(&[1, 2, 3]),
+            Poly::new_from_coeffs_iter(1..=3)
+        );
     }
 
     #[test]
@@ -1860,6 +1915,9 @@ mod tests {
             poly!(0., -2., 1., 1.),
             Poly::new_from_roots(&[-0., -2., 1.])
         );
+
+        let v = vec![1, 2, -3];
+        assert_eq!(Poly::new_from_roots(&v), Poly::new_from_roots_iter(v));
     }
 
     #[test]
