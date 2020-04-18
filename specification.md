@@ -4,19 +4,30 @@ by ref -> method takes reference of parameter
 in place -> parameter is passed by mutable reference
 
 # Polynomial
-
-- Real coefficients
-- Creation from a slice of real coefficients
-- Creation from a slice of real roots
-- Coefficients indexing and manipulation
+## Type
+Real coefficients
+## Creation
+- Creation from real coefficients
+  - slice
+  - iterator
+- Creation from real roots
+  - slice
+  - iterator
+## Indexing
+Coefficients indexing and manipulation
+## Properties
 - Degree calculation (Option type, None for zero polynomial) (by ref)
 - Extension of the polynomial with high degree zero terms (in place)
+- Monic representation and leading coefficient (in place, by ref)
+- Zero polynomial (additive identity)
+- One polynomial (multiplicative identity)
+- Evaluation (real and complex numbers) (by value, by ref)
+## Roots
 - Real roots calculation (Option type) (eigenvalues method)
 - Complex roots calculation (eigenvalues and iterative method)
-- Monic representation and leading coefficient (in place, by ref)
 - Polynomial derivative (by ref)
 - Polynomial integral (by ref)
-- Evaluation (scalar and complex numbers) (by value, by ref)
+## Arithmetic operations
 - Negation of polynomial (by value, by ref)
 - Addition between polynomials (by value, by ref)
 - Subtraction between polynomials  (by value, by ref)
@@ -27,9 +38,8 @@ in place -> parameter is passed by mutable reference
 - Subtraction with scalar (commutative) (by value, by ref)
 - Multiplication with scalar (commutative) (by value, by ref)
 - Division with scalar (by value, by ref)
-- Zero polynomial (additive identity)
-- One polynomial (multiplicative identity)
-- Polynomial formatting
+## Formatting
+Polynomial formatting
 
 # Polynomial matrices
 
