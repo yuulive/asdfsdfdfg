@@ -11,7 +11,7 @@ use crate::transfer_function::continuous::Tf;
 
 /// Struct for root locus plot
 #[derive(Debug)]
-pub struct RootLocusIterator<T: Float> {
+pub struct RootLocus<T: Float> {
     /// Transfer function
     tf: Tf<T>,
     /// Transfer constant
@@ -24,8 +24,8 @@ pub struct RootLocusIterator<T: Float> {
     index: T,
 }
 
-impl<T: Float> RootLocusIterator<T> {
-    /// Create a `RootLocusIterator` struct
+impl<T: Float> RootLocus<T> {
+    /// Create a `RootLocus` struct
     ///
     /// # Arguments
     ///
@@ -60,14 +60,14 @@ impl<T: Float> RootLocusIterator<T> {
 
 /// Struct to hold the data for the root locus plot.
 #[derive(Debug)]
-pub struct RootLocus<T: Float> {
+pub struct Data<T: Float> {
     /// Transfer constant
     k: T,
     /// Roots at the given transfer constant
     output: Vec<Complex<T>>,
 }
 
-impl<T: Float> RootLocus<T> {
+impl<T: Float> Data<T> {
     /// Get the transfer constant.
     pub fn k(&self) -> T {
         self.k
@@ -79,10 +79,8 @@ impl<T: Float> RootLocus<T> {
     }
 }
 
-impl<T: ComplexField + Float + MulAdd<Output = T> + RealField + Scalar> Iterator
-    for RootLocusIterator<T>
-{
-    type Item = RootLocus<T>;
+impl<T: ComplexField + Float + MulAdd<Output = T> + RealField + Scalar> Iterator for RootLocus<T> {
+    type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.intervals {
@@ -109,13 +107,13 @@ mod tests {
     #[should_panic]
     fn fail_new1() {
         let tf = Tf::new(poly!(1.), poly!(0., 1.));
-        RootLocusIterator::new(tf, 0.1, 0.2, 0.);
+        RootLocus::new(tf, 0.1, 0.2, 0.);
     }
 
     #[test]
     #[should_panic]
     fn fail_new2() {
         let tf = Tf::new(poly!(1.), poly!(0., 1.));
-        RootLocusIterator::new(tf, 0.9, 0.2, 0.1);
+        RootLocus::new(tf, 0.9, 0.2, 0.1);
     }
 }

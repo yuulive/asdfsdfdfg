@@ -19,9 +19,9 @@ use std::{cmp::Ordering, marker::PhantomData};
 
 use crate::{
     plots::{
-        bode::{BodeIterator, BodePlot},
-        polar::{PolarIterator, PolarPlot},
-        root_locus::RootLocusIterator,
+        bode::{Bode, BodePlot},
+        polar::{Polar, PolarPlot},
+        root_locus::RootLocus,
     },
     transfer_function::TfGen,
     units::{Decibel, RadiansPerSecond, Seconds},
@@ -195,7 +195,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Tf<T> {
         p.complex_roots()
     }
 
-    /// Create a `RootLocusIterator` plot
+    /// Create a `RootLocus` plot
     ///
     /// # Arguments
     ///
@@ -218,8 +218,8 @@ impl<T: ComplexField + Float + RealField + Scalar> Tf<T> {
     /// let locus = l.root_locus_iter(0.1, 1.0, 0.05);
     /// assert_eq!(19, locus.count());
     /// ```
-    pub fn root_locus_iter(self, min_k: T, max_k: T, step: T) -> RootLocusIterator<T> {
-        RootLocusIterator::new(self, min_k, max_k, step)
+    pub fn root_locus_iter(self, min_k: T, max_k: T, step: T) -> RootLocus<T> {
+        RootLocus::new(self, min_k, max_k, step)
     }
 }
 
@@ -248,8 +248,8 @@ impl<T: Decibel<T> + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
-    ) -> BodeIterator<T> {
-        BodeIterator::new(self, min_freq, max_freq, step)
+    ) -> Bode<T> {
+        Bode::new(self, min_freq, max_freq, step)
     }
 }
 
@@ -260,8 +260,8 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> PolarPlot<T> for Tf<T> {
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
-    ) -> PolarIterator<T> {
-        PolarIterator::new(self, min_freq, max_freq, step)
+    ) -> Polar<T> {
+        Polar::new(self, min_freq, max_freq, step)
     }
 }
 
