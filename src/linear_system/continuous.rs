@@ -8,7 +8,7 @@ use num_traits::Float;
 
 use crate::{
     linear_system::{
-        solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
+        solver::{Order, Radau, Rk, Rkf45},
         Equilibrium, SsGen,
     },
     units::Seconds,
@@ -86,11 +86,11 @@ impl Ss<f64> {
     /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk2<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F, f64>
+    pub fn rk2<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> Rk<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
-        RkIterator::new(self, u, x0, h, n, Order::Rk2)
+        Rk::new(self, u, x0, h, n, Order::Rk2)
     }
 
     /// Time evolution for the given input, using Runge-Kutta fourth order method
@@ -101,11 +101,11 @@ impl Ss<f64> {
     /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk4<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F, f64>
+    pub fn rk4<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> Rk<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
-        RkIterator::new(self, u, x0, h, n, Order::Rk4)
+        Rk::new(self, u, x0, h, n, Order::Rk4)
     }
 
     /// Runge-Kutta-Fehlberg 45 with adaptive step for time evolution.
@@ -124,11 +124,11 @@ impl Ss<f64> {
         h: Seconds<f64>,
         limit: Seconds<f64>,
         tol: f64,
-    ) -> Rkf45Iterator<F, f64>
+    ) -> Rkf45<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
-        Rkf45Iterator::new(self, u, x0, h, limit, tol)
+        Rkf45::new(self, u, x0, h, limit, tol)
     }
 
     /// Radau of order 3 with 2 steps method for time evolution.
@@ -140,18 +140,11 @@ impl Ss<f64> {
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `tol` - error tolerance
-    pub fn radau<F>(
-        &self,
-        u: F,
-        x0: &[f64],
-        h: Seconds<f64>,
-        n: usize,
-        tol: f64,
-    ) -> RadauIterator<F, f64>
+    pub fn radau<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize, tol: f64) -> Radau<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
-        RadauIterator::new(self, u, x0, h, n, tol)
+        Radau::new(self, u, x0, h, n, tol)
     }
 }
 

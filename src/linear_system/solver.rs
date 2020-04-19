@@ -34,7 +34,7 @@ pub(super) enum Order {
 
 /// Struct for the time evolution of a linear system
 #[derive(Debug)]
-pub struct RkIterator<'a, F, T>
+pub struct Rk<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
     T: Float + Scalar,
@@ -57,7 +57,7 @@ where
     order: Order,
 }
 
-impl<'a, F, T> RkIterator<'a, F, T>
+impl<'a, F, T> Rk<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
     T: AddAssign + Float + MulAssign + RkConst + Scalar,
@@ -98,10 +98,10 @@ where
     /// Initial step (time 0) of the Runge-Kutta solver.
     /// It contains the initial state and the calculated initial output
     /// at the constructor.
-    fn initial_step(&mut self) -> Option<Rk<T>> {
+    fn initial_step(&mut self) -> Option<Step<T>> {
         self.index += 1;
         // State and output at time 0.
-        Some(Rk {
+        Some(Step {
             time: Seconds(T::zero()),
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
@@ -110,7 +110,7 @@ where
 
     /// Runge-Kutta order 2 method.
     #[allow(clippy::cast_precision_loss)]
-    fn main_iteration_rk2(&mut self) -> Option<Rk<T>> {
+    fn main_iteration_rk2(&mut self) -> Option<Step<T>> {
         // y_n+1 = y_n + 1/2(k1 + k2) + O(h^3)
         // k1 = h*f(t_n, y_n)
         // k2 = h*f(t_n + h, y_n + k1)
@@ -127,7 +127,7 @@ where
         self.output = &self.sys.c * &self.state + &self.sys.d * &uh;
 
         self.index += 1;
-        Some(Rk {
+        Some(Step {
             time: end_time,
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
@@ -136,7 +136,7 @@ where
 
     /// Runge-Kutta order 4 method.
     #[allow(clippy::cast_precision_loss)]
-    fn main_iteration_rk4(&mut self) -> Option<Rk<T>> {
+    fn main_iteration_rk4(&mut self) -> Option<Step<T>> {
         // y_n+1 = y_n + h/6(k1 + 2*k2 + 2*k3 + k4) + O(h^4)
         // k1 = f(t_n, y_n)
         // k2 = f(t_n + h/2, y_n + h/2 * k1)
@@ -162,7 +162,7 @@ where
         self.output = &self.sys.c * &self.state + &self.sys.d * &u_end;
 
         self.index += 1;
-        Some(Rk {
+        Some(Step {
             time: end_time,
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
@@ -195,13 +195,13 @@ impl_rk_const!(f32);
 impl_rk_const!(f64);
 //////
 
-/// Implementation of the Iterator trait for the `RkIterator` struct
-impl<'a, F, T> Iterator for RkIterator<'a, F, T>
+/// Implementation of the Iterator trait for the `Rk` struct
+impl<'a, F, T> Iterator for Rk<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
     T: AddAssign + Float + MulAssign + RkConst + Scalar,
 {
-    type Item = Rk<T>;
+    type Item = Step<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.n {
@@ -219,7 +219,7 @@ where
 
 /// Struct to hold the data of the linear system time evolution
 #[derive(Debug)]
-pub struct Rk<T: Float> {
+pub struct Step<T: Float> {
     /// Time of the current step
     time: Seconds<T>,
     /// Current state
@@ -228,7 +228,7 @@ pub struct Rk<T: Float> {
     output: Vec<T>,
 }
 
-impl<T: Float> Rk<T> {
+impl<T: Float> Step<T> {
     /// Get the time of the current step
     pub fn time(&self) -> Seconds<T> {
         self.time
@@ -247,7 +247,7 @@ impl<T: Float> Rk<T> {
 
 /// Struct for the time evolution of a linear system
 #[derive(Debug)]
-pub struct Rkf45Iterator<'a, F, T>
+pub struct Rkf45<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
     T: Float + Scalar,
@@ -272,7 +272,7 @@ where
     initial_step: bool,
 }
 
-impl<'a, F, T> Rkf45Iterator<'a, F, T>
+impl<'a, F, T> Rkf45<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
     T: AddAssign + Float + MulAssign + Rkf45Const + Scalar + Signed + SubAssign,
@@ -315,9 +315,9 @@ where
     /// Initial step (time 0) of the rkf45 solver.
     /// It contains the initial state and the calculated initial output
     /// at the constructor
-    fn initial_step(&mut self) -> Option<Rkf45<T>> {
+    fn initial_step(&mut self) -> Option<StepWithError<T>> {
         self.initial_step = false;
-        Some(Rkf45 {
+        Some(StepWithError {
             time: Seconds(T::zero()),
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
@@ -326,7 +326,7 @@ where
     }
 
     /// Runge-Kutta-Fehlberg order 4 and 5 method with adaptive step size
-    fn main_iteration(&mut self) -> Option<Rkf45<T>> {
+    fn main_iteration(&mut self) -> Option<StepWithError<T>> {
         let mut error;
         loop {
             let u1 = DVector::from_vec((self.input)(self.time));
@@ -388,7 +388,7 @@ where
         let u = DVector::from_vec((self.input)(self.time));
         self.output = &self.sys.c * &self.state + &self.sys.d * &u;
 
-        Some(Rkf45 {
+        Some(StepWithError {
             time: self.time,
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
@@ -397,13 +397,13 @@ where
     }
 }
 
-/// Implementation of the Iterator trait for the `Rkf45Iterator` struct
-impl<'a, F, T> Iterator for Rkf45Iterator<'a, F, T>
+/// Implementation of the Iterator trait for the `Rkf45` struct
+impl<'a, F, T> Iterator for Rkf45<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
     T: AddAssign + Float + MulAssign + Rkf45Const + Signed + Scalar + SubAssign,
 {
-    type Item = Rkf45<T>;
+    type Item = StepWithError<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.time > self.limit {
@@ -473,7 +473,7 @@ impl_rkf45_const!(f64);
 
 /// Struct to hold the data of the linear system time evolution
 #[derive(Debug)]
-pub struct Rkf45<T: Float> {
+pub struct StepWithError<T: Float> {
     /// Current step size
     time: Seconds<T>,
     /// Current state
@@ -484,7 +484,7 @@ pub struct Rkf45<T: Float> {
     error: T,
 }
 
-impl<T: Float> Rkf45<T> {
+impl<T: Float> StepWithError<T> {
     /// Get the time of the current step
     pub fn time(&self) -> Seconds<T> {
         self.time
@@ -509,7 +509,7 @@ impl<T: Float> Rkf45<T> {
 /// Struct for the time evolution of the linear system using the implicit
 /// Radau method of order 3 with 2 steps
 #[derive(Debug)]
-pub struct RadauIterator<'a, F, T>
+pub struct Radau<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
     T: ComplexField + Float + Scalar,
@@ -534,7 +534,7 @@ where
     lu_jacobian: LU<T, Dynamic, Dynamic>,
 }
 
-impl<'a, F, T> RadauIterator<'a, F, T>
+impl<'a, F, T> Radau<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
     T: AbsDiffEq<Epsilon = T> + ComplexField + Float + Scalar + RadauConst + RelativeEq,
@@ -587,9 +587,9 @@ where
     /// Initial step (time 0) of the Radau solver.
     /// It contains the initial state and the calculated initial output
     /// at the constructor.
-    fn initial_step(&mut self) -> Option<Radau<T>> {
+    fn initial_step(&mut self) -> Option<Step<T>> {
         self.index += 1;
-        Some(Radau {
+        Some(Step {
             time: Seconds(T::zero()),
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
@@ -598,7 +598,7 @@ where
 
     /// Radau order 3 with 2 step implicit method.
     #[allow(clippy::cast_precision_loss)]
-    fn main_iteration(&mut self) -> Option<Radau<T>> {
+    fn main_iteration(&mut self) -> Option<Step<T>> {
         // Return None if conversion fails.
         let time = T::from(self.index - 1)? * self.h.0;
         let rows = self.sys.a.nrows();
@@ -658,7 +658,7 @@ where
         self.output = &self.sys.c * &self.state + &self.sys.d * &u;
 
         self.index += 1;
-        Some(Radau {
+        Some(Step {
             time: end_time,
             state: self.state.as_slice().to_vec(),
             output: self.output.as_slice().to_vec(),
@@ -697,13 +697,13 @@ impl_radau_const!(f32);
 impl_radau_const!(f64);
 //////
 
-/// Implementation of the Iterator trait for the `RadauIterator` struct.
-impl<'a, F, T> Iterator for RadauIterator<'a, F, T>
+/// Implementation of the Iterator trait for the `Radau` struct.
+impl<'a, F, T> Iterator for Radau<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
     T: AbsDiffEq<Epsilon = T> + ComplexField + Float + Scalar + RadauConst + RelativeEq,
 {
-    type Item = Radau<T>;
+    type Item = Step<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.n {
@@ -713,34 +713,6 @@ where
         } else {
             self.main_iteration()
         }
-    }
-}
-
-/// Struct to hold the data of the linear system time evolution.
-#[derive(Debug)]
-pub struct Radau<T: Float> {
-    /// Time of the current step
-    time: Seconds<T>,
-    /// Current state
-    state: Vec<T>,
-    /// Current output
-    output: Vec<T>,
-}
-
-impl<T: Float> Radau<T> {
-    /// Get the time of the current step
-    pub fn time(&self) -> Seconds<T> {
-        self.time
-    }
-
-    /// Get the current state of the system
-    pub fn state(&self) -> &Vec<T> {
-        &self.state
-    }
-
-    /// Get the current output of the system
-    pub fn output(&self) -> &Vec<T> {
-        &self.output
     }
 }
 
@@ -754,7 +726,7 @@ mod tests {
         let s = vec![2., 3.];
         let o = vec![-5., -4.];
 
-        let rk = Rk {
+        let rk = Step {
             time: t,
             state: s.clone(),
             output: o.clone(),
@@ -772,7 +744,7 @@ mod tests {
         let o = vec![-5., -4.];
         let e = 0.5;
 
-        let rkf = Rkf45 {
+        let rkf = StepWithError {
             time: t,
             state: s.clone(),
             output: o.clone(),
@@ -790,7 +762,7 @@ mod tests {
         let s = vec![2., 2.4];
         let o = vec![-5.33, -4.];
 
-        let rd = Radau {
+        let rd = Step {
             time: t,
             state: s.clone(),
             output: o.clone(),
