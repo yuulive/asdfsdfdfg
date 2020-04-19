@@ -14,7 +14,7 @@ use num_traits::Float;
 
 use std::{
     marker::PhantomData,
-    ops::{AddAssign, MulAssign, SubAssign},
+    ops::{AddAssign, MulAssign},
 };
 
 use crate::{
@@ -198,83 +198,76 @@ impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     /// ```
     fn discretize(&self, st: T, method: Discretization) -> Option<Ssd<T>> {
         match method {
-            Discretization::ForwardEuler => forward_euler(&self, st),
-            Discretization::BackwardEuler => backward_euler(&self, st),
-            Discretization::Tustin => tustin(&self, st),
+            Discretization::ForwardEuler => self.forward_euler(st),
+            Discretization::BackwardEuler => self.backward_euler(st),
+            Discretization::Tustin => self.tustin(st),
         }
     }
 }
 
-/// Discretization using forward Euler Method.
-///
-/// # Arguments
-///
-/// * `sys` - continuous linear system
-/// * `st` - sample time
-fn forward_euler<T>(sys: &Ss<T>, st: T) -> Option<Ssd<T>>
-where
-    T: Float + MulAssign + Scalar + AddAssign,
-{
-    let states = sys.dim.states;
-    let identity = DMatrix::identity(states, states);
-    Some(Ssd {
-        a: identity + &sys.a * st,
-        b: &sys.b * st,
-        c: sys.c.clone(),
-        d: sys.d.clone(),
-        dim: sys.dim,
-        time: PhantomData,
-    })
-}
-
-/// Discretization using backward Euler Method.
-///
-/// # Arguments
-///
-/// * `sys` - continuous linear system
-/// * `st` - sample time
-fn backward_euler<T>(sys: &Ss<T>, st: T) -> Option<Ssd<T>>
-where
-    T: ComplexField + Float + Scalar + SubAssign,
-{
-    let states = sys.dim.states;
-    let identity = DMatrix::identity(states, states);
-    let a = (identity - &sys.a * st).try_inverse()?;
-    Some(Ssd {
-        b: &a * &sys.b * st,
-        c: &sys.c * &a,
-        d: &sys.d + &sys.c * &a * &sys.b * st,
-        a,
-        dim: sys.dim,
-        time: PhantomData,
-    })
-}
-
-/// Discretization using Tustin Method.
-///
-/// # Arguments
-///
-/// * `sys` - continuous linear system
-/// * `st` - sample time
-fn tustin<T>(sys: &Ss<T>, st: T) -> Option<Ssd<T>>
+impl<T> Ss<T>
 where
     T: ComplexField + Float + Scalar,
 {
-    let states = sys.dim.states;
-    let identity = DMatrix::identity(states, states);
-    // Casting is safe for both f32 and f64, representation is exact.
-    let n_05 = T::from(0.5_f32).unwrap();
-    let a_05_st = &sys.a * (n_05 * st);
-    let k = (&identity - &a_05_st).try_inverse()?;
-    let b = &k * &sys.b * st;
-    Some(Ssd {
-        a: &k * (&identity + &a_05_st),
-        c: &sys.c * &k,
-        d: &sys.d + &sys.c * &b * n_05,
-        b,
-        dim: sys.dim,
-        time: PhantomData,
-    })
+    /// Discretization using forward Euler Method.
+    ///
+    /// # Arguments
+    ///
+    /// * `st` - sample time
+    fn forward_euler(&self, st: T) -> Option<Ssd<T>> {
+        let states = self.dim.states;
+        let identity = DMatrix::identity(states, states);
+        Some(Ssd {
+            a: identity + &self.a * st,
+            b: &self.b * st,
+            c: self.c.clone(),
+            d: self.d.clone(),
+            dim: self.dim,
+            time: PhantomData,
+        })
+    }
+
+    /// Discretization using backward Euler Method.
+    ///
+    /// # Arguments
+    ///
+    /// * `st` - sample time
+    fn backward_euler(&self, st: T) -> Option<Ssd<T>> {
+        let states = self.dim.states;
+        let identity = DMatrix::identity(states, states);
+        let a = (identity - &self.a * st).try_inverse()?;
+        Some(Ssd {
+            b: &a * &self.b * st,
+            c: &self.c * &a,
+            d: &self.d + &self.c * &a * &self.b * st,
+            a,
+            dim: self.dim,
+            time: PhantomData,
+        })
+    }
+
+    /// Discretization using Tustin Method.
+    ///
+    /// # Arguments
+    ///
+    /// * `st` - sample time
+    fn tustin(&self, st: T) -> Option<Ssd<T>> {
+        let states = self.dim.states;
+        let identity = DMatrix::identity(states, states);
+        // Casting is safe for both f32 and f64, representation is exact.
+        let n_05 = T::from(0.5_f32).unwrap();
+        let a_05_st = &self.a * (n_05 * st);
+        let k = (&identity - &a_05_st).try_inverse()?;
+        let b = &k * &self.b * st;
+        Some(Ssd {
+            a: &k * (&identity + &a_05_st),
+            c: &self.c * &k,
+            d: &self.d + &self.c * &b * n_05,
+            b,
+            dim: self.dim,
+            time: PhantomData,
+        })
+    }
 }
 
 /// Struct to hold the iterator for the evolution of the discrete linear system.
