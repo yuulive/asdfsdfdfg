@@ -86,17 +86,17 @@ impl<T: Scalar> Ssd<T> {
     /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ssd};
     /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
-    /// let evo = disc_sys.evolution(20, impulse, &[0., 0.]);
+    /// let evo = disc_sys.evolution_fn(20, impulse, &[0., 0.]);
     /// let last = evo.last().unwrap();
     /// assert_abs_diff_eq!(0., last.state()[1], epsilon = 0.001);
     /// ```
-    pub fn evolution<F>(&self, steps: usize, input: F, x0: &[T]) -> DiscreteIterator<F, T>
+    pub fn evolution_fn<F>(&self, steps: usize, input: F, x0: &[T]) -> EvolutionFn<F, T>
     where
         F: Fn(usize) -> Vec<T>,
     {
         let state = DVector::from_column_slice(x0);
         let next_state = DVector::from_column_slice(x0);
-        DiscreteIterator {
+        EvolutionFn {
             sys: &self,
             time: 0,
             steps,
@@ -119,18 +119,18 @@ impl<T: Scalar> Ssd<T> {
     /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ssd};
     /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = iter::once(vec![1.]).chain(iter::repeat(vec![0.])).take(20);
-    /// let evo = disc_sys.evolution_from_iter(impulse, &[0., 0.]);
+    /// let evo = disc_sys.evolution_iter(impulse, &[0., 0.]);
     /// let last = evo.last().unwrap();
     /// assert!(last[0] < 0.001);
     /// ```
-    pub fn evolution_from_iter<I, II>(&self, iter: II, x0: &[T]) -> DiscreteIterator2<I, T>
+    pub fn evolution_iter<I, II>(&self, iter: II, x0: &[T]) -> EvolutionIter<I, T>
     where
         II: IntoIterator<Item = Vec<T>, IntoIter = I>,
         I: Iterator<Item = Vec<T>>,
     {
         let state = DVector::from_column_slice(x0);
         let next_state = DVector::from_column_slice(x0);
-        DiscreteIterator2 {
+        EvolutionIter {
             sys: &self,
             state,
             next_state,
@@ -192,7 +192,7 @@ impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ss};
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
     /// let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
-    /// let evo = disc_sys.evolution(20, |t| vec![1.], &[0., 0.]);
+    /// let evo = disc_sys.evolution_fn(20, |t| vec![1.], &[0., 0.]);
     /// let last = evo.last().unwrap();
     /// assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
     /// ```
@@ -280,7 +280,7 @@ where
 /// Struct to hold the iterator for the evolution of the discrete linear system.
 /// It uses function to supply inputs.
 #[derive(Debug)]
-pub struct DiscreteIterator<'a, F, T>
+pub struct EvolutionFn<'a, F, T>
 where
     F: Fn(usize) -> Vec<T>,
     T: Scalar,
@@ -293,7 +293,7 @@ where
     next_state: DVector<T>,
 }
 
-impl<'a, F, T> Iterator for DiscreteIterator<'a, F, T>
+impl<'a, F, T> Iterator for EvolutionFn<'a, F, T>
 where
     F: Fn(usize) -> Vec<T>,
     T: AddAssign + Float + MulAssign + Scalar,
@@ -324,7 +324,7 @@ where
 /// Struct to hold the iterator for the evolution of the discrete linear system.
 /// It uses iterators to supply inputs.
 #[derive(Debug)]
-pub struct DiscreteIterator2<'a, I, T>
+pub struct EvolutionIter<'a, I, T>
 where
     I: Iterator<Item = Vec<T>>,
     T: Scalar,
@@ -335,7 +335,7 @@ where
     iter: I,
 }
 
-impl<'a, I, T> Iterator for DiscreteIterator2<'a, I, T>
+impl<'a, I, T> Iterator for EvolutionIter<'a, I, T>
 where
     I: Iterator<Item = Vec<T>>,
     T: AddAssign + Float + MulAssign + Scalar,
@@ -441,7 +441,7 @@ mod tests {
         let disc_sys =
             Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
         let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
-        let evo = disc_sys.evolution(20, impulse, &[0., 0.]);
+        let evo = disc_sys.evolution_fn(20, impulse, &[0., 0.]);
         let last = evo.last().unwrap();
         assert_eq!(20, last.time());
         assert_abs_diff_eq!(0., last.state()[1], epsilon = 0.001);
@@ -454,7 +454,7 @@ mod tests {
         let disc_sys =
             Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
         let impulse = iter::once(vec![1.]).chain(iter::repeat(vec![0.])).take(20);
-        let evo = disc_sys.evolution_from_iter(impulse, &[0., 0.]);
+        let evo = disc_sys.evolution_iter(impulse, &[0., 0.]);
         let last = evo.last().unwrap();
         assert!(last[0] < 0.001);
     }
@@ -463,7 +463,7 @@ mod tests {
     fn discretization_tustin() {
         let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
         let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
-        let evo = disc_sys.evolution(20, |_| vec![1.], &[0., 0.]);
+        let evo = disc_sys.evolution_fn(20, |_| vec![1.], &[0., 0.]);
         let last = evo.last().unwrap();
         assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
     }
@@ -480,7 +480,7 @@ mod tests {
         let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
         let disc_sys = sys.discretize(0.1, Discretization::BackwardEuler).unwrap();
         //let evo = disc_sys.time_evolution(20, |_| vec![1.], &[0., 0.]);
-        let evo = disc_sys.evolution(50, |_| vec![1.], &[0., 0.]);
+        let evo = disc_sys.evolution_fn(50, |_| vec![1.], &[0., 0.]);
         let last = evo.last().unwrap();
         assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
     }
@@ -496,7 +496,7 @@ mod tests {
     fn discretization_euler_forward() {
         let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
         let disc_sys = sys.discretize(0.1, Discretization::ForwardEuler).unwrap();
-        let evo = disc_sys.evolution(20, |_| vec![1.], &[0., 0.]);
+        let evo = disc_sys.evolution_fn(20, |_| vec![1.], &[0., 0.]);
         let last = evo.last().unwrap();
         assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
     }

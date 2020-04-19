@@ -12,7 +12,7 @@ fn main() {
     println!("{}", &sys);
 
     let input = 50.;
-    let te = sys.evolution(8, discrete::step_vec(input, 0, 1), &[0., 0., 0.]);
+    let te = sys.evolution_fn(8, discrete::step_vec(input, 0, 1), &[0., 0., 0.]);
 
     let last_step = te.last().unwrap();
     println!("{:?}", last_step);

@@ -11,6 +11,7 @@
 - Use IntoIterator trait as interface in methods that require an iterator
 - Changed iterator names (C-ITER-TY API guidelines)
 - Changed linear system solvers names (C-ITER-TY API guidelines)
+- Changed linear system evolution iterators names (C-ITER-TY API guidelines)
 ## Fixed
 - Subtraction between a real number and a polynomial
 
