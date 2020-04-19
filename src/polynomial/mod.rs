@@ -1834,6 +1834,20 @@ impl<T: Display + One + PartialEq + Signed + Zero> Display for Poly<T> {
     }
 }
 
+/// Conversion from `Poly` to a `Vec` containing its coefficients.
+impl<T> From<Poly<T>> for Vec<T> {
+    fn from(poly: Poly<T>) -> Self {
+        poly.coeffs
+    }
+}
+
+/// View the `Poly` coefficients as slice.
+impl<T> AsRef<[T]> for Poly<T> {
+    fn as_ref(&self) -> &[T] {
+        self.coeffs.as_ref()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2273,6 +2287,16 @@ mod tests {
     fn failing_companion() {
         let p = Poly::<f32>::zero();
         assert_eq!(None, p.companion());
+    }
+
+    #[test]
+    fn conversion_into_vec() {
+        assert_eq!(vec![-1, -2, -3], Vec::from(poly!(-1, -2, -3)));
+    }
+
+    #[test]
+    fn conversion_into_slice() {
+        assert_eq!(&[3, -6, 8], poly!(3, -6, 8).as_ref());
     }
 }
 
