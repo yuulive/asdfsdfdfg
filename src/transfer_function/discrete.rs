@@ -152,13 +152,13 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     /// ```
     /// use automatica::{poly, signals::discrete, Tfz};
     /// let tfz = Tfz::new(poly!(1., 2., 3.), poly!(0., 0., 0., 1.));
-    /// let mut iter = tfz.arma(discrete::step(1., 0));
+    /// let mut iter = tfz.arma_fn(discrete::step(1., 0));
     /// assert_eq!(Some(0.), iter.next());
     /// assert_eq!(Some(3.), iter.next());
     /// assert_eq!(Some(5.), iter.next());
     /// assert_eq!(Some(6.), iter.next());
     /// ```
-    pub fn arma<F>(&self, input: F) -> ArmaFunction<F, T>
+    pub fn arma_fn<F>(&self, input: F) -> ArmaFn<F, T>
     where
         F: Fn(usize) -> T,
     {
@@ -168,7 +168,7 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
         let u: VecDeque<_>;
         arma!(self, y_coeffs, u_coeffs, y, u);
 
-        ArmaFunction {
+        ArmaFn {
             y_coeffs,
             u_coeffs,
             y,
@@ -198,13 +198,13 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     /// ```
     /// use automatica::{poly, signals::discrete, Tfz};
     /// let tfz = Tfz::new(poly!(1., 2., 3.), poly!(0., 0., 0., 1.));
-    /// let mut iter = tfz.arma_from_iter(std::iter::repeat(1.));
+    /// let mut iter = tfz.arma_iter(std::iter::repeat(1.));
     /// assert_eq!(Some(0.), iter.next());
     /// assert_eq!(Some(3.), iter.next());
     /// assert_eq!(Some(5.), iter.next());
     /// assert_eq!(Some(6.), iter.next());
     /// ```
-    pub fn arma_from_iter<I, II>(&self, iter: II) -> ArmaIterator<I, T>
+    pub fn arma_iter<I, II>(&self, iter: II) -> ArmaIter<I, T>
     where
         II: IntoIterator<Item = T, IntoIter = I>,
         I: Iterator<Item = T>,
@@ -215,7 +215,7 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
         let u: VecDeque<_>;
         arma!(self, y_coeffs, u_coeffs, y, u);
 
-        ArmaIterator {
+        ArmaIter {
             y_coeffs,
             u_coeffs,
             y,
@@ -229,7 +229,7 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
 /// transfer function.
 /// The input is supplied through a function.
 #[derive(Debug)]
-pub struct ArmaFunction<F, T>
+pub struct ArmaFn<F, T>
 where
     F: Fn(usize) -> T,
 {
@@ -288,7 +288,7 @@ macro_rules! arma_iter {
     }};
 }
 
-impl<F, T> Iterator for ArmaFunction<F, T>
+impl<F, T> Iterator for ArmaFn<F, T>
 where
     F: Fn(usize) -> T,
     T: Float + Mul<Output = T> + Sum,
@@ -306,7 +306,7 @@ where
 /// transfer function.
 /// The input is supplied through an iterator.
 #[derive(Debug)]
-pub struct ArmaIterator<I, T>
+pub struct ArmaIter<I, T>
 where
     I: Iterator,
 {
@@ -322,7 +322,7 @@ where
     iter: I,
 }
 
-impl<I, T> Iterator for ArmaIterator<I, T>
+impl<I, T> Iterator for ArmaIter<I, T>
 where
     I: Iterator<Item = T>,
     T: Float + Mul<Output = T> + Sum,
@@ -550,7 +550,7 @@ mod tests {
     #[test]
     fn arma() {
         let tfz = Tfz::new(poly!(0.5_f32), poly!(-0.5, 1.));
-        let mut iter = tfz.arma(discrete::impulse(1., 0)).take(6);
+        let mut iter = tfz.arma_fn(discrete::impulse(1., 0)).take(6);
         assert_eq!(Some(0.), iter.next());
         assert_eq!(Some(0.5), iter.next());
         assert_eq!(Some(0.25), iter.next());
@@ -564,7 +564,7 @@ mod tests {
     fn arma_iter() {
         use std::iter;
         let tfz = Tfz::new(poly!(0.5_f32), poly!(-0.5, 1.));
-        let mut iter = tfz.arma_from_iter(iter::once(1.).chain(iter::repeat(0.)).take(6));
+        let mut iter = tfz.arma_iter(iter::once(1.).chain(iter::repeat(0.)).take(6));
         assert_eq!(Some(0.), iter.next());
         assert_eq!(Some(0.5), iter.next());
         assert_eq!(Some(0.25), iter.next());
