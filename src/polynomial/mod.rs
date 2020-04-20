@@ -1077,8 +1077,9 @@ impl<T: Copy + Num> Add for &Poly<T> {
     type Output = Poly<T>;
 
     fn add(self, rhs: &Poly<T>) -> Poly<T> {
-        let new_coeffs = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), Add::add);
-        Poly::new_from_coeffs(&new_coeffs)
+        let zero = T::zero();
+        let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |&x, &y| x + y);
+        Poly::new_from_coeffs_iter(result)
     }
 }
 
@@ -1214,9 +1215,9 @@ impl<T: Copy + PartialEq + Sub<Output = T> + Zero> Sub for &Poly<T> {
     type Output = Poly<T>;
 
     fn sub(self, rhs: Self) -> Poly<T> {
-        let new_coeffs =
-            utils::zip_longest_with(&self.coeffs, &rhs.coeffs, T::zero(), |x, y| x - y);
-        Poly::new_from_coeffs(&new_coeffs)
+        let zero = T::zero();
+        let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |&x, &y| x - y);
+        Poly::new_from_coeffs_iter(result)
     }
 }
 
