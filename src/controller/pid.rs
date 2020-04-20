@@ -10,6 +10,7 @@ use crate::{polynomial::Poly, transfer_function::continuous::Tf};
 use num_traits::Float;
 
 /// Proportional-Integral-Derivative controller
+#[derive(Debug)]
 pub struct Pid<T: Float> {
     /// Proportional action coefficient
     kp: T,

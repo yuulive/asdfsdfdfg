@@ -336,6 +336,7 @@ where
 }
 
 /// Discretization of a transfer function
+#[derive(Debug)]
 pub struct TfDiscretization<T: Num> {
     /// Transfer function
     tf: Tf<T>,
