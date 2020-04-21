@@ -71,7 +71,9 @@ pub mod utils;
 
 pub use linear_system::{continuous::Ss, discrete::Ssd};
 pub use polynomial::Poly;
-pub use transfer_function::{continuous::Tf, discrete::Tfz, matrix::TfMatrix};
+pub use transfer_function::{
+    continuous::Tf, discrete::Tfz, discretization::TfDiscretization, matrix::TfMatrix,
+};
 
 /// Trait for the implementation of object evaluation
 pub trait Eval<T> {

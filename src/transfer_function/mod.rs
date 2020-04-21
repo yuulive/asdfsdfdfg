@@ -18,6 +18,7 @@
 
 pub mod continuous;
 pub mod discrete;
+pub mod discretization;
 pub mod matrix;
 
 use nalgebra::{ComplexField, RealField, Scalar};
