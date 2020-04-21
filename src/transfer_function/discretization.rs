@@ -123,7 +123,7 @@ impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for TfDiscretization<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{polynomial::Poly, units::Decibel, Eval};
+    use crate::{polynomial::Poly, units::ToDecibel, Eval};
     use num_complex::Complex64;
 
     #[test]

@@ -24,7 +24,7 @@ use crate::{
         root_locus::RootLocus,
     },
     transfer_function::TfGen,
-    units::{Decibel, RadiansPerSecond, Seconds},
+    units::{RadiansPerSecond, Seconds, ToDecibel},
     Continuous, Eval,
 };
 
@@ -242,7 +242,7 @@ impl<T: Float + MulAdd<Output = T>> Tf<T> {
 }
 
 /// Implementation of the Bode plot for a transfer function
-impl<T: Decibel<T> + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf<T> {
+impl<T: ToDecibel + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf<T> {
     fn bode(
         self,
         min_freq: RadiansPerSecond<T>,

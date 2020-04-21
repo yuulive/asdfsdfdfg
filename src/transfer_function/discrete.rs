@@ -333,7 +333,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{poly, polynomial::Poly, signals::discrete, units::Decibel, Eval};
+    use crate::{poly, polynomial::Poly, signals::discrete, units::ToDecibel, Eval};
     use num_complex::Complex64;
 
     #[test]

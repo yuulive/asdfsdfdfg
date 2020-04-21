@@ -7,7 +7,7 @@
 
 use crate::{
     transfer_function::continuous::Tf,
-    units::{Decibel, Hertz, RadiansPerSecond},
+    units::{Hertz, RadiansPerSecond, ToDecibel},
     Eval,
 };
 
@@ -29,7 +29,7 @@ pub struct Bode<T: Float> {
     index: T,
 }
 
-impl<T: Decibel<T> + Float + MulAdd<Output = T>> Bode<T> {
+impl<T: ToDecibel + Float + MulAdd<Output = T>> Bode<T> {
     /// Create a `Bode` struct
     ///
     /// # Arguments

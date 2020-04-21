@@ -7,6 +7,7 @@
 - Add polynomial creation from iterators
 - From trait to polynomial to conversion into Vec
 - AsRef trait to polynomial for reference-to-reference conversion into a slice
+- decibel unit of measurement
 ## Changed
 - Improvements on polynomial roots finders and increment of related tests
 - General source code linting
@@ -16,6 +17,7 @@
 - Changed linear system solvers names (C-ITER-TY API guidelines)
 - Changed linear system evolution iterators names (C-ITER-TY API guidelines)
 - Changed arma iterators names (C-ITER-TY API guidelines)
+- Rename Decibel trait to ToDecibel
 ## Fixed
 - Subtraction between a real number and a polynomial
 

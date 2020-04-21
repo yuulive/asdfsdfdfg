@@ -74,7 +74,7 @@ pub use polynomial::Poly;
 pub use transfer_function::{
     continuous::Tf, discrete::Tfz, discretization::TfDiscretization, matrix::TfMatrix,
 };
-pub use units::{Hertz, RadiansPerSecond, Seconds};
+pub use units::{Decibel, Hertz, RadiansPerSecond, Seconds};
 
 /// Trait for the implementation of object evaluation
 pub trait Eval<T> {

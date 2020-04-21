@@ -5,7 +5,7 @@ use num_traits::One;
 
 use automatica::{
     plots::bode::BodePlot,
-    units::{Decibel, RadiansPerSecond},
+    units::{RadiansPerSecond, ToDecibel},
     Eval, Poly, Tf,
 };
 
