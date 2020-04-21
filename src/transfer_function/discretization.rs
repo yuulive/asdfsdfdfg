@@ -60,7 +60,7 @@ impl<T: Float> TfDiscretization<T> {
     ///     linear_system::discrete::Discretization,
     ///     polynomial::Poly,
     ///     transfer_function::discretization::TfDiscretization,
-    ///     units::Seconds,
+    ///     Seconds,
     ///     Eval,
     ///     Tf
     /// };

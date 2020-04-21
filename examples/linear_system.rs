@@ -2,7 +2,7 @@ extern crate automatica;
 
 use num_complex::Complex;
 
-use automatica::{signals::continuous, units::Seconds, Eval, Ss, TfMatrix};
+use automatica::{signals::continuous, Eval, Seconds, Ss, TfMatrix};
 
 #[allow(clippy::many_single_char_names)]
 #[allow(clippy::non_ascii_literal)]

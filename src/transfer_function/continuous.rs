@@ -43,7 +43,7 @@ impl<T: Float> Tf<T> {
     /// # Example
     /// ```
     /// use num_complex::Complex;
-    /// use automatica::{units::Seconds, Tf};
+    /// use automatica::{Seconds, Tf};
     /// let d = Tf::delay(Seconds(2.));
     /// assert_eq!(1., d(Complex::new(0., 10.)).norm());
     /// ```

@@ -6,8 +6,7 @@ use std::convert::TryFrom;
 use automatica::{
     linear_system::discrete::{DiscreteTime, Discretization},
     signals::{continuous, discrete},
-    units::Seconds,
-    Ss, Tf,
+    Seconds, Ss, Tf,
 };
 
 fn main() {
