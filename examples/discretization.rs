@@ -4,9 +4,9 @@ extern crate automatica;
 use std::convert::TryFrom;
 
 use automatica::{
-    linear_system::discrete::{DiscreteTime, Discretization},
+    linear_system::discrete::DiscreteTime,
     signals::{continuous, discrete},
-    Seconds, Ss, Tf,
+    Discretization, Seconds, Ss, Tf,
 };
 
 fn main() {

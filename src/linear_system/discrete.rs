@@ -19,7 +19,7 @@ use std::{
 
 use crate::{
     linear_system::{continuous::Ss, Equilibrium, SsGen},
-    Discrete,
+    Discrete, Discretization,
 };
 
 /// State-space representation of discrete time linear system
@@ -83,7 +83,7 @@ impl<T: Scalar> Ssd<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ssd};
+    /// use automatica::{linear_system::discrete::DiscreteTime, Discretization, Ssd};
     /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
     /// let evo = disc_sys.evolution_fn(20, impulse, &[0., 0.]);
@@ -116,7 +116,7 @@ impl<T: Scalar> Ssd<T> {
     /// # Example
     /// ```
     /// use std::iter;
-    /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ssd};
+    /// use automatica::{linear_system::discrete::DiscreteTime, Discretization, Ssd};
     /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = iter::once(vec![1.]).chain(iter::repeat(vec![0.])).take(20);
     /// let evo = disc_sys.evolution_iter(impulse, &[0., 0.]);
@@ -167,17 +167,6 @@ pub trait DiscreteTime<T: Scalar> {
     fn discretize(&self, st: T, method: Discretization) -> Option<Ssd<T>>;
 }
 
-/// Discretization algorithm.
-#[derive(Clone, Copy, Debug)]
-pub enum Discretization {
-    /// Forward Euler
-    ForwardEuler,
-    /// Backward Euler
-    BackwardEuler,
-    /// Tustin (trapezoidal rule)
-    Tustin,
-}
-
 impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     /// Convert a linear system into a discrete system.
     ///
@@ -189,7 +178,7 @@ impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ss};
+    /// use automatica::{linear_system::discrete::DiscreteTime, Discretization, Ss};
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
     /// let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
     /// let evo = disc_sys.evolution_fn(20, |t| vec![1.], &[0., 0.]);

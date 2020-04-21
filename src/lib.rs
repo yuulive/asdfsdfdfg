@@ -107,3 +107,14 @@ impl Time for Continuous {}
 #[derive(Debug, PartialEq)]
 pub enum Discrete {}
 impl Time for Discrete {}
+
+/// Discretization algorithm.
+#[derive(Clone, Copy, Debug)]
+pub enum Discretization {
+    /// Forward Euler
+    ForwardEuler,
+    /// Backward Euler
+    BackwardEuler,
+    /// Tustin (trapezoidal rule)
+    Tustin,
+}

@@ -12,10 +12,7 @@ use num_traits::{Float, MulAdd, Num};
 
 use std::fmt::Debug;
 
-use crate::{
-    linear_system::discrete::Discretization, transfer_function::continuous::Tf, units::Seconds,
-    Eval,
-};
+use crate::{transfer_function::continuous::Tf, units::Seconds, Discretization, Eval};
 
 /// Discretization of a transfer function
 #[derive(Debug)]
@@ -57,11 +54,11 @@ impl<T: Float> TfDiscretization<T> {
     /// Example
     /// ```
     /// use automatica::{
-    ///     linear_system::discrete::Discretization,
     ///     polynomial::Poly,
     ///     transfer_function::discretization::TfDiscretization,
-    ///     Seconds,
+    ///     Discretization,
     ///     Eval,
+    ///     Seconds,
     ///     Tf
     /// };
     /// use num_complex::Complex64;
