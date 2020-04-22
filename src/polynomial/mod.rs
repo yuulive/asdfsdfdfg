@@ -1691,12 +1691,16 @@ impl<T: Display + One + PartialEq + Signed + Zero> Display for Poly<T> {
     }
 }
 
-/// Conversion from `Poly` to a `Vec` containing its coefficients.
-impl<T> From<Poly<T>> for Vec<T> {
-    fn from(poly: Poly<T>) -> Self {
-        poly.coeffs
-    }
-}
+// TODO: this trait implementation works from Rust 1.41.
+// It is similar to the method .coeffs().
+// I keep it commented if the will be more features that require newer
+// compiler version I will decomment it.
+// /// Conversion from `Poly` to a `Vec` containing its coefficients.
+// impl<T> From<Poly<T>> for Vec<T> {
+//     fn from(poly: Poly<T>) -> Self {
+//         poly.coeffs
+//     }
+// }
 
 /// View the `Poly` coefficients as slice.
 impl<T> AsRef<[T]> for Poly<T> {
@@ -2144,11 +2148,6 @@ mod tests {
     fn failing_companion() {
         let p = Poly::<f32>::zero();
         assert_eq!(None, p.companion());
-    }
-
-    #[test]
-    fn conversion_into_vec() {
-        assert_eq!(vec![-1, -2, -3], Vec::from(poly!(-1, -2, -3)));
     }
 
     #[test]

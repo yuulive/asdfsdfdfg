@@ -5,7 +5,6 @@
 - Documentation of the specification of the library
 - Evaluation of polynomial and transfer functions now take reference values too
 - Add polynomial creation from iterators
-- From trait to polynomial to conversion into Vec
 - AsRef trait to polynomial for reference-to-reference conversion into a slice
 - decibel unit of measurement
 ## Changed
