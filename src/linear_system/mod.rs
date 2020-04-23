@@ -102,10 +102,10 @@ impl<T: Scalar, U: Time> SsGen<T, U> {
     /// * `states` - number of states (n)
     /// * `inputs` - number of inputs (m)
     /// * `outputs` - number of outputs (p)
-    /// * `a` - A matrix (nxn)
-    /// * `b` - B matrix (nxm)
-    /// * `c` - C matrix (pxn)
-    /// * `d` - D matrix (pxm)
+    /// * `a` - A matrix (nxn), row major matrix supplied as slice
+    /// * `b` - B matrix (nxm), row major matrix supplied as slice
+    /// * `c` - C matrix (pxn), row major matrix supplied as slice
+    /// * `d` - D matrix (pxm), row major matrix supplied as slice
     ///
     /// # Panics
     ///
@@ -170,22 +170,24 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// ```
     #[must_use]
     pub fn poles(&self) -> Vec<Complex<T>> {
-        if self.a.nrows() == 2 {
-            let m00 = self.a[(0, 0)];
-            let m01 = self.a[(0, 1)];
-            let m10 = self.a[(1, 0)];
-            let m11 = self.a[(1, 1)];
-            let trace = m00 + m11;
-            let determinant = m00 * m11 - m01 * m10;
+        match self.dim().states() {
+            1 => vec![Complex::new(self.a[(0, 0)], T::zero())],
+            2 => {
+                let m00 = self.a[(0, 0)];
+                let m01 = self.a[(0, 1)];
+                let m10 = self.a[(1, 0)];
+                let m11 = self.a[(1, 1)];
+                let trace = m00 + m11;
+                let determinant = m00 * m11 - m01 * m10;
 
-            let (eig1, eig2) = polynomial::complex_quadratic_roots(-trace, determinant);
+                let (eig1, eig2) = polynomial::complex_quadratic_roots(-trace, determinant);
 
-            vec![eig1, eig2]
-        } else {
-            Schur::new(self.a.clone())
+                vec![eig1, eig2]
+            }
+            _ => Schur::new(self.a.clone())
                 .complex_eigenvalues()
                 .as_slice()
-                .to_vec()
+                .to_vec(),
         }
     }
 }
@@ -551,6 +553,17 @@ mod tests {
         );
         let poles = sys.poles();
         assert_eq!((eig1, eig2), (poles[0].re, poles[1].re));
+    }
+
+    #[quickcheck]
+    fn poles_one(eig: f32) -> bool {
+        let sys = SsGen::<_, Continuous>::new_from_slice(1, 1, 1, &[eig], &[1.], &[-1.], &[0.1]);
+        let poles = sys.poles();
+
+        let expected = (eig, 0.);
+        let actual = (poles[0].re, poles[0].im);
+        relative_eq!(expected.0, actual.0, max_relative = 1e-10)
+            && relative_eq!(expected.1, actual.1, max_relative = 1e-10)
     }
 
     #[quickcheck]
