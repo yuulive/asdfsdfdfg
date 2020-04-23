@@ -549,7 +549,8 @@ impl<T: Float> Poly<T> {
 /// * `c` - zero degree coefficient
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>) {
-    let b_ = b / T::from(2.0_f32).unwrap(); // Safe cast, it's exact.
+    let two = T::one() + T::one();
+    let b_ = b / two;
     let d = b_.powi(2) - c; // Discriminant
     let (root1_r, root1_i, root2_r, root2_i) = if d.is_zero() {
         (-b_, T::zero(), -b_, T::zero())
