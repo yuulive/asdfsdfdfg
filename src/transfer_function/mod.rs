@@ -40,7 +40,7 @@ use crate::{
 };
 
 /// Transfer function representation of a linear system
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TfGen<T, U: Time> {
     /// Transfer function numerator
     num: Poly<T>,

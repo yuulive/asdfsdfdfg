@@ -45,7 +45,7 @@ use crate::{
 /// xdot(t) = A * x(t) + B * u(t)
 /// y(t)    = C * x(t) + D * u(t)
 /// ```
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct SsGen<T: Scalar, U: Time> {
     /// A matrix
     pub(super) a: DMatrix<T>,

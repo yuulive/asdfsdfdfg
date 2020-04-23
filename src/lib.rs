@@ -99,12 +99,12 @@ pub trait Eval<T> {
 pub trait Time {}
 
 /// Type for continuous systems
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Continuous {}
 impl Time for Continuous {}
 
 /// Type for discrete systems
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Discrete {}
 impl Time for Discrete {}
 
