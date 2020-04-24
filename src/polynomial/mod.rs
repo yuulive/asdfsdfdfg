@@ -18,7 +18,7 @@
 mod fft;
 pub mod matrix;
 
-use nalgebra::{ComplexField, DMatrix, RealField, Scalar, Schur};
+use nalgebra::{ComplexField, DMatrix, RealField, Scalar};
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd, Num, NumCast, One, Signed, Zero};
 
@@ -339,7 +339,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
         match self.degree() {
             Some(degree) if degree > 0 => {
                 let hi_coeff = self.coeffs[degree];
-                Some(DMatrix::from_fn(degree, degree, |i, j| {
+                let comp = DMatrix::from_fn(degree, degree, |i, j| {
                     if j == degree - 1 {
                         -self.coeffs[i] / hi_coeff // monic polynomial
                     } else if i == j + 1 {
@@ -347,7 +347,9 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
                     } else {
                         T::zero()
                     }
-                }))
+                });
+                debug_assert!(comp.is_square());
+                Some(comp)
             }
             _ => None,
         }
@@ -373,8 +375,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
             _ => {
                 // Build the companion matrix.
                 let comp = cropped.companion()?;
-                let schur = Schur::new(comp);
-                schur.eigenvalues().map(|e| e.as_slice().to_vec())
+                comp.eigenvalues().map(|e| e.as_slice().to_vec())
             }
         };
         roots.map(|r| extend_roots(r, zeros))
@@ -402,8 +403,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
                     Some(comp) => comp,
                     _ => return Vec::new(),
                 };
-                let schur = Schur::new(comp);
-                schur.complex_eigenvalues().as_slice().to_vec()
+                comp.complex_eigenvalues().as_slice().to_vec()
             }
         };
         extend_roots(roots, zeros)

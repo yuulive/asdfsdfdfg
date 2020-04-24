@@ -21,7 +21,7 @@ pub mod continuous;
 pub mod discrete;
 pub mod solver;
 
-use nalgebra::{ComplexField, DMatrix, DVector, RealField, Scalar, Schur};
+use nalgebra::{ComplexField, DMatrix, DVector, RealField, Scalar};
 use num_complex::Complex;
 use num_traits::Float;
 
@@ -126,8 +126,10 @@ impl<T: Scalar, U: Time> SsGen<T, U> {
         c: &[T],
         d: &[T],
     ) -> Self {
+        let states_matrix = DMatrix::from_row_slice(states, states, a);
+        debug_assert!(states_matrix.is_square());
         Self {
-            a: DMatrix::from_row_slice(states, states, a),
+            a: states_matrix,
             b: DMatrix::from_row_slice(states, inputs, b),
             c: DMatrix::from_row_slice(outputs, states, c),
             d: DMatrix::from_row_slice(outputs, inputs, d),
@@ -184,10 +186,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
 
                 vec![eig1, eig2]
             }
-            _ => Schur::new(self.a.clone())
-                .complex_eigenvalues()
-                .as_slice()
-                .to_vec(),
+            _ => self.a.complex_eigenvalues().as_slice().to_vec(),
         }
     }
 }
@@ -531,7 +530,7 @@ mod tests {
         let eig1 = -2.;
         let eig2 = -7.;
         let a = DMatrix::from_row_slice(2, 2, &[eig1, 0., 3., eig2]);
-        let schur = Schur::new(a);
+        let schur = nalgebra::Schur::new(a);
         //dbg!(&schur);
         let poles = schur.complex_eigenvalues();
         //dbg!(poles);
