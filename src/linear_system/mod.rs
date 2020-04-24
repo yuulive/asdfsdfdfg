@@ -386,9 +386,10 @@ impl<T: Float + Scalar + ComplexField + RealField, U: Time> TryFrom<TfGen<T, U>>
         let (den_monic, den_n) = tf.den().monic();
         // Extend the numerator coefficients with zeros to the length of the
         // denominator polynomial.
-        let order = den_monic
-            .degree()
-            .expect("Transfer functions cannot have zero polynomial denominator");
+        let order = match den_monic.degree() {
+            Some(d) => d,
+            _ => return Err("Transfer functions cannot have zero polynomial denominator"),
+        };
         // Divide the denominator polynomial by the highest coefficient of the
         // numerator polinomial to mantain the original gain.
         let mut num = tf.num().clone() / den_n;
