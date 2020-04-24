@@ -120,7 +120,6 @@ where
     result
 }
 
-#[allow(dead_code)]
 #[derive(Clone, Debug)]
 struct ZipLongest<T, I, J>
 where
@@ -151,7 +150,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 impl<T, I, J> Iterator for ZipLongest<T, I, J>
 where
     T: Copy,
