@@ -817,7 +817,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
                 break;
             }
 
-            for i in 0..n_roots {
+            for (i, d) in done.iter_mut().enumerate() {
                 let solution_i = self.solution[i];
                 let n_xki = self.poly.eval(solution_i) / self.der.eval(solution_i);
                 let a_xki: Complex<T> = self
@@ -838,7 +838,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
                 // Overriding the root before updating the other decrease the time
                 // the algorithm converges.
                 let new = solution_i - n_xki / (Complex::<T>::one() - n_xki * a_xki);
-                done[i] = if solution_i == new {
+                *d = if solution_i == new {
                     true
                 } else {
                     self.solution[i] = new;
