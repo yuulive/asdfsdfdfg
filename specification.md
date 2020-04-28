@@ -24,6 +24,7 @@ Coefficients indexing and manipulation
 - Zero polynomial (additive identity)
 - One polynomial (multiplicative identity)
 - Evaluation (real and complex numbers) (by value, by ref)
+- Round off to zero give an absolute tolerance (by ref, in place)
 ### Roots
 - Real roots calculation (Option type) (eigenvalues method)
 - Complex roots calculation (eigenvalues and iterative method)

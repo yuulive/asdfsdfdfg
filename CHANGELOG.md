@@ -7,6 +7,7 @@
 - Add polynomial creation from iterators
 - AsRef trait to polynomial for reference-to-reference conversion into a slice
 - decibel unit of measurement
+- Polynomial round off to zero
 ## Changed
 - Improvements on polynomial roots finders and increment of related tests
 - General source code linting

@@ -523,6 +523,53 @@ impl<T: Float> Poly<T> {
         let (r1, r2) = real_quadratic_roots(b, c)?;
         Some(vec![r1, r2])
     }
+
+    /// Round off to zero coefficients smaller than `atol`.
+    ///
+    /// # Arguments
+    ///
+    /// * `atol` - Absolute tolerance (should be positive)
+    ///
+    /// # Example
+    ///```
+    /// use automatica::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
+    /// let actual = p.roundoff(0.01);
+    /// let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
+    /// assert_eq!(expected, actual);
+    ///```
+    pub fn roundoff(&self, atol: T) -> Self {
+        let atol = atol.abs();
+        let new_coeff = self
+            .coeffs
+            .iter()
+            .map(|c| if c.abs() < atol { T::zero() } else { *c });
+        Poly::new_from_coeffs_iter(new_coeff)
+    }
+
+    /// Round off to zero coefficients smaller than `atol` in place.
+    ///
+    /// # Arguments
+    ///
+    /// * `atol` - Absolute tolerance (should be positive)
+    ///
+    /// # Example
+    ///```
+    /// use automatica::Poly;
+    /// let mut p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
+    /// p.roundoff_mut(0.01);
+    /// let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
+    /// assert_eq!(expected, p);
+    ///```
+    pub fn roundoff_mut(&mut self, atol: T) {
+        let atol = atol.abs();
+        for c in self.coeffs.iter_mut() {
+            if c.abs() < atol {
+                *c = T::zero()
+            }
+        }
+        self.trim();
+    }
 }
 
 /// Calculate the complex roots of the quadratic equation x^2 + b*x + c = 0.
@@ -1131,6 +1178,35 @@ mod tests {
     #[test]
     fn conversion_into_slice() {
         assert_eq!(&[3, -6, 8], poly!(3, -6, 8).as_ref());
+    }
+
+    #[test]
+    fn round_off_coefficients() {
+        let p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
+        let actual = p.roundoff(0.01);
+        let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn round_off_zero() {
+        let zero = Poly::zero();
+        assert_eq!(zero, zero.roundoff(0.001));
+    }
+
+    #[test]
+    fn round_off_returns_zero() {
+        let p = Poly::new_from_coeffs(&[0.0032, 0.002, -0.0023, -0.0001]);
+        let actual = p.roundoff(0.01);
+        assert_eq!(Poly::zero(), actual);
+    }
+
+    #[test]
+    fn round_off_coefficients_mut() {
+        let mut p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
+        p.roundoff_mut(0.01);
+        let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
+        assert_eq!(expected, p);
     }
 }
 
