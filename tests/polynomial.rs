@@ -3,7 +3,28 @@ extern crate automatica;
 extern crate approx;
 
 use automatica::{poly, Eval, Poly};
-use num_traits::One;
+use num_traits::{One, Zero};
+
+#[test]
+fn arithmetics() {
+    let p1 = poly!(1, 1, 1);
+    let p2 = poly!(-1, -1, -1);
+    let result = p1 + p2;
+    assert_eq!(Poly::<i32>::zero(), result);
+
+    let p3 = poly!(1., 1., 1., 1., 1.);
+    let p4 = poly!(-1., 0., 1.);
+    let quotient = &p3 / &p4;
+    let reminder = &p3 % &p4;
+    assert_eq!(poly!(2., 1., 1.), quotient);
+    assert_eq!(poly!(3., 2.), reminder);
+
+    let original = p4.mul_fft(quotient) + reminder;
+    assert_eq!(p3.degree(), original.degree());
+    for i in 0..=original.degree().unwrap() {
+        assert_relative_eq!(p3[i], original[i]);
+    }
+}
 
 #[test]
 fn maximum_minimum() {
