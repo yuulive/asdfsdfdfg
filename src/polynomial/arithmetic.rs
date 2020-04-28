@@ -443,7 +443,8 @@ impl<T: Float + FloatConst> Poly<T> {
             return self;
         }
         // Both inputs shall have the same length.
-        let res_degree = self.len() + rhs.len() - 1;
+        let res_length = self.len() + rhs.len() - 1;
+        let res_degree = res_length - 1;
         self.extend(res_degree);
         rhs.extend(res_degree);
         // Convert the inputs into complex number vectors.
@@ -465,10 +466,10 @@ impl<T: Float + FloatConst> Poly<T> {
         // IFFT of the result.
         let y = fft::ifft(y_fft);
         // Extract the real parts of the result.
-        let coeffs = y.iter().map(|c| c.re).collect();
-        let mut result = Self { coeffs };
-        result.trim();
-        result
+        // Keep the first res_length elements since is the number of coefficients
+        // of the result.
+        let coeffs = y.iter().map(|c| c.re).take(res_length);
+        Poly::new_from_coeffs_iter(coeffs)
     }
 }
 
