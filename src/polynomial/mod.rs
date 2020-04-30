@@ -563,7 +563,7 @@ impl<T: Float> Poly<T> {
     ///```
     pub fn roundoff_mut(&mut self, atol: T) {
         let atol = atol.abs();
-        for c in self.coeffs.iter_mut() {
+        for c in &mut self.coeffs {
             if c.abs() < atol {
                 *c = T::zero()
             }
