@@ -12,7 +12,7 @@ use num_traits::{Float, MulAdd, Num};
 
 use std::fmt::Debug;
 
-use crate::{transfer_function::continuous::Tf, units::Seconds, Discretization, Eval};
+use crate::{transfer_function::continuous::Tf, units::Seconds, Discretization};
 
 /// Discretization of a transfer function
 #[derive(Debug)]
@@ -57,7 +57,6 @@ impl<T: Float> TfDiscretization<T> {
     ///     polynomial::Poly,
     ///     transfer_function::discretization::TfDiscretization,
     ///     Discretization,
-    ///     Eval,
     ///     Seconds,
     ///     Tf
     /// };
@@ -109,10 +108,13 @@ fn tu<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
     complex * float
 }
 
-/// Implementation of the evaluation of a transfer function discretization
-impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for TfDiscretization<T> {
-    fn eval_ref(&self, z: &Complex<T>) -> Complex<T> {
-        let s = (self.conversion)(*z, self.ts);
+impl<T: Float + MulAdd<Output = T>> TfDiscretization<T> {
+    /// Evaluate the discretization of the transfer function
+    ///
+    /// # Arguments
+    /// * `z` - Value at which the transfer function is evaluated.
+    pub fn eval(&self, z: Complex<T>) -> Complex<T> {
+        let s = (self.conversion)(z, self.ts);
         self.tf.eval(s)
     }
 }
@@ -120,7 +122,7 @@ impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for TfDiscretization<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{polynomial::Poly, units::ToDecibel, Eval};
+    use crate::{polynomial::Poly, units::ToDecibel};
     use num_complex::Complex64;
 
     #[test]
