@@ -13,7 +13,7 @@ use std::{
     fmt::{Debug, Display, Formatter},
 };
 
-use crate::{polynomial::Poly, Eval};
+use crate::polynomial::Poly;
 
 /// Polynomial matrix object
 ///
@@ -86,8 +86,13 @@ impl<T: Scalar + Zero + One + Add + AddAssign + Mul + MulAssign> PolyMatrix<T> {
     }
 }
 
-impl<T: NumAssignOps + Float + Scalar> Eval<DMatrix<Complex<T>>> for PolyMatrix<T> {
-    fn eval_ref(&self, s: &DMatrix<Complex<T>>) -> DMatrix<Complex<T>> {
+impl<T: NumAssignOps + Float + Scalar> PolyMatrix<T> {
+    #[allow(dead_code)]
+    /// Evaluate the polynomial matrix
+    ///
+    /// # Arguments
+    /// * `s` - Matrix at which the polynomial matrix is evaluated.
+    pub(crate) fn eval(&self, s: &DMatrix<Complex<T>>) -> DMatrix<Complex<T>> {
         // transform matr_coeffs in complex numbers matrices
         //
         // ┌     ┐ ┌       ┐ ┌       ┐ ┌     ┐ ┌       ┐ ┌         ┐
@@ -327,7 +332,7 @@ mod tests {
             DMatrix::from_row_slice(2, 2, &[1., 0., 0., 1.]),
         ];
         let pm = PolyMatrix::new_from_coeffs(&v);
-        let res = pm.eval(DMatrix::from_row_slice(
+        let res = pm.eval(&DMatrix::from_row_slice(
             2,
             2,
             &[
