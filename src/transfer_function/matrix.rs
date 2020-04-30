@@ -19,7 +19,7 @@ use std::{
 use crate::{
     linear_system::{self, SsGen},
     polynomial::{matrix::MatrixOfPoly, Poly},
-    Eval, Time,
+    Time,
 };
 
 /// Matrix of transfer functions
@@ -52,8 +52,14 @@ impl<T: Clone> TfMatrix<T> {
     }
 }
 
-impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
-    fn eval_ref(&self, s: &Vec<Complex<T>>) -> Vec<Complex<T>> {
+impl<T: Float + MulAdd<Output = T>> TfMatrix<T> {
+    /// Evaluate the matrix transfers function.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - Array at which the Matrix of transfer functions is evaluated.
+    #[must_use]
+    pub fn eval(&self, s: &[Complex<T>]) -> Vec<Complex<T>> {
         //
         // ┌  ┐ ┌┌         ┐ ┌     ┐┐┌  ┐
         // │y1│=││1/pc 1/pc│*│n1 n2│││s1│
@@ -192,7 +198,7 @@ mod tests {
         );
         let tfm = TfMatrix::from(sys);
         let i = Complex::<f64>::i();
-        let res = tfm.eval(vec![i, i]);
+        let res = tfm.eval(&[i, i]);
         assert_relative_eq!(res[0].re, 4.4, max_relative = 1e-15);
         assert_relative_eq!(res[0].im, -3.2, max_relative = 1e-15);
         assert_relative_eq!(res[1].re, 8.2, max_relative = 1e-15);

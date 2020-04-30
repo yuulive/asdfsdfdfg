@@ -2,7 +2,7 @@ extern crate automatica;
 
 use num_complex::Complex;
 
-use automatica::{signals::continuous, Eval, Seconds, Ss, TfMatrix};
+use automatica::{signals::continuous, Seconds, Ss, TfMatrix};
 
 #[allow(clippy::many_single_char_names)]
 #[allow(clippy::non_ascii_literal)]
@@ -97,7 +97,7 @@ fn main() {
 
     println!("\nEvaluate transfer function in ω = 0.9");
     let u = vec![Complex::new(0.0, 0.9)];
-    let y = tf_matrix.eval_ref(&u);
+    let y = tf_matrix.eval(&u);
     println!("u:\n{:?}\ny:\n{:?}", &u, &y);
 
     println!(
