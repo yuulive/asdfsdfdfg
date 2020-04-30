@@ -17,8 +17,9 @@
 - Changed linear system solvers names (C-ITER-TY API guidelines)
 - Changed linear system evolution iterators names (C-ITER-TY API guidelines)
 - Changed arma iterators names (C-ITER-TY API guidelines)
-- Rename Decibel trait to ToDecibel
+- Renamed Decibel trait to ToDecibel
 - Moved Discretization to top module
+- Removed Eval trait
 ## Fixed
 - Subtraction between a real number and a polynomial
 

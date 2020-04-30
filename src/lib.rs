@@ -76,25 +76,6 @@ pub use transfer_function::{
 };
 pub use units::{Decibel, Hertz, RadiansPerSecond, Seconds};
 
-/// Trait for the implementation of object evaluation
-pub trait Eval<T> {
-    /// Evaluate the polynomial at the value x
-    ///
-    /// # Arguments
-    ///
-    /// * `x` - Value at which the polynomial is evaluated
-    fn eval(&self, x: T) -> T {
-        Eval::eval_ref(self, &x)
-    }
-
-    /// Evaluate the polynomial at the value x
-    ///
-    /// # Arguments
-    ///
-    /// * `x` - Value at which the polynomial is evaluated
-    fn eval_ref(&self, x: &T) -> T;
-}
-
 /// Trait to tag Continuous or Discrete types
 pub trait Time {}
 
