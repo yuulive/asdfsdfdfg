@@ -8,7 +8,6 @@
 use crate::{
     transfer_function::continuous::Tf,
     units::{Hertz, RadiansPerSecond, ToDecibel},
-    Eval,
 };
 
 use num_complex::Complex;

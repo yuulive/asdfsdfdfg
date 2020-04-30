@@ -25,7 +25,7 @@ use crate::{
     },
     transfer_function::TfGen,
     units::{RadiansPerSecond, Seconds, ToDecibel},
-    Continuous, Eval,
+    Continuous,
 };
 
 /// Continuous transfer function

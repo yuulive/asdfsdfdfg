@@ -6,7 +6,7 @@ use num_traits::One;
 use automatica::{
     plots::bode::BodePlot,
     units::{RadiansPerSecond, ToDecibel},
-    Eval, Poly, Tf,
+    Poly, Tf,
 };
 
 #[allow(clippy::non_ascii_literal)]

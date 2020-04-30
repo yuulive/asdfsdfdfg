@@ -23,7 +23,7 @@ pub mod matrix;
 
 use nalgebra::{ComplexField, RealField, Scalar};
 use num_complex::Complex;
-use num_traits::{Float, Inv, MulAdd, One, Signed, Zero};
+use num_traits::{Float, Inv, One, Signed, Zero};
 
 use std::{
     convert::TryFrom,
@@ -36,7 +36,7 @@ use std::{
 use crate::{
     linear_system::{self, SsGen},
     polynomial::{matrix::MatrixOfPoly, Poly},
-    Eval, Time,
+    Time,
 };
 
 /// Transfer function representation of a linear system
@@ -413,17 +413,26 @@ impl<T: Float, U: Time> Div for TfGen<T, U> {
     }
 }
 
-/// Implementation of the evaluation of a transfer function with complex numbers.
-impl<T: Float + MulAdd<Output = T>, U: Time> Eval<Complex<T>> for TfGen<T, U> {
-    fn eval_ref(&self, s: &Complex<T>) -> Complex<T> {
-        self.num.eval_ref(s) / self.den.eval_ref(s)
-    }
-}
-
-/// Implementation of the evaluation of a transfer function with real numbers.
-impl<T: Float + MulAdd<Output = T>, U: Time> Eval<T> for TfGen<T, U> {
-    fn eval_ref(&self, s: &T) -> T {
-        self.num.eval_ref(s) / self.den.eval_ref(s)
+impl<T: Clone, U: Time> TfGen<T, U> {
+    /// Evaluate the transfer function.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - Value at which the transfer function is evaluated.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tf};
+    /// use num_complex::Complex as C;
+    /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
+    /// assert_eq!(-8.5, tf.eval(3.));
+    /// assert_eq!(C::new(0.64, -0.98), tf.eval(C::new(0., 2.0_f32)));
+    /// ```
+    pub fn eval<N>(&self, s: N) -> N
+    where
+        N: Add<T, Output = N> + Clone + Div<Output = N> + Mul<Output = N> + Zero,
+    {
+        self.num.eval(s.clone()) / self.den.eval(s)
     }
 }
 

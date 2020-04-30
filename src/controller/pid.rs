@@ -121,7 +121,7 @@ impl<T: Float> Pid<T> {
 #[cfg(test)]
 mod pid_tests {
     use super::*;
-    use crate::{units::ToDecibel, Eval};
+    use crate::units::ToDecibel;
     use num_complex::Complex64;
 
     #[test]

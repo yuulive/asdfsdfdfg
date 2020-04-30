@@ -32,7 +32,7 @@ use std::{
 
 use crate::{
     polynomial::{matrix::PolyMatrix, roots::RootsFinder},
-    utils, Eval,
+    utils,
 };
 
 /// Polynomial object
@@ -747,11 +747,8 @@ impl<T: Copy + Div<Output = T> + NumCast> Poly<T> {
 //             .fold(N::zero(), |acc, &c| acc.mul_add(*x, N::from(c).unwrap()))
 //     }
 // }
-impl<N, T> Eval<N> for Poly<T>
-where
-    N: Add<T, Output = N> + Copy + Mul<Output = N> + Zero,
-    T: Copy,
-{
+// impl<T: Clone> Poly<T> {
+impl<T: Clone> Poly<T> {
     // The current implementation relies on the ability to add type N and T.
     // When the trait MulAdd<N,T> for N=Complex<T>, mul_add may be used.
 
@@ -763,17 +760,20 @@ where
     ///
     /// # Example
     /// ```
-    /// use automatica::{Eval, polynomial::Poly};
+    /// use automatica::Poly;
     /// use num_complex::Complex;
     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
     /// assert_eq!(18., p.eval(3.));
     /// assert_eq!(Complex::new(-18., 0.), p.eval(Complex::new(0., 3.)));
     /// ```
-    fn eval_ref(&self, x: &N) -> N {
+    pub fn eval<N>(&self, x: N) -> N
+    where
+        N: Add<T, Output = N> + Clone + Mul<N, Output = N> + Zero,
+    {
         self.coeffs
             .iter()
             .rev()
-            .fold(N::zero(), |acc, &c| acc * *x + c)
+            .fold(N::zero(), |acc, c| acc * x.clone() + c.clone())
     }
 }
 

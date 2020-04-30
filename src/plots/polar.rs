@@ -5,7 +5,7 @@
 //!
 //! Functions use angular frequencies as default inputs.
 
-use crate::{transfer_function::continuous::Tf, units::RadiansPerSecond, Eval};
+use crate::{transfer_function::continuous::Tf, units::RadiansPerSecond};
 
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};

@@ -17,7 +17,7 @@ use num_traits::{Float, MulAdd};
 
 use std::{cmp::Ordering, collections::VecDeque, fmt::Debug, iter::Sum, ops::Mul};
 
-use crate::{transfer_function::TfGen, Discrete, Eval};
+use crate::{transfer_function::TfGen, Discrete};
 
 /// Discrete transfer function
 pub type Tfz<T> = TfGen<T, Discrete>;
@@ -333,7 +333,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{poly, polynomial::Poly, signals::discrete, units::ToDecibel, Eval};
+    use crate::{poly, polynomial::Poly, signals::discrete, units::ToDecibel};
     use num_complex::Complex64;
 
     #[test]

@@ -2,7 +2,7 @@ extern crate automatica;
 #[macro_use]
 extern crate approx;
 
-use automatica::{poly, Eval, Poly};
+use automatica::{poly, Poly};
 use num_traits::{One, Zero};
 
 #[test]
