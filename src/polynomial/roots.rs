@@ -120,7 +120,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
 #[allow(dead_code)]
 fn init_simple<T>(poly: &Poly<T>) -> Vec<Complex<T>>
 where
-    T: Debug + Float + FloatConst + MulAdd<Output = T> + NumCast,
+    T: Float + FloatConst + MulAdd<Output = T> + NumCast,
 {
     // Convert degree from usize to float
     let n = poly.degree().unwrap_or(1);
@@ -207,11 +207,11 @@ where
 /// * `set` - set of points.
 fn convex_hull_top<T>(set: &[(usize, T, T)]) -> Vec<(usize, T)>
 where
-    T: Float,
+    T: Clone + Mul<Output = T> + PartialOrd + Sub<Output = T> + Zero,
 {
     let mut stack = Vec::<(usize, T, T)>::new();
-    stack.push(set[0]);
-    stack.push(set[1]);
+    stack.push(set[0].clone());
+    stack.push(set[1].clone());
 
     for p in set.iter().skip(2) {
         loop {
@@ -223,7 +223,11 @@ where
             let next_to_top = stack.get(length - 2).unwrap();
             let top = stack.last().unwrap();
 
-            let c = cross_product((next_to_top.1, next_to_top.2), (top.1, top.2), (p.1, p.2));
+            let c = cross_product(
+                (next_to_top.1.clone(), next_to_top.2.clone()),
+                (top.1.clone(), top.2.clone()),
+                (p.1.clone(), p.2.clone()),
+            );
             // Remove the top if it is not a strict turn to the right.
             if c < T::zero() {
                 break;
@@ -231,10 +235,13 @@ where
                 stack.pop();
             }
         }
-        stack.push(*p);
+        stack.push(p.clone());
     }
 
-    let res: Vec<_> = stack.iter().map(|&(a, b, _c)| (a, b)).collect();
+    let res: Vec<_> = stack
+        .iter()
+        .map(|(a, b, _c)| (a.clone(), b.clone()))
+        .collect();
     // It is be sorted by k.
     res
 }
