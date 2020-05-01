@@ -27,7 +27,7 @@ use num_traits::{Float, FloatConst, MulAdd, Num, NumCast, One, Signed, Zero};
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
-    ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Neg},
+    ops::{Add, Div, Index, IndexMut, Mul, Neg},
 };
 
 use crate::{
@@ -241,7 +241,7 @@ impl<T: Clone + One> Poly<T> {
 }
 
 /// Implementation methods for Poly struct
-impl<T: AddAssign + Clone + Num + Neg<Output = T>> Poly<T> {
+impl<T: Clone + Mul<Output = T> + Neg<Output = T> + One + PartialEq + Zero> Poly<T> {
     /// Create a new polynomial given a slice of real roots
     /// It trims any leading zeros in the high order coefficients.
     ///
@@ -502,7 +502,9 @@ impl<T: Float> Poly<T> {
         let (r1, r2) = real_quadratic_roots(b, c)?;
         Some(vec![r1, r2])
     }
+}
 
+impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
     /// Round off to zero coefficients smaller than `atol`.
     ///
     /// # Arguments
@@ -522,7 +524,7 @@ impl<T: Float> Poly<T> {
         let new_coeff = self
             .coeffs
             .iter()
-            .map(|c| if c.abs() < atol { T::zero() } else { *c });
+            .map(|c| if c.abs() < atol { T::zero() } else { c.clone() });
         Poly::new_from_coeffs_iter(new_coeff)
     }
 
@@ -836,7 +838,7 @@ impl<T: Clone + PartialEq + Zero> Zero for Poly<T> {
 /// let one = Poly::<u8>::one();
 /// assert!(one.is_one());
 /// ```
-impl<T: Clone + Num> One for Poly<T> {
+impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> One for Poly<T> {
     fn one() -> Self {
         Self {
             coeffs: vec![T::one()],
