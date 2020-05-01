@@ -5,29 +5,29 @@ use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use super::*;
 
 /// Implementation of polynomial negation
-impl<T: Copy + Neg<Output = T>> Neg for &Poly<T> {
+impl<T: Clone + Neg<Output = T>> Neg for &Poly<T> {
     type Output = Poly<T>;
 
     fn neg(self) -> Self::Output {
-        let c: Vec<_> = self.coeffs.iter().map(|&i| -i).collect();
+        let c: Vec<_> = self.coeffs.iter().map(|i| -i.clone()).collect();
         Poly { coeffs: c }
     }
 }
 
 /// Implementation of polynomial negation
-impl<T: Copy + Neg<Output = T>> Neg for Poly<T> {
+impl<T: Clone + Neg<Output = T>> Neg for Poly<T> {
     type Output = Self;
 
     fn neg(mut self) -> Self::Output {
         for c in &mut self.coeffs {
-            *c = Neg::neg(*c);
+            *c = Neg::neg(c.clone());
         }
         self
     }
 }
 
 /// Implementation of polynomial addition
-impl<T: Copy + Num> Add for Poly<T> {
+impl<T: Add<Output = T> + Clone + PartialEq + Zero> Add for Poly<T> {
     type Output = Self;
 
     fn add(mut self, mut rhs: Self) -> Self {
@@ -35,12 +35,12 @@ impl<T: Copy + Num> Add for Poly<T> {
         // Mutate the arguments since are passed as values.
         let mut result = if self.degree() < rhs.degree() {
             for (i, c) in self.coeffs.iter().enumerate() {
-                rhs[i] = rhs[i] + *c;
+                rhs[i] = rhs[i].clone() + c.clone();
             }
             rhs
         } else {
             for (i, c) in rhs.coeffs.iter().enumerate() {
-                self[i] = self[i] + *c;
+                self[i] = self[i].clone() + c.clone();
             }
             self
         };
@@ -50,22 +50,24 @@ impl<T: Copy + Num> Add for Poly<T> {
 }
 
 /// Implementation of polynomial addition
-impl<T: Copy + Num> Add for &Poly<T> {
+impl<T: Clone + PartialEq + Zero> Add for &Poly<T> {
     type Output = Poly<T>;
 
     fn add(self, rhs: &Poly<T>) -> Poly<T> {
         let zero = T::zero();
-        let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |&x, &y| x + y);
+        let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
+            x.clone() + y.clone()
+        });
         Poly::new_from_coeffs_iter(result)
     }
 }
 
 /// Implementation of polynomial and real number addition
-impl<T: Add<Output = T> + Copy> Add<T> for Poly<T> {
+impl<T: Add<Output = T> + Clone> Add<T> for Poly<T> {
     type Output = Self;
 
     fn add(mut self, rhs: T) -> Self {
-        self[0] = self[0] + rhs;
+        self[0] = self[0].clone() + rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
         self
@@ -73,7 +75,7 @@ impl<T: Add<Output = T> + Copy> Add<T> for Poly<T> {
 }
 
 /// Implementation of polynomial and real number addition
-impl<T: Add<Output = T> + Copy> Add<T> for &Poly<T> {
+impl<T: Add<Output = T> + Clone> Add<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn add(self, rhs: T) -> Self::Output {
@@ -163,7 +165,7 @@ impl_add_for_poly!(
 );
 
 /// Implementation of polynomial subtraction
-impl<T: Copy + PartialEq + Sub<Output = T> + Zero> Sub for Poly<T> {
+impl<T: Clone + PartialEq + Sub<Output = T> + Zero> Sub for Poly<T> {
     type Output = Self;
 
     fn sub(mut self, mut rhs: Self) -> Self {
@@ -172,13 +174,13 @@ impl<T: Copy + PartialEq + Sub<Output = T> + Zero> Sub for Poly<T> {
         let mut result = if self.len() < rhs.len() {
             // iterate on rhs and do the subtraction until self has values,
             // then invert the coefficients of rhs
-            for i in 0..rhs.len() {
-                rhs[i] = *self.coeffs.get(i).unwrap_or(&T::zero()) - rhs[i];
+            for (i, c) in rhs.coeffs.iter_mut().enumerate() {
+                *c = self.coeffs.get(i).unwrap_or(&T::zero()).clone() - c.clone();
             }
             rhs
         } else {
             for (i, c) in rhs.coeffs.iter().enumerate() {
-                self[i] = self[i] - *c;
+                self[i] = self[i].clone() - c.clone();
             }
             self
         };
@@ -188,22 +190,24 @@ impl<T: Copy + PartialEq + Sub<Output = T> + Zero> Sub for Poly<T> {
 }
 
 /// Implementation of polynomial subtraction
-impl<T: Copy + PartialEq + Sub<Output = T> + Zero> Sub for &Poly<T> {
+impl<T: Clone + PartialEq + Sub<Output = T> + Zero> Sub for &Poly<T> {
     type Output = Poly<T>;
 
     fn sub(self, rhs: Self) -> Poly<T> {
         let zero = T::zero();
-        let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |&x, &y| x - y);
+        let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
+            x.clone() - y.clone()
+        });
         Poly::new_from_coeffs_iter(result)
     }
 }
 
 /// Implementation of polynomial and real number subtraction
-impl<T: Copy + Sub<Output = T>> Sub<T> for Poly<T> {
+impl<T: Clone + Sub<Output = T>> Sub<T> for Poly<T> {
     type Output = Self;
 
     fn sub(mut self, rhs: T) -> Self {
-        self[0] = self[0] - rhs;
+        self[0] = self[0].clone() - rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
         self
@@ -211,7 +215,7 @@ impl<T: Copy + Sub<Output = T>> Sub<T> for Poly<T> {
 }
 
 /// Implementation of polynomial and real number subtraction
-impl<T: Copy + Sub<Output = T>> Sub<T> for &Poly<T> {
+impl<T: Clone + Sub<Output = T>> Sub<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn sub(self, rhs: T) -> Self::Output {
@@ -277,7 +281,7 @@ impl_sub_for_poly!(
 );
 
 /// Implementation of polynomial multiplication
-impl<T: Copy + Mul<Output = T> + PartialEq + Zero> Mul for &Poly<T> {
+impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul for &Poly<T> {
     type Output = Poly<T>;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
@@ -287,10 +291,10 @@ impl<T: Copy + Mul<Output = T> + PartialEq + Zero> Mul for &Poly<T> {
         let mut new_coeffs: Vec<T> = vec![T::zero(); new_length];
         for i in 0..self.len() {
             for j in 0..rhs.len() {
-                let a = *self.coeffs.get(i).unwrap_or(&T::zero());
-                let b = *rhs.coeffs.get(j).unwrap_or(&T::zero());
+                let a = self.coeffs[i].clone();
+                let b = rhs.coeffs[j].clone();
                 let index = i + j;
-                new_coeffs[index] = new_coeffs[index] + a * b;
+                new_coeffs[index] = new_coeffs[index].clone() + a * b;
             }
         }
         Poly::new_from_coeffs(&new_coeffs)
@@ -298,7 +302,7 @@ impl<T: Copy + Mul<Output = T> + PartialEq + Zero> Mul for &Poly<T> {
 }
 
 /// Implementation of polynomial multiplication
-impl<T: Copy + Mul<Output = T> + PartialEq + Zero> Mul for Poly<T> {
+impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul for Poly<T> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
@@ -309,7 +313,7 @@ impl<T: Copy + Mul<Output = T> + PartialEq + Zero> Mul for Poly<T> {
 }
 
 /// Implementation of polynomial and float multiplication
-impl<T: Copy + Num> Mul<T> for Poly<T> {
+impl<T: Clone + Num> Mul<T> for Poly<T> {
     type Output = Self;
 
     fn mul(mut self, rhs: T) -> Self {
@@ -317,7 +321,7 @@ impl<T: Copy + Num> Mul<T> for Poly<T> {
             Self::zero()
         } else {
             for c in &mut self.coeffs {
-                *c = *c * rhs;
+                *c = c.clone() * rhs.clone();
             }
             self
         }
@@ -325,7 +329,7 @@ impl<T: Copy + Num> Mul<T> for Poly<T> {
 }
 
 /// Implementation of polynomial and float multiplication
-impl<T: Copy + Num> Mul<T> for &Poly<T> {
+impl<T: Clone + Num> Mul<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn mul(self, rhs: T) -> Self::Output {
@@ -474,12 +478,12 @@ impl<T: Float + FloatConst> Poly<T> {
 }
 
 /// Implementation of polynomial and real number division
-impl<T: Copy + Num> Div<T> for Poly<T> {
+impl<T: Clone + Num> Div<T> for Poly<T> {
     type Output = Self;
 
     fn div(mut self, rhs: T) -> Self {
         for c in &mut self.coeffs {
-            *c = *c / rhs;
+            *c = c.clone() / rhs.clone();
         }
         self.trim();
         self
@@ -487,7 +491,7 @@ impl<T: Copy + Num> Div<T> for Poly<T> {
 }
 
 /// Implementation of polynomial and real number division
-impl<T: Copy + Num> Div<T> for &Poly<T> {
+impl<T: Clone + Num> Div<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn div(self, rhs: T) -> Self::Output {
@@ -587,12 +591,12 @@ fn poly_div_impl<T: Float>(mut u: Poly<T>, v: &Poly<T>) -> (Poly<T>, Poly<T>) {
     (q, u)
 }
 
-impl<T: Copy + Div<Output = T>> Poly<T> {
-    /// In place division with a real number
+impl<T: Clone + Div<Output = T>> Poly<T> {
+    /// In place division with a scalar
     ///
     /// # Arguments
     ///
-    /// * `d` - Real number divisor
+    /// * `d` - Scalar divisor
     ///
     /// # Example
     /// ```
@@ -603,7 +607,7 @@ impl<T: Copy + Div<Output = T>> Poly<T> {
     /// ```
     pub fn div_mut(&mut self, d: T) {
         for c in &mut self.coeffs {
-            *c = *c / d;
+            *c = c.clone() / d.clone();
         }
     }
 }

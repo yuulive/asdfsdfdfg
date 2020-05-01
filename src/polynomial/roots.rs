@@ -244,9 +244,9 @@ where
 /// `(p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)`
 fn cross_product<T>(p0: (T, T), p1: (T, T), p2: (T, T)) -> T
 where
-    T: Copy + Mul<Output = T> + Sub<Output = T>,
+    T: Clone + Mul<Output = T> + Sub<Output = T>,
 {
-    let first = (p1.0 - p0.0, p1.1 - p0.1);
+    let first = (p1.0 - p0.0.clone(), p1.1 - p0.1.clone());
     let second = (p2.0 - p0.0, p2.1 - p0.1);
     first.0 * second.1 - second.0 * first.1
 }

@@ -83,7 +83,7 @@ impl<T> Poly<T> {
 }
 
 /// Implementation methods for Poly struct
-impl<T: Copy> Poly<T> {
+impl<T: Clone> Poly<T> {
     /// Vector copy of the polynomial's coefficients
     ///
     /// # Example
@@ -98,8 +98,7 @@ impl<T: Copy> Poly<T> {
     }
 }
 
-/// Implementation methods for Poly struct
-impl<T: Copy + Num + Zero> Poly<T> {
+impl<T: Clone + PartialEq + Zero> Poly<T> {
     /// Degree of the polynomial
     ///
     /// # Example
@@ -144,8 +143,7 @@ impl<T: Copy + Num + Zero> Poly<T> {
     }
 }
 
-/// Implementation methods for Poly struct
-impl<T: Copy + Div<Output = T> + One> Poly<T> {
+impl<T: Clone + Div<Output = T> + One> Poly<T> {
     /// Return the monic polynomial and the leading coefficient.
     ///
     /// # Example
@@ -159,7 +157,7 @@ impl<T: Copy + Div<Output = T> + One> Poly<T> {
     #[must_use]
     pub fn monic(&self) -> (Self, T) {
         let lc = self.leading_coeff();
-        let result: Vec<_> = self.coeffs.iter().map(|&x| x / lc).collect();
+        let result: Vec<_> = self.coeffs.iter().map(|x| x.clone() / lc.clone()).collect();
         let monic_poly = Self { coeffs: result };
 
         (monic_poly, lc)
@@ -178,13 +176,13 @@ impl<T: Copy + Div<Output = T> + One> Poly<T> {
     /// ```
     pub fn monic_mut(&mut self) -> T {
         let lc = self.leading_coeff();
-        self.div_mut(lc);
+        self.div_mut(lc.clone());
         lc
     }
 }
 
 /// Implementation methods for Poly struct
-impl<T: Copy + One> Poly<T> {
+impl<T: Clone + One> Poly<T> {
     /// Return the leading coefficient of the polynomial.
     ///
     /// # Example
@@ -196,12 +194,11 @@ impl<T: Copy + One> Poly<T> {
     /// ```
     #[must_use]
     pub fn leading_coeff(&self) -> T {
-        *self.coeffs.last().unwrap_or(&T::one())
+        self.coeffs.last().unwrap_or(&T::one()).clone()
     }
 }
 
-/// Implementation methods for Poly struct
-impl<T: Copy + PartialEq + Zero> Poly<T> {
+impl<T: Clone + PartialEq + Zero> Poly<T> {
     /// Create a new polynomial given a slice of real coefficients.
     /// It trims any leading zeros in the high order coefficients.
     ///
@@ -252,7 +249,7 @@ impl<T: Copy + PartialEq + Zero> Poly<T> {
     fn trim(&mut self) {
         // TODO try to use assert macro.
         //.rposition(|&c| relative_ne!(c, 0.0, epsilon = epsilon, max_relative = max_relative))
-        if let Some(p) = self.coeffs.iter().rposition(|&c| c != T::zero()) {
+        if let Some(p) = self.coeffs.iter().rposition(|c| c != &T::zero()) {
             let new_length = p + 1;
             self.coeffs.truncate(new_length);
         } else {
@@ -262,7 +259,7 @@ impl<T: Copy + PartialEq + Zero> Poly<T> {
 }
 
 /// Implementation methods for Poly struct
-impl<T: AddAssign + Copy + Num + Neg<Output = T>> Poly<T> {
+impl<T: AddAssign + Clone + Num + Neg<Output = T>> Poly<T> {
     /// Create a new polynomial given a slice of real roots
     /// It trims any leading zeros in the high order coefficients.
     ///
@@ -276,9 +273,9 @@ impl<T: AddAssign + Copy + Num + Neg<Output = T>> Poly<T> {
     /// let p = Poly::new_from_roots(&[1., 2., 3.]);
     /// ```
     pub fn new_from_roots(roots: &[T]) -> Self {
-        let mut p = roots.iter().fold(Self::one(), |acc, &r| {
+        let mut p = roots.iter().fold(Self::one(), |acc, r| {
             acc * Self {
-                coeffs: vec![-r, T::one()],
+                coeffs: vec![-r.clone(), T::one()],
             }
         });
         p.trim();
@@ -461,7 +458,7 @@ fn extend_roots<T: Clone + Zero>(mut roots: Vec<T>, zeros: usize) -> Vec<T> {
     roots
 }
 
-impl<T: Copy + Num + Zero> Poly<T> {
+impl<T: Clone + Num + Zero> Poly<T> {
     /// Remove the (multiple) zero roots from a polynomial. It returns the number
     /// of roots in zero and the polynomial without them.
     fn find_zero_roots(&self) -> (usize, Self) {
@@ -650,7 +647,7 @@ impl Poly<f32> {
 }
 
 /// Implementation methods for Poly struct
-impl<T: Copy + Mul<Output = T> + NumCast + One> Poly<T> {
+impl<T: Clone + Mul<Output = T> + NumCast + One> Poly<T> {
     /// Calculate the derivative of the polynomial.
     ///
     /// # Example
@@ -672,7 +669,7 @@ impl<T: Copy + Mul<Output = T> + NumCast + One> Poly<T> {
             .iter()
             .enumerate()
             .skip(1)
-            .map(|(i, c)| *c * T::from(i).unwrap())
+            .map(|(i, c)| c.clone() * T::from(i).unwrap())
             .collect();
         Self {
             coeffs: derive_coeffs,
@@ -681,7 +678,7 @@ impl<T: Copy + Mul<Output = T> + NumCast + One> Poly<T> {
 }
 
 /// Implementation methods for Poly struct
-impl<T: Copy + Div<Output = T> + NumCast> Poly<T> {
+impl<T: Clone + Div<Output = T> + NumCast> Poly<T> {
     /// Calculate the integral of the polynomial. When used with integral types
     /// it does not convert the coefficients to floats, division is between
     /// integers.
@@ -708,7 +705,7 @@ impl<T: Copy + Div<Output = T> + NumCast> Poly<T> {
                 self.coeffs
                     .iter()
                     .enumerate()
-                    .map(|(i, c)| *c / T::from(i + 1).unwrap()),
+                    .map(|(i, c)| c.clone() / T::from(i + 1).unwrap()),
             )
             .collect();
         Self { coeffs: int_coeffs }
@@ -747,7 +744,6 @@ impl<T: Copy + Div<Output = T> + NumCast> Poly<T> {
 //             .fold(N::zero(), |acc, &c| acc.mul_add(*x, N::from(c).unwrap()))
 //     }
 // }
-// impl<T: Clone> Poly<T> {
 impl<T: Clone> Poly<T> {
     // The current implementation relies on the ability to add type N and T.
     // When the trait MulAdd<N,T> for N=Complex<T>, mul_add may be used.
@@ -825,7 +821,7 @@ impl<T> IndexMut<usize> for Poly<T> {
 /// let zero = Poly::<u8>::zero();
 /// assert!(zero.is_zero());
 /// ```
-impl<T: Copy + Num> Zero for Poly<T> {
+impl<T: Clone + PartialEq + Zero> Zero for Poly<T> {
     fn zero() -> Self {
         Self {
             coeffs: vec![T::zero()],
@@ -846,7 +842,7 @@ impl<T: Copy + Num> Zero for Poly<T> {
 /// let one = Poly::<u8>::one();
 /// assert!(one.is_one());
 /// ```
-impl<T: Copy + Num> One for Poly<T> {
+impl<T: Clone + Num> One for Poly<T> {
     fn one() -> Self {
         Self {
             coeffs: vec![T::one()],

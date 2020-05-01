@@ -18,13 +18,13 @@ fn log2(n: usize) -> usize {
 /// * `a` - vector
 /// * `bits` - number of lower bit on which the permutation shall act
 #[allow(non_snake_case)]
-fn bit_reverse_copy<T: Copy + Zero>(a: &[T], bits: usize) -> Vec<T> {
+fn bit_reverse_copy<T: Clone + Zero>(a: &[T], bits: usize) -> Vec<T> {
     let l = a.len();
     let mut A = vec![T::zero(); l];
 
     for k in 0..l {
         let r = rev(k, bits);
-        *A.get_mut(r).unwrap() = *a.get(k).unwrap();
+        *A.get_mut(r).unwrap() = a.get(k).unwrap().clone();
     }
     A
 }
@@ -75,7 +75,7 @@ where
 /// # Arguments
 ///
 /// * `a` - vector
-fn extend_two_power_of_two<T: Copy + Zero>(mut a: Vec<T>) -> Vec<T> {
+fn extend_two_power_of_two<T: Clone + Zero>(mut a: Vec<T>) -> Vec<T> {
     let n = a.len();
     if n.is_power_of_two() {
         a
