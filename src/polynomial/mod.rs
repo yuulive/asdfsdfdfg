@@ -82,23 +82,65 @@ impl<T> Poly<T> {
     }
 }
 
-/// Implementation methods for Poly struct
-impl<T: Clone> Poly<T> {
-    /// Vector copy of the polynomial's coefficients
+impl<T: Clone + PartialEq + Zero> Poly<T> {
+    /// Create a new polynomial given a slice of real coefficients.
+    /// It trims any leading zeros in the high order coefficients.
+    ///
+    /// # Arguments
+    ///
+    /// * `coeffs` - slice of coefficients
     ///
     /// # Example
     /// ```
     /// use automatica::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
-    /// assert_eq!(vec![1., 2., 3.], p.coeffs());
     /// ```
-    #[must_use]
-    pub fn coeffs(&self) -> Vec<T> {
-        self.coeffs.clone()
+    pub fn new_from_coeffs(coeffs: &[T]) -> Self {
+        let mut p = Self {
+            coeffs: coeffs.into(),
+        };
+        p.trim();
+        debug_assert!(!p.coeffs.is_empty());
+        p
     }
-}
 
-impl<T: Clone + PartialEq + Zero> Poly<T> {
+    /// Create a new polynomial given a iterator of real coefficients.
+    /// It trims any leading zeros in the high order coefficients.
+    ///
+    /// # Arguments
+    ///
+    /// * `coeffs` - iterator of coefficients
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs_iter(1..4);
+    /// ```
+    pub fn new_from_coeffs_iter<II>(coeffs: II) -> Self
+    where
+        II: IntoIterator<Item = T>,
+    {
+        let mut p = Self {
+            coeffs: coeffs.into_iter().collect(),
+        };
+        p.trim();
+        debug_assert!(!p.coeffs.is_empty());
+        p
+    }
+
+    /// Trim the zeros coefficients of high degree terms.
+    /// It will not leave an empty `coeffs` vector: zero poly is returned.
+    fn trim(&mut self) {
+        // TODO try to use assert macro.
+        //.rposition(|&c| relative_ne!(c, 0.0, epsilon = epsilon, max_relative = max_relative))
+        if let Some(p) = self.coeffs.iter().rposition(|c| c != &T::zero()) {
+            let new_length = p + 1;
+            self.coeffs.truncate(new_length);
+        } else {
+            self.coeffs.resize(1, T::zero());
+        }
+    }
+
     /// Degree of the polynomial
     ///
     /// # Example
@@ -195,66 +237,6 @@ impl<T: Clone + One> Poly<T> {
     #[must_use]
     pub fn leading_coeff(&self) -> T {
         self.coeffs.last().unwrap_or(&T::one()).clone()
-    }
-}
-
-impl<T: Clone + PartialEq + Zero> Poly<T> {
-    /// Create a new polynomial given a slice of real coefficients.
-    /// It trims any leading zeros in the high order coefficients.
-    ///
-    /// # Arguments
-    ///
-    /// * `coeffs` - slice of coefficients
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::polynomial::Poly;
-    /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
-    /// ```
-    pub fn new_from_coeffs(coeffs: &[T]) -> Self {
-        let mut p = Self {
-            coeffs: coeffs.into(),
-        };
-        p.trim();
-        debug_assert!(!p.coeffs.is_empty());
-        p
-    }
-
-    /// Create a new polynomial given a iterator of real coefficients.
-    /// It trims any leading zeros in the high order coefficients.
-    ///
-    /// # Arguments
-    ///
-    /// * `coeffs` - iterator of coefficients
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::polynomial::Poly;
-    /// let p = Poly::new_from_coeffs_iter(1..4);
-    /// ```
-    pub fn new_from_coeffs_iter<II>(coeffs: II) -> Self
-    where
-        II: IntoIterator<Item = T>,
-    {
-        let mut p = Self {
-            coeffs: coeffs.into_iter().collect(),
-        };
-        p.trim();
-        debug_assert!(!p.coeffs.is_empty());
-        p
-    }
-
-    /// Trim the zeros coefficients of high degree terms.
-    /// It will not leave an empty `coeffs` vector: zero poly is returned.
-    fn trim(&mut self) {
-        // TODO try to use assert macro.
-        //.rposition(|&c| relative_ne!(c, 0.0, epsilon = epsilon, max_relative = max_relative))
-        if let Some(p) = self.coeffs.iter().rposition(|c| c != &T::zero()) {
-            let new_length = p + 1;
-            self.coeffs.truncate(new_length);
-        } else {
-            self.coeffs.resize(1, T::zero());
-        }
     }
 }
 
@@ -745,9 +727,21 @@ impl<T: Clone + Div<Output = T> + NumCast> Poly<T> {
 //     }
 // }
 impl<T: Clone> Poly<T> {
+    /// Vector copy of the polynomial's coefficients
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::polynomial::Poly;
+    /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
+    /// assert_eq!(vec![1., 2., 3.], p.coeffs());
+    /// ```
+    #[must_use]
+    pub fn coeffs(&self) -> Vec<T> {
+        self.coeffs.clone()
+    }
+
     // The current implementation relies on the ability to add type N and T.
     // When the trait MulAdd<N,T> for N=Complex<T>, mul_add may be used.
-
     /// Evaluate the polynomial using Horner's method.
     ///
     /// # Arguments
