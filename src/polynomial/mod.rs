@@ -510,6 +510,14 @@ impl<T: Float> Poly<T> {
 ///
 /// * `b` - first degree coefficient
 /// * `c` - zero degree coefficient
+///
+/// # Example
+///```
+/// use num_complex::Complex;
+/// use automatica::polynomial;
+/// let actual = polynomial::complex_quadratic_roots(0., 1.);
+/// assert_eq!((-Complex::i(), Complex::i()), actual);
+///```
 pub fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>) {
     roots::complex_quadratic_roots_impl(b, c)
 }
@@ -520,6 +528,13 @@ pub fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>)
 ///
 /// * `b` - first degree coefficient
 /// * `c` - zero degree coefficient
+///
+/// # Example
+///```
+/// use automatica::polynomial;
+/// let actual = polynomial::real_quadratic_roots(-2., 1.);
+/// assert_eq!(Some((1., 1.)), actual);
+///```
 pub fn real_quadratic_roots<T: Float>(b: T, c: T) -> Option<(T, T)> {
     roots::real_quadratic_roots_impl(b, c)
 }
