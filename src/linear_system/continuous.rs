@@ -3,7 +3,7 @@
 //! The time evolution of the system is performed through ODE (ordinary
 //! differential equation) [solvers](../solver/index.html).
 
-use nalgebra::{ComplexField, DVector, RealField, Scalar};
+use nalgebra::{ComplexField, DVector, RealField};
 use num_traits::Float;
 
 use crate::{
@@ -19,7 +19,7 @@ use crate::{
 pub type Ss<T> = SsGen<T, Continuous>;
 
 /// Implementation of the methods for the state-space
-impl<T: ComplexField + Scalar> Ss<T> {
+impl<T: ComplexField> Ss<T> {
     /// Calculate the equilibrium point for continuous time systems,
     /// given the input condition
     /// ```text

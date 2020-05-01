@@ -3,7 +3,7 @@
 //! Trajectories of the poles when the system is put in feedback with a pure
 //! constant controller
 
-use nalgebra::{ComplexField, RealField, Scalar};
+use nalgebra::{ComplexField, RealField};
 use num_complex::Complex;
 use num_traits::{Float, MulAdd};
 
@@ -79,7 +79,7 @@ impl<T: Float> Data<T> {
     }
 }
 
-impl<T: ComplexField + Float + MulAdd<Output = T> + RealField + Scalar> Iterator for RootLocus<T> {
+impl<T: ComplexField + Float + MulAdd<Output = T> + RealField> Iterator for RootLocus<T> {
     type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {

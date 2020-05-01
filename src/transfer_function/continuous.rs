@@ -11,7 +11,7 @@
 //! * polar plot
 //! * static gain
 
-use nalgebra::{ComplexField, RealField, Scalar};
+use nalgebra::{ComplexField, RealField};
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
@@ -175,7 +175,7 @@ impl<T: Float> Tf<T> {
     }
 }
 
-impl<T: ComplexField + Float + RealField + Scalar> Tf<T> {
+impl<T: ComplexField + Float + RealField> Tf<T> {
     /// Root locus for the given coefficient `k`
     ///
     /// # Arguments

@@ -26,7 +26,7 @@ use crate::{
 pub type Ssd<T> = SsGen<T, Discrete>;
 
 /// Implementation of the methods for the state-space
-impl<T: ComplexField + Scalar> Ssd<T> {
+impl<T: ComplexField> Ssd<T> {
     /// Calculate the equilibrium point for discrete time systems,
     /// given the input condition.
     /// Input vector must have the same number of inputs of the system.
@@ -139,7 +139,7 @@ impl<T: Scalar> Ssd<T> {
     }
 }
 
-impl<T: ComplexField + Float + RealField + Scalar> Ssd<T> {
+impl<T: ComplexField + Float + RealField> Ssd<T> {
     /// System stability. Checks if all A matrix eigenvalues (poles) are inside
     /// the unit circle.
     ///
@@ -167,7 +167,7 @@ pub trait DiscreteTime<T: Scalar> {
     fn discretize(&self, st: T, method: Discretization) -> Option<Ssd<T>>;
 }
 
-impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
+impl<T: ComplexField + Float> DiscreteTime<T> for Ss<T> {
     /// Convert a linear system into a discrete system.
     ///
     /// # Arguments
@@ -194,10 +194,7 @@ impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     }
 }
 
-impl<T> Ss<T>
-where
-    T: ComplexField + Float + Scalar,
-{
+impl<T: ComplexField + Float> Ss<T> {
     /// Discretization using forward Euler Method.
     ///
     /// # Arguments

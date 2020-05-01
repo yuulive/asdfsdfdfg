@@ -20,7 +20,7 @@ mod fft;
 pub mod matrix;
 mod roots;
 
-use nalgebra::{ComplexField, DMatrix, RealField, Scalar};
+use nalgebra::{ComplexField, DMatrix, RealField};
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd, Num, NumCast, One, Signed, Zero};
 
@@ -293,7 +293,7 @@ impl<T: Clone + Mul<Output = T> + Neg<Output = T> + One + PartialEq + Zero> Poly
 }
 
 /// Implementation methods for Poly struct
-impl<T: ComplexField + Float + RealField + Scalar> Poly<T> {
+impl<T: ComplexField + Float + RealField> Poly<T> {
     /// Build the companion matrix of the polynomial.
     ///
     /// Subdiagonal terms are 1., rightmost column contains the coefficients
