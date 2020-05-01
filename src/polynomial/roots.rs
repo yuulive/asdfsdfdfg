@@ -238,10 +238,7 @@ where
         stack.push(p.clone());
     }
 
-    let res: Vec<_> = stack
-        .iter()
-        .map(|(a, b, _c)| (a.clone(), b.clone()))
-        .collect();
+    let res: Vec<_> = stack.iter().map(|(a, b, _c)| (*a, b.clone())).collect();
     // It is be sorted by k.
     res
 }
