@@ -504,6 +504,26 @@ impl<T: Float> Poly<T> {
     }
 }
 
+/// Calculate the complex roots of the quadratic equation x^2 + b*x + c = 0.
+///
+/// # Arguments
+///
+/// * `b` - first degree coefficient
+/// * `c` - zero degree coefficient
+pub fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>) {
+    roots::complex_quadratic_roots_impl(b, c)
+}
+
+/// Calculate the real roots of the quadratic equation x^2 + b*x + c = 0.
+///
+/// # Arguments
+///
+/// * `b` - first degree coefficient
+/// * `c` - zero degree coefficient
+pub fn real_quadratic_roots<T: Float>(b: T, c: T) -> Option<(T, T)> {
+    roots::real_quadratic_roots_impl(b, c)
+}
+
 impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
     /// Round off to zero coefficients smaller than `atol`.
     ///
@@ -551,62 +571,6 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
         }
         self.trim();
     }
-}
-
-/// Calculate the complex roots of the quadratic equation x^2 + b*x + c = 0.
-///
-/// # Arguments
-///
-/// * `b` - first degree coefficient
-/// * `c` - zero degree coefficient
-#[allow(clippy::many_single_char_names)]
-pub(crate) fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>) {
-    let two = T::one() + T::one();
-    let b_ = b / two;
-    let d = b_.powi(2) - c; // Discriminant
-    let (root1_r, root1_i, root2_r, root2_i) = if d.is_zero() {
-        (-b_, T::zero(), -b_, T::zero())
-    } else if d.is_sign_negative() {
-        // Negative discriminant.
-        let s = (-d).sqrt();
-        (-b_, -s, -b_, s)
-    } else {
-        // Positive discriminant.
-        let s = d.sqrt();
-        let g = if b > T::zero() { T::one() } else { -T::one() };
-        let h = -(b_ + g * s);
-        (c / h, T::zero(), h, T::zero())
-    };
-
-    (
-        Complex::new(root1_r, root1_i),
-        Complex::new(root2_r, root2_i),
-    )
-}
-
-/// Calculate the real roots of the quadratic equation x^2 + b*x + c = 0.
-///
-/// # Arguments
-///
-/// * `b` - first degree coefficient
-/// * `c` - zero degree coefficient
-#[allow(clippy::many_single_char_names)]
-pub(crate) fn real_quadratic_roots<T: Float>(b: T, c: T) -> Option<(T, T)> {
-    let b_ = b / T::from(2.0_f32).unwrap(); // Safe cast, it's exact.
-    let d = b_.powi(2) - c; // Discriminant
-    let (r1, r2) = if d.is_zero() {
-        (-b_, -b_)
-    } else if d.is_sign_negative() {
-        return None;
-    } else {
-        // Positive discriminant.
-        let s = d.sqrt();
-        let g = if b > T::zero() { T::one() } else { -T::one() };
-        let h = -(b_ + g * s);
-        (c / h, h)
-    };
-
-    Some((r1, r2))
 }
 
 /// Implementation methods for Poly struct

@@ -258,6 +258,63 @@ where
     first.0 * second.1 - second.0 * first.1
 }
 
+/// Calculate the complex roots of the quadratic equation x^2 + b*x + c = 0.
+///
+/// # Arguments
+///
+/// * `b` - first degree coefficient
+/// * `c` - zero degree coefficient
+#[allow(clippy::many_single_char_names)]
+pub(super) fn complex_quadratic_roots_impl<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>) {
+    let two = T::one() + T::one();
+    let b_ = b / two;
+    let d = b_.powi(2) - c; // Discriminant
+    let (root1_r, root1_i, root2_r, root2_i) = if d.is_zero() {
+        (-b_, T::zero(), -b_, T::zero())
+    } else if d.is_sign_negative() {
+        // Negative discriminant.
+        let s = (-d).sqrt();
+        (-b_, -s, -b_, s)
+    } else {
+        // Positive discriminant.
+        let s = d.sqrt();
+        let g = if b > T::zero() { T::one() } else { -T::one() };
+        let h = -(b_ + g * s);
+        (c / h, T::zero(), h, T::zero())
+    };
+
+    (
+        Complex::new(root1_r, root1_i),
+        Complex::new(root2_r, root2_i),
+    )
+}
+
+/// Calculate the real roots of the quadratic equation x^2 + b*x + c = 0.
+///
+/// # Arguments
+///
+/// * `b` - first degree coefficient
+/// * `c` - zero degree coefficient
+#[allow(clippy::many_single_char_names)]
+pub(super) fn real_quadratic_roots_impl<T: Float>(b: T, c: T) -> Option<(T, T)> {
+    let two = T::one() + T::one();
+    let b_ = b / two;
+    let d = b_.powi(2) - c; // Discriminant
+    let (r1, r2) = if d.is_zero() {
+        (-b_, -b_)
+    } else if d.is_sign_negative() {
+        return None;
+    } else {
+        // Positive discriminant.
+        let s = d.sqrt();
+        let g = if b > T::zero() { T::one() } else { -T::one() };
+        let h = -(b_ + g * s);
+        (c / h, h)
+    };
+
+    Some((r1, r2))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
