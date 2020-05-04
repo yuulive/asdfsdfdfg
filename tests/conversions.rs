@@ -10,7 +10,7 @@ fn from_tf_to_ss() {
     let den = poly!(4., 1., 2.);
     let g = Tf::new(num, den).normalize();
 
-    let sys = Ss::try_from(g.clone()).unwrap();
+    let sys = Ss::try_from(&g).unwrap();
 
     let expected = Ss::new_from_slice(2, 1, 1, &[0., -2., 1., -0.5], &[2., 0.], &[0., 1.], &[0.]);
     assert_eq!(expected, sys);

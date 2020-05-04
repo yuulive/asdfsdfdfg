@@ -298,7 +298,7 @@ impl<T: ComplexField + Float + RealField> Poly<T> {
     ///
     /// Subdiagonal terms are 1., rightmost column contains the coefficients
     /// of the monic polynomial with opposite sign.
-    pub(crate) fn companion(&self) -> Option<DMatrix<T>> {
+    fn companion(&self) -> Option<DMatrix<T>> {
         match self.degree() {
             Some(degree) if degree > 0 => {
                 let hi_coeff = self.coeffs[degree];

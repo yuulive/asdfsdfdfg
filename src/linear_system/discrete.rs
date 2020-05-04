@@ -407,7 +407,7 @@ mod tests {
             Poly::new_from_coeffs(&[3., 4., 1.]),
         );
 
-        let ss = Ssd::try_from(tf).unwrap();
+        let ss = Ssd::try_from(&tf).unwrap();
 
         assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -3., 1., -4.]), ss.a);
         assert_eq!(DMatrix::from_row_slice(2, 1, &[-2., -4.]), ss.b);

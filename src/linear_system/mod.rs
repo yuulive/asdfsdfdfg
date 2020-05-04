@@ -351,7 +351,7 @@ macro_rules! leverrier {
 leverrier!(f64, leverrier_f64);
 leverrier!(f32, leverrier_f32);
 
-impl<T: Float + Scalar + ComplexField + RealField, U: Time> TryFrom<TfGen<T, U>> for SsGen<T, U> {
+impl<T: ComplexField + Float + RealField, U: Time> TryFrom<&TfGen<T, U>> for SsGen<T, U> {
     type Error = &'static str;
 
     /// Convert a transfer function representation into state space representation.
@@ -374,32 +374,27 @@ impl<T: Float + Scalar + ComplexField + RealField, U: Time> TryFrom<TfGen<T, U>>
     ///
     /// b'_n = b_n,   b'_i = b_i - a_i*b'_n,   i = 0, ..., n-1
     /// ```
-    /// A is the companion matrix of the transfer function denominator.
-    /// The denominator is in monic form, this means that the numerator shall be
-    /// divided by the leading coefficient of the original denominator.
     ///
     /// # Arguments
     ///
     /// `tf` - transfer function
-    fn try_from(tf: TfGen<T, U>) -> Result<Self, Self::Error> {
-        // Get the denominator in the monic form and the leading coefficient.
-        let (den_monic, den_n) = tf.den().monic();
-        // Extend the numerator coefficients with zeros to the length of the
-        // denominator polynomial.
-        let order = match den_monic.degree() {
+    fn try_from(tf: &TfGen<T, U>) -> Result<Self, Self::Error> {
+        // Get the denominator in the monic form mantaining the original gain.
+        let tf_norm = tf.normalize();
+        let order = match tf_norm.den().degree() {
             Some(d) => d,
             _ => return Err("Transfer functions cannot have zero polynomial denominator"),
         };
-        // Divide the denominator polynomial by the highest coefficient of the
-        // numerator polinomial to mantain the original gain.
-        let mut num = tf.num().clone() / den_n;
-        num.extend(order);
+        let num = {
+            // Extend the numerator coefficients with zeros to the length of the
+            // denominator polynomial.
+            let mut num = tf.num().clone();
+            num.extend(order);
+            num
+        };
 
         // Calculate the observability canonical form.
-        let a = match den_monic.companion() {
-            Some(a) => a,
-            _ => return Err("Denominator has no poles"),
-        };
+        let a = observability(&tf_norm)?;
 
         // Get the number of states n.
         let states = a.nrows();
@@ -407,11 +402,14 @@ impl<T: Float + Scalar + ComplexField + RealField, U: Time> TryFrom<TfGen<T, U>>
         let b_n = num[order];
 
         // Create a nx1 vector with b'i = bi - ai * b'n
-        let b = DMatrix::from_fn(states, 1, |i, _j| num[i] - den_monic[i] * b_n);
+        let b = DMatrix::from_fn(states, 1, |i, _j| num[i] - tf_norm.den()[i] * b_n);
 
         // Crate a 1xn vector with all zeros but the last that is 1.
-        let mut c = DMatrix::zeros(1, states);
-        c[states - 1] = T::one();
+        let c = {
+            let mut c = DMatrix::zeros(1, states);
+            c[states - 1] = T::one();
+            c
+        };
 
         // Crate a 1x1 matrix with the highest coefficient of the numerator.
         let d = DMatrix::from_element(1, 1, b_n);
@@ -429,6 +427,60 @@ impl<T: Float + Scalar + ComplexField + RealField, U: Time> TryFrom<TfGen<T, U>>
             },
             time: PhantomData,
         })
+    }
+}
+
+/// Build the companion matrix of the polynomial.
+///
+/// Subdiagonal terms are 1., rightmost column contains the coefficients
+/// of the monic polynomial with opposite sign.
+fn observability<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
+where
+    T: ComplexField + Float + RealField,
+    U: Time,
+{
+    // Assert that the denominator is in monic form.
+    debug_assert!(tf.den().leading_coeff().is_one());
+    match tf.den().degree() {
+        Some(degree) if degree > 0 => {
+            let comp = DMatrix::from_fn(degree, degree, |i, j| {
+                if j == degree - 1 {
+                    -tf.den()[i]
+                } else if i == j + 1 {
+                    T::one()
+                } else {
+                    T::zero()
+                }
+            });
+            debug_assert!(comp.is_square());
+            Ok(comp)
+        }
+        _ => Err("Denominator has no poles"),
+    }
+}
+
+fn controllability<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
+where
+    T: ComplexField + Float + RealField,
+    U: Time,
+{
+    // Assert that the denominator is in monic form.
+    debug_assert!(tf.den().leading_coeff().is_one());
+    match tf.den().degree() {
+        Some(degree) if degree > 0 => {
+            let comp = DMatrix::from_fn(degree, degree, |i, j| {
+                if i == degree - 1 {
+                    -tf.den()[j]
+                } else if j == i + 1 {
+                    T::one()
+                } else {
+                    T::zero()
+                }
+            });
+            debug_assert!(comp.is_square());
+            Ok(comp)
+        }
+        _ => Err("Denominator has no poles"),
     }
 }
 
@@ -719,7 +771,7 @@ mod tests {
             Poly::new_from_coeffs(&[1., 1., 1.]),
         );
 
-        let ss = SsGen::try_from(tf).unwrap();
+        let ss = SsGen::try_from(&tf).unwrap();
 
         assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -1., 1., -1.]), ss.a);
         assert_eq!(DMatrix::from_row_slice(2, 1, &[1., 0.]), ss.b);

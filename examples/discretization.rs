@@ -15,7 +15,7 @@ fn main() {
     let g = Tf::new(num, den);
     println!("{}", g);
 
-    let sys = Ss::try_from(g).unwrap();
+    let sys = Ss::try_from(&g).unwrap();
     println!("{}", &sys);
     let x0 = [0., 0.];
     let steps = 250;
