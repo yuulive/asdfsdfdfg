@@ -459,6 +459,84 @@ where
     }
 }
 
+impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
+    /// Convert a transfer function representation into state space representation.
+    /// Conversion is done using the controllability canonical form.
+    ///
+    /// ```text
+    ///        b_n*s^n + b_(n-1)*s^(n-1) + ... + b_1*s + b_0
+    /// G(s) = ---------------------------------------------
+    ///          s^n + a_(n-1)*s^(n-1) + ... + a_1*s + a_0
+    ///     ┌                          ┐        ┌   ┐
+    ///     │  0    1    0   .  0      │        │ 0 │
+    ///     │  0    0    1   .  0      │        │ 0 │
+    /// A = │  0    0    0   .  0      │,   B = │ 0 │
+    ///     │  .    .    .   .  .      │        │ . │
+    ///     │  0    0    0   .  1      │        │ 0 │
+    ///     │ -a_0 -a_1 -a_2 . -a_(n-1)│        │ 1 │
+    ///     └                          ┘        └   ┘
+    ///     ┌                         ┐         ┌    ┐
+    /// C = │b'_0 b'_1 b'_2 . b'_(n-1)│,    D = │b'_n│
+    ///     └                         ┘         └    ┘
+    ///
+    /// b'_n = b_n,   b'_i = b_i - a_i*b'_n,   i = 0, ..., n-1
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// `tf` - transfer function
+    pub fn new_controllability_realization(tf: &TfGen<T, U>) -> Result<Self, &'static str> {
+        // Get the denominator in the monic form mantaining the original gain.
+        let tf_norm = tf.normalize();
+        let order = match tf_norm.den().degree() {
+            Some(d) => d,
+            _ => return Err("Transfer functions cannot have zero polynomial denominator"),
+        };
+        let num = {
+            // Extend the numerator coefficients with zeros to the length of the
+            // denominator polynomial.
+            let mut num = tf.num().clone();
+            num.extend(order);
+            num
+        };
+
+        // Calculate the observability canonical form.
+        let a = controllability(&tf_norm)?;
+
+        // Get the number of states n.
+        let states = a.nrows();
+        // Get the highest coefficient of the numerator.
+        let b_n = num[order];
+
+        // Crate a nx1 vector with all zeros but the last that is 1.
+        let b = {
+            let mut b = DMatrix::zeros(states, 1);
+            b[states - 1] = T::one();
+            b
+        };
+
+        // Create a 1xn vector with b'i = bi - ai * b'n
+        let c = DMatrix::from_fn(1, states, |_i, j| num[j] - tf_norm.den()[j] * b_n);
+
+        // Crate a 1x1 matrix with the highest coefficient of the numerator.
+        let d = DMatrix::from_element(1, 1, b_n);
+
+        // A single transfer function has only one input and one output.
+        Ok(Self {
+            a,
+            b,
+            c,
+            d,
+            dim: Dim {
+                states,
+                inputs: 1,
+                outputs: 1,
+            },
+            time: PhantomData,
+        })
+    }
+}
+
 fn controllability<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
 where
     T: ComplexField + Float + RealField,
