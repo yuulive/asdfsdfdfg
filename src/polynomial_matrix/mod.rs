@@ -187,7 +187,7 @@ impl<T: Mul<Output = T> + MulAssign<T> + Scalar + Zero> PolyMatrix<T> {
     /// * `poly` - Polynomial
     /// * `matrix` - Matrix
     pub(crate) fn multiply(poly: &Poly<T>, matrix: &DMatrix<T>) -> PolyMatrix<T> {
-        let result = poly.coeffs.iter().map(|&c| matrix * c);
+        let result = poly.as_slice().iter().map(|&c| matrix * c);
         PolyMatrix::new_from_iter(result)
     }
 }

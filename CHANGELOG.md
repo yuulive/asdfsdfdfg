@@ -22,6 +22,7 @@
 - Moved Discretization to top module
 - Removed Eval trait
 - Removed TryFrom trait from TfGen
+- Moved the implementation of the polynomial matrices to its own module
 ## Fixed
 - Subtraction between a real number and a polynomial
 

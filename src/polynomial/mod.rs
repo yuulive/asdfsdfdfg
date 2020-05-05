@@ -17,7 +17,6 @@
 
 pub mod arithmetic;
 mod fft;
-pub mod matrix;
 mod roots;
 
 use nalgebra::{ComplexField, DMatrix, RealField};

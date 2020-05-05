@@ -32,10 +32,7 @@ use std::{
 };
 
 use crate::{
-    polynomial,
-    polynomial::{matrix::PolyMatrix, Poly},
-    transfer_function::TfGen,
-    Time,
+    polynomial, polynomial::Poly, polynomial_matrix::PolyMatrix, transfer_function::TfGen, Time,
 };
 
 /// State-space representation of a linear system
@@ -616,7 +613,7 @@ impl<T: Display + Scalar> Display for Equilibrium<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{polynomial::matrix::MatrixOfPoly, Continuous, Discrete};
+    use crate::{polynomial_matrix::MatrixOfPoly, Continuous, Discrete};
 
     use nalgebra::DMatrix;
 

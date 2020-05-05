@@ -18,10 +18,8 @@ use std::{
 
 use crate::{
     linear_system::{self, SsGen},
-    polynomial::{
-        matrix::{MatrixOfPoly, PolyMatrix},
-        Poly,
-    },
+    polynomial::Poly,
+    polynomial_matrix::{MatrixOfPoly, PolyMatrix},
     Time,
 };
 
