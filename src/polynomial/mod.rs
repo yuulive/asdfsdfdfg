@@ -30,10 +30,7 @@ use std::{
     ops::{Add, Div, Index, IndexMut, Mul, Neg},
 };
 
-use crate::{
-    polynomial::{matrix::PolyMatrix, roots::RootsFinder},
-    utils,
-};
+use crate::{polynomial::roots::RootsFinder, utils};
 
 /// Polynomial object
 ///
@@ -588,28 +585,6 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
     }
 }
 
-/// Implementation methods for Poly struct
-impl Poly<f64> {
-    /// Implementation of polynomial and matrix multiplication
-    pub(crate) fn multiply(&self, rhs: &DMatrix<f64>) -> PolyMatrix<f64> {
-        // It's the polynomial matrix whose coefficients are the coefficients
-        // of the polynomial times the matrix
-        let result: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
-        PolyMatrix::new_from_coeffs(&result)
-    }
-}
-
-impl Poly<f32> {
-    /// Implementation of polynomial and matrix multiplication
-    pub(crate) fn multiply(&self, rhs: &DMatrix<f32>) -> PolyMatrix<f32> {
-        // It's the polynomial matrix whose coefficients are the coefficients
-        // of the polynomial times the matrix
-        let result: Vec<_> = self.coeffs.iter().map(|&c| c * rhs).collect();
-        PolyMatrix::new_from_coeffs(&result)
-    }
-}
-
-/// Implementation methods for Poly struct
 impl<T: Clone + Mul<Output = T> + NumCast + One> Poly<T> {
     /// Calculate the derivative of the polynomial.
     ///

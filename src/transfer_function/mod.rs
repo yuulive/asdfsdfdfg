@@ -34,7 +34,10 @@ use std::{
 
 use crate::{
     linear_system::{self, SsGen},
-    polynomial::{matrix::MatrixOfPoly, Poly},
+    polynomial::{
+        matrix::{MatrixOfPoly, PolyMatrix},
+        Poly,
+    },
     Time,
 };
 
@@ -252,7 +255,7 @@ macro_rules! from_ss_to_tr {
             pub fn new_from_siso(ss: &SsGen<$ty, U>) -> Result<Self, &'static str> {
                 let (pc, a_inv) = $laverrier(&ss.a);
                 let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
-                let rest = pc.multiply(&ss.d);
+                let rest = PolyMatrix::multiply(&pc, &ss.d);
                 let tf = g + rest;
                 if let Some(num) = MatrixOfPoly::from(tf).single() {
                     Ok(Self::new(num.clone(), pc))

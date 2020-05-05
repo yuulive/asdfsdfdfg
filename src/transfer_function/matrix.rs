@@ -18,7 +18,10 @@ use std::{
 
 use crate::{
     linear_system::{self, SsGen},
-    polynomial::{matrix::MatrixOfPoly, Poly},
+    polynomial::{
+        matrix::{MatrixOfPoly, PolyMatrix},
+        Poly,
+    },
     Time,
 };
 
@@ -102,7 +105,7 @@ impl<T: Time> From<SsGen<f64, T>> for TfMatrix<f64> {
     fn from(ss: SsGen<f64, T>) -> Self {
         let (pc, a_inv) = linear_system::leverrier_f64(&ss.a);
         let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
-        let rest = pc.multiply(&ss.d);
+        let rest = PolyMatrix::multiply(&pc, &ss.d);
         let tf = g + rest;
         Self::new(MatrixOfPoly::from(tf), pc)
     }
@@ -117,7 +120,7 @@ impl<T: Time> From<SsGen<f32, T>> for TfMatrix<f32> {
     fn from(ss: SsGen<f32, T>) -> Self {
         let (pc, a_inv) = linear_system::leverrier_f32(&ss.a);
         let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
-        let rest = pc.multiply(&ss.d);
+        let rest = PolyMatrix::multiply(&pc, &ss.d);
         let tf = g + rest;
         Self::new(MatrixOfPoly::from(tf), pc)
     }

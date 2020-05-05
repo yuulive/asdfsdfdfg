@@ -43,7 +43,7 @@ impl<T: Scalar + Zero> PolyMatrix<T> {
     ///
     /// # Arguments
     ///
-    /// * `coeffs` - slice of matrix coefficients
+    /// * `matr_coeffs` - slice of matrix coefficients
     pub(crate) fn new_from_coeffs(matr_coeffs: &[DMatrix<T>]) -> Self {
         let shape = matr_coeffs[0].shape();
         assert!(matr_coeffs.iter().all(|c| c.shape() == shape));
@@ -52,6 +52,25 @@ impl<T: Scalar + Zero> PolyMatrix<T> {
         };
         pm.trim();
         debug_assert!(!pm.matr_coeffs.is_empty());
+        pm
+    }
+
+    /// Create a new polynomial matrix given an iterator of matrix coefficients.
+    ///
+    /// # Arguments
+    ///
+    /// * `matr_iter` - iterator of matrix coefficients
+    pub(crate) fn new_from_iter<II>(matr_iter: II) -> Self
+    where
+        II: IntoIterator<Item = DMatrix<T>>,
+    {
+        let mut pm = Self {
+            matr_coeffs: matr_iter.into_iter().collect(),
+        };
+        debug_assert!(!pm.matr_coeffs.is_empty());
+        let shape = pm.matr_coeffs[0].shape();
+        assert!(pm.matr_coeffs.iter().all(|c| c.shape() == shape));
+        pm.trim();
         pm
     }
 
@@ -155,6 +174,21 @@ impl Add<PolyMatrix<f32>> for PolyMatrix<f32> {
         };
         result.trim();
         result
+    }
+}
+
+impl<T: Mul<Output = T> + MulAssign<T> + Scalar + Zero> PolyMatrix<T> {
+    /// Implementation of polynomial and matrix multiplication
+    /// It's the polynomial matrix whose coefficients are the coefficients
+    /// of the polynomial times the matrix
+    ///
+    /// # Arguments
+    ///
+    /// * `poly` - Polynomial
+    /// * `matrix` - Matrix
+    pub(crate) fn multiply(poly: &Poly<T>, matrix: &DMatrix<T>) -> PolyMatrix<T> {
+        let result = poly.coeffs.iter().map(|&c| matrix * c);
+        PolyMatrix::new_from_iter(result)
     }
 }
 
