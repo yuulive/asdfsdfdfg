@@ -26,7 +26,6 @@ use num_complex::Complex;
 use num_traits::{Float, Inv, One, Signed, Zero};
 
 use std::{
-    convert::TryFrom,
     fmt,
     fmt::{Debug, Display, Formatter},
     marker::PhantomData,
@@ -242,9 +241,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
 
 macro_rules! from_ss_to_tr {
     ($ty:ty, $laverrier:expr) => {
-        impl<U: Time> TryFrom<SsGen<$ty, U>> for TfGen<$ty, U> {
-            type Error = &'static str;
-
+        impl<U: Time> TfGen<$ty, U> {
             /// Convert a state-space representation into transfer functions.
             /// Conversion is available for Single Input Single Output system.
             /// If fails if the system is not SISO
@@ -252,7 +249,7 @@ macro_rules! from_ss_to_tr {
             /// # Arguments
             ///
             /// `ss` - state space linear system
-            fn try_from(ss: SsGen<$ty, U>) -> Result<Self, Self::Error> {
+            pub fn new_from_siso(ss: &SsGen<$ty, U>) -> Result<Self, &'static str> {
                 let (pc, a_inv) = $laverrier(&ss.a);
                 let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
                 let rest = pc.multiply(&ss.d);

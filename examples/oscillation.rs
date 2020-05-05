@@ -2,8 +2,6 @@ extern crate automatica;
 
 use automatica::{signals::continuous, Seconds, Ss, Tf};
 
-use std::convert::TryFrom;
-
 #[allow(clippy::many_single_char_names)]
 fn main() {
     // Mass (m), spring (k), dumper (f)
@@ -22,7 +20,7 @@ fn main() {
     let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
     println!("{}", &sys);
 
-    let tr = Tf::try_from(sys).unwrap();
+    let tr = Tf::<f64>::new_from_siso(&sys).unwrap();
     println!("{}", &tr);
 
     println!("\nPoles:\n{:?}", tr.complex_poles());

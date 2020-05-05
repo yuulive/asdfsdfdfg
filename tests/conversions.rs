@@ -1,7 +1,5 @@
 extern crate automatica;
 
-use std::convert::TryFrom;
-
 use automatica::{poly, Ss, Tf};
 
 #[test]
@@ -19,7 +17,7 @@ fn from_tf_to_ss() {
     assert_eq!(1, sys.dim().inputs());
     assert_eq!(1, sys.dim().outputs());
 
-    let new_tf = Tf::try_from(sys).unwrap().normalize();
+    let new_tf = Tf::<f32>::new_from_siso(&sys).unwrap().normalize();
 
     assert_eq!(g, new_tf);
 }
