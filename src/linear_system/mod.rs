@@ -391,7 +391,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
         };
 
         // Calculate the observability canonical form.
-        let a = observability(&tf_norm)?;
+        let a = observability_canonical_form(&tf_norm)?;
 
         // Get the number of states n.
         let states = a.nrows();
@@ -467,7 +467,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
         };
 
         // Calculate the observability canonical form.
-        let a = controllability(&tf_norm)?;
+        let a = controllability_canonical_form(&tf_norm)?;
 
         // Get the number of states n.
         let states = a.nrows();
@@ -503,11 +503,11 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     }
 }
 
-/// Build the companion matrix of the polynomial.
+/// Build the observability canonical form of the states (A) matrix.
 ///
-/// Subdiagonal terms are 1., rightmost column contains the coefficients
-/// of the monic polynomial with opposite sign.
-fn observability<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
+/// The transfer function shall be in normalized from, i.e. the highest
+/// coefficient of the denominator shall be 1.
+fn observability_canonical_form<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
 where
     T: ComplexField + Float + RealField,
     U: Time,
@@ -532,7 +532,11 @@ where
     }
 }
 
-fn controllability<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
+/// Build the controllability canonical form of the states (A) matrix.
+///
+/// The transfer function shall be in normalized from, i.e. the highest
+/// coefficient of the denominator shall be 1.
+fn controllability_canonical_form<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
 where
     T: ComplexField + Float + RealField,
     U: Time,
