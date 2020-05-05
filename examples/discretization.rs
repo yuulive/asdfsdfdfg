@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate automatica;
 
-use std::convert::TryFrom;
-
 use automatica::{
     linear_system::discrete::DiscreteTime,
     signals::{continuous, discrete},
@@ -15,7 +13,7 @@ fn main() {
     let g = Tf::new(num, den);
     println!("{}", g);
 
-    let sys = Ss::try_from(&g).unwrap();
+    let sys = Ss::new_observability_realization(&g).unwrap();
     println!("{}", &sys);
     let x0 = [0., 0.];
     let steps = 250;

@@ -8,6 +8,7 @@
 - AsRef trait to polynomial for reference-to-reference conversion into a slice
 - decibel unit of measurement
 - Polynomial round off to zero
+- Conversion from TfGen to SSGen using controllability canonical form
 ## Changed
 - Improvements on polynomial roots finders and increment of related tests
 - General source code linting
@@ -20,6 +21,7 @@
 - Renamed Decibel trait to ToDecibel
 - Moved Discretization to top module
 - Removed Eval trait
+- Removed TryFrom trait from TfGen
 ## Fixed
 - Subtraction between a real number and a polynomial
 

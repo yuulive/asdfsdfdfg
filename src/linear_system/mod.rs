@@ -26,7 +26,6 @@ use num_complex::Complex;
 use num_traits::Float;
 
 use std::{
-    convert::TryFrom,
     fmt,
     fmt::{Debug, Display, Formatter},
     marker::PhantomData,
@@ -351,9 +350,7 @@ macro_rules! leverrier {
 leverrier!(f64, leverrier_f64);
 leverrier!(f32, leverrier_f32);
 
-impl<T: ComplexField + Float + RealField, U: Time> TryFrom<&TfGen<T, U>> for SsGen<T, U> {
-    type Error = &'static str;
-
+impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// Convert a transfer function representation into state space representation.
     /// Conversion is done using the observability canonical form.
     ///
@@ -378,7 +375,7 @@ impl<T: ComplexField + Float + RealField, U: Time> TryFrom<&TfGen<T, U>> for SsG
     /// # Arguments
     ///
     /// `tf` - transfer function
-    fn try_from(tf: &TfGen<T, U>) -> Result<Self, Self::Error> {
+    pub fn new_observability_realization(tf: &TfGen<T, U>) -> Result<Self, &'static str> {
         // Get the denominator in the monic form mantaining the original gain.
         let tf_norm = tf.normalize();
         let order = match tf_norm.den().degree() {
@@ -428,38 +425,7 @@ impl<T: ComplexField + Float + RealField, U: Time> TryFrom<&TfGen<T, U>> for SsG
             time: PhantomData,
         })
     }
-}
 
-/// Build the companion matrix of the polynomial.
-///
-/// Subdiagonal terms are 1., rightmost column contains the coefficients
-/// of the monic polynomial with opposite sign.
-fn observability<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
-where
-    T: ComplexField + Float + RealField,
-    U: Time,
-{
-    // Assert that the denominator is in monic form.
-    debug_assert!(tf.den().leading_coeff().is_one());
-    match tf.den().degree() {
-        Some(degree) if degree > 0 => {
-            let comp = DMatrix::from_fn(degree, degree, |i, j| {
-                if j == degree - 1 {
-                    -tf.den()[i]
-                } else if i == j + 1 {
-                    T::one()
-                } else {
-                    T::zero()
-                }
-            });
-            debug_assert!(comp.is_square());
-            Ok(comp)
-        }
-        _ => Err("Denominator has no poles"),
-    }
-}
-
-impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// Convert a transfer function representation into state space representation.
     /// Conversion is done using the controllability canonical form.
     ///
@@ -534,6 +500,35 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
             },
             time: PhantomData,
         })
+    }
+}
+
+/// Build the companion matrix of the polynomial.
+///
+/// Subdiagonal terms are 1., rightmost column contains the coefficients
+/// of the monic polynomial with opposite sign.
+fn observability<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
+where
+    T: ComplexField + Float + RealField,
+    U: Time,
+{
+    // Assert that the denominator is in monic form.
+    debug_assert!(tf.den().leading_coeff().is_one());
+    match tf.den().degree() {
+        Some(degree) if degree > 0 => {
+            let comp = DMatrix::from_fn(degree, degree, |i, j| {
+                if j == degree - 1 {
+                    -tf.den()[i]
+                } else if i == j + 1 {
+                    T::one()
+                } else {
+                    T::zero()
+                }
+            });
+            debug_assert!(comp.is_square());
+            Ok(comp)
+        }
+        _ => Err("Denominator has no poles"),
     }
 }
 
@@ -849,11 +844,11 @@ mod tests {
             Poly::new_from_coeffs(&[1., 1., 1.]),
         );
 
-        let ss = SsGen::try_from(&tf).unwrap();
+        let ss = SsGen::new_controllability_realization(&tf).unwrap();
 
-        assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -1., 1., -1.]), ss.a);
-        assert_eq!(DMatrix::from_row_slice(2, 1, &[1., 0.]), ss.b);
-        assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), ss.c);
+        assert_eq!(DMatrix::from_row_slice(2, 2, &[0., 1., -1., -1.]), ss.a);
+        assert_eq!(DMatrix::from_row_slice(2, 1, &[0., 1.]), ss.b);
+        assert_eq!(DMatrix::from_row_slice(1, 2, &[1., 0.]), ss.c);
         assert_eq!(DMatrix::from_row_slice(1, 1, &[0.]), ss.d);
     }
 
