@@ -74,7 +74,7 @@ impl<T> Poly<T> {
     /// ```
     #[must_use]
     pub fn as_slice(&self) -> &[T] {
-        &self.coeffs
+        self.as_ref()
     }
 }
 
