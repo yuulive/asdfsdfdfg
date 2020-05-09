@@ -45,7 +45,6 @@ Coefficients indexing and manipulation
 Polynomial formatting
 
 ## Polynomial matrices
-
 - Formatting the matrix
 
 ## Units of measurement
@@ -77,8 +76,7 @@ Polynomial formatting
 - Observability matrix
 - Formatting of the system
 #### Conversions
-- From single input single output state space representation to transfer function
-- From multiple input multiple output state space representation to a matrix of transfer functions
+From transfer function to state space representation
 ### Continuous linear system state space representation
 #### Properties
 - Calculate equilibrium point
@@ -123,7 +121,8 @@ Generic transfer function
 - Negative unit feedback
 - Positive unit feedback
 #### Conversions
-From transfer function to state space representation
+- From single input single output state space representation to transfer function
+- From multiple input multiple output state space representation to a matrix of transfer functions
 ### Continuous time transfer function
 #### Properties
 - Time delay
@@ -151,7 +150,7 @@ Discretization of a continuous time transfer function (forward Euler, backward E
 ### Matrix of transfer functions
 #### Properties
 - Retrieve the characteristic polynomial of the system
-- Evaluation of the matrix give a vector of complex numbers
+- Evaluation of the matrix given a vector of complex numbers
 - Indexing (mutable) of the numerator of the matrix
 - Formatting of the matrix
 
