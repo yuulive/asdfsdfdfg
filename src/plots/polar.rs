@@ -11,7 +11,7 @@ use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
 /// Struct for the calculation of Polar plots
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Polar<T: Float> {
     /// Transfer function
     tf: Tf<T>,
