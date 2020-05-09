@@ -28,3 +28,15 @@ fn central_moving_average() {
         assert_relative_eq!(e, a);
     }
 }
+
+#[test]
+fn arma_channel_example() {
+    let tf = Tfz::new(poly!(1.), poly!(1., 0.5));
+    let values = &[0.1, 0.3, 0.6, 0.8, 1.0];
+    let arma = tf.arma_iter(values.iter().cloned());
+    let expected = [0., 0.2, 0.2, 0.8, 0.];
+
+    for (a, &e) in arma.skip(4).zip(&expected) {
+        assert_relative_eq!(e, a);
+    }
+}
