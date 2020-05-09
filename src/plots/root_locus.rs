@@ -10,7 +10,7 @@ use num_traits::{Float, MulAdd};
 use crate::transfer_function::continuous::Tf;
 
 /// Struct for root locus plot
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct RootLocus<T: Float> {
     /// Transfer function
     tf: Tf<T>,

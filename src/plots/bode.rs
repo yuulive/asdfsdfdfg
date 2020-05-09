@@ -14,7 +14,7 @@ use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
 /// Struct for the calculation of Bode plots
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Bode<T: Float> {
     /// Transfer function
     tf: Tf<T>,
