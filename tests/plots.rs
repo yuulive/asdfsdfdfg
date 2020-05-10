@@ -43,3 +43,27 @@ fn polar_plot() {
         .0
     );
 }
+
+#[test]
+fn root_locus_plot() {
+    // Example 13.2.
+    let tf = Tf::new(poly!(1.0_f64), Poly::new_from_roots(&[0., -3., -5.]));
+    // println!("{}", &tf);
+
+    let loci = tf.root_locus_iter(1., 130., 1.);
+    for locus in loci {
+        let out = locus.output();
+        if locus.k() < 120. {
+            assert!(out[0].re < 0.);
+            assert!(out[1].re < 0.);
+            assert!(out[2].re < 0.);
+        } else {
+            assert!(out[0].re > 0.);
+            assert!(out[1].re > 0.);
+            assert!(relative_eq!(out[2].re, -8.) || out[2].re <= -8.);
+        }
+        // Test symmetry
+        assert_relative_eq!(out[0].im.abs(), out[1].im.abs());
+        assert_relative_eq!(out[2].im, 0.);
+    }
+}
