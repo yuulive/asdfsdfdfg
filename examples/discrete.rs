@@ -12,10 +12,19 @@ fn main() {
     println!("{}", &sys);
 
     let input = 50.;
+    println!("Input: step from time 0 of {}", input);
     let te = sys.evolution_fn(8, discrete::step_vec(input, 0, 1), &[0., 0., 0.]);
 
     let last_step = te.last().unwrap();
-    println!("{:?}", last_step);
+    println!("Last evolution data:");
+    println!(
+        "Time: {}, state: [{:.3}, {:.3}, {:.3}], output: {:.3}",
+        last_step.time(),
+        last_step.state()[0],
+        last_step.state()[1],
+        last_step.state()[2],
+        last_step.output()[0]
+    );
 
     let last_output = last_step.output()[0];
     let gain = last_output / input;
