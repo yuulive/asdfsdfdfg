@@ -16,80 +16,62 @@ fn main() {
     let poles = sys.poles();
 
     println!("{}", &sys);
-    println!("poles:\n{:?}", poles);
+    println!(
+        "Poles: {:.2}{:+.2}i, {:.2}{:+.2}i",
+        poles[0].re, poles[0].im, poles[1].re, poles[1].im
+    );
 
-    println!("\nStep response:");
+    println!("\nUnitary step response:");
     let step = continuous::step(1., 1);
 
     let rk2 = sys.rk2(&step, &[0., 0.], Seconds(0.1), 150);
-    println!("rk2 stationary values: {:?}", rk2.last().unwrap());
+    println!("rk2 stationary values:");
+    let last_rk2 = rk2.last().unwrap();
+    print_step(&last_rk2);
     // Change to 'true' to print the result
     if false {
         for i in sys.rk2(&step, &[0., 0.], Seconds(0.1), 150) {
-            println!(
-                "{};{};{};{};{}",
-                i.time(),
-                i.state()[0],
-                i.state()[1],
-                i.output()[0],
-                i.output()[1]
-            );
+            print_step(&i);
         }
     }
 
     let rk4 = sys.rk4(&step, &[0., 0.], Seconds(0.1), 150);
-    println!("rk4 stationary values: {:?}", rk4.last().unwrap());
+    println!("rk4 stationary values:");
+    let last_rk4 = rk4.last().unwrap();
+    print_step(&last_rk4);
     // Change to 'true' to print the result
     if false {
         for i in sys.rk4(&step, &[0., 0.], Seconds(0.1), 150) {
-            println!(
-                "{};{};{};{};{}",
-                i.time(),
-                i.state()[0],
-                i.state()[1],
-                i.output()[0],
-                i.output()[1]
-            );
+            print_step(&i);
         }
     }
 
     let rkf45 = sys.rkf45(&step, &[0., 0.], Seconds(0.1), Seconds(16.), 1e-4);
-    println!("rkf45 stationary values: {:?}", rkf45.last().unwrap());
+    println!("rkf45 stationary values:");
+    let last_rkf45 = rkf45.last().unwrap();
+    print_step_with_error(&last_rkf45);
     // Change to 'true' to print the result
     if false {
         for i in sys.rkf45(&step, &[0., 0.], Seconds(0.1), Seconds(16.), 1e-4) {
-            println!(
-                "{};{};{};{};{};{}",
-                i.time(),
-                i.state()[0],
-                i.state()[1],
-                i.output()[0],
-                i.output()[1],
-                i.error()
-            );
+            print_step_with_error(&i);
         }
     }
 
     let radau = sys.radau(&step, &[0., 0.], Seconds(0.1), 150, 1e-4);
-    println!("radau stationary values: {:?}", radau.last().unwrap());
+    println!("radau stationary values:");
+    let last_radau = radau.last().unwrap();
+    print_step(&last_radau);
     // Change to 'true' to print the result
     if false {
         for i in sys.radau(&step, &[0., 0.], Seconds(0.1), 150, 1e-4) {
-            println!(
-                "{:>4.1};{:>9.6};{:>9.6};{:>9.6};{:>9.6}",
-                i.time(),
-                i.state()[0],
-                i.state()[1],
-                i.output()[0],
-                i.output()[1]
-            );
+            print_step(&i);
         }
     }
 
     let u = 0.0;
-    println!("\nEquilibrium for u={}", u);
+    println!("\nEquilibrium for u = {}", u);
     let eq = sys.equilibrium(&[u]).unwrap();
-    println!("x:\n{:?}\ny:\n{:?}", eq.x(), eq.y());
+    println!("x = {:?}\ny = {:?}", eq.x(), eq.y());
 
     println!("\nTransform linear system into a transfer function");
     let tf_matrix = TfMatrix::from(sys);
@@ -98,12 +80,42 @@ fn main() {
     println!("\nEvaluate transfer function in ω = 0.9");
     let u = vec![Complex::new(0.0, 0.9)];
     let y = tf_matrix.eval(&u);
-    println!("u:\n{:?}\ny:\n{:?}", &u, &y);
-
+    let y1 = &y[0];
+    let y2 = &y[1];
     println!(
-        "y:\n{:?}",
-        &y.iter()
-            .map(|x| (x.norm(), x.arg().to_degrees()))
-            .collect::<Vec<_>>()
+        "u = {:.2}{:+.2}i => y = [{:.2}{:+.2}i, {:.2}{:+.2}i] = [{:.2}<{:+.2}, {:.2}<{:+.2}]",
+        &u[0].re,
+        &u[0].im,
+        y1.re,
+        y1.im,
+        y2.re,
+        y2.im,
+        y1.norm(),
+        y1.arg().to_degrees(),
+        y2.norm(),
+        y2.arg().to_degrees()
+    );
+}
+
+fn print_step(s: &automatica::linear_system::solver::Step<f64>) {
+    println!(
+        "Time: {:.2}; state: [{:.4}; {:.4}]; output: [{:.4}; {:.4}]",
+        s.time(),
+        s.state()[0],
+        s.state()[1],
+        s.output()[0],
+        s.output()[1]
+    );
+}
+
+fn print_step_with_error(s: &automatica::linear_system::solver::StepWithError<f64>) {
+    println!(
+        "Time: {:.2}; state: [{:.4}; {:.4}]; output: [{:.4}; {:.4}]; error: {:.5}",
+        s.time(),
+        s.state()[0],
+        s.state()[1],
+        s.output()[0],
+        s.output()[1],
+        s.error()
     );
 }
