@@ -772,9 +772,9 @@ mod tests {
 
         let mp = MatrixOfPoly::from(poly_matrix);
         println!("mp {}", &mp);
-        let expected_result = "[[6 -7*s +1*s^2, 26 +1*s, -14 +5*s],\n \
-                               [-8 +3*s, -8 -7*s +1*s^2, 12 +1*s],\n \
-                               [6 +4*s, -14 +6*s, 6 -6*s +1*s^2]]";
+        let expected_result = "[[6 -7s +1s^2, 26 +1s, -14 +5s],\n \
+                               [-8 +3s, -8 -7s +1s^2, 12 +1s],\n \
+                               [6 +4s, -14 +6s, 6 -6s +1s^2]]";
         assert_eq!(expected_result, format!("{}", &mp));
     }
 
@@ -801,9 +801,9 @@ mod tests {
 
         let mp = MatrixOfPoly::from(poly_matrix);
         println!("mp {}", &mp);
-        let expected_result = "[[6 -7*s +1*s^2, 26 +1*s, -14 +5*s],\n \
-                               [-8 +3*s, -8 -7*s +1*s^2, 12 +1*s],\n \
-                               [6 +4*s, -14 +6*s, 6 -6*s +1*s^2]]";
+        let expected_result = "[[6 -7s +1s^2, 26 +1s, -14 +5s],\n \
+                               [-8 +3s, -8 -7s +1s^2, 12 +1s],\n \
+                               [6 +4s, -14 +6s, 6 -6s +1s^2]]";
         assert_eq!(expected_result, format!("{}", &mp));
     }
 

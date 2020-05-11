@@ -408,7 +408,7 @@ mod tests {
         let p = Poly::new_from_coeffs(&c);
         let v = vec![p.clone(), p.clone(), p.clone(), p];
         let mp = MatrixOfPoly::new(2, 2, v);
-        let expected = "[[4.3 +5.32*s, 4.3 +5.32*s],\n [4.3 +5.32*s, 4.3 +5.32*s]]";
+        let expected = "[[4.3 +5.32s, 4.3 +5.32s],\n [4.3 +5.32s, 4.3 +5.32s]]";
         assert_eq!(expected, format!("{}", &mp));
     }
 

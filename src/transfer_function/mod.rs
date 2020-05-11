@@ -632,7 +632,7 @@ mod tests {
     #[test]
     fn print() {
         let tf = TfGen::<_, Continuous>::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
-        assert_eq!("1\n──────\n1 +1*s", format!("{}", tf));
+        assert_eq!("1\n─────\n1 +1s", format!("{}", tf));
     }
 
     #[test]

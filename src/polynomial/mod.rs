@@ -808,37 +808,29 @@ impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> One for Poly<T> {
 /// # Example
 /// ```
 /// use automatica::polynomial::Poly;
-/// let p = Poly::new_from_coeffs(&[0, 1, 2, 3]);
-/// assert_eq!("+1*s +2*s^2 +3*s^3", format!("{}", p));
+/// let p = Poly::new_from_coeffs(&[0, 1, 2, 0, 3]);
+/// assert_eq!("+1s +2s^2 +3s^4", format!("{}", p));
 /// ```
-impl<T: Display + One + PartialEq + Signed + Zero> Display for Poly<T> {
+impl<T: Display + Zero> Display for Poly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.coeffs.is_empty() {
             return write!(f, "0");
         } else if self.len() == 1 {
-            return write!(f, "{}", self.coeffs[0]);
+            return write!(f, "{}", self[0]);
         }
         let mut s = String::new();
         let mut sep = "";
-        for (i, c) in self.coeffs.iter().enumerate() {
-            // TODO use approx crate
-            //if relative_eq!(*c, 0.0) {
-            if *c == T::zero() {
-                continue;
-            }
+        for (i, c) in self.coeffs.iter().enumerate().filter(|(_, x)| !x.is_zero()) {
             s.push_str(sep);
-            #[allow(clippy::float_cmp)] // signum() returns either 1.0 or -1.0
-            let sign = if c.signum() == T::one() { "+" } else { "" };
             if i == 0 {
                 s.push_str(&format!("{}", c));
             } else if i == 1 {
-                s.push_str(&format!("{}{}*s", sign, c));
+                s.push_str(&format!("{:+}s", c));
             } else {
-                s.push_str(&format!("{}{}*s^{}", sign, c, i));
+                s.push_str(&format!("{:+}s^{}", c, i));
             }
             sep = " ";
         }
-
         write!(f, "{}", s)
     }
 }
@@ -870,7 +862,7 @@ mod tests {
     fn poly_formatting() {
         assert_eq!("0", format!("{}", Poly::<i16>::zero()));
         assert_eq!("0", format!("{}", Poly::<i16>::new_from_coeffs(&[])));
-        assert_eq!("1 +2*s^3 -4*s^4", format!("{}", poly!(1, 0, 0, 2, -4)));
+        assert_eq!("1 +2s^3 -4s^4", format!("{}", poly!(1, 0, 0, 2, -4)));
     }
 
     #[test]
