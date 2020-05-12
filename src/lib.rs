@@ -70,33 +70,11 @@ pub mod transfer_function;
 pub mod units;
 pub mod utils;
 
+// Export from crate root.
 pub use linear_system::{continuous::Ss, discrete::Ssd};
 pub use polynomial::Poly;
 pub use transfer_function::{
     continuous::Tf, discrete::Tfz, discretization::TfDiscretization, matrix::TfMatrix,
 };
 pub use units::{Decibel, Hertz, RadiansPerSecond, Seconds};
-
-/// Trait to tag Continuous or Discrete types
-pub trait Time {}
-
-/// Type for continuous systems
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Continuous {}
-impl Time for Continuous {}
-
-/// Type for discrete systems
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Discrete {}
-impl Time for Discrete {}
-
-/// Discretization algorithm.
-#[derive(Clone, Copy, Debug)]
-pub enum Discretization {
-    /// Forward Euler
-    ForwardEuler,
-    /// Backward Euler
-    BackwardEuler,
-    /// Tustin (trapezoidal rule)
-    Tustin,
-}
+pub use utils::{Continuous, Discrete, Discretization, Time};
