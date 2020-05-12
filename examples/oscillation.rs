@@ -24,10 +24,7 @@ fn main() {
     println!("{}", &tr);
 
     let poles = tr.complex_poles();
-    println!(
-        "\nPoles: {:.2}{:+.2}i, {:.2}{:+.2}i",
-        poles[0].re, poles[0].im, poles[1].re, poles[1].im
-    );
+    println!("\nPoles: {:.2}, {:.2}", poles[0], poles[1]);
     //let radau = sys.radau(|t| vec![t.cos()], &[0., 0.], 0.1, 200, 1e-3);
 
     // Make a stiff system.
@@ -40,10 +37,7 @@ fn main() {
         k_stiff, f_stiff
     );
     let stiff_poles = stiff_sys.poles();
-    println!(
-        "Poles: {:.2}{:+.2}i, {:.2}{:+.2}i",
-        stiff_poles[0].re, stiff_poles[0].im, stiff_poles[1].re, stiff_poles[1].im
-    );
+    println!("Poles: {:.2}, {:.2}", stiff_poles[0], stiff_poles[1]);
 
     // Free movement.
     let zero_input = continuous::zero(1);

@@ -16,10 +16,7 @@ fn main() {
     let poles = sys.poles();
 
     println!("{}", &sys);
-    println!(
-        "Poles: {:.2}{:+.2}i, {:.2}{:+.2}i",
-        poles[0].re, poles[0].im, poles[1].re, poles[1].im
-    );
+    println!("Poles: {:.2}, {:.2}", poles[0], poles[1]);
 
     println!("\nUnitary step response:");
     let step = continuous::step(1., 1);
@@ -83,13 +80,10 @@ fn main() {
     let y1 = &y[0];
     let y2 = &y[1];
     println!(
-        "u = {:.2}{:+.2}i => y = [{:.2}{:+.2}i, {:.2}{:+.2}i] = [{:.2}<{:+.2}, {:.2}<{:+.2}]",
-        &u[0].re,
-        &u[0].im,
-        y1.re,
-        y1.im,
-        y2.re,
-        y2.im,
+        "u = {:.2} => y = [{:.2}, {:.2}] = [{:.2}<{:+.2}, {:.2}<{:+.2}]",
+        &u[0],
+        y1,
+        y2,
         y1.norm(),
         y1.arg().to_degrees(),
         y2.norm(),

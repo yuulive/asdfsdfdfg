@@ -11,9 +11,8 @@ fn main() {
     let p = tf.polar(RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
     for g in p {
         println!(
-            "({:.3}{:+.3}i) => mag: {:.3}, phase: {:.3}",
-            g.real(),
-            g.imag(),
+            "({:.3}) => mag: {:.3}, phase: {:.3}",
+            g.output(),
             g.magnitude(),
             g.phase()
         );
