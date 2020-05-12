@@ -71,6 +71,11 @@ pub struct Data<T> {
 }
 
 impl<T: Float> Data<T> {
+    /// Get the output
+    pub fn output(&self) -> Complex<T> {
+        self.output
+    }
+
     /// Get the real part
     pub fn real(&self) -> T {
         self.output.re
