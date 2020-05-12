@@ -12,12 +12,19 @@ fn main() {
     println!("T:\n{}\n", tf);
 
     let input = &[0.1, 0.3, 0.6, 0.8, 1.0];
-    let (send, recv) = mpsc::channel();
+    let (sensor_tx, sensor_rx) = mpsc::channel();
     thread::spawn(move || {
         for i in input {
-            send.send(*i).unwrap();
+            sensor_tx.send(*i).unwrap();
             // Simulate sensor timing.
             thread::sleep(Duration::from_millis(50));
+        }
+    });
+
+    let (actuator_tx, actuator_rx) = mpsc::channel();
+    thread::spawn(move || {
+        for i in actuator_rx {
+            print!("{:.2} ", i);
         }
     });
 
@@ -28,9 +35,9 @@ fn main() {
     println!();
 
     println!("Transformed values:");
-    let arma = tf.arma_iter(recv);
+    let arma = tf.arma_iter(sensor_rx);
     for y in arma {
-        print!("{:.2} ", y);
+        actuator_tx.send(y).unwrap();
     }
     println!();
     // y = dsimul(tf2ss(1/(1+0.5*%z)), [0.1, 0.3, 0.6, 0.8, 1.0])
