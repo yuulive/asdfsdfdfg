@@ -176,7 +176,7 @@ where
 
 impl<T, I, J> Iterator for ZipLongest<T, I, J>
 where
-    T: Copy,
+    T: Clone,
     I: Iterator<Item = T>,
     J: Iterator<Item = T>,
 {
@@ -185,8 +185,8 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         match (self.a.next(), self.b.next()) {
             (Some(l), Some(r)) => Some((l, r)),
-            (Some(l), None) => Some((l, self.fill)),
-            (None, Some(r)) => Some((self.fill, r)),
+            (Some(l), None) => Some((l, self.fill.clone())),
+            (None, Some(r)) => Some((self.fill.clone(), r)),
             _ => None,
         }
     }
@@ -211,7 +211,7 @@ where
     L: IntoIterator<Item = U>,
     R: IntoIterator<Item = U>,
     F: FnMut(U, U) -> T,
-    U: Copy,
+    U: Clone,
 {
     zip_longest(left, right, fill).map(move |(l, r)| f(l, r))
 }
