@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate automatica;
 
-use automatica::Tf;
+use automatica::{units::ToDecibel, Tf};
 
 use num_complex::Complex64;
 
@@ -14,9 +14,9 @@ fn main() {
     let c = tf.eval(Complex64::new(0., 0.9));
     println!("\nEvaluation at s = 0 + 0.9i:");
     println!(
-        "{}\n{}dB, {}°",
+        "{:.3} = {:.3}dB, {:.3}°",
         c,
-        20. * c.norm().log(10.),
+        c.norm().to_db(),
         c.arg().to_degrees()
     );
 
