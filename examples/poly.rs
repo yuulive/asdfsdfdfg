@@ -31,16 +31,15 @@ fn main() {
         1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
     ]);
     println!("p(x) = {}\n", wp);
-    let mut roots = wp.iterative_roots();
-    roots.sort_by(|&x, &y| x.re.partial_cmp(&y.re).unwrap());
-    println!("p(x) roots with Aberth-Ehrlich Method:");
-    for r in roots {
-        println!("{}", r);
-    }
-    let mut roots2 = wp.complex_roots();
-    roots2.sort_by(|&x, &y| x.re.partial_cmp(&y.re).unwrap());
-    println!("\np(x) roots with eigenvalue decomposition:");
-    for r in roots2 {
-        println!("{}", r);
+    println!("Wilkinson's polynomial p(x) roots");
+    println!("Aberth-Ehrlich Method;\teigenvalue decomposition");
+
+    let mut iter_roots = wp.iterative_roots();
+    iter_roots.sort_by(|&x, &y| x.re.partial_cmp(&y.re).unwrap());
+    let mut eig_roots = wp.complex_roots();
+    eig_roots.sort_by(|&x, &y| x.re.partial_cmp(&y.re).unwrap());
+
+    for (r1, r2) in iter_roots.iter().zip(eig_roots) {
+        println!("{};\t{}", r1, r2);
     }
 }
