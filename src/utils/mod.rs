@@ -266,6 +266,30 @@ mod tests {
     }
 
     #[test]
+    fn zip_longest_two_iters_copy() {
+        // test zip_longest with iterator of different type
+        let a = (1..6).map(|x| x * 2);
+        let b = (1..7).filter(|x| x % 2 == 1);
+        let res = zip_longest(a, b, 0);
+        assert_eq!(
+            vec![(2, 1), (4, 3), (6, 5), (8, 0), (10, 0)],
+            res.collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn zip_longest_two_iters_non_copy() {
+        // test zip_longest with iterator of different type non Copy
+        let a = vec![vec![0], vec![1], vec![2]];
+        let a = a.iter().map(|x| x);
+        let b = vec![vec![5], vec![4]];
+        let b = b.iter().filter(|_| true);
+        let c = vec![10];
+        let res = zip_longest(a, b, &c).map(|(x, y)| (x[0], y[0]));
+        assert_eq!(vec![(0, 5), (1, 4), (2, 10)], res.collect::<Vec<_>>());
+    }
+
+    #[test]
     fn zip_longest_struct_left() {
         let mut a = zip_longest(&[1, 2, 3], &[1, 2], &0);
         assert_eq!(Some((&1, &1)), a.next());
