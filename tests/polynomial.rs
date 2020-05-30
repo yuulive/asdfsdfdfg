@@ -6,6 +6,97 @@ use automatica::{poly, Poly};
 use num_traits::{One, Zero};
 
 #[test]
+fn multiplicative_unity() {
+    let p1 = poly!(1., 0., 0.3, -4.);
+    let one_p = poly!(1.);
+    assert_eq!(p1, &p1 * &one_p);
+
+    let p2 = poly!(1., 0., 0.3, -4.);
+    assert_eq!(p2, &p2 * 1.);
+
+    let zero_p = poly!(0.);
+    assert_eq!(zero_p, &zero_p * 1.);
+}
+
+#[test]
+fn multiplicative_null() {
+    let p1 = poly!(1., 0., 0.3, -4.);
+    let zero_p = poly!(0.);
+    assert_eq!(zero_p, &p1 * &zero_p);
+
+    let p2 = poly!(1., 0., 0.3, -4.);
+    assert_eq!(zero_p, &p2 * 0.);
+
+    assert_eq!(zero_p, &zero_p * 0.);
+}
+
+#[test]
+fn additive_invariant() {
+    let p1 = poly!(0., -4.5, 0.6);
+    let zero_p = poly!(0.);
+    assert_eq!(p1, &p1 + &zero_p);
+    assert_eq!(p1, &p1 - 0.);
+}
+
+#[test]
+fn roots_degree() {
+    let p0 = poly!(1);
+    assert_eq!(Some(0), p0.degree());
+    let p1 = poly!(1, 2);
+    assert_eq!(Some(1), p1.degree());
+    let p2 = poly!(1, 2, 3);
+    assert_eq!(Some(2), p2.degree());
+}
+
+#[test]
+fn no_degree() {
+    let p0 = poly!(0);
+    assert_eq!(None, p0.degree());
+}
+
+#[test]
+fn additive_inverse() {
+    let p1 = poly!(0, -4, 6);
+    let p2 = poly!(1, 44, -12);
+    let sum = &p1 + &p2;
+    assert_eq!(p1, sum - p2);
+}
+
+#[test]
+fn multiplicative_inverse() {
+    let p1 = poly!(0., -4., 6.);
+    let p2 = poly!(1., 44., -12.);
+    let mul = &p1 * &p2;
+    assert_eq!(p1, mul / p2);
+}
+
+#[test]
+fn derivation() {
+    let p2 = poly!(0., 2., 3.);
+    let p1 = p2.derive();
+    assert_eq!(Some(1), p1.degree());
+
+    let p0 = p1.derive();
+    assert_eq!(Some(0), p0.degree());
+
+    let p0_der = p0.derive();
+    assert_eq!(None, p0_der.degree());
+}
+
+#[test]
+fn integration() {
+    let p0 = poly!(0.);
+    let p1 = p0.integrate(1.);
+    assert_eq!(Some(0), p1.degree());
+
+    let p2 = p1.integrate(-1.);
+    assert_eq!(Some(1), p2.degree());
+
+    let p3 = p2.integrate(2.);
+    assert_eq!(Some(2), p3.degree());
+}
+
+#[test]
 fn arithmetics() {
     let p1 = poly!(1, 1, 1);
     let p2 = poly!(-1, -1, -1);
