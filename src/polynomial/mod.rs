@@ -615,7 +615,7 @@ impl<T: Clone + Mul<Output = T> + NumCast + One> Poly<T> {
 }
 
 /// Implementation methods for Poly struct
-impl<T: Clone + Div<Output = T> + NumCast> Poly<T> {
+impl<T: Clone + Div<Output = T> + NumCast + PartialEq + Zero> Poly<T> {
     /// Calculate the integral of the polynomial. When used with integral types
     /// it does not convert the coefficients to floats, division is between
     /// integers.
@@ -637,6 +637,11 @@ impl<T: Clone + Div<Output = T> + NumCast> Poly<T> {
     /// Panics when the exponent of the term (`usize`) cannot be converted
     /// to `T`.
     pub fn integrate(&self, constant: T) -> Self {
+        if self.is_zero() {
+            return Self {
+                coeffs: vec![constant],
+            };
+        }
         let int_coeffs: Vec<_> = std::iter::once(constant)
             .chain(
                 self.coeffs
