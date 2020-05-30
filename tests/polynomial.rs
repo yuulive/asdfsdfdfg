@@ -139,21 +139,25 @@ fn maximum_minimum() {
 #[test]
 fn roots_consistency() {
     // Wilkinson's polynomial.
-    let wp = Poly::new_from_roots(&[
+    let roots = [
         1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
-    ]);
+    ];
+    let wp = Poly::new_from_roots(&roots);
 
     // Roots with Aberth-Ehrlich Method.
-    let mut roots = wp.iterative_roots();
-    roots.sort_by(|&x, &y| x.re.partial_cmp(&y.re).unwrap());
+    let mut iter_roots = wp.iterative_roots();
+    iter_roots.sort_by(|&x, &y| x.re.partial_cmp(&y.re).unwrap());
+    for (i, r) in iter_roots.iter().zip(&roots) {
+        assert_relative_eq!(i.re, *r, max_relative = 1e-3);
+        assert_relative_eq!(i.im, 0.);
+    }
 
     // Roots with eigenvalue decomposition.
-    let mut roots2 = wp.complex_roots();
-    roots2.sort_by(|&x, &y| x.re.partial_cmp(&y.re).unwrap());
-
-    for (i, e) in roots.iter().zip(roots2) {
-        assert_relative_eq!(i.re, e.re, max_relative = 1e-2);
-        assert_relative_eq!(i.im, e.im);
+    let mut eig_roots = wp.complex_roots();
+    eig_roots.sort_by(|&x, &y| x.re.partial_cmp(&y.re).unwrap());
+    for (i, r) in eig_roots.iter().zip(&roots) {
+        assert_relative_eq!(i.re, *r, max_relative = 1e-3);
+        assert_relative_eq!(i.im, 0.);
     }
 }
 
