@@ -25,6 +25,7 @@
 - Moved the implementation of the polynomial matrices to its own module
 ## Fixed
 - Subtraction between a real number and a polynomial
+- Derivation of zero degree polynomial
 
 ## [0.7.0] - 2020-02-08
 ## Added

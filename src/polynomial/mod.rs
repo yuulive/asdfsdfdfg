@@ -584,7 +584,7 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
     }
 }
 
-impl<T: Clone + Mul<Output = T> + NumCast + One> Poly<T> {
+impl<T: Clone + Mul<Output = T> + NumCast + One + PartialEq + Zero> Poly<T> {
     /// Calculate the derivative of the polynomial.
     ///
     /// # Example
@@ -601,6 +601,10 @@ impl<T: Clone + Mul<Output = T> + NumCast + One> Poly<T> {
     /// to `T`.
     #[must_use]
     pub fn derive(&self) -> Self {
+        if self.len() == 1 {
+            return Poly::zero();
+        }
+
         let derive_coeffs: Vec<_> = self
             .coeffs
             .iter()
@@ -608,6 +612,7 @@ impl<T: Clone + Mul<Output = T> + NumCast + One> Poly<T> {
             .skip(1)
             .map(|(i, c)| c.clone() * T::from(i).unwrap())
             .collect();
+
         Self {
             coeffs: derive_coeffs,
         }
