@@ -17,6 +17,23 @@ pub mod continuous {
         move |_| vec![T::zero(); size]
     }
 
+    /// Impulse function
+    ///
+    /// # Arguments
+    ///
+    /// * `k` - Impulse size
+    /// * `o` - Impulse time
+    /// * `size` - Output size
+    pub fn impulse<T: Float>(k: T, o: Seconds<T>, size: usize) -> impl Fn(Seconds<T>) -> Vec<T> {
+        move |t| {
+            if t == o {
+                vec![k; size]
+            } else {
+                vec![T::zero(); size]
+            }
+        }
+    }
+
     /// Step function
     ///
     /// # Arguments
@@ -52,6 +69,13 @@ pub mod continuous {
         #[quickcheck]
         fn zero_input(s: f64) -> bool {
             relative_eq!(0., zero(1)(Seconds(s))[0])
+        }
+
+        #[test]
+        fn impulse_input() {
+            let imp = impulse(10., Seconds(1.), 1);
+            assert_relative_eq!(0., imp(Seconds(0.5))[0]);
+            assert_relative_eq!(10., imp(Seconds(1.))[0]);
         }
 
         #[quickcheck]
