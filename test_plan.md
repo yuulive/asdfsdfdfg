@@ -35,20 +35,25 @@ A polynomial integral shall have one more degree of the polynomial.
 The initial value of a system is the limit to infinity of its transfer function.
 
 A linear system can be represented both with state-space representation of with transfer function.
+> tests/conversions/from_tf_to_ss
 
 A single input single output system can be transformed between state-representation and transfer function forms.
+> tests/conversions/from_tf_to_ss
 
 The poles of a system are equal to the eigenvalues of the A matrix.
+> tests/linear_system/poles_eigenvalues
 
 An asymptotically stable system response after enough time is independent from the initial state. (3.4.6)
 
-The response to an impulse of the state and the output tends to zero. (3.4.6)
-
 The response of the state and the output to an input limited in time tends to zero. (3.4.6)
+In response to an impulse, both the state and the output tends to zero. (3.4.6)
+> tests/linear_system/to_zero
 
 Series connection of subsystems is asymptotically stable if and only if the subsystems are asymptotically stable.
+> tests/linear_system/series_system
 
 Parallel connection of subsystems is asymptotically stable if and only if the subsystems are asymptotically stable.
+> tests/linear_system/parallel_system
 
 #### Continuous time
 
