@@ -9,6 +9,7 @@
 - decibel unit of measurement
 - Polynomial round off to zero
 - Conversion from TfGen to SSGen using controllability canonical form
+- Methods to check transfer function stability
 ## Changed
 - Improvements on polynomial roots finders and increment of related tests
 - General source code linting

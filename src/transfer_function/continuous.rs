@@ -176,6 +176,20 @@ impl<T: Float> Tf<T> {
 }
 
 impl<T: ComplexField + Float + RealField> Tf<T> {
+    /// System stability. Checks if all poles are negative.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::{Poly, Tf};
+    /// let tf = Tf::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_roots(&[-1., -2.]));
+    /// assert!(tf.is_stable());
+    /// ```
+    #[must_use]
+    pub fn is_stable(&self) -> bool {
+        self.complex_poles().iter().all(|p| p.re.is_negative())
+    }
+
     /// Root locus for the given coefficient `k`
     ///
     /// # Arguments
@@ -285,6 +299,17 @@ mod tests {
     fn static_gain(g: f32) -> bool {
         let tf = Tf::new(poly!(g, -3.), poly!(1., 5., -0.5));
         relative_eq!(g, tf.static_gain())
+    }
+
+    #[test]
+    fn stability() {
+        let stable_den = Poly::new_from_roots(&[-1., -2.]);
+        let stable_tf = Tf::new(poly!(1., 2.), stable_den);
+        assert!(stable_tf.is_stable());
+
+        let unstable_den = Poly::new_from_roots(&[0., -2.]);
+        let unstable_tf = Tf::new(poly!(1., 2.), unstable_den);
+        assert!(!unstable_tf.is_stable());
     }
 
     #[test]

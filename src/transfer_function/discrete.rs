@@ -12,6 +12,7 @@
 //! * backward Euler method
 //! * Tustin (trapezoidal) method
 
+use nalgebra::{ComplexField, RealField};
 use num_complex::Complex;
 use num_traits::{Float, MulAdd};
 
@@ -78,6 +79,22 @@ impl<T: Float + MulAdd<Output = T>> Tfz<T> {
     #[must_use]
     pub fn static_gain(&self) -> T {
         self.eval(T::one())
+    }
+}
+
+impl<T: ComplexField + Float + RealField> Tfz<T> {
+    /// System stability. Checks if all poles are inside the unit circle.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::{Poly, Tfz};
+    /// let tfz = Tfz::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_roots(&[0.5, 1.5]));
+    /// assert!(!tfz.is_stable());
+    /// ```
+    #[must_use]
+    pub fn is_stable(&self) -> bool {
+        self.complex_poles().iter().all(|p| p.abs() < T::one())
     }
 }
 
@@ -363,6 +380,17 @@ mod tests {
     fn static_gain() {
         let tf = Tfz::new(poly!(5., -3.), poly!(2., 5., -6.));
         assert_relative_eq!(2., tf.static_gain());
+    }
+
+    #[test]
+    fn stability() {
+        let stable_den = Poly::new_from_roots(&[-0.3, 0.5]);
+        let stable_tf = Tfz::new(poly!(1., 2.), stable_den);
+        assert!(stable_tf.is_stable());
+
+        let unstable_den = Poly::new_from_roots(&[0., -2.]);
+        let unstable_tf = Tfz::new(poly!(1., 2.), unstable_den);
+        assert!(!unstable_tf.is_stable());
     }
 
     #[test]
