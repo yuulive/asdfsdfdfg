@@ -2,7 +2,7 @@ extern crate automatica;
 #[macro_use]
 extern crate approx;
 
-use automatica::{poly, signals::continuous, Poly, Seconds, Ss, Tf, Tfz};
+use automatica::{poly, signals::continuous, Poly, Seconds, Ss, Ssd, Tf, Tfz};
 
 #[test]
 fn poles_eigenvalues() {
@@ -41,6 +41,29 @@ fn parallel_system() {
 
     let unstable_tf = tf1 + tf3;
     assert!(!unstable_tf.is_stable());
+}
+
+#[test]
+fn initial_state_independence() {
+    let a = &[0.3_f32, 0., 0., 0.25];
+    let b = &[3., -1.];
+    let c = &[1., 1.];
+    let d = &[1.];
+    let sys = Ssd::new_from_slice(2, 1, 1, a, b, c, d);
+
+    let tf = Tfz::<f32>::new_from_siso(&sys).unwrap();
+    let expected = tf.static_gain();
+
+    let iter = std::iter::repeat(vec![1.]);
+    let steps = 30;
+
+    let evo = sys.evolution_iter(iter.clone(), &[0., 0.]);
+    let a = evo.take(steps).last().unwrap()[0];
+    assert_relative_eq!(expected, a);
+
+    let evo2 = sys.evolution_iter(iter, &[1., -1.]);
+    let b = evo2.take(steps).last().unwrap()[0];
+    assert_relative_eq!(expected, b);
 }
 
 #[test]

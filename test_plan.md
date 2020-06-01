@@ -44,6 +44,7 @@ The poles of a system are equal to the eigenvalues of the A matrix.
 > tests/linear_system/poles_eigenvalues
 
 An asymptotically stable system response after enough time is independent from the initial state. (3.4.6)
+> tests/linear_system/initial_state_independence
 
 The response of the state and the output to an input limited in time tends to zero. (3.4.6)
 In response to an impulse, both the state and the output tends to zero. (3.4.6)
