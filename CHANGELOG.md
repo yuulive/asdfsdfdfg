@@ -27,6 +27,7 @@
 ## Fixed
 - Subtraction between a real number and a polynomial
 - Derivation of zero degree polynomial
+- Fixed conversion from transfer function to state space representation
 
 ## [0.7.0] - 2020-02-08
 ## Added

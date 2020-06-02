@@ -382,7 +382,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
         let num = {
             // Extend the numerator coefficients with zeros to the length of the
             // denominator polynomial.
-            let mut num = tf.num().clone();
+            let mut num = tf_norm.num().clone();
             num.extend(order);
             num
         };
@@ -458,7 +458,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
         let num = {
             // Extend the numerator coefficients with zeros to the length of the
             // denominator polynomial.
-            let mut num = tf.num().clone();
+            let mut num = tf_norm.num().clone();
             num.extend(order);
             num
         };

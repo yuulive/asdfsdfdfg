@@ -3,8 +3,10 @@
 use num_complex::Complex;
 use num_traits::Float;
 
+use std::fmt::Debug;
+
 /// Trait to tag Continuous or Discrete types
-pub trait Time {}
+pub trait Time: Debug {}
 
 /// Type for continuous systems
 #[derive(Clone, Copy, Debug, PartialEq)]
