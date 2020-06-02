@@ -24,7 +24,7 @@ use std::{
 use crate::{linear_system::continuous::Ss, units::Seconds};
 
 /// Define the order of the Runge-Kutta method.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(super) enum Order {
     /// Runge-Kutta method of order 2.
     Rk2,
@@ -33,7 +33,7 @@ pub(super) enum Order {
 }
 
 /// Struct for the time evolution of a linear system
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Rk<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
@@ -218,7 +218,7 @@ where
 }
 
 /// Struct to hold the data of the linear system time evolution
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Step<T: Float> {
     /// Time of the current step
     time: Seconds<T>,
@@ -246,7 +246,7 @@ impl<T: Float> Step<T> {
 }
 
 /// Struct for the time evolution of a linear system
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Rkf45<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
@@ -472,7 +472,7 @@ impl_rkf45_const!(f64);
 //////
 
 /// Struct to hold the data of the linear system time evolution
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct StepWithError<T: Float> {
     /// Current step size
     time: Seconds<T>,
@@ -508,7 +508,7 @@ impl<T: Float> StepWithError<T> {
 
 /// Struct for the time evolution of the linear system using the implicit
 /// Radau method of order 3 with 2 steps
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Radau<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
