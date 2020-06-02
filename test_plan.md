@@ -59,12 +59,14 @@ Parallel connection of subsystems is asymptotically stable if and only if the su
 #### Continuous time
 
 A linear system whose eigenvalues have negative real part is stable. (3.4.3)
+> tests/continuous_linear_system/stability
 
 A system with no null eigenvalues has a unique equilibrium state. (3.3, 3.4.6)
-
 A system with null eigenvalues has a none or infinite equilibrium states. (3.3)
+> tests/continuous_linear_system/equilibrium
 
-An asymptotically stable transfer function gain for a step input is the value at zero.
+An asymptotically stable system gain for a step input is the value of its transfer function at zero.
+> tests/continuous_linear_system/static_gain
 
 #### Discrete time
 
