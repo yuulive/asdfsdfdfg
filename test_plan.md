@@ -71,16 +71,20 @@ An asymptotically stable system gain for a step input is the value of its transf
 #### Discrete time
 
 A linear system whose eigenvalues have modulus less than one is stable. (8.5.3)
+> tests/discrete_linear_system/stability
 
 A system with no eigenvalues with modulus equal to one has a unique equilibrium state. (8.4.7)
-
 A system with eigenvalues with modulus equal to one has a none or infinite equilibrium states. (8.4.7)
+> tests/discrete_linear_system/equilibrium
 
 An asymptotically stable transfer function gain for a step input is the value at one. (9.2.5)
+> tests/discrete_linear_system/static_gain
 
 A Finite Impulse Response (FIR) system output response to an impulse is zero after a number of steps equal to its order. (9.3.5)
+> tests/discrete_linear_system/fir_impulse
 
 A Finite Impulse Response (FIR) system output response to a step is equal to its gain after a number of steps equal to its order. (9.3.5)
+> tests/discrete_linear_system/fir_step
 
 ## Plots
 
