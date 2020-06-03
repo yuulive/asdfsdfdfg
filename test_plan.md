@@ -81,3 +81,8 @@ An asymptotically stable transfer function gain for a step input is the value at
 A Finite Impulse Response (FIR) system output response to an impulse is zero after a number of steps equal to its order. (9.3.5)
 
 A Finite Impulse Response (FIR) system output response to a step is equal to its gain after a number of steps equal to its order. (9.3.5)
+
+## Plots
+
+A Bode plot of a system with two conjugate complex poles shall have a resonance peak.
+> tests/plots/bode_plot
