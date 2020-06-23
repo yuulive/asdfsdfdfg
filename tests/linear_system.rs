@@ -57,13 +57,13 @@ fn initial_state_independence() {
     let iter = std::iter::repeat(vec![1.]);
     let steps = 30;
 
-    let evo = sys.evolution_iter(iter.clone(), &[0., 0.]);
-    let a = evo.take(steps).last().unwrap()[0];
-    assert_relative_eq!(expected, a);
+    let evolution1 = sys.evolution_iter(iter.clone(), &[0., 0.]);
+    let response1 = evolution1.take(steps).last().unwrap()[0];
+    assert_relative_eq!(expected, response1);
 
-    let evo2 = sys.evolution_iter(iter, &[1., -1.]);
-    let b = evo2.take(steps).last().unwrap()[0];
-    assert_relative_eq!(expected, b);
+    let evolution2 = sys.evolution_iter(iter, &[1., -1.]);
+    let response2 = evolution2.take(steps).last().unwrap()[0];
+    assert_relative_eq!(expected, response2);
 }
 
 #[test]

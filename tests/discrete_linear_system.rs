@@ -18,21 +18,21 @@ fn stability() {
 #[test]
 fn equilibrium() {
     // Es 8.6
-    let a = [0.6_f32, 0., 0., 0.4];
-    let b = [1., 5.];
-    let c = [1., 3.];
-    let d = [0.];
-    let sys = Ssd::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+    let a1 = [0.6_f32, 0., 0., 0.4];
+    let b1 = [1., 5.];
+    let c1 = [1., 3.];
+    let d1 = [0.];
+    let sys = Ssd::new_from_slice(2, 1, 1, &a1, &b1, &c1, &d1);
     let eq = sys.equilibrium(&[1.]).unwrap();
     assert_relative_eq!(2.5, eq.x()[0]);
-    assert_relative_eq!(8.333333, eq.x()[1]);
+    assert_relative_eq!(8.333_333, eq.x()[1]);
     assert_relative_eq!(27.5, eq.y()[0]);
 
-    let a = [0.6_f32, 0., 0., 1.];
-    let b = [1., 5.];
-    let c = [1., 3.];
-    let d = [0.];
-    let sys = Ssd::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+    let a2 = [0.6_f32, 0., 0., 1.];
+    let b2 = [1., 5.];
+    let c2 = [1., 3.];
+    let d2 = [0.];
+    let sys = Ssd::new_from_slice(2, 1, 1, &a2, &b2, &c2, &d2);
     let no_eq = sys.equilibrium(&[1.]);
     assert!(no_eq.is_none());
 }
@@ -53,7 +53,7 @@ fn static_gain() {
 
 #[test]
 fn fir_impulse() {
-    use std::iter::*;
+    use std::iter::{once, repeat, Iterator};
 
     let num = 1.016_f32 * poly!(0.015, 0.031, 0.063, 0.125, 0.25, 0.5);
     let den = poly!(0., 0., 0., 0., 0., 0., 1.);
@@ -72,7 +72,7 @@ fn fir_impulse() {
 
 #[test]
 fn fir_step() {
-    use std::iter::*;
+    use std::iter::{repeat, Iterator};
 
     let num = 1.016_f32 * poly!(0.015, 0.031, 0.063, 0.125, 0.25, 0.5);
     let den = poly!(0., 0., 0., 0., 0., 0., 1.);
