@@ -732,6 +732,49 @@ impl<T: Clone> Poly<T> {
     }
 }
 
+impl<T: Clone> Poly<T> {
+    /// DOC
+    pub fn eval2<'a, N>(&self, x: &'a N) -> N
+    where
+        N: 'a + Add<T, Output = N> + Clone + Mul<&'a N, Output = N> + Zero,
+    {
+        self.coeffs
+            .iter()
+            .rev()
+            .fold(N::zero(), |acc, c| acc * x + c.clone())
+    }
+}
+
+impl<T> Poly<T> {
+    /// DOC
+    pub fn eval3<'a, N>(&'a self, x: &'a N) -> N
+    where
+        T: 'a,
+        N: 'a + Add<&'a T, Output = N> + Clone + Mul<&'a N, Output = N> + Zero,
+    {
+        self.coeffs
+            .iter()
+            .rev()
+            .fold(N::zero(), |acc, c| acc * x + c)
+    }
+}
+
+#[cfg(test)]
+mod mytests {
+    // use super::*;
+
+    #[test]
+    fn test_name() {
+        let p = poly!(1., 2., 3.);
+        let r1 = p.eval(0.);
+        let r2 = p.eval2(&0.);
+        let r3 = p.eval3(&0.);
+        assert_eq!(r1, r2);
+        assert_eq!(r1, r3);
+        eprintln!("test");
+    }
+}
+
 /// Implement read only indexing of polynomial returning its coefficients.
 ///
 /// # Panics
