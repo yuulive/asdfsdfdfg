@@ -41,32 +41,32 @@ Reference/link to Rust tier list
 List of dependencies:
 - num-traits
   * Trait system for numeric types. It is used to allow the writing of generic numeric methods
-  * Source: [](https://crates.io/crates/num-traits)
+  * Source: [https://crates.io/crates/num-traits](https://crates.io/crates/num-traits)
   * Version: 0.2
 - num-complex
   * Complex numbers library
-  * Source: [](https://crates.io/crates/num-complex)
+  * Source: [https://crates.io/crates/num-complex](https://crates.io/crates/num-complex)
   * Version: 0.2
 - nalgebra
   * Linear algebra library. It provides matrices an methods for matrices arithmetics, matrices decomposition and eigenvalues finder
-  * Source: [](https://crates.io/crates/nalgebra)
+  * Source: [https://crates.io/crates/nalgebra](https://crates.io/crates/nalgebra)
   * Version: 0.18.0
 - ndarray
   * Multidimensional arrays. Complementary method where nalgebra requirements on input types are too string
-  * Source: [](https://crates.io/crates/ndarray)
+  * Source: [https://crates.io/crates/ndarray](https://crates.io/crates/ndarray)
   * Version: 0.12.1
 - approx
   * Approximate equalities for floating point numbers
-  * Source: [](https://crates.io/crates/approx)
+  * Source: [https://crates.io/crates/approx](https://crates.io/crates/approx)
   * Version: 0.3.2
 Development dependencies:
 - quickcheck
   * Randomized testing
-  * Source: [](https://crates.io/crates/quickcheck)
+  * Source: [https://crates.io/crates/quickcheck](https://crates.io/crates/quickcheck)
   * Version: 0.9
 - quickcheck_macros
   * Randomized testing macros
-  * Source: [](https://crates.io/crates/quickcheck_macros)
+  * Source: [https://crates.io/crates/quickcheck_macros](https://crates.io/crates/quickcheck_macros)
   * Version: 0.9
 #### Communications interfaces
 The library does not have network interfaces.
