@@ -418,7 +418,7 @@ mod tests {
         let mp = MatrixOfPoly::new(1, 1, v);
         let res = mp.single();
         assert!(res.is_some());
-        assert_relative_eq!(14.94, res.unwrap().eval(2.), max_relative = 1e-10);
+        assert_relative_eq!(14.94, res.unwrap().eval(&2.), max_relative = 1e-10);
     }
 
     #[test]

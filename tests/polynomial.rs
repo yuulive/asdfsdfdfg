@@ -131,9 +131,9 @@ fn maximum_minimum() {
     let curvature = slope.derive();
 
     // Local maximum.
-    assert!(curvature.eval(stationary[0]).is_sign_negative());
+    assert!(curvature.eval(&stationary[0]).is_sign_negative());
     // Local minimum.
-    assert!(curvature.eval(stationary[1]).is_sign_positive());
+    assert!(curvature.eval(&stationary[1]).is_sign_positive());
 }
 
 #[test]

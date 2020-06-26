@@ -430,7 +430,7 @@ impl<T: Clone, U: Time> TfGen<T, U> {
     where
         N: Add<T, Output = N> + Clone + Div<Output = N> + Mul<Output = N> + Zero,
     {
-        self.num.eval(s.clone()) / self.den.eval(s)
+        self.num.eval1(s.clone()) / self.den.eval1(s)
     }
 }
 

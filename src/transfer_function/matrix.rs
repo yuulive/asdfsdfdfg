@@ -87,7 +87,7 @@ impl<T: Float + MulAdd<Output = T>> TfMatrix<T> {
                 Zip::from(&mut res_row)
                     .and(s) // The vector of the input.
                     .and(matrix_row) // The row of the numerator matrix.
-                    .apply(|r, s, n| *r = n.eval(*s).fdiv(self.den.eval(*s)));
+                    .apply(|r, s, n| *r = n.eval(s).fdiv(self.den.eval(s)));
             });
 
         res.sum_axis(Axis(1)).to_vec()

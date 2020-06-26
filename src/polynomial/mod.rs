@@ -718,10 +718,10 @@ impl<T: Clone> Poly<T> {
     /// use automatica::Poly;
     /// use num_complex::Complex;
     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
-    /// assert_eq!(18., p.eval(3.));
-    /// assert_eq!(Complex::new(-18., 0.), p.eval(Complex::new(0., 3.)));
+    /// assert_eq!(18., p.eval1(3.));
+    /// assert_eq!(Complex::new(-18., 0.), p.eval1(Complex::new(0., 3.)));
     /// ```
-    pub fn eval<N>(&self, x: N) -> N
+    pub fn eval1<N>(&self, x: N) -> N
     where
         N: Add<T, Output = N> + Clone + Mul<N, Output = N> + Zero,
     {
@@ -747,7 +747,7 @@ impl<T: Clone> Poly<T> {
 
 impl<T> Poly<T> {
     /// DOC
-    pub fn eval3<'a, N>(&'a self, x: &'a N) -> N
+    pub fn eval<'a, N>(&'a self, x: &'a N) -> N
     where
         T: 'a,
         N: 'a + Add<&'a T, Output = N> + Clone + Mul<&'a N, Output = N> + Zero,
@@ -759,6 +759,19 @@ impl<T> Poly<T> {
     }
 }
 
+impl<T: Copy> Poly<T> {
+    /// DOC
+    pub fn eval4<N>(&self, x: N) -> N
+    where
+        N: Add<T, Output = N> + Copy + Mul<N, Output = N> + Zero,
+    {
+        self.coeffs
+            .iter()
+            .rev()
+            .fold(N::zero(), |acc, c| acc * x + *c)
+    }
+}
+
 #[cfg(test)]
 mod mytests {
     // use super::*;
@@ -766,9 +779,9 @@ mod mytests {
     #[test]
     fn test_name() {
         let p = poly!(1., 2., 3.);
-        let r1 = p.eval(0.);
+        let r1 = p.eval1(0.);
         let r2 = p.eval2(&0.);
-        let r3 = p.eval3(&0.);
+        let r3 = p.eval(&0.);
         assert_eq!(r1, r2);
         assert_eq!(r1, r3);
         eprintln!("test");
@@ -1038,12 +1051,12 @@ mod tests {
     #[test]
     fn poly_eval() {
         let p = poly!(1., 2., 3.);
-        assert_abs_diff_eq!(86., p.eval(5.), epsilon = 0.);
+        assert_abs_diff_eq!(86., p.eval(&5.), epsilon = 0.);
 
-        assert_abs_diff_eq!(0., Poly::<f64>::zero().eval(6.4), epsilon = 0.);
+        assert_abs_diff_eq!(0., Poly::<f64>::zero().eval(&6.4), epsilon = 0.);
 
         let p2 = poly!(3, 4, 1);
-        assert_eq!(143, p2.eval(10));
+        assert_eq!(143, p2.eval(&10));
     }
 
     #[test]
@@ -1051,11 +1064,11 @@ mod tests {
         let p = poly!(1., 1., 1.);
         let c = Complex::new(1.0, 1.0);
         let res = Complex::new(2.0, 3.0);
-        assert_eq!(res, p.eval(c));
+        assert_eq!(res, p.eval(&c));
 
         assert_eq!(
             Complex::zero(),
-            Poly::<f64>::new_from_coeffs(&[]).eval(Complex::new(2., 3.))
+            Poly::<f64>::new_from_coeffs(&[]).eval(&Complex::new(2., 3.))
         );
     }
 
