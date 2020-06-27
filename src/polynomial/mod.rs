@@ -721,54 +721,56 @@ impl<T: Clone> Poly<T> {
     /// assert_eq!(18., p.eval1(3.));
     /// assert_eq!(Complex::new(-18., 0.), p.eval1(Complex::new(0., 3.)));
     /// ```
-    pub fn eval1<N>(&self, x: N) -> N
+    pub fn eval1<U>(&self, x: U) -> U
     where
-        N: Add<T, Output = N> + Clone + Mul<N, Output = N> + Zero,
+        U: Add<T, Output = U> + Clone + Mul<U, Output = U> + Zero,
     {
         self.coeffs
             .iter()
             .rev()
-            .fold(N::zero(), |acc, c| acc * x.clone() + c.clone())
-    }
-}
-
-impl<T: Clone> Poly<T> {
-    /// DOC
-    pub fn eval2<'a, N>(&self, x: &'a N) -> N
-    where
-        N: 'a + Add<T, Output = N> + Clone + Mul<&'a N, Output = N> + Zero,
-    {
-        self.coeffs
-            .iter()
-            .rev()
-            .fold(N::zero(), |acc, c| acc * x + c.clone())
+            .fold(U::zero(), |acc, c| acc * x.clone() + c.clone())
     }
 }
 
 impl<T> Poly<T> {
-    /// DOC
-    pub fn eval<'a, N>(&'a self, x: &'a N) -> N
+    /// Evaluate the polynomial using Horner's method.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - Value at which the polynomial is evaluated.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::Poly;
+    /// use num_complex::Complex;
+    /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
+    /// assert_eq!(18., p.eval(&3.));
+    /// assert_eq!(Complex::new(-18., 0.), p.eval(&Complex::new(0., 3.)));
+    /// ```
+    pub fn eval<'a, U>(&'a self, x: &'a U) -> U
     where
         T: 'a,
-        N: 'a + Add<&'a T, Output = N> + Clone + Mul<&'a N, Output = N> + Zero,
+        U: 'a + Add<&'a T, Output = U> + Mul<&'a U, Output = U> + Zero,
     {
+        // Both the polynomial and the input value must have the same lifetime.
         self.coeffs
             .iter()
             .rev()
-            .fold(N::zero(), |acc, c| acc * x + c)
+            .fold(U::zero(), |acc, c| acc * x + c)
     }
 }
 
-impl<T: Copy> Poly<T> {
-    /// DOC
-    pub fn eval4<N>(&self, x: N) -> N
+impl<T: Clone> Poly<T> {
+    /// Unused method.
+    #[allow(dead_code)]
+    fn eval2<'a, U>(&self, x: &'a U) -> U
     where
-        N: Add<T, Output = N> + Copy + Mul<N, Output = N> + Zero,
+        U: 'a + Add<T, Output = U> + Mul<&'a U, Output = U> + Zero,
     {
         self.coeffs
             .iter()
             .rev()
-            .fold(N::zero(), |acc, c| acc * x + *c)
+            .fold(U::zero(), |acc, c| acc * x + c.clone())
     }
 }
 
