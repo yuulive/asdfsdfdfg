@@ -718,10 +718,10 @@ impl<T: Clone> Poly<T> {
     /// use automatica::Poly;
     /// use num_complex::Complex;
     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
-    /// assert_eq!(18., p.eval1(3.));
-    /// assert_eq!(Complex::new(-18., 0.), p.eval1(Complex::new(0., 3.)));
+    /// assert_eq!(18., p.eval_by_val(3.));
+    /// assert_eq!(Complex::new(-18., 0.), p.eval_by_val(Complex::new(0., 3.)));
     /// ```
-    pub fn eval1<U>(&self, x: U) -> U
+    pub fn eval_by_val<U>(&self, x: U) -> U
     where
         U: Add<T, Output = U> + Clone + Mul<U, Output = U> + Zero,
     {
@@ -757,36 +757,6 @@ impl<T> Poly<T> {
             .iter()
             .rev()
             .fold(U::zero(), |acc, c| acc * x + c)
-    }
-}
-
-impl<T: Clone> Poly<T> {
-    /// Unused method.
-    #[allow(dead_code)]
-    fn eval2<'a, U>(&self, x: &'a U) -> U
-    where
-        U: 'a + Add<T, Output = U> + Mul<&'a U, Output = U> + Zero,
-    {
-        self.coeffs
-            .iter()
-            .rev()
-            .fold(U::zero(), |acc, c| acc * x + c.clone())
-    }
-}
-
-#[cfg(test)]
-mod mytests {
-    // use super::*;
-
-    #[test]
-    fn test_name() {
-        let p = poly!(1., 2., 3.);
-        let r1 = p.eval1(0.);
-        let r2 = p.eval2(&0.);
-        let r3 = p.eval(&0.);
-        assert_eq!(r1, r2);
-        assert_eq!(r1, r3);
-        eprintln!("test");
     }
 }
 
@@ -1072,6 +1042,14 @@ mod tests {
             Complex::zero(),
             Poly::<f64>::new_from_coeffs(&[]).eval(&Complex::new(2., 3.))
         );
+    }
+
+    #[test]
+    fn poly_eval_by_value() {
+        let p = poly!(1., 2., 3.);
+        let r1 = p.eval_by_val(0.);
+        let r2 = p.eval(&0.);
+        assert_relative_eq!(r1, r2);
     }
 
     #[test]

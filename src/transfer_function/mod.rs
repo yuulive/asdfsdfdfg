@@ -423,14 +423,14 @@ impl<T: Clone, U: Time> TfGen<T, U> {
     /// use automatica::{poly, Tf};
     /// use num_complex::Complex as C;
     /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
-    /// assert_eq!(-8.5, tf.eval1(3.));
-    /// assert_eq!(C::new(0.64, -0.98), tf.eval1(C::new(0., 2.0_f32)));
+    /// assert_eq!(-8.5, tf.eval_by_val(3.));
+    /// assert_eq!(C::new(0.64, -0.98), tf.eval_by_val(C::new(0., 2.0_f32)));
     /// ```
-    pub fn eval1<N>(&self, s: N) -> N
+    pub fn eval_by_val<N>(&self, s: N) -> N
     where
         N: Add<T, Output = N> + Clone + Div<Output = N> + Mul<Output = N> + Zero,
     {
-        self.num.eval1(s.clone()) / self.den.eval1(s)
+        self.num.eval_by_val(s.clone()) / self.den.eval_by_val(s)
     }
 }
 
@@ -475,6 +475,7 @@ impl<T: Display + One + PartialEq + Signed + Zero, U: Time> Display for TfGen<T,
 mod tests {
     use super::*;
     use crate::{poly, Continuous, Discrete};
+    use num_complex::Complex;
 
     #[test]
     fn transfer_function_creation() {
@@ -483,6 +484,22 @@ mod tests {
         let tf = TfGen::<_, Continuous>::new(num.clone(), den.clone());
         assert_eq!(&num, tf.num());
         assert_eq!(&den, tf.den());
+    }
+
+    #[test]
+    fn evaluation() {
+        let tf = TfGen::<_, Continuous>::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
+        let res = tf.eval(&Complex::new(0., 0.9));
+        assert_abs_diff_eq!(0.429, res.re, epsilon = 0.001);
+        assert_abs_diff_eq!(1.073, res.im, epsilon = 0.001);
+    }
+
+    #[test]
+    fn evaluation_by_value() {
+        let tf = TfGen::<_, Continuous>::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
+        let res1 = tf.eval(&Complex::new(0., 0.9));
+        let res2 = tf.eval_by_val(Complex::new(0., 0.9));
+        assert_eq!(res1, res2);
     }
 
     #[test]
