@@ -15,7 +15,7 @@ fn main() {
 
     println!("T:\n{}", tf);
 
-    let c = tf.eval(Complex::new(0., 1.));
+    let c = tf.eval(&Complex::new(0., 1.));
     println!("\nEvaluation at i:");
     println!(
         "{} = {:.3}dB, {:.3}°",

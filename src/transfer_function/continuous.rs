@@ -15,7 +15,7 @@ use nalgebra::{ComplexField, RealField};
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
-use std::{cmp::Ordering, marker::PhantomData};
+use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 
 use crate::{
     plots::{
@@ -237,7 +237,7 @@ impl<T: ComplexField + Float + RealField> Tf<T> {
     }
 }
 
-impl<T: Float + MulAdd<Output = T>> Tf<T> {
+impl<T> Tf<T> {
     /// Static gain `G(0)`.
     /// Ratio between constant output and constant input.
     /// Static gain is defined only for transfer functions of 0 type.
@@ -250,8 +250,11 @@ impl<T: Float + MulAdd<Output = T>> Tf<T> {
     /// assert_eq!(2., tf.static_gain());
     /// ```
     #[must_use]
-    pub fn static_gain(&self) -> T {
-        self.eval(T::zero())
+    pub fn static_gain<'a>(&'a self) -> T
+    where
+        &'a T: 'a + Div<&'a T, Output = T>,
+    {
+        &self.num[0] / &self.den[0]
     }
 }
 

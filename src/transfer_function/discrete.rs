@@ -14,9 +14,15 @@
 
 use nalgebra::{ComplexField, RealField};
 use num_complex::Complex;
-use num_traits::{Float, MulAdd};
+use num_traits::Float;
 
-use std::{cmp::Ordering, collections::VecDeque, fmt::Debug, iter::Sum, ops::Mul};
+use std::{
+    cmp::Ordering,
+    collections::VecDeque,
+    fmt::Debug,
+    iter::Sum,
+    ops::{Div, Mul},
+};
 
 use crate::{transfer_function::TfGen, Discrete};
 
@@ -64,7 +70,7 @@ impl<T: Float> Tfz<T> {
     }
 }
 
-impl<T: Float + MulAdd<Output = T>> Tfz<T> {
+impl<'a, T: 'a + Div<Output = T> + std::iter::Sum<&'a T>> Tfz<T> {
     /// Static gain `G(1)`.
     /// Ratio between constant output and constant input.
     /// Static gain is defined only for transfer functions of 0 type.
@@ -77,8 +83,8 @@ impl<T: Float + MulAdd<Output = T>> Tfz<T> {
     /// assert_eq!(2., tf.static_gain());
     /// ```
     #[must_use]
-    pub fn static_gain(&self) -> T {
-        self.eval(T::one())
+    pub fn static_gain(&'a self) -> T {
+        self.num.as_slice().iter().sum::<T>() / self.den.as_slice().iter().sum()
     }
 }
 
@@ -400,7 +406,7 @@ mod tests {
             Poly::new_from_coeffs(&[1., 0.1]),
         );
         let z = 0.5 * Complex64::i();
-        let g = tf.eval(z);
+        let g = tf.eval(&z);
         assert_relative_eq!(20.159, g.norm().to_db(), max_relative = 1e-4);
         assert_relative_eq!(75.828, g.arg().to_degrees(), max_relative = 1e-4);
     }

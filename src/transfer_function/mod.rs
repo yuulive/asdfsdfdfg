@@ -423,10 +423,10 @@ impl<T: Clone, U: Time> TfGen<T, U> {
     /// use automatica::{poly, Tf};
     /// use num_complex::Complex as C;
     /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
-    /// assert_eq!(-8.5, tf.eval(3.));
-    /// assert_eq!(C::new(0.64, -0.98), tf.eval(C::new(0., 2.0_f32)));
+    /// assert_eq!(-8.5, tf.eval1(3.));
+    /// assert_eq!(C::new(0.64, -0.98), tf.eval1(C::new(0., 2.0_f32)));
     /// ```
-    pub fn eval<N>(&self, s: N) -> N
+    pub fn eval1<N>(&self, s: N) -> N
     where
         N: Add<T, Output = N> + Clone + Div<Output = N> + Mul<Output = N> + Zero,
     {
@@ -446,10 +446,10 @@ impl<T, U: Time> TfGen<T, U> {
     /// use automatica::{poly, Tf};
     /// use num_complex::Complex as C;
     /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
-    /// assert_eq!(-8.5, tf.eval2(&3.));
-    /// assert_eq!(C::new(0.64, -0.98), tf.eval2(&C::new(0., 2.0_f32)));
+    /// assert_eq!(-8.5, tf.eval(&3.));
+    /// assert_eq!(C::new(0.64, -0.98), tf.eval(&C::new(0., 2.0_f32)));
     /// ```
-    pub fn eval2<'a, N>(&'a self, s: &'a N) -> N
+    pub fn eval<'a, N>(&'a self, s: &'a N) -> N
     where
         T: 'a,
         N: 'a + Add<&'a T, Output = N> + Div<Output = N> + Mul<&'a N, Output = N> + Zero,
