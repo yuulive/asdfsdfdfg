@@ -14,6 +14,7 @@
 - Improvements on polynomial roots finders and increment of related tests
 - General source code linting
 - Use IntoIterator trait as interface in methods that require an iterator
+- Evaluation of polynomials and transfer functions now can take references
 ### API Changes
 - Changed iterator names (C-ITER-TY API guidelines)
 - Changed linear system solvers names (C-ITER-TY API guidelines)

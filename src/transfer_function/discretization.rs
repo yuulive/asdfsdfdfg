@@ -115,7 +115,7 @@ impl<T: Float + MulAdd<Output = T>> TfDiscretization<T> {
     /// * `z` - Value at which the transfer function is evaluated.
     pub fn eval(&self, z: Complex<T>) -> Complex<T> {
         let s = (self.conversion)(z, self.ts);
-        self.tf.eval(s)
+        self.tf.eval(&s)
     }
 }
 

@@ -128,7 +128,7 @@ mod pid_tests {
     fn ideal_pid_creation() {
         let pid = Pid::new_ideal(10., 5., 2.);
         let tf = pid.tf();
-        let c = tf.eval(Complex64::new(0., 1.));
+        let c = tf.eval(&Complex64::new(0., 1.));
         assert_eq!(Complex64::new(10., 18.), c);
     }
 
@@ -144,7 +144,7 @@ mod pid_tests {
         assert_eq!(Some(vec![-10., 0.]), r.real_poles());
         let l = &g * &r;
         let critical_freq = 0.8;
-        let c = l.eval(Complex64::new(0., critical_freq));
+        let c = l.eval(&Complex64::new(0., critical_freq));
         assert_abs_diff_eq!(0., c.norm().to_db(), epsilon = 0.1);
     }
 }

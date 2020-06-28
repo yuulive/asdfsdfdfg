@@ -81,7 +81,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
 
             for (i, d) in done.iter_mut().enumerate() {
                 let solution_i = self.solution[i];
-                let n_xki = self.poly.eval(solution_i) / self.der.eval(solution_i);
+                let n_xki = self.poly.eval(&solution_i) / self.der.eval(&solution_i);
                 let a_xki: Complex<T> = self
                     .solution
                     .iter()
@@ -117,37 +117,37 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
 /// # Arguments
 ///
 /// * `poly` - polynomial whose roots have to be found.
-#[allow(dead_code)]
-fn init_simple<T>(poly: &Poly<T>) -> Vec<Complex<T>>
-where
-    T: Float + FloatConst + MulAdd<Output = T> + NumCast,
-{
-    // Convert degree from usize to float
-    let n = poly.degree().unwrap_or(1);
-    let n_f = T::from(n).unwrap();
+// #[allow(dead_code)]
+// fn init_simple<T>(poly: &Poly<T>) -> Vec<Complex<T>>
+// where
+//     T: Float + FloatConst + MulAdd<Output = T> + NumCast,
+// {
+//     // Convert degree from usize to float
+//     let n = poly.degree().unwrap_or(1);
+//     let n_f = T::from(n).unwrap();
 
-    // Calculate the center of the circle.
-    let a_n = poly.leading_coeff();
-    let a_n_1 = poly[poly.len() - 2];
-    let c = -a_n_1 / n_f / a_n;
+//     // Calculate the center of the circle.
+//     let a_n = poly.leading_coeff();
+//     let a_n_1 = poly[poly.len() - 2];
+//     let c = -a_n_1 / n_f / a_n;
 
-    // Calculate the radius of the circle.
-    let r = poly.eval(c).abs().powf(n_f.recip());
+//     // Calculate the radius of the circle.
+//     let r = poly.eval(c).abs().powf(n_f.recip());
 
-    // Pre-compute the constants of the exponent.
-    let phi = T::one() * FloatConst::FRAC_PI_2() / n_f;
-    let tau = (T::one() + T::one()) * FloatConst::PI();
+//     // Pre-compute the constants of the exponent.
+//     let phi = T::one() * FloatConst::FRAC_PI_2() / n_f;
+//     let tau = (T::one() + T::one()) * FloatConst::PI();
 
-    let initial: Vec<Complex<T>> = (1..=n)
-        .map(|j| {
-            let j_f = T::from(j).unwrap();
-            let ex = tau * j_f / n_f + phi;
-            let ex = Complex::i() * ex;
-            ex.exp() * r + c
-        })
-        .collect();
-    initial
-}
+//     let initial: Vec<Complex<T>> = (1..=n)
+//         .map(|j| {
+//             let j_f = T::from(j).unwrap();
+//             let ex = tau * j_f / n_f + phi;
+//             let ex = Complex::i() * ex;
+//             ex.exp() * r + c
+//         })
+//         .collect();
+//     initial
+// }
 
 /// Generate the initial approximation of the polynomial roots.
 ///

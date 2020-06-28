@@ -111,7 +111,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for Polar<T> {
             let j_omega = Complex::<T>::new(T::zero(), omega);
             self.index = self.index + T::one();
             Some(Data {
-                output: self.tf.eval(j_omega),
+                output: self.tf.eval(&j_omega),
             })
         }
     }
