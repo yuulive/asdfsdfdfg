@@ -14,14 +14,14 @@
 
 use nalgebra::{ComplexField, RealField};
 use num_complex::Complex;
-use num_traits::Float;
+use num_traits::{Float, Zero};
 
 use std::{
     cmp::Ordering,
     collections::VecDeque,
     fmt::Debug,
     iter::Sum,
-    ops::{Div, Mul},
+    ops::{Add, Div, Mul},
 };
 
 use crate::{transfer_function::TfGen, Discrete};
@@ -70,7 +70,7 @@ impl<T: Float> Tfz<T> {
     }
 }
 
-impl<'a, T: 'a + Div<Output = T> + std::iter::Sum<&'a T>> Tfz<T> {
+impl<'a, T: 'a + Add<&'a T, Output = T> + Div<Output = T> + Zero> Tfz<T> {
     /// Static gain `G(1)`.
     /// Ratio between constant output and constant input.
     /// Static gain is defined only for transfer functions of 0 type.
@@ -84,7 +84,9 @@ impl<'a, T: 'a + Div<Output = T> + std::iter::Sum<&'a T>> Tfz<T> {
     /// ```
     #[must_use]
     pub fn static_gain(&'a self) -> T {
-        self.num.as_slice().iter().sum::<T>() / self.den.as_slice().iter().sum()
+        let n = self.num.as_slice().iter().fold(T::zero(), |acc, c| acc + c);
+        let d = self.den.as_slice().iter().fold(T::zero(), |acc, c| acc + c);
+        n / d
     }
 }
 
