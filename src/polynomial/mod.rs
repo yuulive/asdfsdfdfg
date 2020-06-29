@@ -131,10 +131,12 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
         //.rposition(|&c| relative_ne!(c, 0.0, epsilon = epsilon, max_relative = max_relative))
         if let Some(p) = self.coeffs.iter().rposition(|c| c != &T::zero()) {
             let new_length = p + 1;
+            debug_assert!(new_length > 0);
             self.coeffs.truncate(new_length);
         } else {
             self.coeffs.resize(1, T::zero());
         }
+        debug_assert!(!self.coeffs.is_empty());
     }
 
     /// Degree of the polynomial
@@ -147,7 +149,7 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
     /// ```
     #[must_use]
     pub fn degree(&self) -> Option<usize> {
-        assert!(
+        debug_assert!(
             !self.coeffs.is_empty(),
             "Degree is not defined on empty polynomial"
         );
@@ -178,6 +180,7 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
             Some(d) if degree > d => self.coeffs.resize(degree + 1, T::zero()),
             _ => (),
         };
+        debug_assert!(!self.coeffs.is_empty());
     }
 }
 
@@ -198,6 +201,7 @@ impl<T: Clone + Div<Output = T> + One> Poly<T> {
         let result: Vec<_> = self.coeffs.iter().map(|x| x.clone() / lc.clone()).collect();
         let monic_poly = Self { coeffs: result };
 
+        debug_assert!(!monic_poly.coeffs.is_empty());
         (monic_poly, lc)
     }
 
@@ -215,6 +219,7 @@ impl<T: Clone + Div<Output = T> + One> Poly<T> {
     pub fn monic_mut(&mut self) -> T {
         let lc = self.leading_coeff();
         self.div_mut(lc.clone());
+        debug_assert!(!self.coeffs.is_empty());
         lc
     }
 }
@@ -581,6 +586,7 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
             }
         }
         self.trim();
+        debug_assert!(!self.coeffs.is_empty());
     }
 }
 
@@ -602,7 +608,7 @@ impl<T: Clone + Mul<Output = T> + NumCast + One + PartialEq + Zero> Poly<T> {
     #[must_use]
     pub fn derive(&self) -> Self {
         if self.len() == 1 {
-            return Poly::zero();
+            return Poly::zero(); // Never empty polynomial.
         }
 
         let derive_coeffs: Vec<_> = self
@@ -613,9 +619,11 @@ impl<T: Clone + Mul<Output = T> + NumCast + One + PartialEq + Zero> Poly<T> {
             .map(|(i, c)| c.clone() * T::from(i).unwrap())
             .collect();
 
-        Self {
+        let result = Self {
             coeffs: derive_coeffs,
-        }
+        };
+        debug_assert!(!result.coeffs.is_empty());
+        result
     }
 }
 
@@ -643,6 +651,7 @@ impl<T: Clone + Div<Output = T> + NumCast + PartialEq + Zero> Poly<T> {
     /// to `T`.
     pub fn integrate(&self, constant: T) -> Self {
         if self.is_zero() {
+            // Never empty polynomial.
             return Self {
                 coeffs: vec![constant],
             };
@@ -655,11 +664,13 @@ impl<T: Clone + Div<Output = T> + NumCast + PartialEq + Zero> Poly<T> {
                     .map(|(i, c)| c.clone() / T::from(i + 1).unwrap()),
             )
             .collect();
-        Self { coeffs: int_coeffs }
+        let result = Self { coeffs: int_coeffs };
+        debug_assert!(!result.coeffs.is_empty());
+        result
     }
 }
 
-/// Evaluate the polynomial at the given real or complex number
+// Evaluate the polynomial at the given real or complex number
 // impl<N, T> Eval<N> for Poly<T>
 // where
 //     N: Copy + MulAdd<Output = N> + NumCast + Zero,
@@ -691,6 +702,7 @@ impl<T: Clone + Div<Output = T> + NumCast + PartialEq + Zero> Poly<T> {
 //             .fold(N::zero(), |acc, &c| acc.mul_add(*x, N::from(c).unwrap()))
 //     }
 // }
+
 impl<T: Clone> Poly<T> {
     /// Vector copy of the polynomial's coefficients
     ///
@@ -775,7 +787,7 @@ impl<T> Poly<T> {
 impl<T> Index<usize> for Poly<T> {
     type Output = T;
 
-    fn index(&self, i: usize) -> &T {
+    fn index(&self, i: usize) -> &Self::Output {
         &self.coeffs[i]
     }
 }
@@ -794,7 +806,7 @@ impl<T> Index<usize> for Poly<T> {
 /// assert_eq!(4, p[2]);
 /// ```
 impl<T> IndexMut<usize> for Poly<T> {
-    fn index_mut(&mut self, i: usize) -> &mut T {
+    fn index_mut(&mut self, i: usize) -> &mut Self::Output {
         &mut self.coeffs[i]
     }
 }
@@ -810,6 +822,7 @@ impl<T> IndexMut<usize> for Poly<T> {
 /// ```
 impl<T: Clone + PartialEq + Zero> Zero for Poly<T> {
     fn zero() -> Self {
+        // The polynomial is never empty.
         Self {
             coeffs: vec![T::zero()],
         }
@@ -831,6 +844,7 @@ impl<T: Clone + PartialEq + Zero> Zero for Poly<T> {
 /// ```
 impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> One for Poly<T> {
     fn one() -> Self {
+        // The polynomial is never empty.
         Self {
             coeffs: vec![T::one()],
         }
@@ -852,7 +866,8 @@ impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> One for Poly<T> {
 impl<T: Display + Zero> Display for Poly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         if self.coeffs.is_empty() {
-            return write!(f, "0");
+            // The polynomial shall be never empty.
+            unreachable!();
         } else if self.len() == 1 {
             return write!(f, "{}", self[0]);
         }
