@@ -10,6 +10,7 @@ impl<T: Clone + Neg<Output = T>> Neg for &Poly<T> {
 
     fn neg(self) -> Self::Output {
         let c: Vec<_> = self.coeffs.iter().map(|i| -i.clone()).collect();
+        // The polynomial cannot be empty.
         Poly { coeffs: c }
     }
 }
@@ -22,6 +23,7 @@ impl<T: Clone + Neg<Output = T>> Neg for Poly<T> {
         for c in &mut self.coeffs {
             *c = Neg::neg(c.clone());
         }
+        // The polynomial cannot be empty.
         self
     }
 }
@@ -45,6 +47,7 @@ impl<T: Add<Output = T> + Clone + PartialEq + Zero> Add for Poly<T> {
             self
         };
         result.trim();
+        // The polynomial cannot be empty, trim has already the postcondition.
         result
     }
 }
@@ -58,6 +61,7 @@ impl<T: Clone + PartialEq + Zero> Add for &Poly<T> {
         let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
             x.clone() + y.clone()
         });
+        // The polynomial cannot be empty.
         Poly::new_from_coeffs_iter(result)
     }
 }
@@ -70,6 +74,7 @@ impl<T: Add<Output = T> + Clone> Add<T> for Poly<T> {
         self[0] = self[0].clone() + rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
+        // The polynomial cannot be empty.
         self
     }
 }
@@ -79,6 +84,7 @@ impl<T: Add<Output = T> + Clone> Add<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn add(self, rhs: T) -> Self::Output {
+        // The polynomial cannot be empty.
         self.clone().add(rhs)
     }
 }
@@ -93,6 +99,7 @@ macro_rules! impl_add_for_poly {
             type Output = Poly<Self>;
 
             fn add(self, rhs: Poly<Self>) -> Poly<Self> {
+                // The polynomial cannot be empty.
                 rhs + self
             }
         }
@@ -101,6 +108,7 @@ macro_rules! impl_add_for_poly {
             type Output = Poly<Self>;
 
             fn add(self, rhs: &Poly<Self>) -> Poly<Self> {
+                // The polynomial cannot be empty.
                 rhs + self
             }
         }
@@ -185,6 +193,7 @@ impl<T: Clone + PartialEq + Sub<Output = T> + Zero> Sub for Poly<T> {
             self
         };
         result.trim();
+        // The polynomial cannot be empty, trim has already the postcondition.
         result
     }
 }
@@ -198,6 +207,7 @@ impl<T: Clone + PartialEq + Sub<Output = T> + Zero> Sub for &Poly<T> {
         let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
             x.clone() - y.clone()
         });
+        // The polynomial cannot be empty.
         Poly::new_from_coeffs_iter(result)
     }
 }
@@ -210,6 +220,7 @@ impl<T: Clone + Sub<Output = T>> Sub<T> for Poly<T> {
         self[0] = self[0].clone() - rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
+        // The polynomial cannot be empty.
         self
     }
 }
@@ -219,6 +230,7 @@ impl<T: Clone + Sub<Output = T>> Sub<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn sub(self, rhs: T) -> Self::Output {
+        // The polynomial cannot be empty.
         self.clone().sub(rhs)
     }
 }
@@ -233,6 +245,7 @@ macro_rules! impl_sub_for_poly {
             type Output = Poly<Self>;
 
             fn sub(self, rhs: Poly<Self>) -> Poly<Self> {
+        // The polynomial cannot be empty.
                 rhs.neg().add(self)
             }
         }
@@ -241,6 +254,7 @@ macro_rules! impl_sub_for_poly {
             type Output = Poly<Self>;
 
             fn sub(self, rhs: &Poly<Self>) -> Poly<Self> {
+        // The polynomial cannot be empty.
                 self.sub(rhs.clone())
             }
         }
@@ -286,8 +300,13 @@ impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul for &Poly<T> {
 
     #[allow(clippy::suspicious_arithmetic_impl)]
     fn mul(self, rhs: Self) -> Poly<T> {
+        // Shortcut if one of the factors is zero.
+        if self.is_zero() || rhs.is_zero() {
+            return Poly::zero();
+        }
         // Polynomial multiplication is implemented as discrete convolution.
         let new_length = self.len() + rhs.len() - 1;
+        debug_assert!(new_length > 0);
         let mut new_coeffs: Vec<T> = vec![T::zero(); new_length];
         for i in 0..self.len() {
             for j in 0..rhs.len() {
@@ -297,6 +316,8 @@ impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul for &Poly<T> {
                 new_coeffs[index] = new_coeffs[index].clone() + a * b;
             }
         }
+        // The number of coefficients is at least one.
+        // No need to trim since the last coefficient is not zero.
         Poly::new_from_coeffs(&new_coeffs)
     }
 }
@@ -307,7 +328,7 @@ impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul for Poly<T> {
 
     fn mul(self, rhs: Self) -> Self {
         // Can't reuse arguments to avoid additional allocations.
-        // The to arguments can't mutate during the loops.
+        // The two arguments can't mutate during the loops.
         Mul::mul(&self, &rhs)
     }
 }
@@ -323,6 +344,7 @@ impl<T: Clone + Num> Mul<T> for Poly<T> {
             for c in &mut self.coeffs {
                 *c = c.clone() * rhs.clone();
             }
+            // The polynomial cannot be empty.
             self
         }
     }
@@ -333,6 +355,7 @@ impl<T: Clone + Num> Mul<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn mul(self, rhs: T) -> Self::Output {
+        // The polynomial cannot be empty.
         self.clone().mul(rhs)
     }
 }
@@ -347,6 +370,7 @@ macro_rules! impl_mul_for_poly {
             type Output = Poly<Self>;
 
             fn mul(self, rhs: Poly<Self>) -> Poly<Self> {
+                // The polynomial cannot be empty.
                 rhs * self
             }
         }
@@ -355,6 +379,7 @@ macro_rules! impl_mul_for_poly {
             type Output = Poly<Self>;
 
             fn mul(self, rhs: &Poly<Self>) -> Poly<Self> {
+                // The polynomial cannot be empty.
                 rhs * self
             }
         }
@@ -486,6 +511,7 @@ impl<T: Clone + Num> Div<T> for Poly<T> {
             *c = c.clone() / rhs.clone();
         }
         self.trim();
+        // The polynomial cannot be empty, trim has already the postcondition.
         self
     }
 }
@@ -495,6 +521,7 @@ impl<T: Clone + Num> Div<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn div(self, rhs: T) -> Self::Output {
+        // The polynomial cannot be empty.
         self.clone().div(rhs)
     }
 }
@@ -508,6 +535,7 @@ impl<T: Float> Div for &Poly<T> {
     type Output = Poly<T>;
 
     fn div(self, rhs: &Poly<T>) -> Self::Output {
+        // The polynomial cannot be empty, poly_div_impl has already the postcondition.
         poly_div_impl(self.clone(), rhs).0
     }
 }
@@ -521,6 +549,7 @@ impl<T: Float> Div for Poly<T> {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
+        // The polynomial cannot be empty, poly_div_impl has already the postcondition.
         poly_div_impl(self, &rhs).0
     }
 }
@@ -534,6 +563,7 @@ impl<T: Float> Rem for &Poly<T> {
     type Output = Poly<T>;
 
     fn rem(self, rhs: &Poly<T>) -> Self::Output {
+        // The polynomial cannot be empty, poly_div_impl has already the postcondition.
         poly_div_impl(self.clone(), rhs).1
     }
 }
@@ -547,6 +577,7 @@ impl<T: Float> Rem for Poly<T> {
     type Output = Self;
 
     fn rem(self, rhs: Self) -> Self::Output {
+        // The polynomial cannot be empty, poly_div_impl has already the postcondition.
         poly_div_impl(self, &rhs).1
     }
 }
@@ -609,6 +640,7 @@ impl<T: Clone + Div<Output = T>> Poly<T> {
         for c in &mut self.coeffs {
             *c = c.clone() / d.clone();
         }
+        // The polynomial cannot be empty.
     }
 }
 
