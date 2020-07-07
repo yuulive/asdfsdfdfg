@@ -73,13 +73,13 @@ pub fn damp<T: Float>(c: Complex<T>) -> T {
     }
 }
 
-/// Zip two slices with the given function
+/// Zip two iterators with the given function
 ///
 /// # Arguments
 ///
-/// * `left` - first slice to zip
-/// * `right` - second slice to zip
-/// * `f` - function used to zip the two lists
+/// * `left` - first iterator to zip
+/// * `right` - second iterator to zip
+/// * `f` - function used to zip the two iterators
 pub(crate) fn zip_with<L, R, T, F>(left: L, right: R, mut f: F) -> impl Iterator<Item = T>
 where
     L: IntoIterator,
@@ -161,8 +161,8 @@ where
 ///
 /// # Arguments
 ///
-/// * `left` - first iterator
-/// * `right` - second iterator
+/// * `a` - first iterator
+/// * `b` - second iterator
 /// * `fill` - default value
 fn zip_longest<T, I, J>(a: I, b: J, fill: T) -> ZipLongest<T, I::IntoIter, J::IntoIter>
 where
