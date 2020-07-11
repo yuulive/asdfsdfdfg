@@ -206,3 +206,43 @@ fn chebyshev_first_kind() {
     let t11 = poly!(0, -11, 0, 220, 0, -1232, 0, 2816, 0, -2816, 0, 1024);
     assert_eq!(t11, polys[11]);
 }
+
+#[test]
+fn chebyshev_roots() {
+    let polys = chebyshev_polys();
+    for n in 2..12 {
+        let t = &polys[n];
+        let mut roots: Vec<_> = (1..=n)
+            .map(|i| chebyshev_nodes(i as f64, n as f64))
+            .collect();
+
+        // Roots with Aberth-Ehrlich Method.
+        let mut iter_roots = t.iterative_roots();
+        iter_roots.sort_by(|&x, &y| x.re.partial_cmp(&y.re).unwrap());
+        roots.sort_by(|&x, &y| x.partial_cmp(&y).unwrap());
+        for (i, r) in iter_roots.iter().zip(&roots) {
+            assert_relative_eq!(i.re, *r, max_relative = 1e-10, epsilon = 1e-10);
+            assert_relative_eq!(i.im, 0.);
+        }
+    }
+}
+
+fn chebyshev_nodes(i: f64, n: f64) -> f64 {
+    ((2. * i - 1.) * std::f64::consts::PI / (2. * n)).cos()
+}
+
+fn chebyshev_polys() -> Vec<Poly<f64>> {
+    // Recurrence relation:
+    // T0(x) = 1
+    // T1(x) = x
+    // T_{n+1}(x) = 2xT_n(x) - T_{n-1}(x)
+    let mut polys: Vec<Poly<f64>> = Vec::new();
+    polys.push(Poly::<f64>::one());
+    polys.push(poly!(0., 1.));
+    let c = poly!(0., 2.);
+    for n in 2..12 {
+        let tmp = &c * &polys[n - 1];
+        polys.push(&tmp - &polys[n - 2]);
+    }
+    polys
+}
