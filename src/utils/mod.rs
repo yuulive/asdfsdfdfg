@@ -125,7 +125,7 @@ where
 /// * `left` - first iterator
 /// * `right` - second iterator
 /// * `fill` - default value
-/// * `f` - function used to zip the two lists
+/// * `f` - function used to zip the two iterators
 #[allow(dead_code)]
 pub(crate) fn zip_longest_with_old<T, F>(left: &[T], right: &[T], fill: T, mut f: F) -> Vec<T>
 where
@@ -147,14 +147,14 @@ where
 }
 
 #[derive(Clone, Debug)]
-struct ZipLongest<T, I, J>
+struct ZipLongest<I, J>
 where
-    I: Iterator<Item = T>,
-    J: Iterator<Item = T>,
+    I: Iterator,
+    J: Iterator,
 {
     a: I,
     b: J,
-    fill: T,
+    fill: I::Item,
 }
 
 /// Zip two iterators extending the shorter one with the provided `fill` value.
@@ -164,10 +164,10 @@ where
 /// * `a` - first iterator
 /// * `b` - second iterator
 /// * `fill` - default value
-fn zip_longest<T, I, J>(a: I, b: J, fill: T) -> ZipLongest<T, I::IntoIter, J::IntoIter>
+fn zip_longest<I, J>(a: I, b: J, fill: I::Item) -> ZipLongest<I::IntoIter, J::IntoIter>
 where
-    I: IntoIterator<Item = T>,
-    J: IntoIterator<Item = T>,
+    I: IntoIterator,
+    J: IntoIterator<Item = I::Item>,
 {
     ZipLongest {
         a: a.into_iter(),
@@ -176,13 +176,13 @@ where
     }
 }
 
-impl<T, I, J> Iterator for ZipLongest<T, I, J>
+impl<I, J> Iterator for ZipLongest<I, J>
 where
-    T: Clone,
-    I: Iterator<Item = T>,
-    J: Iterator<Item = T>,
+    I::Item: Clone,
+    I: Iterator,
+    J: Iterator<Item = I::Item>,
 {
-    type Item = (T, T);
+    type Item = (I::Item, I::Item);
 
     fn next(&mut self) -> Option<Self::Item> {
         match (self.a.next(), self.b.next()) {
@@ -202,18 +202,18 @@ where
 /// * `left` - first iterator
 /// * `right` - second iterator
 /// * `fill` - default value
-/// * `f` - function used to zip the two lists
-pub(crate) fn zip_longest_with<L, R, U, T, F>(
+/// * `f` - function used to zip the two iterators
+pub(crate) fn zip_longest_with<L, R, T, F>(
     left: L,
     right: R,
-    fill: U,
+    fill: L::Item,
     mut f: F,
 ) -> impl Iterator<Item = T>
 where
-    L: IntoIterator<Item = U>,
-    R: IntoIterator<Item = U>,
-    F: FnMut(U, U) -> T,
-    U: Clone,
+    L::Item: Clone,
+    L: IntoIterator,
+    R: IntoIterator<Item = L::Item>,
+    F: FnMut(L::Item, L::Item) -> T,
 {
     zip_longest(left, right, fill).map(move |(l, r)| f(l, r))
 }
