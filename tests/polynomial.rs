@@ -207,11 +207,11 @@ fn chebyshev_first_kind() {
     assert_eq!(t11, polys[11]);
 }
 
+#[allow(clippy::cast_precision_loss)]
 #[test]
 fn chebyshev_roots() {
     let polys = chebyshev_polys();
-    for n in 2..12 {
-        let t = &polys[n];
+    for (n, t) in polys.iter().enumerate().take(12).skip(2) {
         let mut roots: Vec<_> = (1..=n)
             .map(|i| chebyshev_nodes(i as f64, n as f64))
             .collect();
