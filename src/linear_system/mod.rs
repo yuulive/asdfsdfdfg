@@ -372,6 +372,10 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// # Arguments
     ///
     /// `tf` - transfer function
+    ///
+    /// # Errors
+    ///
+    /// It returns an error if the transfer function has no poles.
     pub fn new_observability_realization(tf: &TfGen<T, U>) -> Result<Self, &'static str> {
         // Get the denominator in the monic form mantaining the original gain.
         let tf_norm = tf.normalize();
@@ -448,6 +452,10 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// # Arguments
     ///
     /// `tf` - transfer function
+    ///
+    /// # Errors
+    ///
+    /// It returns an error if the transfer function has no poles.
     pub fn new_controllability_realization(tf: &TfGen<T, U>) -> Result<Self, &'static str> {
         // Get the denominator in the monic form mantaining the original gain.
         let tf_norm = tf.normalize();
