@@ -1,5 +1,5 @@
 use num_complex::Complex;
-use num_traits::{Float, FloatConst, MulAdd, NumCast};
+use num_traits::{Float, FloatConst, NumCast};
 
 use std::{
     fmt::Debug,
@@ -21,7 +21,7 @@ pub(super) struct RootsFinder<T> {
     iterations: u32,
 }
 
-impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
+impl<T: Float + FloatConst + NumCast> RootsFinder<T> {
     /// Create a `RootsFinder` structure
     ///
     /// # Arguments
@@ -69,7 +69,7 @@ impl<T: Float + FloatConst + MulAdd<Output = T> + NumCast> RootsFinder<T> {
     /// BIT 35 (1995), 001-003
     pub(super) fn roots_finder(mut self) -> Vec<Complex<T>>
     where
-        T: Float + MulAdd<Output = T>,
+        T: Float,
     {
         let n_roots = self.solution.len();
         let mut done = vec![false; n_roots];

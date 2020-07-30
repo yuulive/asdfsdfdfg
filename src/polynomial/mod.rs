@@ -21,7 +21,7 @@ mod roots;
 
 use nalgebra::{ComplexField, DMatrix, RealField};
 use num_complex::Complex;
-use num_traits::{Float, FloatConst, MulAdd, Num, NumCast, One, Signed, Zero};
+use num_traits::{Float, FloatConst, Num, NumCast, One, Signed, Zero};
 
 use std::{
     fmt,
@@ -374,7 +374,7 @@ impl<T: ComplexField + Float + RealField> Poly<T> {
     }
 }
 
-impl<T: Float + FloatConst + MulAdd<Output = T>> Poly<T> {
+impl<T: Float + FloatConst> Poly<T> {
     /// Calculate the complex roots of the polynomial
     /// using Aberth-Ehrlich method.
     ///
