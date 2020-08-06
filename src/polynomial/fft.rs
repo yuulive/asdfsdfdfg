@@ -70,12 +70,12 @@ where
     iterative_fft(y, Transform::Inverse)
 }
 
-/// Extend the vector to a length that is the nex power of two.
+/// Extend the vector to a length that is the next power of two.
 ///
 /// # Arguments
 ///
 /// * `a` - vector
-fn extend_two_power_of_two<T: Clone + Zero>(mut a: Vec<T>) -> Vec<T> {
+fn extend_to_power_of_two<T: Clone + Zero>(mut a: Vec<T>) -> Vec<T> {
     let n = a.len();
     if n.is_power_of_two() {
         a
@@ -107,7 +107,7 @@ fn iterative_fft<T>(a: Vec<Complex<T>>, dir: Transform) -> Vec<Complex<T>>
 where
     T: Float + FloatConst + NumCast,
 {
-    let a = extend_two_power_of_two(a);
+    let a = extend_to_power_of_two(a);
     let n = a.len();
     debug_assert!(n.is_power_of_two());
     let bits = log2(n);
