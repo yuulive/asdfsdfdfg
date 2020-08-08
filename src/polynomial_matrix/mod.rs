@@ -252,7 +252,7 @@ impl<T: Display + Scalar + Zero> Display for PolyMatrix<T> {
 /// `P(x) = [[P1, P2], [P3, P4]]`
 #[derive(Debug)]
 pub struct MatrixOfPoly<T> {
-    pub(crate) matrix: Array2<Poly<T>>,
+    matrix: Array2<Poly<T>>,
 }
 
 /// Implementation methods for MP struct
@@ -275,6 +275,11 @@ impl<T> MatrixOfPoly<T> {
         }
     }
 
+    /// Get access to a reference of the internal matrix.
+    pub(crate) fn matrix(&self) -> &Array2<Poly<T>> {
+        &self.matrix
+    }
+
     /// Extract the polynomial from the matrix if is the only one.
     pub(crate) fn single(&self) -> Option<&Poly<T>> {
         if self.matrix.shape() == [1, 1] {
@@ -282,6 +287,30 @@ impl<T> MatrixOfPoly<T> {
         } else {
             None
         }
+    }
+}
+
+/// Implement read only indexing of the matrix of polynomials.
+///
+/// # Panics
+///
+/// Panics for out of bounds access.
+impl<T> Index<[usize; 2]> for MatrixOfPoly<T> {
+    type Output = Poly<T>;
+
+    fn index(&self, i: [usize; 2]) -> &Poly<T> {
+        &self.matrix[i]
+    }
+}
+
+/// Implement mutable indexing of the matrix of polynomials.
+///
+/// # Panics
+///
+/// Panics for out of bounds access.
+impl<T> IndexMut<[usize; 2]> for MatrixOfPoly<T> {
+    fn index_mut(&mut self, i: [usize; 2]) -> &mut Poly<T> {
+        &mut self.matrix[i]
     }
 }
 
@@ -413,9 +442,22 @@ mod tests {
     }
 
     #[test]
+    fn indexing() {
+        let c = [4.3, 5.32];
+        let p = Poly::new_from_coeffs(&c);
+        let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
+        let mut mp = MatrixOfPoly::new(2, 2, v);
+        assert_eq!(p, mp[[1, 1]]);
+        let p2 = Poly::new_from_coeffs(&[1., 2.]);
+        mp[[1, 1]] = p2.clone();
+        assert_eq!(p2, mp[[1, 1]]);
+    }
+
+    #[test]
     fn single() {
         let v = vec![Poly::new_from_coeffs(&[4.3, 5.32])];
         let mp = MatrixOfPoly::new(1, 1, v);
+        assert_eq!(1, mp.matrix().len());
         let res = mp.single();
         assert!(res.is_some());
         assert_relative_eq!(14.94, res.unwrap().eval(&2.), max_relative = 1e-10);

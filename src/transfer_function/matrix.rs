@@ -75,13 +75,13 @@ impl<T: Float + MulAdd<Output = T>> TfMatrix<T> {
 
         // Create a matrix to contain the result of the evaluation.
         let mut res = Array2::from_elem(
-            self.num.matrix.dim(),
+            self.num.matrix().dim(),
             Complex::<T>::new(T::zero(), T::zero()),
         );
 
         // Zip the result and the numerator matrix row by row.
         Zip::from(res.genrows_mut())
-            .and(self.num.matrix.genrows())
+            .and(self.num.matrix().genrows())
             .apply(|mut res_row, matrix_row| {
                 // Zip the row of the result matrix.
                 Zip::from(&mut res_row)
@@ -133,7 +133,7 @@ impl<T> Index<[usize; 2]> for TfMatrix<T> {
     type Output = Poly<T>;
 
     fn index(&self, i: [usize; 2]) -> &Poly<T> {
-        &self.num.matrix[i]
+        &self.num[i]
     }
 }
 
@@ -145,7 +145,7 @@ impl<T> Index<[usize; 2]> for TfMatrix<T> {
 /// Panics for out of bounds access.
 impl<T> IndexMut<[usize; 2]> for TfMatrix<T> {
     fn index_mut(&mut self, i: [usize; 2]) -> &mut Poly<T> {
-        &mut self.num.matrix[i]
+        &mut self.num[i]
     }
 }
 
