@@ -40,6 +40,10 @@ W. S. Luk, Finding roots of real polynomial simultaneously by means of Bairstow'
 
 Donald Ervin Knuth, The Art of Computer Programming: Seminumerical algorithms, Volume 2, third edition, section 4.6.1, Algorithm D: division of polynomials over a field.
 
+T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein, Introduction to Algorithms, 3rd edition, McGraw-Hill Education, 2009
+
+A. M. Andrew, "Another Efficient Algorithm for Convex Hulls in Two Dimensions", Info. Proc. Letters 9, 216-219 (1979)
+
 ### Overview
 
 ## Overall description

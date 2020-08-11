@@ -205,6 +205,20 @@ where
 /// # Arguments
 ///
 /// * `set` - set of points.
+///
+/// # Reference
+///
+/// T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein,
+/// Introduction to Algorithms, 3rd edition, McGraw-Hill Education, 2009,
+/// A. M. Andrew, "Another Efficient Algorithm for Convex Hulls in Two Dimensions",
+/// Info. Proc. Letters 9, 216-219 (1979)
+///
+/// # Algorithm
+///
+/// Monotone chain, a.k.a. Andrew's algorithm— O(n log n)
+/// The algorithm is a variant of Graham scan which sorts the points
+/// lexicographically by their coordinates.
+/// https://en.wikipedia.org/wiki/Convex_hull_algorithms
 fn convex_hull_top<T>(set: &[(usize, T, T)]) -> Vec<(usize, T)>
 where
     T: Clone + Mul<Output = T> + PartialOrd + Sub<Output = T> + Zero,
@@ -223,13 +237,13 @@ where
             let next_to_top = stack.get(length - 2).unwrap();
             let top = stack.last().unwrap();
 
-            let c = cross_product(
+            let cp = cross_product(
                 (next_to_top.1.clone(), next_to_top.2.clone()),
                 (top.1.clone(), top.2.clone()),
                 (p.1.clone(), p.2.clone()),
             );
             // Remove the top if it is not a strict turn to the right.
-            if c < T::zero() {
+            if cp < T::zero() {
                 break;
             } else {
                 stack.pop();
@@ -239,13 +253,19 @@ where
     }
 
     let res: Vec<_> = stack.iter().map(|(a, b, _c)| (*a, b.clone())).collect();
-    // It is be sorted by k.
+    // res is already sorted by k.
     res
 }
 
 /// Compute the cross product of (p1 - p0) and (p2 - p0)
 ///
 /// `(p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)`
+///
+/// # Reference
+///
+/// T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein,
+/// Introduction to Algorithms, 3rd edition, McGraw-Hill Education, 2009,
+/// paragraph 33.1
 fn cross_product<T>(p0: (T, T), p1: (T, T), p2: (T, T)) -> T
 where
     T: Clone + Mul<Output = T> + Sub<Output = T>,
