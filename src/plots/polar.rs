@@ -156,10 +156,10 @@ mod tests {
     }
 
     #[test]
-    fn polar_struct() {
-        let p = Data {
-            output: Complex::new(3., 4.),
-        };
+    fn data_struct() {
+        let c = Complex::new(3., 4.);
+        let p = Data { output: c };
+        assert_eq!(c, p.output());
         assert_relative_eq!(3., p.real());
         assert_relative_eq!(4., p.imag());
         assert_relative_eq!(5., p.magnitude());
