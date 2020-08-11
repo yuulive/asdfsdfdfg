@@ -178,9 +178,8 @@ where
 ///
 /// # Algorithm
 ///
-/// Monotone chain, a.k.a. Andrew's algorithm— O(n log n)
-/// The algorithm is a variant of Graham scan which sorts the points
-/// lexicographically by their coordinates.
+/// Monotone chain Andrew's algorithm. The algorithm is a variant of Graham scan
+/// which sorts the points lexicographically by their coordinates.
 /// https://en.wikipedia.org/wiki/Convex_hull_algorithms
 fn convex_hull_top<T>(set: &[(usize, T, T)]) -> Vec<(usize, T)>
 where
