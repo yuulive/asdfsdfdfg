@@ -198,7 +198,7 @@ mod tests {
     }
 
     #[test]
-    fn polar_struct() {
+    fn data_struct() {
         let f = RadiansPerSecond(120.);
         let mag = 3.;
         let ph = std::f64::consts::PI;

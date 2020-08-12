@@ -9,14 +9,14 @@ A polynomial multiplied by one returns the same polynomial.
 A polynomial multiplied by zero returns zero.
 > tests/polynomial/multiplicative_null
 
+If a non zero polynomial is multiplied to another polynomial and divided the result equals to the latter.
+> tests/polynomial/multiplicative_inverse
+
 A polynomial plus or minus zero is equal to the polynomial.
 > tests/polynomial/additive_invariant
 
 If a polynomial is added and subtracted to another polynomial the result is equal to the latter.
 > tests/polynomial/additive_inverse
-
-If a non zero polynomial is multiplied and divided to another polynomial the result equals to the latter.
-> tests/polynomial/multiplicative_inverse
 
 A polynomial must have the same number of roots as its degree.
 > tests/polynomial/roots_degree

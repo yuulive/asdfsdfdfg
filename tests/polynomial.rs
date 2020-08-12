@@ -9,32 +9,38 @@ use num_traits::{One, Zero};
 fn multiplicative_unity() {
     let p1 = poly!(1., 0., 0.3, -4.);
     let one_p = poly!(1.);
+    // Polynomial unity.
     assert_eq!(p1, &p1 * &one_p);
 
     let p2 = poly!(1., 0., 0.3, -4.);
+    // Scalar unity.
     assert_eq!(p2, &p2 * 1.);
 
     let zero_p = poly!(0.);
-    assert_eq!(zero_p, &zero_p * 1.);
+    assert_eq!(zero_p, &zero_p * 1. * Poly::one());
 }
 
 #[test]
 fn multiplicative_null() {
     let p1 = poly!(1., 0., 0.3, -4.);
     let zero_p = poly!(0.);
+    // Polynomial zero.
     assert_eq!(zero_p, &p1 * &zero_p);
 
     let p2 = poly!(1., 0., 0.3, -4.);
+    // Scalar zero.
     assert_eq!(zero_p, &p2 * 0.);
 
-    assert_eq!(zero_p, &zero_p * 0.);
+    assert_eq!(zero_p, &zero_p * 0. * Poly::zero());
 }
 
 #[test]
 fn additive_invariant() {
     let p1 = poly!(0., -4.5, 0.6);
     let zero_p = poly!(0.);
+    // Polynomial zero.
     assert_eq!(p1, &p1 + &zero_p);
+    // Scalar zero.
     assert_eq!(p1, &p1 - 0.);
 }
 
