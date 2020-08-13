@@ -36,7 +36,7 @@
 //!
 //! [Polynomials](polynomial/index.html)
 //!
-//! [Matrix of polynomials](polynomial/matrix/index.html)
+//! [Matrix of polynomials](polynomial_matrix/index.html)
 //!
 //! ## Units of measurement
 //!
