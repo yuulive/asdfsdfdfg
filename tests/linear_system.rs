@@ -78,3 +78,21 @@ fn to_zero() {
 
     assert_abs_diff_eq!(0., last.state()[0], epsilon = 1e-4);
 }
+
+#[test]
+fn initial_value() {
+    // Figure 5.6
+    let num = poly!(1., 5.);
+    let den = poly!(1., 2.) * poly!(1., 1.);
+
+    let g = Tf::new(num, den);
+    let sys = Ss::new_observability_realization(&g).unwrap();
+
+    let limit = g.eval(&1e30);
+    let mut evo = sys.rk2(|_| vec![1.], &[0., 0.], Seconds(0.1), 25);
+    let init = evo.nth(0).unwrap().output()[0];
+
+    assert_relative_eq!(0., limit);
+    assert_relative_eq!(0., init);
+    assert_relative_eq!(limit, init);
+}

@@ -33,6 +33,7 @@ A polynomial integral shall have one more degree of the polynomial.
 ### Linear System
 
 The initial value of a system is the limit to infinity of its transfer function.
+> tests/linear_system/initial_value
 
 A linear system can be represented both with state-space representation of with transfer function.
 > tests/conversions/from_tf_to_ss
