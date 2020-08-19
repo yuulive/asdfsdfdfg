@@ -77,6 +77,7 @@ fn to_zero() {
     let last = evo.last().unwrap();
 
     assert_abs_diff_eq!(0., last.state()[0], epsilon = 1e-4);
+    assert_abs_diff_eq!(0., last.output()[0], epsilon = 1e-4);
 }
 
 #[test]
