@@ -18,22 +18,25 @@ fn stability() {
 #[test]
 fn equilibrium() {
     // Es 3.7
-    let a1 = [0., 1., -1., -1.];
-    let b1 = [0., 1.];
-    let c1 = [0., 1.];
-    let d1 = [0.];
-    let sys1 = Ss::new_from_slice(2, 1, 1, &a1, &b1, &c1, &d1);
-    let eq = sys1.equilibrium(&[1.]).unwrap();
+    let a = [0., 1., -1., -1.];
+    let b = [0., 1.];
+    let c = [0., 1.];
+    let d = [0.];
+    let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+    let eq = sys.equilibrium(&[1.]).unwrap();
     assert_eq!(&[1., 0.], eq.x());
     assert_eq!(&[0.], eq.y());
+}
 
+#[test]
+fn no_equilibrium() {
     // Es 3.9
-    let a2 = [0., 0., 1., 2.];
-    let b2 = [1., 2., 3., 4.];
-    let c2 = [5., 6.];
-    let d2 = [0., 0.];
-    let sys2 = Ss::new_from_slice(2, 2, 1, &a2, &b2, &c2, &d2);
-    let no_eq = sys2.equilibrium(&[1., 1.]);
+    let a = [0., 0., 1., 2.];
+    let b = [1., 2., 3., 4.];
+    let c = [5., 6.];
+    let d = [0., 0.];
+    let sys = Ss::new_from_slice(2, 2, 1, &a, &b, &c, &d);
+    let no_eq = sys.equilibrium(&[1., 1.]);
     assert!(no_eq.is_none());
 }
 

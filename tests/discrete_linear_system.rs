@@ -17,22 +17,26 @@ fn stability() {
 
 #[test]
 fn equilibrium() {
-    // Es 8.6
-    let a1 = [0.6_f32, 0., 0., 0.4];
-    let b1 = [1., 5.];
-    let c1 = [1., 3.];
-    let d1 = [0.];
-    let sys = Ssd::new_from_slice(2, 1, 1, &a1, &b1, &c1, &d1);
+    // Exercise 8.6
+    let a = [0.6_f32, 0., 0., 0.4];
+    let b = [1., 5.];
+    let c = [1., 3.];
+    let d = [0.];
+    let sys = Ssd::new_from_slice(2, 1, 1, &a, &b, &c, &d);
     let eq = sys.equilibrium(&[1.]).unwrap();
     assert_relative_eq!(2.5, eq.x()[0]);
     assert_relative_eq!(8.333_333, eq.x()[1]);
     assert_relative_eq!(27.5, eq.y()[0]);
+}
 
-    let a2 = [0.6_f32, 0., 0., 1.];
-    let b2 = [1., 5.];
-    let c2 = [1., 3.];
-    let d2 = [0.];
-    let sys = Ssd::new_from_slice(2, 1, 1, &a2, &b2, &c2, &d2);
+#[test]
+fn no_equilibrium() {
+    // Exercise 8.6
+    let a = [0.6_f32, 0., 0., 1.];
+    let b = [1., 5.];
+    let c = [1., 3.];
+    let d = [0.];
+    let sys = Ssd::new_from_slice(2, 1, 1, &a, &b, &c, &d);
     let no_eq = sys.equilibrium(&[1.]);
     assert!(no_eq.is_none());
 }
