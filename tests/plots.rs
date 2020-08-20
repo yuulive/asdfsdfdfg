@@ -9,6 +9,9 @@ use automatica::{
 
 #[test]
 fn bode_plot() {
+    // Figure 7.8
+    use crate::automatica::units::ToDecibel;
+
     let xi = 0.1_f32;
     let omega = 1.;
     let tf = Tf::new(
@@ -20,8 +23,9 @@ fn bode_plot() {
     let data: Vec<_> = bode.into_db_deg().collect();
     println!("{:?}", data[10]);
 
-    // at resonance frequency
-    assert!(data[10].magnitude() > 10.);
+    // At resonance frequency, 1 rad/s is the 10th element of the iterator.
+    let peak = (1. / 2. / xi.abs()).to_db();
+    assert_relative_eq!(peak, data[10].magnitude(), max_relative = 1e-6);
     assert_relative_eq!(-90., data[10].phase());
 }
 
