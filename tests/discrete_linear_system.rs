@@ -57,6 +57,7 @@ fn static_gain() {
 
 #[test]
 fn fir_impulse() {
+    // Example 9.3
     use std::iter::{once, repeat, Iterator};
 
     let num = 1.016_f32 * poly!(0.015, 0.031, 0.063, 0.125, 0.25, 0.5);
@@ -64,14 +65,14 @@ fn fir_impulse() {
     let g = Tfz::new(num, den);
 
     let mut iter = g.arma_iter(once(1.).chain(repeat(0.)));
-    assert_abs_diff_eq!(0.000, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.508, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.254, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.127, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.064, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.031, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.015, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.000, iter.next().unwrap(), epsilon = 1e-3);
+    assert_abs_diff_eq!(0.000, iter.next().unwrap(), epsilon = 1e-3); // Step 0
+    assert_abs_diff_eq!(0.508, iter.next().unwrap(), epsilon = 1e-3); // Step 1
+    assert_abs_diff_eq!(0.254, iter.next().unwrap(), epsilon = 1e-3); // Step 2
+    assert_abs_diff_eq!(0.127, iter.next().unwrap(), epsilon = 1e-3); // Step 3
+    assert_abs_diff_eq!(0.064, iter.next().unwrap(), epsilon = 1e-3); // Step 4
+    assert_abs_diff_eq!(0.031, iter.next().unwrap(), epsilon = 1e-3); // Step 5
+    assert_abs_diff_eq!(0.015, iter.next().unwrap(), epsilon = 1e-3); // Step 6
+    assert_abs_diff_eq!(0.000, iter.next().unwrap(), epsilon = 1e-3); // Step 7
 }
 
 #[test]
@@ -83,11 +84,12 @@ fn fir_step() {
     let g = Tfz::new(num, den);
 
     let mut iter = g.arma_iter(repeat(1.));
-    assert_abs_diff_eq!(0.000, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.508, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.762, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.889, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.953, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(0.985, iter.next().unwrap(), epsilon = 1e-3);
-    assert_abs_diff_eq!(1.000, iter.next().unwrap(), epsilon = 1e-3);
+    assert_abs_diff_eq!(0.000, iter.next().unwrap(), epsilon = 1e-3); // Step 0
+    assert_abs_diff_eq!(0.508, iter.next().unwrap(), epsilon = 1e-3); // Step 1
+    assert_abs_diff_eq!(0.762, iter.next().unwrap(), epsilon = 1e-3); // Step 2
+    assert_abs_diff_eq!(0.889, iter.next().unwrap(), epsilon = 1e-3); // Step 3
+    assert_abs_diff_eq!(0.953, iter.next().unwrap(), epsilon = 1e-3); // Step 4
+    assert_abs_diff_eq!(0.985, iter.next().unwrap(), epsilon = 1e-3); // Step 5
+    assert_abs_diff_eq!(1.000, iter.next().unwrap(), epsilon = 1e-3); // Step 6
+    assert_abs_diff_eq!(1.000, iter.next().unwrap(), epsilon = 1e-3); // Step 7
 }
