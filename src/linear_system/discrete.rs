@@ -364,7 +364,6 @@ impl<T> TimeEvolution<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::polynomial::Poly;
 
     #[test]
     fn equilibrium() {
@@ -396,22 +395,6 @@ mod tests {
         let sys = Ssd::new_from_slice(3, 2, 1, a, b, c, d);
 
         assert!(!sys.is_stable());
-    }
-
-    #[test]
-    fn convert_to_ss_discrete() {
-        use crate::transfer_function::discrete::Tfz;
-        let tf = Tfz::new(
-            Poly::new_from_coeffs(&[1., 0., 1.]),
-            Poly::new_from_coeffs(&[3., 4., 1.]),
-        );
-
-        let ss = Ssd::new_observability_realization(&tf).unwrap();
-
-        assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -3., 1., -4.]), ss.a);
-        assert_eq!(DMatrix::from_row_slice(2, 1, &[-2., -4.]), ss.b);
-        assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), ss.c);
-        assert_eq!(DMatrix::from_row_slice(1, 1, &[1.]), ss.d);
     }
 
     #[test]
