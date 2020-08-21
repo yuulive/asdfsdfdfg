@@ -1,5 +1,5 @@
 default:
-  image: 'rust:1.38-alpine'
+  image: 'rust:alpine'
 
 stages:
   - build
@@ -8,7 +8,7 @@ stages:
   - doc
 
 variables:
-  TARGET: target
+  DOC_FOLDER: target/doc
 
 .build_template: &build_definition
   stage: build
@@ -17,18 +17,18 @@ variables:
     - cargo build --verbose
     - cargo build --verbose --release
 
-build:
+build:oldest:
   <<: *build_definition
+  image: 'rust:1.38-alpine'
+  allow_failure: true
 
 build:latest:
   <<: *build_definition
-  image: 'rust:alpine'
-  allow_failure: true
 
-test:
+test:run:
   stage: test
   image: 'rust:latest'
-  needs: ["build"]
+  needs: ["build:latest"]
   script:
     - "rustc --version && cargo --version"
     - cargo test --verbose
@@ -51,19 +51,19 @@ cover:
       - tarpaulin-report.html
   allow_failure: true
 
-examples:
+examples:run:
   stage: examples
   image: 'rust:latest'
   script:
     - "rustc --version && cargo --version"
     - make all_examples
-  needs: ["test"]
+  needs: ["test:run"]
 
 pages:
   stage: doc
   script:
-    - cargo doc --no-deps
-    - cp -R $TARGET/doc public
+    - make doc
+    - cp -R $DOC_FOLDER public
     - echo '<meta http-equiv="refresh" content="0; url=automatica/index.html">' > public/index.html
   artifacts:
     paths:
