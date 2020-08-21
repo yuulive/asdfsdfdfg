@@ -743,21 +743,6 @@ mod tests {
     }
 
     #[test]
-    fn equilibrium() {
-        let a = [-1., 1., -1., 0.25];
-        let b = [1., 0.25];
-        let c = [0., 1.];
-        let d = [0.];
-
-        let sys = SsGen::<_, Continuous>::new_from_slice(2, 1, 1, &a, &b, &c, &d);
-        let u = 0.0;
-        let eq = sys.equilibrium(&[u]).unwrap();
-        assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
-        println!("{}", &eq);
-        assert!(!format!("{}", eq).is_empty());
-    }
-
-    #[test]
     fn leverrier_algorythm_f64() {
         // Example of LeVerrier algorithm (Wikipedia)");
         let t = DMatrix::from_row_slice(3, 3, &[3., 1., 5., 3., 3., 1., 4., 6., 4.]);

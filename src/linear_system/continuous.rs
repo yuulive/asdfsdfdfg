@@ -163,6 +163,7 @@ mod tests {
         let u = 0.0;
         let eq = sys.equilibrium(&[u]).unwrap();
         assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
+        assert!(!format!("{}", eq).is_empty());
     }
 
     #[test]
