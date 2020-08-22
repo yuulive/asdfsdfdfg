@@ -429,6 +429,7 @@ mod tests {
         let pm = PolyMatrix::new_from_coeffs(&v);
         let res = pm.clone() + pm;
         assert_eq!(DMatrix::from_row_slice(2, 2, &[2., 4., 6., 8.]), res[0]);
+        assert_eq!(DMatrix::from_row_slice(2, 2, &[2., 0., 0., 2.]), res[1]);
     }
 
     #[test]
