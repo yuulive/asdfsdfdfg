@@ -381,7 +381,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
         let tf_norm = tf.normalize();
         let order = match tf_norm.den().degree() {
             Some(d) => d,
-            _ => return Err("Transfer functions cannot have zero polynomial denominator"),
+            None => return Err("Transfer functions cannot have zero polynomial denominator"),
         };
         let num = {
             // Extend the numerator coefficients with zeros to the length of the
@@ -461,7 +461,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
         let tf_norm = tf.normalize();
         let order = match tf_norm.den().degree() {
             Some(d) => d,
-            _ => return Err("Transfer functions cannot have zero polynomial denominator"),
+            None => return Err("Transfer functions cannot have zero polynomial denominator"),
         };
         let num = {
             // Extend the numerator coefficients with zeros to the length of the

@@ -178,7 +178,7 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
         match self.degree() {
             None => self.coeffs.resize(degree + 1, T::zero()),
             Some(d) if degree > d => self.coeffs.resize(degree + 1, T::zero()),
-            _ => (),
+            Some(_) => (),
         };
         debug_assert!(!self.coeffs.is_empty());
     }
@@ -365,7 +365,7 @@ impl<T: ComplexField + Float + RealField> Poly<T> {
             _ => {
                 let comp = match cropped.companion() {
                     Some(comp) => comp,
-                    _ => return Vec::new(),
+                    None => return Vec::new(),
                 };
                 comp.complex_eigenvalues().as_slice().to_vec()
             }
