@@ -4,6 +4,7 @@ extern crate approx;
 
 use automatica::{poly, Tfz};
 
+/// TC4.7
 #[test]
 fn left_moving_average() {
     let tf = Tfz::new(poly!(1., 1., 1.), poly!(0., 0., 3.));

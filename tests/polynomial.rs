@@ -5,6 +5,7 @@ extern crate approx;
 use automatica::{poly, Poly};
 use num_traits::{One, Zero};
 
+/// TC1.1
 #[test]
 fn multiplicative_unity() {
     let p1 = poly!(1., 0., 0.3, -4.);
@@ -20,6 +21,7 @@ fn multiplicative_unity() {
     assert_eq!(zero_p, &zero_p * 1. * Poly::one());
 }
 
+/// TC1.2
 #[test]
 fn multiplicative_null() {
     let p1 = poly!(1., 0., 0.3, -4.);
@@ -34,6 +36,7 @@ fn multiplicative_null() {
     assert_eq!(zero_p, &zero_p * 0. * Poly::zero());
 }
 
+/// TC1.4
 #[test]
 fn additive_invariant() {
     let p1 = poly!(0., -4.5, 0.6);
@@ -44,6 +47,7 @@ fn additive_invariant() {
     assert_eq!(p1, &p1 - 0.);
 }
 
+/// TC1.6
 #[test]
 fn roots_degree() {
     let p0 = poly!(1);
@@ -54,12 +58,14 @@ fn roots_degree() {
     assert_eq!(Some(2), p2.degree());
 }
 
+/// TC1.7
 #[test]
 fn no_degree() {
     let p0 = poly!(0);
     assert_eq!(None, p0.degree());
 }
 
+/// TC1.5
 #[test]
 fn additive_inverse() {
     let p1 = poly!(0, -4, 6);
@@ -68,6 +74,7 @@ fn additive_inverse() {
     assert_eq!(p1, sum - p2);
 }
 
+/// TC1.3
 #[test]
 fn multiplicative_inverse() {
     let p1 = poly!(0., -4., 6.);
@@ -76,6 +83,7 @@ fn multiplicative_inverse() {
     assert_eq!(p1, mul / p2);
 }
 
+/// TC1.8
 #[test]
 fn derivation() {
     let p2 = poly!(0., 2., 3.);
@@ -89,6 +97,7 @@ fn derivation() {
     assert_eq!(None, p0_der.degree());
 }
 
+/// TC1.9
 #[test]
 fn integration() {
     let p0 = poly!(0.);
@@ -123,6 +132,7 @@ fn arithmetics() {
     }
 }
 
+/// TC1.10
 #[test]
 fn maximum_minimum() {
     let cubic = Poly::<f32>::new_from_roots(&[-1., 0., 1.]);

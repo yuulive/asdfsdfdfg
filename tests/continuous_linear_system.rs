@@ -4,6 +4,7 @@ extern crate approx;
 
 use automatica::{poly, signals::continuous, Poly, Seconds, Ss, Tf};
 
+/// TC3.1
 #[test]
 fn stability() {
     let stable_poles = [-1., -1.3, -15.];
@@ -15,6 +16,7 @@ fn stability() {
     assert!(!Tf::new(poly!(0.5, 1.5), den2).is_stable());
 }
 
+/// TC3.2
 #[test]
 fn equilibrium() {
     // Es 3.7
@@ -28,6 +30,7 @@ fn equilibrium() {
     assert_eq!(&[0.], eq.y());
 }
 
+/// TC3.3
 #[test]
 fn no_equilibrium() {
     // Es 3.9
@@ -40,6 +43,7 @@ fn no_equilibrium() {
     assert!(no_eq.is_none());
 }
 
+/// TC3.4
 #[test]
 fn static_gain() {
     // 5.4.4

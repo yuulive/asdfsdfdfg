@@ -4,6 +4,7 @@ extern crate approx;
 
 use automatica::{poly, signals::continuous, Poly, Seconds, Ss, Ssd, Tf, Tfz};
 
+/// TC2.3
 #[test]
 fn poles_eigenvalues() {
     let num = poly!(4.);
@@ -15,6 +16,7 @@ fn poles_eigenvalues() {
     assert_eq!(tf.complex_poles(), sys.poles());
 }
 
+/// TC2.6
 #[test]
 fn series_system() {
     let tf1 = Tfz::new(poly!(1.), Poly::new_from_roots(&[-0.7, -0.5]));
@@ -29,6 +31,7 @@ fn series_system() {
     assert!(!unstable_tf.is_stable());
 }
 
+/// TC2.7
 #[test]
 fn parallel_system() {
     let tf1 = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -0.5]));
@@ -43,6 +46,7 @@ fn parallel_system() {
     assert!(!unstable_tf.is_stable());
 }
 
+/// TC2.4
 #[test]
 fn initial_state_independence() {
     let a = &[0.3_f32, 0., 0., 0.25];
@@ -66,6 +70,7 @@ fn initial_state_independence() {
     assert_relative_eq!(expected, response2);
 }
 
+/// TC2.5
 #[test]
 fn to_zero() {
     // 5.4.4
@@ -80,6 +85,7 @@ fn to_zero() {
     assert_abs_diff_eq!(0., last.output()[0], epsilon = 1e-4);
 }
 
+/// TC2.1
 #[test]
 fn initial_value() {
     // Figure 5.6

@@ -4,6 +4,7 @@ extern crate approx;
 
 use automatica::{poly, signals::discrete, Poly, Ssd, Tfz};
 
+/// TC4.1
 #[test]
 fn stability() {
     let stable_poles = [-0.3, 0., -0.99];
@@ -15,6 +16,7 @@ fn stability() {
     assert!(!Tfz::new(poly!(0.5, 1.5), den2).is_stable());
 }
 
+/// TC4.2
 #[test]
 fn equilibrium() {
     // Exercise 8.6
@@ -29,6 +31,7 @@ fn equilibrium() {
     assert_relative_eq!(27.5, eq.y()[0]);
 }
 
+/// TC4.3
 #[test]
 fn no_equilibrium() {
     // Exercise 8.6
@@ -41,6 +44,7 @@ fn no_equilibrium() {
     assert!(no_eq.is_none());
 }
 
+/// TC4.4
 #[test]
 fn static_gain() {
     // Es. 9.1
@@ -55,6 +59,7 @@ fn static_gain() {
     assert_abs_diff_eq!(gain, last.output()[0], epsilon = 1e-5);
 }
 
+/// TC4.5
 #[test]
 fn fir_impulse() {
     // Example 9.3
@@ -75,6 +80,7 @@ fn fir_impulse() {
     assert_abs_diff_eq!(0.000, iter.next().unwrap(), epsilon = 1e-3); // Step 7
 }
 
+/// TC4.6
 #[test]
 fn fir_step() {
     use std::iter::{repeat, Iterator};

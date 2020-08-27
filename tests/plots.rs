@@ -7,6 +7,7 @@ use automatica::{
     poly, Poly, RadiansPerSecond, Tf,
 };
 
+/// TC5.1
 #[test]
 fn bode_plot() {
     // Figure 7.8
@@ -21,7 +22,6 @@ fn bode_plot() {
 
     let bode = tf.bode(RadiansPerSecond(0.1), RadiansPerSecond(10.), 0.1);
     let data: Vec<_> = bode.into_db_deg().collect();
-    println!("{:?}", data[10]);
 
     // At resonance frequency, 1 rad/s is the 10th element of the iterator.
     let peak = (1. / 2. / xi.abs()).to_db();
@@ -29,12 +29,10 @@ fn bode_plot() {
     assert_relative_eq!(-90., data[10].phase());
 }
 
+/// TC5.2
 #[test]
 fn polar_plot() {
     let tf = Tf::new(poly!(5.), Poly::new_from_roots(&[-1., -10.]));
-
-    println!("T:\n{}\n", tf);
-
     let p = tf.polar(RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
 
     assert!(p.clone().all(|x| x.magnitude() < 1.));
@@ -48,11 +46,11 @@ fn polar_plot() {
     );
 }
 
+/// TC5.3
 #[test]
 fn root_locus_plot() {
     // Example 13.2.
     let tf = Tf::new(poly!(1.0_f64), Poly::new_from_roots(&[0., -3., -5.]));
-    // println!("{}", &tf);
 
     let loci = tf.root_locus_iter(1., 130., 1.);
     for locus in loci {
