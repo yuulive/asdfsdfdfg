@@ -29,7 +29,7 @@ use std::{
     ops::{Add, Div, Index, IndexMut, Mul, Neg},
 };
 
-use crate::{polynomial::roots::RootsFinder, utils};
+use crate::polynomial::roots::RootsFinder;
 
 /// Polynomial object
 ///

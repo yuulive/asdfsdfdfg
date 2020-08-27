@@ -1,8 +1,13 @@
 //! Arithmetic module for polynomials
+use num_complex::Complex;
+use num_traits::{Float, FloatConst, Num, One, Zero};
 
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
-use super::*;
+use crate::{
+    polynomial::{fft, Poly},
+    utils,
+};
 
 /// Implementation of polynomial negation
 impl<T: Clone + Neg<Output = T>> Neg for &Poly<T> {

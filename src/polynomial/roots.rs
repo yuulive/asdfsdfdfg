@@ -1,12 +1,12 @@
 use num_complex::Complex;
-use num_traits::{Float, FloatConst, NumCast};
+use num_traits::{Float, FloatConst, NumCast, One, Zero};
 
 use std::{
     fmt::Debug,
     ops::{Mul, Sub},
 };
 
-use super::*;
+use super::Poly;
 
 /// Structure to hold the computational data for polynomial root finding.
 #[derive(Debug)]

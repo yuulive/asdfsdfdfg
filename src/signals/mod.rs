@@ -1,12 +1,9 @@
 //! Collection of commons input signals.
 
-use num_traits::Float;
-
-use crate::units::{RadiansPerSecond, Seconds};
-
 pub mod continuous {
     //! Collection of continuous signals.
-    use super::*;
+    use crate::units::{RadiansPerSecond, Seconds};
+    use num_traits::Float;
 
     /// Zero input function
     ///
@@ -94,7 +91,7 @@ pub mod continuous {
 
 pub mod discrete {
     //! Collection of discrete signals.
-    use super::*;
+    use num_traits::Float;
 
     /// Zero input function
     ///
