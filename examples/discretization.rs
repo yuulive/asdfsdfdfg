@@ -34,7 +34,7 @@ fn main() {
 
     println!("Time; continuous - step; discrete");
     for (i, j) in it.zip(te).step_by(10) {
-        print!("{:.1}; {:.5} - ", i.time(), i.output()[0],);
-        println!("{:.1}; {:.5}", j.time(), j.output()[0],);
+        print!("{:>4.1}; {:>10.5} - ", i.time(), i.output()[0],);
+        println!("{:>4.1}; {:>8.5}", j.time(), j.output()[0],);
     }
 }
