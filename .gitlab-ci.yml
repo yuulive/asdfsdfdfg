@@ -1,5 +1,7 @@
 default:
   image: 'rust:alpine'
+  # Do not fetch artifacts from previous stages
+  dependencies: []
 
 stages:
   - build
