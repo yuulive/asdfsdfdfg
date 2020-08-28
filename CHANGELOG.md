@@ -10,11 +10,15 @@
 - Polynomial round off to zero
 - Conversion from TfGen to SSGen using controllability canonical form
 - Methods to check transfer function stability
+- Auto implementation of PartialEq trait for SSGen
+- Auto implementation Clone trait for TfGen and SSGen
+- Methods to check transfer functions stability
 ## Changed
 - Improvements on polynomial roots finders and increment of related tests
 - General source code linting
 - Use IntoIterator trait as interface in methods that require an iterator
 - Evaluation of polynomials and transfer functions now can take references
+- Polynomial numeric type no longer requires Copy trait
 ### API Changes
 - Changed iterator names (C-ITER-TY API guidelines)
 - Changed linear system solvers names (C-ITER-TY API guidelines)
@@ -28,7 +32,8 @@
 ## Fixed
 - Subtraction between a real number and a polynomial
 - Derivation of zero degree polynomial
-- Fixed conversion from transfer function to state space representation
+- Conversion from transfer function to state space representation
+- Derivation of zero degree polynomials
 
 ## [0.7.0] - 2020-02-08
 ## Added
