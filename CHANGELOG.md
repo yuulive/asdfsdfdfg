@@ -62,7 +62,7 @@
 - Generalization of transfer functions
 - Generalization of linear systems
 - Generalization of polynomial matrices
-- Generalization of transfer function matices
+- Generalization of transfer function matrices
 - Generalization of units of measurement
 - Generalization of discrete transfer functions
 - Generalization of Bode and polar plots
@@ -98,7 +98,7 @@
 ### Changed
 - Improve efficiency using LU decomposition to solve implicit system.
 ### Fixed
-- Corrected the trasformation from transfer function to state-space form.
+- Corrected the transformation from transfer function to state-space form.
 
 ## [0.3.0] - 2019-08-05
 ### Added

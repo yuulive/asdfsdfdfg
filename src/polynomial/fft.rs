@@ -175,7 +175,7 @@ mod tests {
     fn fft_iterative() {
         let one = Complex::one();
         let a = vec![one * 1., one * 0., one * 1.];
-        // `a` is extended to for elements
+        // `a` is extended to four elements
         let f = iterative_fft(a, Transform::Direct);
         let expected = vec![one * 2., one * 0., one * 2., one * 0.];
         assert_eq!(expected, f);
