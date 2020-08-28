@@ -1,7 +1,5 @@
 default:
   image: 'rust:alpine'
-  # Do not fetch artifacts from previous stages
-  dependencies: []
 
 stages:
   - build
@@ -73,6 +71,8 @@ pages:
       - public
   only:
     - master
+  # Do not fetch artifacts from previous stages
+  dependencies: []
 
 package:build:
   stage: package
@@ -80,3 +80,5 @@ package:build:
     - "rustc --version && cargo --version"
     - cargo package --list --verbose
     - cargo package --verbose
+  # Do not fetch artifacts from previous stages
+  dependencies: []
