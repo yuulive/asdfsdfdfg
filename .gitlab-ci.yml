@@ -6,6 +6,7 @@ stages:
   - test
   - examples
   - doc
+  - package
 
 variables:
   DOC_FOLDER: target/doc
@@ -70,3 +71,10 @@ pages:
       - public
   only:
     - master
+
+package:build:
+  stage: package
+  script:
+    - "rustc --version && cargo --version"
+    - cargo package --list --verbose
+    - cargo package --verbose
