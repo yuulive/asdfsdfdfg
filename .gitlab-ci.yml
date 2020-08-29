@@ -7,6 +7,7 @@ stages:
   - examples
   - doc
   - package
+  - publish
 
 variables:
   DOC_FOLDER: target/doc
@@ -82,3 +83,14 @@ package:build:
     - cargo package --verbose
   # Do not fetch artifacts from previous stages
   dependencies: []
+
+publish:send:
+  stage: publish
+  script:
+    - "rustc --version && cargo --version"
+    - cargo publish --verbose
+  # Do not fetch artifacts from previous stages
+  dependencies: []
+  only:
+    - master
+  when: manual
