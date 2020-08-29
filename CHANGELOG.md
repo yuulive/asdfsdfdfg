@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.8.0] Unreleased
+## [0.8.0] - 2020-08-30
 ## Added
 - Documentation of the specification of the library
 - Evaluation of polynomial and transfer functions now take reference values too
