@@ -1,6 +1,6 @@
 # Test Plan
 
-## Test black box
+## Black box testing
 
 Black box tests verify the properties of the mathematical entities defined in the library.
 
@@ -259,3 +259,217 @@ TC5.3 The number of branches of the direct root locus is equal to the degree of 
 
 - input: G(s)=\frac{k}{s\left(3+s\right)\left(5+s\right)}
 - output: 3 branches, symmetric, limit value for stability =120
+
+## White box testing
+
+Every module must contain a test submodule, whose purpose it to test all the functions present inside the module.
+
+This tests are dependent from the implementation of the method, it is not given a detailed description, but the requirements are listed and what the test shall verify. More information must be added in the source code.
+
+### Module controllers
+
+#### pid
+
+Creation of a real and ideal PID controller and generation of the related transfer function.
+
+### Module linear_system
+
+Creation of the structure that contains the dimensions of a system and check of the correct initialization of a system.
+
+Calculation of the eigenvalues of a system of first, second and third order.
+
+Le Verrier algorithm with single and double precision floating point numbers, both on a 1x1 matrix and higher dimensions.
+
+Conversion from a transfer function to a representation with state variables, both through the canonical observability and controllability form.
+
+Calculation of the observability and controllability matrices.
+
+#### continuous
+
+Determination of an equilibrium point and the evaluation of the stability of a system.
+
+Evolution of a system using Runge-Kutta method of order 2 and 4, the Runge-Kutta-Fehlberg method of order 4/5 and the Radau method.
+
+#### discrete
+
+Determination of and equilibrium point and the evaluation of the stability of a system.
+
+Evolution of a system with input supplied as a function or an iterator.
+
+Discretization of a continuous time system using forward Euler, backward Euler and Tustin methods. Backward Euler and Tustin methods can fail.
+
+#### solver
+
+Creation of the data structures that are returned by the integrators.
+
+### Module plots
+
+#### bode
+
+Creation of the iterator that supplies the diagram points, both as absolute values / Hertz and decibel / radians per second and counting of supplied points.
+
+Creation of the structure that represents the points of the diagram.
+
+#### polar
+
+Creation of the iterator that supplies the diagram points and counting of supplied points.
+
+Creation of the structure that represents the points of the diagram.
+
+#### root_locus
+
+Correctness of the parameters for the creation of the data structure of the diagram.
+
+### Module polynomial
+
+Formatting polynomial as string.
+
+Creation from coefficient and from roots, supplied both as a list and as a iterator, creation of the null and unity polynomial.
+
+Return coefficients as a list.
+
+Calculation of the length and the degree of the polynomial.
+
+Extension with zeros of the high degree coefficients.
+
+Evaluation of the polynomial both with real and complex numbers.
+
+Indexing of polynomial coefficients.
+
+Derivative and integral of the polynomial.
+
+Transformation into a monic polynomial and return of the leading coefficient.
+
+Rounding towards zero of the coefficients.
+
+Creation of the companion matrix.
+
+Calculation of the real and complex roots of a polynomial of first, second and third degree, both with the method of eigenvalues and the iterative method. The null roots shall be removed from the calculation.
+
+#### arithmetic
+
+Arithmetic operations defined between polynomial and with real numbers.
+
+Multiplication through fast Fourier transformation.
+
+#### fft
+
+Bit permutation of a integer number.
+
+Calculation of the direct and inverse fast Fourier transformation.
+
+#### roots
+
+Calculation of the roots with iterative method.
+
+### Module polynomial_matrix
+
+#### PolyMatrix
+
+Creation of a polynomial whose elements are matrices, eliminating null terms.
+
+Multiplication coefficient by coefficient times a matrix both on the right and on the left.
+
+Evaluation supplying a matrix of values.
+
+Addition between polynomials of matrices.
+
+#### MatrixOfPoly
+
+Creation of a matrix whose elements are polynomial, that can be indexed.
+
+If the matrix has dimension 1x1 it is possible to extract the single element.
+
+### Module signals
+
+#### continuous
+
+Creation and output of a null, impulse, step and sinusoidal signal.
+
+#### discrete
+
+Creation and output of a null, impulse and step signal.
+
+### Module transfer_function
+
+Creation of a transfer function.
+
+Evaluation of a transfer function given a complex number.
+
+Inversion of a function and arithmetical operations of negation, addition, subtraction, multiplication and division.
+
+Calculation of poles and zeros, both real and complex.
+
+Determination of the system given a function with a unitary positive or negative feedback.
+
+Formatting of the function as a string.
+
+Normalization of the function with a monic polynomial as denominator.
+
+#### continuous
+
+Creation of a delay function.
+
+Calculation of the static gain.
+
+Determination of the stability of a system.
+
+Creation of a Bode diagram, polar diagram and a root locus diagram.
+
+Calculation of the initial value of the system evolution and its first derivative.
+
+Calculation of the sensitivity, complementary sensitivity and control sensitivity functions.
+
+#### discrete
+
+Creation of a transfer function of a discrete time system and a delay function.
+
+Calculation of the initial value of the system evolution.
+
+Calculation of the static gain.
+
+Determination of the stability of a system.
+
+Evaluation of the function given a complex number.
+
+Creation of an autoregressive moving average form.
+
+#### discretization
+
+Creation of a discrete time transfer function from a continuous time one.
+
+Check of the correct discretization with forward Euler, backward Euler and Tustin methods.
+
+#### matrix
+
+Creation of a matrix of transfer functions.
+
+Evaluation of the matrix given a vector of complex numbers.
+
+Indexing and formatting as string of the matrix.
+
+### Module units
+
+Creation of decibel from floating point numbers.
+
+Conversion between Hertz and radians per second. Inversion between seconds and Hertz.
+
+Formatting of units of measurement as strings.
+
+### Module utils
+
+Determination of the pulse and the dump of a complex number.
+
+Zip two iterators with different lengths, also through a function, at the shortest elements are added.
+
+## Documentation tests
+
+Every public method of the library shall have a documentation in the source code, in addition there shall be an example of the use of the method.
+
+This example it will compiled and executed during the test phase, ensuring that the documentation remains aligned with the code modifications.
+
+## Test coverage
+
+The test development shall tend to obtain the maximum line coverage.
+
+The program to determine the test coverage is `tarpaulin` [15], it is executed during the continuous integration phases.
