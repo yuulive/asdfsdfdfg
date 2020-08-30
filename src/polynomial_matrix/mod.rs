@@ -13,7 +13,7 @@ use std::{
     fmt::{Debug, Display, Formatter},
 };
 
-use crate::{polynomial::Poly, Eval};
+use crate::polynomial::Poly;
 
 /// Polynomial matrix object
 ///
@@ -43,7 +43,7 @@ impl<T: Scalar + Zero> PolyMatrix<T> {
     ///
     /// # Arguments
     ///
-    /// * `coeffs` - slice of matrix coefficients
+    /// * `matr_coeffs` - slice of matrix coefficients
     pub(crate) fn new_from_coeffs(matr_coeffs: &[DMatrix<T>]) -> Self {
         let shape = matr_coeffs[0].shape();
         assert!(matr_coeffs.iter().all(|c| c.shape() == shape));
@@ -52,6 +52,25 @@ impl<T: Scalar + Zero> PolyMatrix<T> {
         };
         pm.trim();
         debug_assert!(!pm.matr_coeffs.is_empty());
+        pm
+    }
+
+    /// Create a new polynomial matrix given an iterator of matrix coefficients.
+    ///
+    /// # Arguments
+    ///
+    /// * `matr_iter` - iterator of matrix coefficients
+    pub(crate) fn new_from_iter<II>(matr_iter: II) -> Self
+    where
+        II: IntoIterator<Item = DMatrix<T>>,
+    {
+        let mut pm = Self {
+            matr_coeffs: matr_iter.into_iter().collect(),
+        };
+        debug_assert!(!pm.matr_coeffs.is_empty());
+        let shape = pm.matr_coeffs[0].shape();
+        assert!(pm.matr_coeffs.iter().all(|c| c.shape() == shape));
+        pm.trim();
         pm
     }
 
@@ -71,7 +90,7 @@ impl<T: Scalar + Zero> PolyMatrix<T> {
 impl<T: Scalar + Zero + One + Add + AddAssign + Mul + MulAssign> PolyMatrix<T> {
     /// Implementation of polynomial matrix and matrix multiplication
     ///
-    /// PolyMatrix * DMatrix
+    /// `PolyMatrix` * `DMatrix`
     pub(crate) fn right_mul(&self, rhs: &DMatrix<T>) -> Self {
         let result: Vec<_> = self.matr_coeffs.iter().map(|x| x * rhs).collect();
         Self::new_from_coeffs(&result)
@@ -79,15 +98,20 @@ impl<T: Scalar + Zero + One + Add + AddAssign + Mul + MulAssign> PolyMatrix<T> {
 
     /// Implementation of matrix and polynomial matrix multiplication
     ///
-    /// DMatrix * PolyMatrix
+    /// `DMatrix` * `PolyMatrix`
     pub(crate) fn left_mul(&self, lhs: &DMatrix<T>) -> Self {
         let res: Vec<_> = self.matr_coeffs.iter().map(|r| lhs * r).collect();
         Self::new_from_coeffs(&res)
     }
 }
 
-impl<T: NumAssignOps + Float + Scalar> Eval<DMatrix<Complex<T>>> for PolyMatrix<T> {
-    fn eval(&self, s: &DMatrix<Complex<T>>) -> DMatrix<Complex<T>> {
+impl<T: NumAssignOps + Float + Scalar> PolyMatrix<T> {
+    #[allow(dead_code)]
+    /// Evaluate the polynomial matrix
+    ///
+    /// # Arguments
+    /// * `s` - Matrix at which the polynomial matrix is evaluated.
+    pub(crate) fn eval(&self, s: &DMatrix<Complex<T>>) -> DMatrix<Complex<T>> {
         // transform matr_coeffs in complex numbers matrices
         //
         // ┌     ┐ ┌       ┐ ┌       ┐ ┌     ┐ ┌       ┐ ┌         ┐
@@ -104,7 +128,7 @@ impl<T: NumAssignOps + Float + Scalar> Eval<DMatrix<Complex<T>>> for PolyMatrix<
 
         for mc in self.matr_coeffs.iter().rev() {
             let mcplx = mc.map(|x| Complex::<T>::new(x, T::zero()));
-            result = result.component_mul(s) + mcplx;
+            result = result.component_mul(&s) + mcplx;
         }
         result
     }
@@ -150,6 +174,21 @@ impl Add<PolyMatrix<f32>> for PolyMatrix<f32> {
         };
         result.trim();
         result
+    }
+}
+
+impl<T: Mul<Output = T> + MulAssign<T> + Scalar + Zero> PolyMatrix<T> {
+    /// Implementation of polynomial and matrix multiplication
+    /// It's the polynomial matrix whose coefficients are the coefficients
+    /// of the polynomial times the matrix
+    ///
+    /// # Arguments
+    ///
+    /// * `poly` - Polynomial
+    /// * `matrix` - Matrix
+    pub(crate) fn multiply(poly: &Poly<T>, matrix: &DMatrix<T>) -> PolyMatrix<T> {
+        let result = poly.as_slice().iter().map(|&c| matrix * c);
+        PolyMatrix::new_from_iter(result)
     }
 }
 
@@ -213,7 +252,7 @@ impl<T: Display + Scalar + Zero> Display for PolyMatrix<T> {
 /// `P(x) = [[P1, P2], [P3, P4]]`
 #[derive(Debug)]
 pub struct MatrixOfPoly<T> {
-    pub(crate) matrix: Array2<Poly<T>>,
+    matrix: Array2<Poly<T>>,
 }
 
 /// Implementation methods for MP struct
@@ -236,6 +275,11 @@ impl<T> MatrixOfPoly<T> {
         }
     }
 
+    /// Get access to a reference of the internal matrix.
+    pub(crate) fn matrix(&self) -> &Array2<Poly<T>> {
+        &self.matrix
+    }
+
     /// Extract the polynomial from the matrix if is the only one.
     pub(crate) fn single(&self) -> Option<&Poly<T>> {
         if self.matrix.shape() == [1, 1] {
@@ -243,6 +287,30 @@ impl<T> MatrixOfPoly<T> {
         } else {
             None
         }
+    }
+}
+
+/// Implement read only indexing of the matrix of polynomials.
+///
+/// # Panics
+///
+/// Panics for out of bounds access.
+impl<T> Index<[usize; 2]> for MatrixOfPoly<T> {
+    type Output = Poly<T>;
+
+    fn index(&self, i: [usize; 2]) -> &Poly<T> {
+        &self.matrix[i]
+    }
+}
+
+/// Implement mutable indexing of the matrix of polynomials.
+///
+/// # Panics
+///
+/// Panics for out of bounds access.
+impl<T> IndexMut<[usize; 2]> for MatrixOfPoly<T> {
+    fn index_mut(&mut self, i: [usize; 2]) -> &mut Poly<T> {
+        &mut self.matrix[i]
     }
 }
 
@@ -284,7 +352,7 @@ impl<T: Display + Signed> Display for MatrixOfPoly<T> {
 }
 
 #[cfg(test)]
-mod tests2 {
+mod tests {
     use super::*;
 
     #[test]
@@ -361,22 +429,36 @@ mod tests2 {
         let pm = PolyMatrix::new_from_coeffs(&v);
         let res = pm.clone() + pm;
         assert_eq!(DMatrix::from_row_slice(2, 2, &[2., 4., 6., 8.]), res[0]);
+        assert_eq!(DMatrix::from_row_slice(2, 2, &[2., 0., 0., 2.]), res[1]);
     }
 
     #[test]
     fn mp_creation() {
         let c = [4.3, 5.32];
         let p = Poly::new_from_coeffs(&c);
-        let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
+        let v = vec![p.clone(), p.clone(), p.clone(), p];
         let mp = MatrixOfPoly::new(2, 2, v);
-        let expected = "[[4.3 +5.32*s, 4.3 +5.32*s],\n [4.3 +5.32*s, 4.3 +5.32*s]]";
+        let expected = "[[4.3 +5.32s, 4.3 +5.32s],\n [4.3 +5.32s, 4.3 +5.32s]]";
         assert_eq!(expected, format!("{}", &mp));
+    }
+
+    #[test]
+    fn indexing() {
+        let c = [4.3, 5.32];
+        let p = Poly::new_from_coeffs(&c);
+        let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
+        let mut mp = MatrixOfPoly::new(2, 2, v);
+        assert_eq!(p, mp[[1, 1]]);
+        let p2 = Poly::new_from_coeffs(&[1., 2.]);
+        mp[[1, 1]] = p2.clone();
+        assert_eq!(p2, mp[[1, 1]]);
     }
 
     #[test]
     fn single() {
         let v = vec![Poly::new_from_coeffs(&[4.3, 5.32])];
         let mp = MatrixOfPoly::new(1, 1, v);
+        assert_eq!(1, mp.matrix().len());
         let res = mp.single();
         assert!(res.is_some());
         assert_relative_eq!(14.94, res.unwrap().eval(&2.), max_relative = 1e-10);
@@ -386,7 +468,7 @@ mod tests2 {
     fn single_fail() {
         let c = [4.3, 5.32];
         let p = Poly::new_from_coeffs(&c);
-        let v = vec![p.clone(), p.clone(), p.clone(), p.clone()];
+        let v = vec![p.clone(), p.clone(), p.clone(), p];
         let mp = MatrixOfPoly::new(2, 2, v);
         let res = mp.single();
         assert!(res.is_none());

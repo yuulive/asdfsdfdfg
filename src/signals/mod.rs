@@ -1,12 +1,9 @@
 //! Collection of commons input signals.
 
-use num_traits::Float;
-
-use crate::units::{RadiansPerSecond, Seconds};
-
 pub mod continuous {
     //! Collection of continuous signals.
-    use super::*;
+    use crate::units::{RadiansPerSecond, Seconds};
+    use num_traits::Float;
 
     /// Zero input function
     ///
@@ -15,6 +12,23 @@ pub mod continuous {
     /// * `size` - Output size
     pub fn zero<T: Float>(size: usize) -> impl Fn(Seconds<T>) -> Vec<T> {
         move |_| vec![T::zero(); size]
+    }
+
+    /// Impulse function
+    ///
+    /// # Arguments
+    ///
+    /// * `k` - Impulse size
+    /// * `o` - Impulse time
+    /// * `size` - Output size
+    pub fn impulse<T: Float>(k: T, o: Seconds<T>, size: usize) -> impl Fn(Seconds<T>) -> Vec<T> {
+        move |t| {
+            if t == o {
+                vec![k; size]
+            } else {
+                vec![T::zero(); size]
+            }
+        }
     }
 
     /// Step function
@@ -54,6 +68,13 @@ pub mod continuous {
             relative_eq!(0., zero(1)(Seconds(s))[0])
         }
 
+        #[test]
+        fn impulse_input() {
+            let imp = impulse(10., Seconds(1.), 1);
+            assert_relative_eq!(0., imp(Seconds(0.5))[0]);
+            assert_relative_eq!(10., imp(Seconds(1.))[0]);
+        }
+
         #[quickcheck]
         fn step_input(s: f64) -> bool {
             relative_eq!(3., step(3., 1)(Seconds(s))[0])
@@ -70,7 +91,7 @@ pub mod continuous {
 
 pub mod discrete {
     //! Collection of discrete signals.
-    use super::*;
+    use num_traits::Float;
 
     /// Zero input function
     ///
@@ -170,6 +191,12 @@ pub mod discrete {
             } else {
                 relative_eq!(3., f(s)[0])
             }
+        }
+
+        #[test]
+        fn step_input_at_zero() {
+            let f = step_vec(3., 1, 1);
+            assert_relative_eq!(0., f(0)[0]);
         }
 
         #[quickcheck]

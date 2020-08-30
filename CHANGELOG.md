@@ -1,6 +1,39 @@
 # Changelog
 
-## Unreleased
+## [0.8.0] - 2020-08-30
+## Added
+- Documentation of the specification of the library
+- Evaluation of polynomial and transfer functions now take reference values too
+- Add polynomial creation from iterators
+- AsRef trait to polynomial for reference-to-reference conversion into a slice
+- decibel unit of measurement
+- Polynomial round off to zero
+- Conversion from TfGen to SSGen using controllability canonical form
+- Methods to check transfer function stability
+- Auto implementation of PartialEq trait for SSGen
+- Auto implementation Clone trait for TfGen and SSGen
+- Methods to check transfer functions stability
+## Changed
+- Improvements on polynomial roots finders and increment of related tests
+- General source code linting
+- Use IntoIterator trait as interface in methods that require an iterator
+- Evaluation of polynomials and transfer functions now can take references
+- Polynomial numeric type no longer requires Copy trait
+### API Changes
+- Changed iterator names (C-ITER-TY API guidelines)
+- Changed linear system solvers names (C-ITER-TY API guidelines)
+- Changed linear system evolution iterators names (C-ITER-TY API guidelines)
+- Changed arma iterators names (C-ITER-TY API guidelines)
+- Renamed Decibel trait to ToDecibel
+- Moved Discretization to top module
+- Removed Eval trait
+- Removed TryFrom trait from TfGen
+- Moved the implementation of the polynomial matrices to its own module
+## Fixed
+- Subtraction between a real number and a polynomial
+- Derivation of zero degree polynomial
+- Conversion from transfer function to state space representation
+- Derivation of zero degree polynomials
 
 ## [0.7.0] - 2020-02-08
 ## Added
@@ -34,7 +67,7 @@
 - Generalization of transfer functions
 - Generalization of linear systems
 - Generalization of polynomial matrices
-- Generalization of transfer function matices
+- Generalization of transfer function matrices
 - Generalization of units of measurement
 - Generalization of discrete transfer functions
 - Generalization of Bode and polar plots
@@ -70,7 +103,7 @@
 ### Changed
 - Improve efficiency using LU decomposition to solve implicit system.
 ### Fixed
-- Corrected the trasformation from transfer function to state-space form.
+- Corrected the transformation from transfer function to state-space form.
 
 ## [0.3.0] - 2019-08-05
 ### Added

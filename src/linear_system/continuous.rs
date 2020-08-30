@@ -3,12 +3,12 @@
 //! The time evolution of the system is performed through ODE (ordinary
 //! differential equation) [solvers](../solver/index.html).
 
-use nalgebra::{ComplexField, DVector, RealField, Scalar};
+use nalgebra::{ComplexField, DVector, RealField};
 use num_traits::Float;
 
 use crate::{
     linear_system::{
-        solver::{Order, RadauIterator, RkIterator, Rkf45Iterator},
+        solver::{Order, Radau, Rk, Rkf45},
         Equilibrium, SsGen,
     },
     units::Seconds,
@@ -19,7 +19,7 @@ use crate::{
 pub type Ss<T> = SsGen<T, Continuous>;
 
 /// Implementation of the methods for the state-space
-impl<T: ComplexField + Scalar> Ss<T> {
+impl<T: ComplexField> Ss<T> {
     /// Calculate the equilibrium point for continuous time systems,
     /// given the input condition
     /// ```text
@@ -70,6 +70,7 @@ impl<T: ComplexField + Float + RealField> Ss<T> {
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// assert!(sys.is_stable());
     /// ```
+    #[must_use]
     pub fn is_stable(&self) -> bool {
         self.poles().iter().all(|p| p.re.is_negative())
     }
@@ -85,11 +86,11 @@ impl Ss<f64> {
     /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk2<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F, f64>
+    pub fn rk2<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> Rk<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
-        RkIterator::new(self, u, x0, h, n, Order::Rk2)
+        Rk::new(self, u, x0, h, n, Order::Rk2)
     }
 
     /// Time evolution for the given input, using Runge-Kutta fourth order method
@@ -100,11 +101,11 @@ impl Ss<f64> {
     /// * `x0` - initial state (column mayor)
     /// * `h` - integration time interval
     /// * `n` - integration steps
-    pub fn rk4<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> RkIterator<F, f64>
+    pub fn rk4<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize) -> Rk<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
-        RkIterator::new(self, u, x0, h, n, Order::Rk4)
+        Rk::new(self, u, x0, h, n, Order::Rk4)
     }
 
     /// Runge-Kutta-Fehlberg 45 with adaptive step for time evolution.
@@ -123,11 +124,11 @@ impl Ss<f64> {
         h: Seconds<f64>,
         limit: Seconds<f64>,
         tol: f64,
-    ) -> Rkf45Iterator<F, f64>
+    ) -> Rkf45<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
-        Rkf45Iterator::new(self, u, x0, h, limit, tol)
+        Rkf45::new(self, u, x0, h, limit, tol)
     }
 
     /// Radau of order 3 with 2 steps method for time evolution.
@@ -139,18 +140,11 @@ impl Ss<f64> {
     /// * `h` - integration time interval
     /// * `n` - integration steps
     /// * `tol` - error tolerance
-    pub fn radau<F>(
-        &self,
-        u: F,
-        x0: &[f64],
-        h: Seconds<f64>,
-        n: usize,
-        tol: f64,
-    ) -> RadauIterator<F, f64>
+    pub fn radau<F>(&self, u: F, x0: &[f64], h: Seconds<f64>, n: usize, tol: f64) -> Radau<F, f64>
     where
         F: Fn(Seconds<f64>) -> Vec<f64>,
     {
-        RadauIterator::new(self, u, x0, h, n, tol)
+        Radau::new(self, u, x0, h, n, tol)
     }
 }
 
@@ -169,6 +163,7 @@ mod tests {
         let u = 0.0;
         let eq = sys.equilibrium(&[u]).unwrap();
         assert_eq!((0., 0.), (eq.x()[0], eq.y()[0]));
+        assert!(!format!("{}", eq).is_empty());
     }
 
     #[test]

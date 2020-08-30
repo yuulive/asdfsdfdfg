@@ -7,16 +7,15 @@
 
 use crate::{
     transfer_function::continuous::Tf,
-    units::{Decibel, Hertz, RadiansPerSecond},
-    Eval,
+    units::{Hertz, RadiansPerSecond, ToDecibel},
 };
 
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
 /// Struct for the calculation of Bode plots
-#[derive(Debug)]
-pub struct BodeIterator<T: Float> {
+#[derive(Clone, Debug)]
+pub struct Bode<T: Float> {
     /// Transfer function
     tf: Tf<T>,
     /// Number of intervals of the plot
@@ -29,8 +28,8 @@ pub struct BodeIterator<T: Float> {
     index: T,
 }
 
-impl<T: Decibel<T> + Float + MulAdd<Output = T>> BodeIterator<T> {
-    /// Create a BodeIterator struct
+impl<T: ToDecibel + Float + MulAdd<Output = T>> Bode<T> {
+    /// Create a `Bode` struct
     ///
     /// # Arguments
     ///
@@ -66,9 +65,9 @@ impl<T: Decibel<T> + Float + MulAdd<Output = T>> BodeIterator<T> {
         }
     }
 
-    /// Convert BodeIterator into decibels and degrees
-    pub fn into_db_deg(self) -> impl Iterator<Item = Bode<T>> {
-        self.map(|g| Bode {
+    /// Convert `Bode` into decibels and degrees
+    pub fn into_db_deg(self) -> impl Iterator<Item = Data<T>> {
+        self.map(|g| Data {
             magnitude: g.magnitude.to_db(),
             phase: g.phase.to_degrees(),
             ..g
@@ -78,7 +77,7 @@ impl<T: Decibel<T> + Float + MulAdd<Output = T>> BodeIterator<T> {
 
 /// Struct to hold the data returned by the Bode iterator
 #[derive(Debug, PartialEq)]
-pub struct Bode<T: Float> {
+pub struct Data<T: Float> {
     /// Angular frequency (rad)
     angular_frequency: RadiansPerSecond<T>,
     /// Magnitude (absolute value or dB)
@@ -87,8 +86,7 @@ pub struct Bode<T: Float> {
     phase: T,
 }
 
-/// Implementation of Bode methods
-impl<T: Float + FloatConst> Bode<T> {
+impl<T: Float + FloatConst> Data<T> {
     /// Get the angular frequency
     pub fn angular_frequency(&self) -> RadiansPerSecond<T> {
         self.angular_frequency
@@ -110,9 +108,9 @@ impl<T: Float + FloatConst> Bode<T> {
     }
 }
 
-/// Implementation of the Iterator trait for `BodeIterator` struct
-impl<T: Float + MulAdd<Output = T>> Iterator for BodeIterator<T> {
-    type Item = Bode<T>;
+/// Implementation of the Iterator trait for `Bode` struct
+impl<T: Float + MulAdd<Output = T>> Iterator for Bode<T> {
+    type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.intervals {
@@ -125,7 +123,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for BodeIterator<T> {
             let g = self.tf.eval(&j_omega);
             //self.index += T::one();
             self.index = self.index + T::one();
-            Some(Bode {
+            Some(Data {
                 angular_frequency: RadiansPerSecond(omega),
                 magnitude: g.norm(),
                 phase: g.arg(),
@@ -136,7 +134,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for BodeIterator<T> {
 
 /// Trait for the implementation of Bode plot for a linear system.
 pub trait BodePlot<T: Float + FloatConst> {
-    /// Create a BodeIterator struct
+    /// Create a `Bode` struct
     ///
     /// # Arguments
     ///
@@ -150,14 +148,10 @@ pub trait BodePlot<T: Float + FloatConst> {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    fn bode(
-        self,
-        min_freq: RadiansPerSecond<T>,
-        max_freq: RadiansPerSecond<T>,
-        step: T,
-    ) -> BodeIterator<T>;
+    fn bode(self, min_freq: RadiansPerSecond<T>, max_freq: RadiansPerSecond<T>, step: T)
+        -> Bode<T>;
 
-    /// Create a BodeIterator struct
+    /// Create a `Bode` struct
     ///
     /// # Arguments
     ///
@@ -171,7 +165,7 @@ pub trait BodePlot<T: Float + FloatConst> {
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
     /// is not lower than the maximum frequency
-    fn bode_hz(self, min_freq: Hertz<T>, max_freq: Hertz<T>, step: T) -> BodeIterator<T>
+    fn bode_hz(self, min_freq: Hertz<T>, max_freq: Hertz<T>, step: T) -> Bode<T>
     where
         Self: std::marker::Sized,
     {
@@ -187,7 +181,7 @@ mod tests {
     #[test]
     fn create_iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = BodeIterator::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Bode::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
         assert_relative_eq!(20., iter.intervals);
         assert_eq!(RadiansPerSecond(1.), iter.base_freq);
         assert_relative_eq!(0., iter.index);
@@ -196,7 +190,7 @@ mod tests {
     #[test]
     fn create_iterator_db_deg() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = BodeIterator::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Bode::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
         let iter2 = iter.into_db_deg();
         let res = iter2.last().unwrap();
         assert_eq!(RadiansPerSecond(1000.), res.angular_frequency());
@@ -204,11 +198,11 @@ mod tests {
     }
 
     #[test]
-    fn polar_struct() {
+    fn data_struct() {
         let f = RadiansPerSecond(120.);
         let mag = 3.;
         let ph = std::f64::consts::PI;
-        let p = Bode {
+        let p = Data {
             angular_frequency: f,
             magnitude: mag,
             phase: ph,
@@ -222,7 +216,7 @@ mod tests {
     #[test]
     fn iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = BodeIterator::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Bode::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
         // 20 steps -> 21 iteration
         assert_eq!(21, iter.count());
     }

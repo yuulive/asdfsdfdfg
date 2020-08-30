@@ -14,19 +14,19 @@ use num_traits::Float;
 
 use std::{
     marker::PhantomData,
-    ops::{AddAssign, MulAssign, SubAssign},
+    ops::{AddAssign, MulAssign},
 };
 
 use crate::{
     linear_system::{continuous::Ss, Equilibrium, SsGen},
-    Discrete,
+    Discrete, Discretization,
 };
 
 /// State-space representation of discrete time linear system
 pub type Ssd<T> = SsGen<T, Discrete>;
 
 /// Implementation of the methods for the state-space
-impl<T: ComplexField + Scalar> Ssd<T> {
+impl<T: ComplexField> Ssd<T> {
     /// Calculate the equilibrium point for discrete time systems,
     /// given the input condition.
     /// Input vector must have the same number of inputs of the system.
@@ -83,20 +83,20 @@ impl<T: Scalar> Ssd<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ssd};
+    /// use automatica::{linear_system::discrete::DiscreteTime, Discretization, Ssd};
     /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
-    /// let evo = disc_sys.evolution(20, impulse, &[0., 0.]);
+    /// let evo = disc_sys.evolution_fn(20, impulse, &[0., 0.]);
     /// let last = evo.last().unwrap();
     /// assert_abs_diff_eq!(0., last.state()[1], epsilon = 0.001);
     /// ```
-    pub fn evolution<F>(&self, steps: usize, input: F, x0: &[T]) -> DiscreteIterator<F, T>
+    pub fn evolution_fn<F>(&self, steps: usize, input: F, x0: &[T]) -> EvolutionFn<F, T>
     where
         F: Fn(usize) -> Vec<T>,
     {
         let state = DVector::from_column_slice(x0);
         let next_state = DVector::from_column_slice(x0);
-        DiscreteIterator {
+        EvolutionFn {
             sys: &self,
             time: 0,
             steps,
@@ -116,29 +116,30 @@ impl<T: Scalar> Ssd<T> {
     /// # Example
     /// ```
     /// use std::iter;
-    /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ssd};
+    /// use automatica::{linear_system::discrete::DiscreteTime, Discretization, Ssd};
     /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = iter::once(vec![1.]).chain(iter::repeat(vec![0.])).take(20);
-    /// let evo = disc_sys.evolution_from_iter(impulse, &[0., 0.]);
+    /// let evo = disc_sys.evolution_iter(impulse, &[0., 0.]);
     /// let last = evo.last().unwrap();
     /// assert!(last[0] < 0.001);
     /// ```
-    pub fn evolution_from_iter<I>(&self, iter: I, x0: &[T]) -> DiscreteIterator2<I, T>
+    pub fn evolution_iter<I, II>(&self, iter: II, x0: &[T]) -> EvolutionIter<I, T>
     where
+        II: IntoIterator<Item = Vec<T>, IntoIter = I>,
         I: Iterator<Item = Vec<T>>,
     {
         let state = DVector::from_column_slice(x0);
         let next_state = DVector::from_column_slice(x0);
-        DiscreteIterator2 {
+        EvolutionIter {
             sys: &self,
             state,
             next_state,
-            iter,
+            iter: iter.into_iter(),
         }
     }
 }
 
-impl<T: ComplexField + Float + RealField + Scalar> Ssd<T> {
+impl<T: ComplexField + Float + RealField> Ssd<T> {
     /// System stability. Checks if all A matrix eigenvalues (poles) are inside
     /// the unit circle.
     ///
@@ -149,6 +150,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Ssd<T> {
     /// let sys = Ssd::new_from_slice(2, 1, 1, &[-0.2, 0., 3., 0.1], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// assert!(sys.is_stable());
     /// ```
+    #[must_use]
     pub fn is_stable(&self) -> bool {
         self.poles().iter().all(|p| p.abs() < T::one())
     }
@@ -165,18 +167,7 @@ pub trait DiscreteTime<T: Scalar> {
     fn discretize(&self, st: T, method: Discretization) -> Option<Ssd<T>>;
 }
 
-/// Discretization algorithm.
-#[derive(Clone, Copy, Debug)]
-pub enum Discretization {
-    /// Forward Euler
-    ForwardEuler,
-    /// Backward Euler
-    BackwardEuler,
-    /// Tustin (trapezoidal rule)
-    Tustin,
-}
-
-impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
+impl<T: ComplexField + Float> DiscreteTime<T> for Ss<T> {
     /// Convert a linear system into a discrete system.
     ///
     /// # Arguments
@@ -187,104 +178,88 @@ impl<T: ComplexField + Float + Scalar> DiscreteTime<T> for Ss<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::{linear_system::{discrete::{DiscreteTime, Discretization}}, Ss};
+    /// use automatica::{linear_system::discrete::DiscreteTime, Discretization, Ss};
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
     /// let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
-    /// let evo = disc_sys.evolution(20, |t| vec![1.], &[0., 0.]);
+    /// let evo = disc_sys.evolution_fn(20, |t| vec![1.], &[0., 0.]);
     /// let last = evo.last().unwrap();
     /// assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
     /// ```
     fn discretize(&self, st: T, method: Discretization) -> Option<Ssd<T>> {
         match method {
-            Discretization::ForwardEuler => forward_euler(&self, st),
-            Discretization::BackwardEuler => backward_euler(&self, st),
-            Discretization::Tustin => tustin(&self, st),
+            Discretization::ForwardEuler => self.forward_euler(st),
+            Discretization::BackwardEuler => self.backward_euler(st),
+            Discretization::Tustin => self.tustin(st),
         }
     }
 }
 
-/// Discretization using forward Euler Method.
-///
-/// # Arguments
-///
-/// * `sys` - continuous linear system
-/// * `st` - sample time
-fn forward_euler<T>(sys: &Ss<T>, st: T) -> Option<Ssd<T>>
-where
-    T: Float + MulAssign + Scalar + AddAssign,
-{
-    let states = sys.dim.states;
-    let identity = DMatrix::identity(states, states);
-    Some(Ssd {
-        a: identity + &sys.a * st,
-        b: &sys.b * st,
-        c: sys.c.clone(),
-        d: sys.d.clone(),
-        dim: sys.dim,
-        time: PhantomData,
-    })
-}
-
-/// Discretization using backward Euler Method.
-///
-/// # Arguments
-///
-/// * `sys` - continuous linear system
-/// * `st` - sample time
-fn backward_euler<T>(sys: &Ss<T>, st: T) -> Option<Ssd<T>>
-where
-    T: ComplexField + Float + Scalar + SubAssign,
-{
-    let states = sys.dim.states;
-    let identity = DMatrix::identity(states, states);
-    if let Some(a) = (identity - &sys.a * st).try_inverse() {
+impl<T: ComplexField + Float> Ss<T> {
+    /// Discretization using forward Euler Method.
+    ///
+    /// # Arguments
+    ///
+    /// * `st` - sample time
+    fn forward_euler(&self, st: T) -> Option<Ssd<T>> {
+        let states = self.dim.states;
+        let identity = DMatrix::identity(states, states);
         Some(Ssd {
-            b: &a * &sys.b * st,
-            c: &sys.c * &a,
-            d: &sys.d + &sys.c * &a * &sys.b * st,
-            a,
-            dim: sys.dim,
+            a: identity + &self.a * st,
+            b: &self.b * st,
+            c: self.c.clone(),
+            d: self.d.clone(),
+            dim: self.dim,
             time: PhantomData,
         })
-    } else {
-        None
     }
-}
 
-/// Discretization using Tustin Method.
-///
-/// # Arguments
-///
-/// * `sys` - continuous linear system
-/// * `st` - sample time
-fn tustin<T>(sys: &Ss<T>, st: T) -> Option<Ssd<T>>
-where
-    T: ComplexField + Float + Scalar,
-{
-    let states = sys.dim.states;
-    let identity = DMatrix::identity(states, states);
-    // Casting is safe for both f32 and f64, representation is exact.
-    let n_05 = T::from(0.5_f32).unwrap();
-    let a_05_st = &sys.a * (n_05 * st);
-    if let Some(k) = (&identity - &a_05_st).try_inverse() {
-        let b = &k * &sys.b * st;
+    /// Discretization using backward Euler Method.
+    ///
+    /// # Arguments
+    ///
+    /// * `st` - sample time
+    fn backward_euler(&self, st: T) -> Option<Ssd<T>> {
+        let states = self.dim.states;
+        let identity = DMatrix::identity(states, states);
+        let a = (identity - &self.a * st).try_inverse()?;
+        Some(Ssd {
+            b: &a * &self.b * st,
+            c: &self.c * &a,
+            d: &self.d + &self.c * &a * &self.b * st,
+            a,
+            dim: self.dim,
+            time: PhantomData,
+        })
+    }
+
+    /// Discretization using Tustin Method.
+    ///
+    /// # Arguments
+    ///
+    /// * `st` - sample time
+    fn tustin(&self, st: T) -> Option<Ssd<T>> {
+        let states = self.dim.states;
+        let identity = DMatrix::identity(states, states);
+        // Casting is safe for both f32 and f64, representation is exact.
+        let n_05 = T::from(0.5_f32).unwrap();
+        let a_05_st = &self.a * (n_05 * st);
+        let k = (&identity - &a_05_st).try_inverse()?;
+        let b = &k * &self.b * st;
         Some(Ssd {
             a: &k * (&identity + &a_05_st),
-            c: &sys.c * &k,
-            d: &sys.d + &sys.c * &b * n_05,
+            c: &self.c * &k,
+            d: &self.d + &self.c * &b * n_05,
             b,
-            dim: sys.dim,
+            dim: self.dim,
             time: PhantomData,
         })
-    } else {
-        None
     }
 }
 
 /// Struct to hold the iterator for the evolution of the discrete linear system.
 /// It uses function to supply inputs.
 #[derive(Debug)]
-pub struct DiscreteIterator<'a, F, T>
+pub struct EvolutionFn<'a, F, T>
 where
     F: Fn(usize) -> Vec<T>,
     T: Scalar,
@@ -297,7 +272,7 @@ where
     next_state: DVector<T>,
 }
 
-impl<'a, F, T> Iterator for DiscreteIterator<'a, F, T>
+impl<'a, F, T> Iterator for EvolutionFn<'a, F, T>
 where
     F: Fn(usize) -> Vec<T>,
     T: AddAssign + Float + MulAssign + Scalar,
@@ -328,7 +303,7 @@ where
 /// Struct to hold the iterator for the evolution of the discrete linear system.
 /// It uses iterators to supply inputs.
 #[derive(Debug)]
-pub struct DiscreteIterator2<'a, I, T>
+pub struct EvolutionIter<'a, I, T>
 where
     I: Iterator<Item = Vec<T>>,
     T: Scalar,
@@ -339,7 +314,7 @@ where
     iter: I,
 }
 
-impl<'a, I, T> Iterator for DiscreteIterator2<'a, I, T>
+impl<'a, I, T> Iterator for EvolutionIter<'a, I, T>
 where
     I: Iterator<Item = Vec<T>>,
     T: AddAssign + Float + MulAssign + Scalar,
@@ -368,16 +343,19 @@ pub struct TimeEvolution<T> {
 
 impl<T> TimeEvolution<T> {
     /// Get the time of the current step
+    #[must_use]
     pub fn time(&self) -> usize {
         self.time
     }
 
     /// Get the current state of the system
+    #[must_use]
     pub fn state(&self) -> &Vec<T> {
         &self.state
     }
 
     /// Get the current output of the system
+    #[must_use]
     pub fn output(&self) -> &Vec<T> {
         &self.output
     }
@@ -386,8 +364,6 @@ impl<T> TimeEvolution<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::polynomial::Poly;
-    use std::convert::TryFrom;
 
     #[test]
     fn equilibrium() {
@@ -404,6 +380,9 @@ mod tests {
         assert_relative_eq!(200.0, eq.x()[1]);
         assert_relative_eq!(100.0, eq.x()[2], max_relative = 1e-10);
         assert_relative_eq!(500.0, eq.y()[0]);
+
+        // Test wrong number of inputs.
+        assert!(sys.equilibrium(&[0., 0., 0.]).is_none());
     }
 
     #[test]
@@ -419,27 +398,11 @@ mod tests {
     }
 
     #[test]
-    fn convert_to_ss_discrete() {
-        use crate::transfer_function::discrete::Tfz;
-        let tf = Tfz::new(
-            Poly::new_from_coeffs(&[1., 0., 1.]),
-            Poly::new_from_coeffs(&[3., 4., 1.]),
-        );
-
-        let ss = Ssd::try_from(tf).unwrap();
-
-        assert_eq!(DMatrix::from_row_slice(2, 2, &[0., -3., 1., -4.]), ss.a);
-        assert_eq!(DMatrix::from_row_slice(2, 1, &[-2., -4.]), ss.b);
-        assert_eq!(DMatrix::from_row_slice(1, 2, &[0., 1.]), ss.c);
-        assert_eq!(DMatrix::from_row_slice(1, 1, &[1.]), ss.d);
-    }
-
-    #[test]
     fn time_evolution() {
         let disc_sys =
             Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
         let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
-        let evo = disc_sys.evolution(20, impulse, &[0., 0.]);
+        let evo = disc_sys.evolution_fn(20, impulse, &[0., 0.]);
         let last = evo.last().unwrap();
         assert_eq!(20, last.time());
         assert_abs_diff_eq!(0., last.state()[1], epsilon = 0.001);
@@ -452,7 +415,7 @@ mod tests {
         let disc_sys =
             Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
         let impulse = iter::once(vec![1.]).chain(iter::repeat(vec![0.])).take(20);
-        let evo = disc_sys.evolution_from_iter(impulse, &[0., 0.]);
+        let evo = disc_sys.evolution_iter(impulse, &[0., 0.]);
         let last = evo.last().unwrap();
         assert!(last[0] < 0.001);
     }
@@ -461,9 +424,16 @@ mod tests {
     fn discretization_tustin() {
         let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
         let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
-        let evo = disc_sys.evolution(20, |_| vec![1.], &[0., 0.]);
+        let evo = disc_sys.evolution_fn(20, |_| vec![1.], &[0., 0.]);
         let last = evo.last().unwrap();
         assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
+    }
+
+    #[test]
+    fn discretization_tustin_fail() {
+        let sys = Ss::new_from_slice(2, 1, 1, &[-3., 5., 4., -4.], &[0., 1.], &[1., 1.], &[0.]);
+        let disc_sys = sys.discretize(2., Discretization::Tustin);
+        assert!(disc_sys.is_none());
     }
 
     #[test]
@@ -471,16 +441,23 @@ mod tests {
         let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
         let disc_sys = sys.discretize(0.1, Discretization::BackwardEuler).unwrap();
         //let evo = disc_sys.time_evolution(20, |_| vec![1.], &[0., 0.]);
-        let evo = disc_sys.evolution(50, |_| vec![1.], &[0., 0.]);
+        let evo = disc_sys.evolution_fn(50, |_| vec![1.], &[0., 0.]);
         let last = evo.last().unwrap();
         assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
+    }
+
+    #[test]
+    fn discretization_euler_backward_fail() {
+        let sys = Ss::new_from_slice(2, 1, 1, &[-3., 5., 4., -4.], &[0., 1.], &[1., 1.], &[0.]);
+        let disc_sys = sys.discretize(1., Discretization::BackwardEuler);
+        assert!(disc_sys.is_none());
     }
 
     #[test]
     fn discretization_euler_forward() {
         let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
         let disc_sys = sys.discretize(0.1, Discretization::ForwardEuler).unwrap();
-        let evo = disc_sys.evolution(20, |_| vec![1.], &[0., 0.]);
+        let evo = disc_sys.evolution_fn(20, |_| vec![1.], &[0., 0.]);
         let last = evo.last().unwrap();
         assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
     }

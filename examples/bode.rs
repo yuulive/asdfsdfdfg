@@ -5,8 +5,8 @@ use num_traits::One;
 
 use automatica::{
     plots::bode::BodePlot,
-    units::{Decibel, RadiansPerSecond},
-    Eval, Poly, Tf,
+    units::{RadiansPerSecond, ToDecibel},
+    Poly, Tf,
 };
 
 #[allow(clippy::non_ascii_literal)]
@@ -16,8 +16,15 @@ fn main() {
     println!("T:\n{}", tf);
 
     let c = tf.eval(&Complex::new(0., 1.));
-    println!("{}\n{}dB, {}°", c, c.norm().to_db(), c.arg().to_degrees());
+    println!("\nEvaluation at i:");
+    println!(
+        "{} = {:.3}dB, {:.3}°",
+        c,
+        c.norm().to_db(),
+        c.arg().to_degrees()
+    );
 
+    println!("\nBode Plot:");
     let b = tf.bode(RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
     for g in b.into_db_deg() {
         println!(

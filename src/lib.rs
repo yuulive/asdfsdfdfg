@@ -36,7 +36,7 @@
 //!
 //! [Polynomials](polynomial/index.html)
 //!
-//! [Matrix of polynomials](polynomial/matrix/index.html)
+//! [Matrix of polynomials](polynomial_matrix/index.html)
 //!
 //! ## Units of measurement
 //!
@@ -64,34 +64,17 @@ pub mod controller;
 pub mod linear_system;
 pub mod plots;
 pub mod polynomial;
+pub mod polynomial_matrix;
 pub mod signals;
 pub mod transfer_function;
 pub mod units;
 pub mod utils;
 
+// Export from crate root.
 pub use linear_system::{continuous::Ss, discrete::Ssd};
 pub use polynomial::Poly;
-pub use transfer_function::{continuous::Tf, discrete::Tfz, matrix::TfMatrix};
-
-/// Trait for the implementation of object evaluation
-pub trait Eval<T> {
-    /// Evaluate the polynomial at the value x
-    ///
-    /// # Arguments
-    ///
-    /// * `x` - Value at which the polynomial is evaluated
-    fn eval(&self, x: &T) -> T;
-}
-
-/// Trait to tag Continuous or Discrete types
-pub trait Time {}
-
-/// Type for continuous systems
-#[derive(Debug, PartialEq)]
-pub enum Continuous {}
-impl Time for Continuous {}
-
-/// Type for discrete systems
-#[derive(Debug, PartialEq)]
-pub enum Discrete {}
-impl Time for Discrete {}
+pub use transfer_function::{
+    continuous::Tf, discrete::Tfz, discretization::TfDiscretization, matrix::TfMatrix,
+};
+pub use units::{Decibel, Hertz, RadiansPerSecond, Seconds};
+pub use utils::{Continuous, Discrete, Discretization, Time};

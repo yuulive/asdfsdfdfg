@@ -18,8 +18,9 @@ use std::{
 
 use crate::{
     linear_system::{self, SsGen},
-    polynomial::{matrix::MatrixOfPoly, Poly},
-    Eval, Time,
+    polynomial::Poly,
+    polynomial_matrix::{MatrixOfPoly, PolyMatrix},
+    Time,
 };
 
 /// Matrix of transfer functions
@@ -39,20 +40,27 @@ impl<T> TfMatrix<T> {
     ///
     /// * `num` - Polynomial matrix
     /// * `den` - Characteristic polynomial of the system
-    pub(crate) fn new(num: MatrixOfPoly<T>, den: Poly<T>) -> Self {
+    fn new(num: MatrixOfPoly<T>, den: Poly<T>) -> Self {
         Self { num, den }
     }
 }
 
 impl<T: Clone> TfMatrix<T> {
     /// Retrive the characteristic polynomial of the system.
+    #[must_use]
     pub fn den(&self) -> Poly<T> {
         self.den.clone()
     }
 }
 
-impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
-    fn eval(&self, s: &Vec<Complex<T>>) -> Vec<Complex<T>> {
+impl<T: Float + MulAdd<Output = T>> TfMatrix<T> {
+    /// Evaluate the matrix transfers function.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - Array at which the Matrix of transfer functions is evaluated.
+    #[must_use]
+    pub fn eval(&self, s: &[Complex<T>]) -> Vec<Complex<T>> {
         //
         // ┌  ┐ ┌┌         ┐ ┌     ┐┐┌  ┐
         // │y1│=││1/pc 1/pc│*│n1 n2│││s1│
@@ -67,13 +75,13 @@ impl<T: Float + MulAdd<Output = T>> Eval<Vec<Complex<T>>> for TfMatrix<T> {
 
         // Create a matrix to contain the result of the evaluation.
         let mut res = Array2::from_elem(
-            self.num.matrix.dim(),
+            self.num.matrix().dim(),
             Complex::<T>::new(T::zero(), T::zero()),
         );
 
         // Zip the result and the numerator matrix row by row.
         Zip::from(res.genrows_mut())
-            .and(self.num.matrix.genrows())
+            .and(self.num.matrix().genrows())
             .apply(|mut res_row, matrix_row| {
                 // Zip the row of the result matrix.
                 Zip::from(&mut res_row)
@@ -95,7 +103,7 @@ impl<T: Time> From<SsGen<f64, T>> for TfMatrix<f64> {
     fn from(ss: SsGen<f64, T>) -> Self {
         let (pc, a_inv) = linear_system::leverrier_f64(&ss.a);
         let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
-        let rest = pc.multiply(&ss.d);
+        let rest = PolyMatrix::multiply(&pc, &ss.d);
         let tf = g + rest;
         Self::new(MatrixOfPoly::from(tf), pc)
     }
@@ -110,7 +118,7 @@ impl<T: Time> From<SsGen<f32, T>> for TfMatrix<f32> {
     fn from(ss: SsGen<f32, T>) -> Self {
         let (pc, a_inv) = linear_system::leverrier_f32(&ss.a);
         let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
-        let rest = pc.multiply(&ss.d);
+        let rest = PolyMatrix::multiply(&pc, &ss.d);
         let tf = g + rest;
         Self::new(MatrixOfPoly::from(tf), pc)
     }
@@ -125,7 +133,7 @@ impl<T> Index<[usize; 2]> for TfMatrix<T> {
     type Output = Poly<T>;
 
     fn index(&self, i: [usize; 2]) -> &Poly<T> {
-        &self.num.matrix[i]
+        &self.num[i]
     }
 }
 
@@ -137,7 +145,7 @@ impl<T> Index<[usize; 2]> for TfMatrix<T> {
 /// Panics for out of bounds access.
 impl<T> IndexMut<[usize; 2]> for TfMatrix<T> {
     fn index_mut(&mut self, i: [usize; 2]) -> &mut Poly<T> {
-        &mut self.num.matrix[i]
+        &mut self.num[i]
     }
 }
 
@@ -170,12 +178,12 @@ mod tests {
             &[1., 2., 3., 4.],
             &[1., 0., 0., 1.],
         );
-        let tfm = TfMatrix::from(sys);
+        let tfm = TfMatrix::<f32>::from(sys);
         assert_eq!(tfm[[0, 0]], poly!(6., 5., 1.));
         assert_eq!(tfm[[0, 1]], poly!(9., 5.));
         assert_eq!(tfm[[1, 0]], poly!(8., 4.));
         assert_eq!(tfm[[1, 1]], poly!(21., 14., 1.));
-        assert_eq!(tfm.den, poly!(2., 3., 1.));
+        assert_eq!(tfm.den(), poly!(2., 3., 1.));
     }
 
     #[test]
@@ -191,11 +199,27 @@ mod tests {
         );
         let tfm = TfMatrix::from(sys);
         let i = Complex::<f64>::i();
-        let res = tfm.eval(&vec![i, i]);
+        let res = tfm.eval(&[i, i]);
         assert_relative_eq!(res[0].re, 4.4, max_relative = 1e-15);
         assert_relative_eq!(res[0].im, -3.2, max_relative = 1e-15);
         assert_relative_eq!(res[1].re, 8.2, max_relative = 1e-15);
         assert_relative_eq!(res[1].im, -6.6, max_relative = 1e-15);
+    }
+
+    #[test]
+    fn tf_matrix_index_mut() {
+        let sys = Ss::new_from_slice(
+            2,
+            2,
+            2,
+            &[-2., 0., 0., -1.],
+            &[0., 1., 1., 2.],
+            &[1., 2., 3., 4.],
+            &[1., 0., 0., 1.],
+        );
+        let mut tfm = TfMatrix::from(sys);
+        tfm[[0, 0]] = poly!(1., 2., 3.);
+        assert_eq!(poly!(1., 2., 3.), tfm[[0, 0]]);
     }
 
     #[test]
@@ -211,7 +235,7 @@ mod tests {
         );
         let tfm = TfMatrix::from(sys);
         assert_eq!(
-            "[[6 +5*s +1*s^2, 9 +5*s],\n [8 +4*s, 21 +14*s +1*s^2]]\n─────────────\n2 +3*s +1*s^2",
+            "[[6 +5s +1s^2, 9 +5s],\n [8 +4s, 21 +14s +1s^2]]\n───────────\n2 +3s +1s^2",
             format!("{}", tfm)
         );
     }

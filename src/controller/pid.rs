@@ -10,6 +10,7 @@ use crate::{polynomial::Poly, transfer_function::continuous::Tf};
 use num_traits::Float;
 
 /// Proportional-Integral-Derivative controller
+#[derive(Debug)]
 pub struct Pid<T: Float> {
     /// Proportional action coefficient
     kp: T,
@@ -120,7 +121,7 @@ impl<T: Float> Pid<T> {
 #[cfg(test)]
 mod pid_tests {
     use super::*;
-    use crate::{units::Decibel, Eval};
+    use crate::units::ToDecibel;
     use num_complex::Complex64;
 
     #[test]
@@ -140,7 +141,7 @@ mod pid_tests {
         );
         let pid = Pid::new(2., 2., 0.5, 5.);
         let r = pid.tf();
-        assert_eq!(Some(vec![0., -10.]), r.real_poles());
+        assert_eq!(Some(vec![-10., 0.]), r.real_poles());
         let l = &g * &r;
         let critical_freq = 0.8;
         let c = l.eval(&Complex64::new(0., critical_freq));

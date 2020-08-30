@@ -1,16 +1,16 @@
 default:
-  image: 'rust:1.38-alpine'
+  image: 'rust:alpine'
 
 stages:
   - build
   - test
   - examples
   - doc
+  - package
+  - publish
 
 variables:
-  CARGO_HOME_BIN: ~/.cargo/bin
-  TARGET: target
-  COVER: cover
+  DOC_FOLDER: target/doc
 
 .build_template: &build_definition
   stage: build
@@ -19,30 +19,18 @@ variables:
     - cargo build --verbose
     - cargo build --verbose --release
 
-build:
+build:oldest:
   <<: *build_definition
-  cache:
-    key: buildDefault
-    paths:
-      - $TARGET
+  image: 'rust:1.38-alpine'
+  allow_failure: true
 
 build:latest:
   <<: *build_definition
-  image: 'rust:alpine'
-  cache:
-    key: buildLatest
-    paths:
-      - $TARGET
-  allow_failure: true
 
-test:
+test:run:
   stage: test
   image: 'rust:latest'
-  cache:
-    key: test
-    paths:
-      - $TARGET
-  needs: ["build"]
+  needs: ["build:latest"]
   script:
     - "rustc --version && cargo --version"
     - cargo test --verbose
@@ -52,52 +40,57 @@ cover:
   stage: test
   # Tarpaulin do not work in Alpine image.
   image: 'rust:latest'
-  cache:
-    key: cover
-    paths:
-      - $COVER
-      - $TARGET
   before_script:
     - apt-get update
     - apt-get install -y --no-install-recommends libssl-dev pkg-config cmake zlib1g-dev
-    # Copy the tarpaulin binary into the ~/.cargo/bin/ directory.
-    - mv $COVER/cargo-tarpaulin $CARGO_HOME_BIN || true
-    # Check if cargo-tarpaulin is already installed.
-    - cargo install cargo-tarpaulin || true
+    - cargo install cargo-tarpaulin
   script:
     - "rustc --version && cargo --version"
     - cargo tarpaulin -v --exclude-files cargo -o Html
-  after_script:
-    # Copy the tarpaulin binary into the current working directory for caching.
-    - mkdir -p $COVER/
-    - mv --update $CARGO_HOME_BIN/cargo-tarpaulin $COVER/ || true
   coverage: '/\d+\.\d+\% coverage/'
   artifacts:
     paths:
       - tarpaulin-report.html
   allow_failure: true
 
-examples:
+examples:run:
   stage: examples
   image: 'rust:latest'
-  cache:
-    key: test
-    policy: pull
-    paths:
-      - $TARGET
   script:
     - "rustc --version && cargo --version"
     - make all_examples
-  needs: ["test"]
+  needs: ["test:run"]
 
 pages:
   stage: doc
   script:
-    - cargo doc --no-deps
-    - cp -R target/doc public
+    - make doc
+    - cp -R $DOC_FOLDER public
     - echo '<meta http-equiv="refresh" content="0; url=automatica/index.html">' > public/index.html
   artifacts:
     paths:
       - public
   only:
     - master
+  # Do not fetch artifacts from previous stages
+  dependencies: []
+
+package:build:
+  stage: package
+  script:
+    - "rustc --version && cargo --version"
+    - cargo package --list --verbose
+    - cargo package --verbose
+  # Do not fetch artifacts from previous stages
+  dependencies: []
+
+publish:send:
+  stage: publish
+  script:
+    - "rustc --version && cargo --version"
+    - cargo publish --verbose
+  # Do not fetch artifacts from previous stages
+  dependencies: []
+  only:
+    - master
+  when: manual

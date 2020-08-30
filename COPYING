@@ -13,11 +13,3 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-CREDITS
-This program is derived from Free Software Foundation version of ed.
-This program has been modified to be written in Rust insead of C.
-Any credit to the original work is theirs.
-Copyright (C) 1993, 1994, 2006-2017 Free Software Foundation, Inc.
-The original work can be found at the following website:
-https://www.gnu.org/software/ed/

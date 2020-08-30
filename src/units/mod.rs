@@ -49,13 +49,13 @@ macro_rules! impl_display {
 }
 
 /// Trait for the conversion to decibels.
-pub trait Decibel<T> {
+pub trait ToDecibel {
     /// Convert to decibels
-    fn to_db(&self) -> T;
+    fn to_db(&self) -> Self;
 }
 
 /// Implementation of the Decibels for f64
-impl Decibel<f64> for f64 {
+impl ToDecibel for f64 {
     /// Convert f64 to decibels
     fn to_db(&self) -> Self {
         20. * self.log10()
@@ -63,12 +63,16 @@ impl Decibel<f64> for f64 {
 }
 
 /// Implementation of the Decibels for f32
-impl Decibel<f32> for f32 {
+impl ToDecibel for f32 {
     /// Convert f32 to decibels
     fn to_db(&self) -> Self {
         20. * self.log10()
     }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+/// Unit of measurement: deciBel [dB]
+pub struct Decibel<T: Num>(pub T);
 
 /// Unit of measurement: seconds [s]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
@@ -82,6 +86,7 @@ pub struct Hertz<T: Num>(pub T);
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct RadiansPerSecond<T: Num>(pub T);
 
+impl_display!(Decibel);
 impl_display!(Seconds);
 impl_display!(Hertz);
 impl_display!(RadiansPerSecond);

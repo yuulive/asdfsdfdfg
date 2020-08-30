@@ -1,8 +1,6 @@
 extern crate automatica;
 
-use automatica::{signals::continuous, units::Seconds, Ss, Tf};
-
-use std::convert::TryFrom;
+use automatica::{signals::continuous, Seconds, Ss, Tf};
 
 #[allow(clippy::many_single_char_names)]
 fn main() {
@@ -22,10 +20,11 @@ fn main() {
     let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
     println!("{}", &sys);
 
-    let tr = Tf::try_from(sys).unwrap();
+    let tr = Tf::<f64>::new_from_siso(&sys).unwrap();
     println!("{}", &tr);
 
-    println!("\nPoles:\n{:?}", tr.complex_poles());
+    let poles = tr.complex_poles();
+    println!("\nPoles: {:.2}, {:.2}", poles[0], poles[1]);
     //let radau = sys.radau(|t| vec![t.cos()], &[0., 0.], 0.1, 200, 1e-3);
 
     // Make a stiff system.
@@ -37,26 +36,25 @@ fn main() {
         "\nThe system becomes stiff with k={} and f={}",
         k_stiff, f_stiff
     );
+    let stiff_poles = stiff_sys.poles();
+    println!("Poles: {:.2}, {:.2}", stiff_poles[0], stiff_poles[1]);
 
     // Free movement.
-    let null_input = continuous::zero(1);
+    let zero_input = continuous::zero(1);
     let x0 = &[1., 0.];
 
     // Solvers.
-    let rk2: Vec<_> = stiff_sys.rk2(&null_input, x0, Seconds(0.1), 5).collect();
-    let rkf45: Vec<_> = stiff_sys
-        .rkf45(&null_input, x0, Seconds(0.1), Seconds(5.), 1e-3)
-        .collect();
-    let radau: Vec<_> = stiff_sys
-        .radau(&null_input, x0, Seconds(0.1), 70, 1e-3)
-        .collect();
+    let rk2 = stiff_sys.rk2(&zero_input, x0, Seconds(0.1), 5);
+    let rkf45 = stiff_sys.rkf45(&zero_input, x0, Seconds(0.1), Seconds(5.), 1e-3);
+    let radau = stiff_sys.radau(&zero_input, x0, Seconds(0.1), 70, 1e-3);
 
     println!(
         "Rk2 number of steps before diverging: {}",
-        rk2.iter()
-            .take_while(|y| y.output()[0].abs() < 1000.)
-            .count()
+        rk2.take_while(|y| y.output()[0].abs() < 1000.).count()
     );
-    println!("Rkf45 number of steps: {}", rkf45.len());
-    println!("Radau stationary: {}", radau.last().unwrap().output()[0]);
+    println!("Rkf45 number of steps: {}", rkf45.count());
+    println!(
+        "Radau stationary output: {:.5}",
+        radau.last().unwrap().output()[0]
+    );
 }

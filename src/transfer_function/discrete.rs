@@ -12,17 +12,19 @@
 //! * backward Euler method
 //! * Tustin (trapezoidal) method
 
+use nalgebra::{ComplexField, RealField};
 use num_complex::Complex;
-use num_traits::{Float, MulAdd, Num};
+use num_traits::{Float, Zero};
 
-use std::{collections::VecDeque, fmt::Debug, iter::Sum, ops::Mul};
-
-use crate::{
-    linear_system::discrete::Discretization,
-    transfer_function::{continuous::Tf, TfGen},
-    units::Seconds,
-    Discrete, Eval,
+use std::{
+    cmp::Ordering,
+    collections::VecDeque,
+    fmt::Debug,
+    iter::Sum,
+    ops::{Add, Div, Mul},
 };
+
+use crate::{transfer_function::TfGen, Discrete};
 
 /// Discrete transfer function
 pub type Tfz<T> = TfGen<T, Discrete>;
@@ -56,20 +58,19 @@ impl<T: Float> Tfz<T> {
     /// let tf = Tfz::new(poly!(4.), poly!(1., 5.));
     /// assert_eq!(0., tf.init_value());
     /// ```
+    #[must_use]
     pub fn init_value(&self) -> T {
         let n = self.num.degree();
         let d = self.den.degree();
-        if n < d {
-            T::zero()
-        } else if n == d {
-            self.num.leading_coeff() / self.den.leading_coeff()
-        } else {
-            T::infinity()
+        match n.cmp(&d) {
+            Ordering::Less => T::zero(),
+            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Greater => T::infinity(),
         }
     }
 }
 
-impl<T: Float + MulAdd<Output = T>> Tfz<T> {
+impl<'a, T: 'a + Add<&'a T, Output = T> + Div<Output = T> + Zero> Tfz<T> {
     /// Static gain `G(1)`.
     /// Ratio between constant output and constant input.
     /// Static gain is defined only for transfer functions of 0 type.
@@ -81,8 +82,27 @@ impl<T: Float + MulAdd<Output = T>> Tfz<T> {
     /// let tf = Tfz::new(poly!(5., -3.),poly!(2., 5., -6.));
     /// assert_eq!(2., tf.static_gain());
     /// ```
-    pub fn static_gain(&self) -> T {
-        self.eval(&T::one())
+    #[must_use]
+    pub fn static_gain(&'a self) -> T {
+        let n = self.num.as_slice().iter().fold(T::zero(), |acc, c| acc + c);
+        let d = self.den.as_slice().iter().fold(T::zero(), |acc, c| acc + c);
+        n / d
+    }
+}
+
+impl<T: ComplexField + Float + RealField> Tfz<T> {
+    /// System stability. Checks if all poles are inside the unit circle.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::{Poly, Tfz};
+    /// let tfz = Tfz::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_roots(&[0.5, 1.5]));
+    /// assert!(!tfz.is_stable());
+    /// ```
+    #[must_use]
+    pub fn is_stable(&self) -> bool {
+        self.complex_poles().iter().all(|p| p.abs() < T::one())
     }
 }
 
@@ -97,28 +117,37 @@ impl<T: Float + MulAdd<Output = T>> Tfz<T> {
 /// * `u` - queue containing the supplied inputs
 macro_rules! arma {
     ($self:ident, $y_coeffs:ident, $u_coeffs:ident, $y:ident, $u:ident) => {{
-        let mut g = $self.normalize();
-        let n = g.den.degree().unwrap_or(0);
+        let g = $self.normalize();
+        let n_n = g.num.degree().unwrap_or(0);
+        let n_d = g.den.degree().unwrap_or(0);
+        let n = n_n.max(n_d);
 
         // The front is the lowest order coefficient.
         // The back is the higher order coefficient.
-        // The last coefficient is always 1.
+        // The higher degree terms are the more recent.
+        // The last coefficient is always 1, because g is normalized.
         // [a0, a1, a2, ..., a(n-1), 1]
-        $y_coeffs = g.den.coeffs;
-        // [b0, b1, b2, ..., bn]
-        // The numerator must be extended to the degree of the denominator
-        // and the higher degree terms (more recent) must be zero.
-        g.num.extend(n);
-        $u_coeffs = g.num.coeffs;
+        let mut output_coefficients = g.den.coeffs();
+        // Remove the last coefficient by truncating the vector by one.
+        // This is done because the last coefficient of the denominator corresponds
+        // to the currently calculated output.
+        output_coefficients.truncate(n_d);
+        // [a0, a1, a2, ..., a(n-1)]
+        $y_coeffs = output_coefficients;
+        // [b0, b1, b2, ..., bm]
+        $u_coeffs = g.num.coeffs();
 
+        // The coefficients do not need to be extended with zeros,
+        // when the coffiecients are 'zipped' with the VecDeque, the zip stops at the
+        // shortest iterator.
+
+        let length = n + 1;
         // The front is the oldest calculated output.
         // [y(k-n), y(k-n+1), ..., y(k-1), y(k)]
-        $y = VecDeque::from(vec![T::zero(); $y_coeffs.len()]);
+        $y = VecDeque::from(vec![T::zero(); length]);
         // The front is the oldest input.
         // [u(k-n), u(k-n+1), ..., u(k-1), u(k)]
-        $u = VecDeque::from(vec![T::zero(); $u_coeffs.len()]);
-        debug_assert!($u_coeffs.len() == $u.len());
-        debug_assert!($u.len() == $y.len());
+        $u = VecDeque::from(vec![T::zero(); length]);
     }};
 }
 
@@ -143,13 +172,13 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     /// ```
     /// use automatica::{poly, signals::discrete, Tfz};
     /// let tfz = Tfz::new(poly!(1., 2., 3.), poly!(0., 0., 0., 1.));
-    /// let mut iter = tfz.arma(discrete::step(1., 0));
+    /// let mut iter = tfz.arma_fn(discrete::step(1., 0));
     /// assert_eq!(Some(0.), iter.next());
     /// assert_eq!(Some(3.), iter.next());
     /// assert_eq!(Some(5.), iter.next());
     /// assert_eq!(Some(6.), iter.next());
     /// ```
-    pub fn arma<F>(&self, input: F) -> ArmaFunction<F, T>
+    pub fn arma_fn<F>(&self, input: F) -> ArmaFn<F, T>
     where
         F: Fn(usize) -> T,
     {
@@ -159,7 +188,7 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
         let u: VecDeque<_>;
         arma!(self, y_coeffs, u_coeffs, y, u);
 
-        ArmaFunction {
+        ArmaFn {
             y_coeffs,
             u_coeffs,
             y,
@@ -189,14 +218,15 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     /// ```
     /// use automatica::{poly, signals::discrete, Tfz};
     /// let tfz = Tfz::new(poly!(1., 2., 3.), poly!(0., 0., 0., 1.));
-    /// let mut iter = tfz.arma_from_iter(std::iter::repeat(1.));
+    /// let mut iter = tfz.arma_iter(std::iter::repeat(1.));
     /// assert_eq!(Some(0.), iter.next());
     /// assert_eq!(Some(3.), iter.next());
     /// assert_eq!(Some(5.), iter.next());
     /// assert_eq!(Some(6.), iter.next());
     /// ```
-    pub fn arma_from_iter<I>(&self, iter: I) -> ArmaIterator<I, T>
+    pub fn arma_iter<I, II>(&self, iter: II) -> ArmaIter<I, T>
     where
+        II: IntoIterator<Item = T, IntoIter = I>,
         I: Iterator<Item = T>,
     {
         let y_coeffs: Vec<_>;
@@ -205,12 +235,12 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
         let u: VecDeque<_>;
         arma!(self, y_coeffs, u_coeffs, y, u);
 
-        ArmaIterator {
+        ArmaIter {
             y_coeffs,
             u_coeffs,
             y,
             u,
-            iter,
+            iter: iter.into_iter(),
         }
     }
 }
@@ -219,7 +249,7 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
 /// transfer function.
 /// The input is supplied through a function.
 #[derive(Debug)]
-pub struct ArmaFunction<F, T>
+pub struct ArmaFn<F, T>
 where
     F: Fn(usize) -> T,
 {
@@ -243,14 +273,16 @@ where
 ///
 /// * `self` - `self` keyword parameter
 macro_rules! arma_iter {
-    ($self:ident) => {{
+    ($self:ident, $current_input:ident) => {{
+        // Push the current input into the most recent position of the input buffer.
+        $self.u.push_back($current_input);
         // Discard oldest input.
         $self.u.pop_front();
         let input: T = $self
             .u_coeffs
             .iter()
             .zip(&$self.u)
-            .map(|(&i, &j)| i * j)
+            .map(|(&c, &u)| c * u)
             .sum();
 
         // Push zero in the last position shifting output values one step back
@@ -263,20 +295,20 @@ macro_rules! arma_iter {
             .y_coeffs
             .iter()
             .zip(&$self.y)
-            .map(|(&i, &j)| i * j)
+            .map(|(&c, &y)| c * y)
             .sum();
 
         // Calculate the output.
         let new_y = input - old_output;
         // Put the new calculated value in the last position of the buffer.
-        if let Some(x) = $self.y.back_mut() {
-            *x = new_y;
-        }
+        // `back_mut` returns None if the Deque is empty, this should never happen.
+        debug_assert!(!$self.y.is_empty());
+        *$self.y.back_mut()? = new_y;
         Some(new_y)
     }};
 }
 
-impl<F, T> Iterator for ArmaFunction<F, T>
+impl<F, T> Iterator for ArmaFn<F, T>
 where
     F: Fn(usize) -> T,
     T: Float + Mul<Output = T> + Sum,
@@ -284,9 +316,9 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.u.push_back((self.input)(self.k));
+        let current_input = (self.input)(self.k);
         self.k += 1;
-        arma_iter!(self)
+        arma_iter!(self, current_input)
     }
 }
 
@@ -294,7 +326,10 @@ where
 /// transfer function.
 /// The input is supplied through an iterator.
 #[derive(Debug)]
-pub struct ArmaIterator<I, T> {
+pub struct ArmaIter<I, T>
+where
+    I: Iterator,
+{
     /// y coefficients
     y_coeffs: Vec<T>,
     /// u coefficients
@@ -307,7 +342,7 @@ pub struct ArmaIterator<I, T> {
     iter: I,
 }
 
-impl<I, T> Iterator for ArmaIterator<I, T>
+impl<I, T> Iterator for ArmaIter<I, T>
 where
     I: Iterator<Item = T>,
     T: Float + Mul<Output = T> + Sum,
@@ -315,121 +350,15 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(data) = self.iter.next() {
-            self.u.push_back(data);
-        } else {
-            return None;
-        }
-        arma_iter!(self)
-    }
-}
-
-/// Discretization of a transfer function
-pub struct TfDiscretization<T: Num> {
-    /// Transfer function
-    tf: Tf<T>,
-    /// Sampling period
-    ts: Seconds<T>,
-    /// Discretization function
-    conversion: fn(Complex<T>, Seconds<T>) -> Complex<T>,
-}
-
-/// Implementation of `TfDiscretization` struct.
-impl<T: Num> TfDiscretization<T> {
-    /// Create a new discretization transfer function from a continuous one.
-    ///
-    /// # Arguments
-    /// * `tf` - Continuous transfer function
-    /// * `ts` - Sampling period
-    /// * `conversion` - Conversion function
-    fn new_from_cont(
-        tf: Tf<T>,
-        ts: Seconds<T>,
-        conversion: fn(Complex<T>, Seconds<T>) -> Complex<T>,
-    ) -> Self {
-        Self { tf, ts, conversion }
-    }
-}
-
-/// Implementation of `TfDiscretization` struct.
-impl<T: Float> TfDiscretization<T> {
-    /// Discretize a transfer function.
-    ///
-    /// # Arguments
-    /// * `tf` - Continuous transfer function
-    /// * `ts` - Sampling period
-    /// * `method` - Discretization method
-    ///
-    /// Example
-    /// ```
-    /// use automatica::{
-    ///     linear_system::discrete::Discretization,
-    ///     polynomial::Poly,
-    ///     transfer_function::discrete::TfDiscretization,
-    ///     units::Seconds,
-    ///     Eval,
-    ///     Tf
-    /// };
-    /// use num_complex::Complex64;
-    /// let tf = Tf::new(
-    ///     Poly::new_from_coeffs(&[2., 20.]),
-    ///     Poly::new_from_coeffs(&[1., 0.1]),
-    /// );
-    /// let tfz = TfDiscretization::discretize(tf, Seconds(1.), Discretization::BackwardEuler);
-    /// let gz = tfz.eval(&Complex64::i());
-    /// ```
-    pub fn discretize(tf: Tf<T>, ts: Seconds<T>, method: Discretization) -> Self {
-        let conv = match method {
-            Discretization::ForwardEuler => fe,
-            Discretization::BackwardEuler => fb,
-            Discretization::Tustin => tu,
-        };
-        Self::new_from_cont(tf, ts, conv)
-    }
-}
-
-/// Forward Euler transformation
-///
-/// # Arguments
-/// * `z` - Discrete evaluation point
-/// * `ts` - Sampling period
-fn fe<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
-    (z - T::one()) / ts.0
-}
-
-/// Backward Euler transformation
-///
-/// # Arguments
-/// * `z` - Discrete evaluation point
-/// * `ts` - Sampling period
-fn fb<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
-    (z - T::one()) / (z * ts.0)
-}
-
-/// Tustin transformation
-///
-/// # Arguments
-/// * `z` - Discrete evaluation point
-/// * `ts` - Sampling period
-fn tu<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
-    let float = (T::one() + T::one()) / ts.0;
-    let complex = (z - T::one()) / (z + T::one());
-    // Complex<T> * T is implemented, not T * Complex<T>
-    complex * float
-}
-
-/// Implementation of the evaluation of a transfer function discretization
-impl<T: Float + MulAdd<Output = T>> Eval<Complex<T>> for TfDiscretization<T> {
-    fn eval(&self, z: &Complex<T>) -> Complex<T> {
-        let s = (self.conversion)(*z, self.ts);
-        self.tf.eval(&s)
+        let current_input = self.iter.next()?;
+        arma_iter!(self, current_input)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{poly, polynomial::Poly, signals::discrete, units::Decibel, Eval};
+    use crate::{poly, polynomial::Poly, signals::discrete, units::ToDecibel};
     use num_complex::Complex64;
 
     #[test]
@@ -462,20 +391,19 @@ mod tests {
     }
 
     #[test]
-    fn new_tfz() {
-        let _t = TfDiscretization {
-            tf: Tf::new(
-                Poly::new_from_coeffs(&[0., 1.]),
-                Poly::new_from_coeffs(&[1., 1., 1.]),
-            ),
-            ts: Seconds(0.1),
-            conversion: |_z, _ts| 1.0 * Complex64::i(),
-        };
+    fn stability() {
+        let stable_den = Poly::new_from_roots(&[-0.3, 0.5]);
+        let stable_tf = Tfz::new(poly!(1., 2.), stable_den);
+        assert!(stable_tf.is_stable());
+
+        let unstable_den = Poly::new_from_roots(&[0., -2.]);
+        let unstable_tf = Tfz::new(poly!(1., 2.), unstable_den);
+        assert!(!unstable_tf.is_stable());
     }
 
     #[test]
     fn eval() {
-        let tf = Tf::new(
+        let tf = Tfz::new(
             Poly::new_from_coeffs(&[2., 20.]),
             Poly::new_from_coeffs(&[1., 0.1]),
         );
@@ -486,60 +414,9 @@ mod tests {
     }
 
     #[test]
-    fn eval_forward_euler() {
-        let tf = Tf::new(
-            Poly::new_from_coeffs(&[2., 20.]),
-            Poly::new_from_coeffs(&[1., 0.1]),
-        );
-        let z = 0.5 * Complex64::i();
-        let ts = Seconds(1.);
-        let tfz = TfDiscretization::discretize(tf, ts, Discretization::ForwardEuler);
-        let s = (tfz.conversion)(z, ts);
-        assert_eq!(Complex64::new(-1.0, 0.5), s);
-
-        let gz = tfz.eval(&z);
-        assert_relative_eq!(27.175, gz.norm().to_db(), max_relative = 1e-4);
-        assert_relative_eq!(147.77, gz.arg().to_degrees(), max_relative = 1e-4);
-    }
-
-    #[test]
-    fn eval_backward_euler() {
-        let tf = Tf::new(
-            Poly::new_from_coeffs(&[2., 20.]),
-            Poly::new_from_coeffs(&[1., 0.1]),
-        );
-        let z = 0.5 * Complex64::i();
-        let ts = Seconds(1.);
-        let tfz = TfDiscretization::discretize(tf, ts, Discretization::BackwardEuler);
-        let s = (tfz.conversion)(z, ts);
-        assert_eq!(Complex64::new(1.0, 2.0), s);
-
-        let gz = tfz.eval(&z);
-        assert_relative_eq!(32.220, gz.norm().to_db(), max_relative = 1e-4);
-        assert_relative_eq!(50.884, gz.arg().to_degrees(), max_relative = 1e-4);
-    }
-
-    #[test]
-    fn eval_tustin() {
-        let tf = Tf::new(
-            Poly::new_from_coeffs(&[2., 20.]),
-            Poly::new_from_coeffs(&[1., 0.1]),
-        );
-        let z = 0.5 * Complex64::i();
-        let ts = Seconds(1.);
-        let tfz = TfDiscretization::discretize(tf, ts, Discretization::Tustin);
-        let s = (tfz.conversion)(z, ts);
-        assert_eq!(Complex64::new(-1.2, 1.6), s);
-
-        let gz = tfz.eval(&z);
-        assert_relative_eq!(32.753, gz.norm().to_db(), max_relative = 1e-4);
-        assert_relative_eq!(114.20, gz.arg().to_degrees(), max_relative = 1e-4);
-    }
-
-    #[test]
     fn arma() {
         let tfz = Tfz::new(poly!(0.5_f32), poly!(-0.5, 1.));
-        let mut iter = tfz.arma(discrete::impulse(1., 0)).take(6);
+        let mut iter = tfz.arma_fn(discrete::impulse(1., 0)).take(6);
         assert_eq!(Some(0.), iter.next());
         assert_eq!(Some(0.5), iter.next());
         assert_eq!(Some(0.25), iter.next());
@@ -553,7 +430,7 @@ mod tests {
     fn arma_iter() {
         use std::iter;
         let tfz = Tfz::new(poly!(0.5_f32), poly!(-0.5, 1.));
-        let mut iter = tfz.arma_from_iter(iter::once(1.).chain(iter::repeat(0.)).take(6));
+        let mut iter = tfz.arma_iter(iter::once(1.).chain(iter::repeat(0.)).take(6));
         assert_eq!(Some(0.), iter.next());
         assert_eq!(Some(0.5), iter.next());
         assert_eq!(Some(0.25), iter.next());

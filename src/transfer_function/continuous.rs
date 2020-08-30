@@ -11,21 +11,21 @@
 //! * polar plot
 //! * static gain
 
-use nalgebra::{ComplexField, RealField, Scalar};
+use nalgebra::{ComplexField, RealField};
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
-use std::marker::PhantomData;
+use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 
 use crate::{
     plots::{
-        bode::{BodeIterator, BodePlot},
-        polar::{PolarIterator, PolarPlot},
-        root_locus::RootLocusIterator,
+        bode::{Bode, BodePlot},
+        polar::{Polar, PolarPlot},
+        root_locus::RootLocus,
     },
     transfer_function::TfGen,
-    units::{Decibel, RadiansPerSecond, Seconds},
-    Continuous, Eval,
+    units::{RadiansPerSecond, Seconds, ToDecibel},
+    Continuous,
 };
 
 /// Continuous transfer function
@@ -43,7 +43,7 @@ impl<T: Float> Tf<T> {
     /// # Example
     /// ```
     /// use num_complex::Complex;
-    /// use automatica::{units::Seconds, Tf};
+    /// use automatica::{Seconds, Tf};
     /// let d = Tf::delay(Seconds(2.));
     /// assert_eq!(1., d(Complex::new(0., 10.)).norm());
     /// ```
@@ -60,15 +60,14 @@ impl<T: Float> Tf<T> {
     /// let tf = Tf::new(poly!(4.), poly!(1., 5.));
     /// assert_eq!(0., tf.init_value());
     /// ```
+    #[must_use]
     pub fn init_value(&self) -> T {
         let n = self.num.degree();
         let d = self.den.degree();
-        if n < d {
-            T::zero()
-        } else if n == d {
-            self.num.leading_coeff() / self.den.leading_coeff()
-        } else {
-            T::infinity()
+        match n.cmp(&d) {
+            Ordering::Less => T::zero(),
+            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Greater => T::infinity(),
         }
     }
 
@@ -81,15 +80,14 @@ impl<T: Float> Tf<T> {
     /// let tf = Tf::new(poly!(1., -3.), poly!(1., 3., 2.));
     /// assert_eq!(-1.5, tf.init_value_der());
     /// ```
+    #[must_use]
     pub fn init_value_der(&self) -> T {
         let n = self.num.degree();
         let d = self.den.degree().map(|d| d - 1);
-        if n < d {
-            T::zero()
-        } else if n == d {
-            self.num.leading_coeff() / self.den.leading_coeff()
-        } else {
-            T::infinity()
+        match n.cmp(&d) {
+            Ordering::Less => T::zero(),
+            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Greater => T::infinity(),
         }
     }
 
@@ -112,6 +110,7 @@ impl<T: Float> Tf<T> {
     /// let s = g.sensitivity(&r);
     /// assert_eq!(Tf::new(poly!(0., 1., 1.), poly!(4., 1., 1.)), s);
     /// ```
+    #[must_use]
     pub fn sensitivity(&self, r: &Self) -> Self {
         let n = &self.num * &r.num;
         let d = &self.den * &r.den;
@@ -141,6 +140,7 @@ impl<T: Float> Tf<T> {
     /// let f = g.compl_sensitivity(&r);
     /// assert_eq!(Tf::new(poly!(4.), poly!(4., 1., 1.)), f);
     /// ```
+    #[must_use]
     pub fn compl_sensitivity(&self, r: &Self) -> Self {
         let l = self * r;
         l.feedback_n()
@@ -165,6 +165,7 @@ impl<T: Float> Tf<T> {
     /// let q = g.control_sensitivity(&r);
     /// assert_eq!(Tf::new(poly!(0., 4.), poly!(4., 1., 1.)), q);
     /// ```
+    #[must_use]
     pub fn control_sensitivity(&self, r: &Self) -> Self {
         Self {
             num: &r.num * &self.den,
@@ -174,7 +175,21 @@ impl<T: Float> Tf<T> {
     }
 }
 
-impl<T: ComplexField + Float + RealField + Scalar> Tf<T> {
+impl<T: ComplexField + Float + RealField> Tf<T> {
+    /// System stability. Checks if all poles are negative.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use automatica::{Poly, Tf};
+    /// let tf = Tf::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_roots(&[-1., -2.]));
+    /// assert!(tf.is_stable());
+    /// ```
+    #[must_use]
+    pub fn is_stable(&self) -> bool {
+        self.complex_poles().iter().all(|p| p.re.is_negative())
+    }
+
     /// Root locus for the given coefficient `k`
     ///
     /// # Arguments
@@ -194,7 +209,7 @@ impl<T: ComplexField + Float + RealField + Scalar> Tf<T> {
         p.complex_roots()
     }
 
-    /// Create a RootLocusIterator plot
+    /// Create a `RootLocus` plot
     ///
     /// # Arguments
     ///
@@ -217,12 +232,12 @@ impl<T: ComplexField + Float + RealField + Scalar> Tf<T> {
     /// let locus = l.root_locus_iter(0.1, 1.0, 0.05);
     /// assert_eq!(19, locus.count());
     /// ```
-    pub fn root_locus_iter(self, min_k: T, max_k: T, step: T) -> RootLocusIterator<T> {
-        RootLocusIterator::new(self, min_k, max_k, step)
+    pub fn root_locus_iter(self, min_k: T, max_k: T, step: T) -> RootLocus<T> {
+        RootLocus::new(self, min_k, max_k, step)
     }
 }
 
-impl<T: Float + MulAdd<Output = T>> Tf<T> {
+impl<T> Tf<T> {
     /// Static gain `G(0)`.
     /// Ratio between constant output and constant input.
     /// Static gain is defined only for transfer functions of 0 type.
@@ -234,20 +249,24 @@ impl<T: Float + MulAdd<Output = T>> Tf<T> {
     /// let tf = Tf::new(poly!(4., -3.),poly!(2., 5., -0.5));
     /// assert_eq!(2., tf.static_gain());
     /// ```
-    pub fn static_gain(&self) -> T {
-        self.eval(&T::zero())
+    #[must_use]
+    pub fn static_gain<'a>(&'a self) -> T
+    where
+        &'a T: 'a + Div<&'a T, Output = T>,
+    {
+        &self.num[0] / &self.den[0]
     }
 }
 
 /// Implementation of the Bode plot for a transfer function
-impl<T: Decibel<T> + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf<T> {
+impl<T: ToDecibel + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf<T> {
     fn bode(
         self,
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
-    ) -> BodeIterator<T> {
-        BodeIterator::new(self, min_freq, max_freq, step)
+    ) -> Bode<T> {
+        Bode::new(self, min_freq, max_freq, step)
     }
 }
 
@@ -258,8 +277,8 @@ impl<T: Float + FloatConst + MulAdd<Output = T>> PolarPlot<T> for Tf<T> {
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
-    ) -> PolarIterator<T> {
-        PolarIterator::new(self, min_freq, max_freq, step)
+    ) -> Polar<T> {
+        Polar::new(self, min_freq, max_freq, step)
     }
 }
 
@@ -283,6 +302,17 @@ mod tests {
     fn static_gain(g: f32) -> bool {
         let tf = Tf::new(poly!(g, -3.), poly!(1., 5., -0.5));
         relative_eq!(g, tf.static_gain())
+    }
+
+    #[test]
+    fn stability() {
+        let stable_den = Poly::new_from_roots(&[-1., -2.]);
+        let stable_tf = Tf::new(poly!(1., 2.), stable_den);
+        assert!(stable_tf.is_stable());
+
+        let unstable_den = Poly::new_from_roots(&[0., -2.]);
+        let unstable_tf = Tf::new(poly!(1., 2.), unstable_den);
+        assert!(!unstable_tf.is_stable());
     }
 
     #[test]
@@ -357,7 +387,8 @@ mod tests {
         assert_eq!(Complex::from_str("-1.5").unwrap(), locus1[0]);
 
         let locus2 = l.root_locus(-2.);
-        assert_eq!(Complex::from_str("0.").unwrap(), locus2[0]);
+        assert_eq!(Complex::from_str("-3.").unwrap(), locus2[0]);
+        assert_eq!(Complex::from_str("0.").unwrap(), locus2[1]);
     }
 
     #[test]

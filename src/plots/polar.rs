@@ -5,14 +5,14 @@
 //!
 //! Functions use angular frequencies as default inputs.
 
-use crate::{transfer_function::continuous::Tf, units::RadiansPerSecond, Eval};
+use crate::{transfer_function::continuous::Tf, units::RadiansPerSecond};
 
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
 /// Struct for the calculation of Polar plots
-#[derive(Debug)]
-pub struct PolarIterator<T: Float> {
+#[derive(Clone, Debug)]
+pub struct Polar<T: Float> {
     /// Transfer function
     tf: Tf<T>,
     /// Number of intervals of the plot
@@ -25,8 +25,8 @@ pub struct PolarIterator<T: Float> {
     index: T,
 }
 
-impl<T: Float + MulAdd<Output = T>> PolarIterator<T> {
-    /// Create a PolarIterator struct
+impl<T: Float + MulAdd<Output = T>> Polar<T> {
+    /// Create a `Polar` struct
     ///
     /// # Arguments
     ///
@@ -65,13 +65,17 @@ impl<T: Float + MulAdd<Output = T>> PolarIterator<T> {
 
 /// Struct to hold the data returned by the Polar iterator
 #[derive(Clone, Copy, Debug)]
-pub struct Polar<T> {
+pub struct Data<T> {
     /// Output
     output: Complex<T>,
 }
 
-/// Implementation of Polar methods
-impl<T: Float> Polar<T> {
+impl<T: Float> Data<T> {
+    /// Get the output
+    pub fn output(&self) -> Complex<T> {
+        self.output
+    }
+
     /// Get the real part
     pub fn real(&self) -> T {
         self.output.re
@@ -93,9 +97,9 @@ impl<T: Float> Polar<T> {
     }
 }
 
-/// Implementation of the Iterator trait for `PolarIterator` struct
-impl<T: Float + MulAdd<Output = T>> Iterator for PolarIterator<T> {
-    type Item = Polar<T>;
+/// Implementation of the Iterator trait for `Polar` struct
+impl<T: Float + MulAdd<Output = T>> Iterator for Polar<T> {
+    type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.intervals {
@@ -106,7 +110,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for PolarIterator<T> {
             let omega = T::from(10.0_f32).unwrap().powf(freq_exponent);
             let j_omega = Complex::<T>::new(T::zero(), omega);
             self.index = self.index + T::one();
-            Some(Polar {
+            Some(Data {
                 output: self.tf.eval(&j_omega),
             })
         }
@@ -115,7 +119,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for PolarIterator<T> {
 
 /// Trait for the implementation of polar plot for a linear system.
 pub trait PolarPlot<T: Float + FloatConst> {
-    /// Create a PolarIterator struct
+    /// Create a `Polar` struct
     ///
     /// # Arguments
     ///
@@ -134,7 +138,7 @@ pub trait PolarPlot<T: Float + FloatConst> {
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
-    ) -> PolarIterator<T>;
+    ) -> Polar<T>;
 }
 
 #[cfg(test)]
@@ -145,17 +149,17 @@ mod tests {
     #[test]
     fn create_iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = PolarIterator::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Polar::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
         assert_relative_eq!(20., iter.intervals);
         assert_relative_eq!(1., iter.base_freq_exp);
         assert_relative_eq!(0., iter.index);
     }
 
     #[test]
-    fn polar_struct() {
-        let p = Polar {
-            output: Complex::new(3., 4.),
-        };
+    fn data_struct() {
+        let c = Complex::new(3., 4.);
+        let p = Data { output: c };
+        assert_eq!(c, p.output());
         assert_relative_eq!(3., p.real());
         assert_relative_eq!(4., p.imag());
         assert_relative_eq!(5., p.magnitude());
@@ -165,7 +169,7 @@ mod tests {
     #[test]
     fn iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = PolarIterator::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Polar::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
         // 20 steps -> 21 iteration
         assert_eq!(21, iter.count());
     }

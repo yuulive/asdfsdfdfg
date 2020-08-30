@@ -18,14 +18,14 @@
 
 pub mod continuous;
 pub mod discrete;
+pub mod discretization;
 pub mod matrix;
 
-use nalgebra::{ComplexField, RealField, Scalar};
+use nalgebra::{ComplexField, RealField};
 use num_complex::Complex;
-use num_traits::{Float, Inv, MulAdd, One, Signed, Zero};
+use num_traits::{Float, Inv, One, Signed, Zero};
 
 use std::{
-    convert::TryFrom,
     fmt,
     fmt::{Debug, Display, Formatter},
     marker::PhantomData,
@@ -34,12 +34,13 @@ use std::{
 
 use crate::{
     linear_system::{self, SsGen},
-    polynomial::{matrix::MatrixOfPoly, Poly},
-    Eval, Time,
+    polynomial::Poly,
+    polynomial_matrix::{MatrixOfPoly, PolyMatrix},
+    Time,
 };
 
 /// Transfer function representation of a linear system
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TfGen<T, U: Time> {
     /// Transfer function numerator
     num: Poly<T>,
@@ -61,6 +62,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     /// Panics
     ///
     /// If either numerator of denominator is zero the method panics.
+    #[must_use]
     pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
         assert!(!num.is_zero());
         assert!(!den.is_zero());
@@ -72,11 +74,13 @@ impl<T: Float, U: Time> TfGen<T, U> {
     }
 
     /// Extract transfer function numerator
+    #[must_use]
     pub fn num(&self) -> &Poly<T> {
         &self.num
     }
 
     /// Extract transfer function denominator
+    #[must_use]
     pub fn den(&self) -> &Poly<T> {
         &self.den
     }
@@ -113,23 +117,27 @@ impl<T: Clone, U: Time> Inv for TfGen<T, U> {
     }
 }
 
-impl<T: ComplexField + Debug + Float + RealField + Scalar, U: Time> TfGen<T, U> {
+impl<T: ComplexField + Debug + Float + RealField, U: Time> TfGen<T, U> {
     /// Calculate the poles of the transfer function
+    #[must_use]
     pub fn real_poles(&self) -> Option<Vec<T>> {
         self.den.real_roots()
     }
 
     /// Calculate the poles of the transfer function
+    #[must_use]
     pub fn complex_poles(&self) -> Vec<Complex<T>> {
         self.den.complex_roots()
     }
 
     /// Calculate the zeros of the transfer function
+    #[must_use]
     pub fn real_zeros(&self) -> Option<Vec<T>> {
         self.num.real_roots()
     }
 
     /// Calculate the zeros of the transfer function
+    #[must_use]
     pub fn complex_zeros(&self) -> Vec<Complex<T>> {
         self.num.complex_roots()
     }
@@ -144,6 +152,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     ///         1 + L(s)
     /// ```
     /// where `self = L(s)`
+    #[must_use]
     pub fn feedback_n(&self) -> Self {
         Self {
             num: self.num.clone(),
@@ -160,6 +169,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     ///         1 - L(s)
     /// ```
     /// where `self = L(s)`
+    #[must_use]
     pub fn feedback_p(&self) -> Self {
         Self {
             num: self.num.clone(),
@@ -190,6 +200,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
     /// assert_eq!(expected, tfz.normalize());
     /// ```
+    #[must_use]
     pub fn normalize(&self) -> Self {
         let (den, an) = self.den.monic();
         let num = &self.num / an;
@@ -229,51 +240,38 @@ impl<T: Float, U: Time> TfGen<T, U> {
     }
 }
 
-impl<U: Time> TryFrom<SsGen<f64, U>> for TfGen<f64, U> {
-    type Error = &'static str;
-
-    /// Convert a state-space representation into transfer functions.
-    /// Conversion is available for Single Input Single Output system.
-    /// If fails if the system is not SISO
-    ///
-    /// # Arguments
-    ///
-    /// `ss` - state space linear system
-    fn try_from(ss: SsGen<f64, U>) -> Result<Self, Self::Error> {
-        let (pc, a_inv) = linear_system::leverrier_f64(&ss.a);
-        let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
-        let rest = pc.multiply(&ss.d);
-        let tf = g + rest;
-        if let Some(num) = MatrixOfPoly::from(tf).single() {
-            Ok(Self::new(num.clone(), pc))
-        } else {
-            Err("Linear system is not Single Input Single Output")
+macro_rules! from_ss_to_tr {
+    ($ty:ty, $laverrier:expr) => {
+        impl<U: Time> TfGen<$ty, U> {
+            /// Convert a state-space representation into transfer functions.
+            /// Conversion is available for Single Input Single Output system.
+            /// If fails if the system is not SISO
+            ///
+            /// # Arguments
+            ///
+            /// `ss` - state space linear system
+            ///
+            /// # Errors
+            ///
+            /// It returns an error if the linear system is not single input
+            /// single output.
+            pub fn new_from_siso(ss: &SsGen<$ty, U>) -> Result<Self, &'static str> {
+                let (pc, a_inv) = $laverrier(&ss.a);
+                let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
+                let rest = PolyMatrix::multiply(&pc, &ss.d);
+                let tf = g + rest;
+                if let Some(num) = MatrixOfPoly::from(tf).single() {
+                    Ok(Self::new(num.clone(), pc))
+                } else {
+                    Err("Linear system is not Single Input Single Output")
+                }
+            }
         }
-    }
+    };
 }
 
-impl<U: Time> TryFrom<SsGen<f32, U>> for TfGen<f32, U> {
-    type Error = &'static str;
-
-    /// Convert a state-space representation into transfer functions.
-    /// Conversion is available for Single Input Single Output system.
-    /// If fails if the system is not SISO
-    ///
-    /// # Arguments
-    ///
-    /// `ss` - state space linear system
-    fn try_from(ss: SsGen<f32, U>) -> Result<Self, Self::Error> {
-        let (pc, a_inv) = linear_system::leverrier_f32(&ss.a);
-        let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
-        let rest = pc.multiply(&ss.d);
-        let tf = g + rest;
-        if let Some(num) = MatrixOfPoly::from(tf).single() {
-            Ok(Self::new(num.clone(), pc))
-        } else {
-            Err("Linear system is not Single Input Single Output")
-        }
-    }
-}
+from_ss_to_tr!(f64, linear_system::leverrier_f64);
+from_ss_to_tr!(f32, linear_system::leverrier_f32);
 
 /// Implementation of transfer function negation.
 /// Negative sign is transferred to the numerator.
@@ -418,16 +416,49 @@ impl<T: Float, U: Time> Div for TfGen<T, U> {
     }
 }
 
-/// Implementation of the evaluation of a transfer function with complex numbers.
-impl<T: Float + MulAdd<Output = T>, U: Time> Eval<Complex<T>> for TfGen<T, U> {
-    fn eval(&self, s: &Complex<T>) -> Complex<T> {
-        self.num.eval(s) / self.den.eval(s)
+impl<T: Clone, U: Time> TfGen<T, U> {
+    /// Evaluate the transfer function.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - Value at which the transfer function is evaluated.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tf};
+    /// use num_complex::Complex as C;
+    /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
+    /// assert_eq!(-8.5, tf.eval_by_val(3.));
+    /// assert_eq!(C::new(0.64, -0.98), tf.eval_by_val(C::new(0., 2.0_f32)));
+    /// ```
+    pub fn eval_by_val<N>(&self, s: N) -> N
+    where
+        N: Add<T, Output = N> + Clone + Div<Output = N> + Mul<Output = N> + Zero,
+    {
+        self.num.eval_by_val(s.clone()) / self.den.eval_by_val(s)
     }
 }
 
-/// Implementation of the evaluation of a transfer function with real numbers.
-impl<T: Float + MulAdd<Output = T>, U: Time> Eval<T> for TfGen<T, U> {
-    fn eval(&self, s: &T) -> T {
+impl<T, U: Time> TfGen<T, U> {
+    /// Evaluate the transfer function.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - Value at which the transfer function is evaluated.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tf};
+    /// use num_complex::Complex as C;
+    /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
+    /// assert_eq!(-8.5, tf.eval(&3.));
+    /// assert_eq!(C::new(0.64, -0.98), tf.eval(&C::new(0., 2.0_f32)));
+    /// ```
+    pub fn eval<'a, N>(&'a self, s: &'a N) -> N
+    where
+        T: 'a,
+        N: 'a + Add<&'a T, Output = N> + Div<Output = N> + Mul<&'a N, Output = N> + Zero,
+    {
         self.num.eval(s) / self.den.eval(s)
     }
 }
@@ -449,6 +480,7 @@ impl<T: Display + One + PartialEq + Signed + Zero, U: Time> Display for TfGen<T,
 mod tests {
     use super::*;
     use crate::{poly, Continuous, Discrete};
+    use num_complex::Complex;
 
     #[test]
     fn transfer_function_creation() {
@@ -460,16 +492,35 @@ mod tests {
     }
 
     #[test]
+    fn evaluation() {
+        let tf = TfGen::<_, Continuous>::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
+        let res = tf.eval(&Complex::new(0., 0.9));
+        assert_abs_diff_eq!(0.429, res.re, epsilon = 0.001);
+        assert_abs_diff_eq!(1.073, res.im, epsilon = 0.001);
+    }
+
+    #[test]
+    fn evaluation_by_value() {
+        let tf = TfGen::<_, Continuous>::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
+        let res1 = tf.eval(&Complex::new(0., 0.9));
+        let res2 = tf.eval_by_val(Complex::new(0., 0.9));
+        assert_eq!(res1, res2);
+    }
+
+    #[test]
     fn tf_inversion() {
         let num1 = poly!(1., 2., 3.);
         let den1 = poly!(-4.2, -3.12, 0.0012);
-        let tf1 = TfGen::<_, Discrete>::new(num1.clone(), den1.clone());
+        let tf1 = TfGen::<_, Discrete>::new(num1, den1);
         let num2 = poly!(-4.2, -3.12, 0.0012);
         let den2 = poly!(1., 2., 3.);
-        let mut tf2 = TfGen::new(num2.clone(), den2.clone());
+        let mut tf2 = TfGen::new(num2, den2);
+
         assert_eq!(tf2, (&tf1).inv());
         tf2.inv_mut();
         assert_eq!(tf2, tf1);
+
+        assert_eq!(tf2.inv(), tf1.inv());
     }
 
     #[test]
@@ -491,7 +542,7 @@ mod tests {
     #[test]
     fn zeros() {
         let tf = TfGen::<_, Discrete>::new(poly!(1.), poly!(6., -5., 1.));
-        assert_eq!(Some(vec![]), tf.real_zeros());
+        assert_eq!(None, tf.real_zeros());
     }
 
     #[test]
@@ -545,6 +596,19 @@ mod tests {
     }
 
     #[test]
+    fn tf_add3() {
+        let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(3., -4.));
+        let tf2 = TfGen::new(poly!(3.), poly!(1., 5.));
+        let tf3 = TfGen::new(poly!(0., 4.), poly!(3., 11., -20.));
+        let actual = &(&tf1 + &tf2) + &tf3;
+        let expected = TfGen::new(poly!(10., -1., 10.), poly!(3., 11., -20.));
+        assert_eq!(expected, actual);
+
+        let actual2 = (tf1 + tf2) + tf3;
+        assert_eq!(actual, actual2);
+    }
+
+    #[test]
     fn tf_sub1() {
         let tf1 = TfGen::<_, Continuous>::new(poly!(-1., 9.), poly!(4., -1.));
         let tf2 = TfGen::new(poly!(3.), poly!(4., -1.));
@@ -560,6 +624,19 @@ mod tests {
         let actual = tf1 - tf2;
         let expected = TfGen::new(poly!(-6., 7., -6.), poly!(8., 4., -12.));
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tf_sub3() {
+        let tf1 = TfGen::<_, Discrete>::new(poly!(1., -2.), poly!(4., -4.));
+        let tf2 = TfGen::new(poly!(2.), poly!(2., 3.));
+        let tf3 = TfGen::new(poly!(0., 2.), poly!(8., 4., -12.));
+        let actual = &(&tf1 - &tf2) - &tf3;
+        let expected = TfGen::new(poly!(-6., 5., -6.), poly!(8., 4., -12.));
+        assert_eq!(expected, actual);
+
+        let actual2 = (tf1 - tf2) - tf3;
+        assert_eq!(actual, actual2);
     }
 
     #[test]
@@ -581,7 +658,7 @@ mod tests {
     }
 
     #[test]
-    fn tf_div() {
+    fn tf_div1() {
         let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2., 3.), poly!(1., 5.));
         let tf2 = TfGen::new(poly!(3.), poly!(1., 6., 5.));
         let actual = tf2 / tf1;
@@ -590,9 +667,18 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::eq_op)]
+    fn tf_div2() {
+        let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let actual = &tf1 / &tf1;
+        let expected = TfGen::new(poly!(1., 7., 13., 15.), poly!(1., 7., 13., 15.));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn print() {
         let tf = TfGen::<_, Continuous>::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
-        assert_eq!("1\n──────\n1 +1*s", format!("{}", tf));
+        assert_eq!("1\n─────\n1 +1s", format!("{}", tf));
     }
 
     #[test]
