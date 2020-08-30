@@ -63,8 +63,9 @@ examples:run:
 
 pages:
   stage: doc
+  # Do not use make because it is not included in Alpine
   script:
-    - make doc
+    - cargo doc --no-deps
     - cp -R $DOC_FOLDER public
     - echo '<meta http-equiv="refresh" content="0; url=automatica/index.html">' > public/index.html
   artifacts:
