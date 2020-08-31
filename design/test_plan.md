@@ -130,7 +130,7 @@ TC2.7 The parallel connection of subsystems is asymptotically stable if and only
 > tests/linear_system/parallel_system
 
 - input: G_{1}=\frac{1}{\left(1+s\right)\left(0.5+s\right)}, G_{2}=\frac{1}{\left(2+s\right)\left(0.25+s\right)}, G_{3}=\frac{1}{\left(-2+s\right)\left(0.25+s\right)}
-- output: G_{1}\cdot G_{2} is stable, G_{1}\cdot G_{3} is unstable
+- output: G_{1}+G_{2} is stable, G_{1}+G_{3} is unstable
 
 ### Continuous time
 
