@@ -16,7 +16,7 @@ The version control system is `git` [12] and the source code is hosted on `Gitla
 
 The access to the public registry crates.io [13] is available at the following link:
 
-[https://gitlab.com/daingun/automatica]
+[https://crates.io/crates/automatica]
 
 The library supplies an infrastructure that contains calculation methods for the design of computer aided control systems. This software does not supply an interface with the final user.
 
