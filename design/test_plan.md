@@ -208,7 +208,7 @@ TC4.3 A system with at least on eigenvalue with modulus equal to one has none of
 
 - input: A=\left[\begin{array}{cc}
 0.6 & 0\\
-0 & 0.4
+0 & 1
 \end{array}\right], B=\left[\begin{array}{c}
 1\\
 5
