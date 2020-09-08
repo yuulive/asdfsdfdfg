@@ -9,6 +9,7 @@ examples = arma_channel \
 		   polar \
 		   poly \
 		   root_locus \
+		   suspension \
 		   transfer_function
 
 .PHONY : all_examples clippy doc $(examples)
