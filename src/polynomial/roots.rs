@@ -21,7 +21,7 @@ pub(super) struct RootsFinder<T> {
     iterations: u32,
 }
 
-impl<T: Float + FloatConst + NumCast> RootsFinder<T> {
+impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
     /// Create a `RootsFinder` structure
     ///
     /// # Arguments

@@ -374,7 +374,7 @@ impl<T: ComplexField + Float + RealField> Poly<T> {
     }
 }
 
-impl<T: Float + FloatConst> Poly<T> {
+impl<T: Debug + Float + FloatConst> Poly<T> {
     /// Calculate the complex roots of the polynomial
     /// using Aberth-Ehrlich method.
     ///
