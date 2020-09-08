@@ -1,4 +1,6 @@
-use automatica::{Poly, Ss, Tf, TfMatrix};
+use automatica::{
+    linear_system::discrete::DiscreteTime, Discretization, Poly, Ss, Tf, TfMatrix, Tfz,
+};
 use num_traits::One;
 
 #[allow(non_snake_case)]
@@ -54,7 +56,7 @@ fn main() {
     println!("\nActuator:\n{}", &Ga);
 
     // Loop function;
-    let L = R * Ga * G12;
+    let L = &R * &Ga * G12;
     println!("\nLoop function:\n{}", &L);
     let one = Tf::new(Poly::one(), Poly::one());
     let M = G11 / (one + L);
@@ -65,4 +67,9 @@ fn main() {
     for p in M.complex_poles() {
         println!("{:.3}", p);
     }
+
+    let ssR = Ss::new_observability_realization(&R).unwrap();
+    let sdR = ssR.discretize(5.0e-3, Discretization::Tustin).unwrap();
+    let tfzR = Tfz::<f64>::new_from_siso(&sdR).unwrap();
+    println!("\nDiscrete regulator:\n{}", tfzR);
 }
