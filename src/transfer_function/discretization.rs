@@ -103,7 +103,7 @@ fn fb<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
 /// * `ts` - Sampling period
 fn tu<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
     let float = (T::one() + T::one()) / ts.0;
-    let complex = (z - T::one()) / (z + T::one());
+    let complex = (z - T::one()).fdiv(z + T::one());
     // Complex<T> * T is implemented, not T * Complex<T>
     complex * float
 }
@@ -147,7 +147,8 @@ mod tests {
         let ts = Seconds(1.);
         let tfz = TfDiscretization::discretize(tf, ts, Discretization::ForwardEuler);
         let s = (tfz.conversion)(z, ts);
-        assert_eq!(Complex64::new(-1.0, 0.5), s);
+        assert_relative_eq!(-1.0, s.re);
+        assert_relative_eq!(0.5, s.im);
 
         let gz = tfz.eval(z);
         assert_relative_eq!(27.175, gz.norm().to_db(), max_relative = 1e-4);
@@ -164,7 +165,8 @@ mod tests {
         let ts = Seconds(1.);
         let tfz = TfDiscretization::discretize(tf, ts, Discretization::BackwardEuler);
         let s = (tfz.conversion)(z, ts);
-        assert_eq!(Complex64::new(1.0, 2.0), s);
+        assert_relative_eq!(1.0, s.re);
+        assert_relative_eq!(2.0, s.im);
 
         let gz = tfz.eval(z);
         assert_relative_eq!(32.220, gz.norm().to_db(), max_relative = 1e-4);
@@ -181,7 +183,8 @@ mod tests {
         let ts = Seconds(1.);
         let tfz = TfDiscretization::discretize(tf, ts, Discretization::Tustin);
         let s = (tfz.conversion)(z, ts);
-        assert_eq!(Complex64::new(-1.2, 1.6), s);
+        assert_relative_eq!(-1.2, s.re);
+        assert_relative_eq!(1.6, s.im);
 
         let gz = tfz.eval(z);
         assert_relative_eq!(32.753, gz.norm().to_db(), max_relative = 1e-4);
