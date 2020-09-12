@@ -68,6 +68,12 @@ TC1.10 The stationary points of a polynomial function are the roots of its deriv
 - input: \left(1+x\right)x\left(-1+x\right)
 - output: stationary points in x=\pm0.57735
 
+TC1.11 The iterative root finding method must be stable for nearly multiple zeros ([16] page 6).
+> tests/polynomial/nearly_multiple_zeros
+
+- input: P4, P5, P6, P8
+- output: roots must all be real, from root it is possible to recover the original polynomial with given error or roots must be within given error.
+
 ### Linear systems
 
 TC2.1 The initial value of the output of the system in response to a step is the limit to infinity of its transfer function ([1], para. 5.4.1).

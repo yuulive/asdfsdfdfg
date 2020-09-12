@@ -262,3 +262,38 @@ fn chebyshev_polys() -> Vec<Poly<f64>> {
     }
     polys
 }
+
+/// TC1.11
+#[test]
+fn nearly_multiple_zeros() {
+    let p4 = Poly::new_from_roots(&[0.1, 0.1, 0.1, 0.5, 0.6, 0.7]);
+    let r4 = p4.iterative_roots();
+    assert!(r4.iter().all(|c| relative_eq!(c.im, 0.)));
+    let p4n = Poly::new_from_roots_iter(r4.iter().map(|r| r.re));
+    for (c1, c2) in p4.as_slice().iter().zip(p4n.as_slice()) {
+        assert_relative_eq!(c1, c2, max_relative = 1e-4);
+    }
+
+    let p5 = Poly::new_from_roots(&[0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.3, 0.3, 0.4]);
+    let r5 = p5.iterative_roots();
+    assert!(r5.iter().all(|c| relative_eq!(c.im, 0.)));
+    let p5n = Poly::new_from_roots_iter(r5.iter().map(|r| r.re));
+    for (c1, c2) in p5.as_slice().iter().zip(p5n.as_slice()) {
+        assert_relative_eq!(c1, c2, max_relative = 1e-1);
+    }
+
+    let p6 = Poly::new_from_roots(&[0.1, 1.001, 0.998, 1.00002, 0.99999]);
+    let r6 = p6.iterative_roots();
+    assert!(r6.iter().all(|c| relative_eq!(c.im, 0.)));
+    let p6n = Poly::new_from_roots_iter(r6.iter().map(|r| r.re));
+    for (c1, c2) in p6.as_slice().iter().zip(p6n.as_slice()) {
+        assert_relative_eq!(c1, c2, max_relative = 1e-2);
+    }
+
+    let p8 = Poly::new_from_roots(&[-1., -1., -1., -1., -1.]);
+    let r8 = p8.iterative_roots();
+    assert!(r8.iter().all(|c| relative_eq!(c.im, 0.)));
+    assert!(r8
+        .iter()
+        .all(|c| relative_eq!(c.re, -1., max_relative = 1e-3)));
+}

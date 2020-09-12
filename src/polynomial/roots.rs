@@ -81,7 +81,8 @@ impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
 
             for (i, d) in done.iter_mut().enumerate() {
                 let solution_i = self.solution[i];
-                let n_xki = self.poly.eval(&solution_i).fdiv(self.der.eval(&solution_i));
+                let derivative = self.der.eval(&solution_i);
+
                 let a_xki: Complex<T> = self
                     .solution
                     .iter()
@@ -97,9 +98,15 @@ impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
                     })
                     .sum();
 
+                let fraction = if derivative.is_zero() {
+                    -Complex::<T>::one().fdiv(a_xki)
+                } else {
+                    let n_xki = self.poly.eval(&solution_i).fdiv(derivative);
+                    n_xki.fdiv(Complex::<T>::one() - n_xki * a_xki)
+                };
                 // Overriding the root before updating the other decrease the time
                 // the algorithm converges.
-                let new = solution_i - n_xki.fdiv(Complex::<T>::one() - n_xki * a_xki);
+                let new = solution_i - fraction;
                 *d = if solution_i == new {
                     true
                 } else {

@@ -29,3 +29,5 @@
 [14] [https://forge.rust-lang.org/release/platform-support.html]
 
 [15] [https://crates.io/crates/cargo-tarpaulin]
+
+[16] Jenkins, M. & Traub, Joseph. (1975). Principles for Testing Polynomial Zerofinding Programs. ACM Transactions on Mathematical Software (TOMS). 1. 26-34. 10.1145/355626.355632.
