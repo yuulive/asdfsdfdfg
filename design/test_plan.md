@@ -74,6 +74,12 @@ TC1.11 The iterative root finding method must be stable for nearly multiple zero
 - input: P4, P5, P6, P8
 - output: roots must all be real, from root it is possible to recover the original polynomial with given error or roots must be within given error.
 
+TC1.12 The iterative root finding method must be stable for equimodular zeros ([16] page 7).
+> tests/polynomial/equimodular_zeros
+
+- input: P9
+- outpu: there shall be 20 roots, all root must have a modulus of either 100 or 0.01
+
 ### Linear systems
 
 TC2.1 The initial value of the output of the system in response to a step is the limit to infinity of its transfer function ([1], para. 5.4.1).

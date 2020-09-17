@@ -297,3 +297,19 @@ fn nearly_multiple_zeros() {
         .iter()
         .all(|c| relative_eq!(c.re, -1., max_relative = 1e-3)));
 }
+
+/// TC1.12
+#[test]
+fn equimodular_zeros() {
+    // Roots are equispaced on circle of radius 0.01.
+    let p9_1 = Poly::new_from_coeffs(&[-1e-20, 0., 0., 0., 0., 0., 0., 0., 0., 0., 1.]);
+    // Roots are equispaced on circle of radius 100.
+    let p9_2 = Poly::new_from_coeffs(&[1e20, 0., 0., 0., 0., 0., 0., 0., 0., 0., 1.]);
+    let p9 = p9_1 * p9_2;
+
+    let r9 = p9.iterative_roots();
+    for r in &r9 {
+        assert!(relative_eq!(r.norm(), 100.) || relative_eq!(r.norm(), 0.01));
+    }
+    assert_eq!(20, r9.len());
+}
