@@ -869,7 +869,7 @@ impl<T: Display + Zero> Display for Poly<T> {
             // The polynomial shall be never empty.
             unreachable!();
         } else if self.len() == 1 {
-            return write!(f, "{}", self[0]);
+            return Display::fmt(&self[0], f);
         }
         let mut s = String::new();
         let mut sep = "";
@@ -916,6 +916,7 @@ mod tests {
         assert_eq!("0", format!("{}", Poly::<i16>::zero()));
         assert_eq!("0", format!("{}", Poly::<i16>::new_from_coeffs(&[])));
         assert_eq!("1 +2s^3 -4s^4", format!("{}", poly!(1, 0, 0, 2, -4)));
+        assert_eq!("1.235", format!("{:.3}", Poly::new_from_coeffs(&[1.23456])));
     }
 
     #[test]
