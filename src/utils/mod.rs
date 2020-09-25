@@ -147,7 +147,7 @@ where
 }
 
 #[derive(Clone, Debug)]
-struct ZipLongest<I, J>
+pub(crate) struct ZipLongest<I, J>
 where
     I: Iterator,
     J: Iterator,
@@ -164,7 +164,7 @@ where
 /// * `a` - first iterator
 /// * `b` - second iterator
 /// * `fill` - default value
-fn zip_longest<I, J>(a: I, b: J, fill: I::Item) -> ZipLongest<I::IntoIter, J::IntoIter>
+pub(crate) fn zip_longest<I, J>(a: I, b: J, fill: I::Item) -> ZipLongest<I::IntoIter, J::IntoIter>
 where
     I: IntoIterator,
     J: IntoIterator<Item = I::Item>,

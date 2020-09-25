@@ -29,7 +29,7 @@ use std::{
     ops::{Add, Div, Index, IndexMut, Mul, Neg},
 };
 
-use crate::polynomial::roots::RootsFinder;
+use crate::{polynomial::roots::RootsFinder, utils};
 
 /// Polynomial object
 ///
@@ -772,6 +772,48 @@ impl<T> Poly<T> {
     }
 }
 
+impl<T: Float> Poly<T> {
+    /// Evaluate the ratio between to polynomials at the given value.
+    /// This implementation avoids overflow issues when evaluating the
+    /// numerator and the denominator separately.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` - numerator of the polynomial ratio.
+    /// * `b` - denominator of the polynomial ratio.
+    /// * `x` - Value at which the polynomial ratio is evaluated.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::Poly;
+    /// let p1 = Poly::new_from_coeffs(&[4., 5., 1.]);
+    /// let p2 = Poly::new_from_coeffs(&[1., 2., 3., 1.]);
+    /// let x = -1e30_f32;
+    /// let r = Poly::eval_poly_ratio(&p1, &p2, x);
+    /// let naive = p1.eval(&x) / p2.eval(&x);
+    /// assert!(naive.is_nan());
+    /// assert!((0.- r).abs() < 1e-16);
+    /// ```
+    pub fn eval_poly_ratio(a: &Self, b: &Self, x: T) -> T {
+        // When the `x` value is less than one evaluate the polynomial ratio
+        // at `1/x` reversing the coefficients.
+        if x.abs() <= T::one() {
+            let n = a.eval_by_val(x);
+            let d = b.eval_by_val(x);
+            n / d
+        } else {
+            let x = x.recip();
+            // Zip and extend the smaller polynomial with zeros.
+            // Evaluate the reversed polynomial.
+            let (n, d) = utils::zip_longest(&a.coeffs, &b.coeffs, &T::zero())
+                .fold((T::zero(), T::zero()), |acc, c| {
+                    (acc.0 * x + *c.0, acc.1 * x + *c.1)
+                });
+            n / d
+        }
+    }
+}
+
 /// Implement read only indexing of polynomial returning its coefficients.
 ///
 /// # Panics
@@ -1066,6 +1108,30 @@ mod tests {
         let r1 = p.eval_by_val(0.);
         let r2 = p.eval(&0.);
         assert_relative_eq!(r1, r2);
+    }
+
+    #[test]
+    fn poly_ratio_evaluation() {
+        let p1 = poly!(1., 2., 3.);
+        let p2 = poly!(4., 5.);
+        let x = 2.;
+        let r = Poly::eval_poly_ratio(&p1, &p2, x);
+        assert_eq!(p1.eval(&x) / p2.eval(&x), r);
+
+        let y = 0.5;
+        let r = Poly::eval_poly_ratio(&p1, &p2, y);
+        assert_eq!(p1.eval(&y) / p2.eval(&y), r);
+    }
+
+    #[test]
+    fn poly_ratio_overflow() {
+        let p1 = Poly::new_from_coeffs(&[4., 5., 1.]);
+        let p2 = Poly::new_from_coeffs(&[1., 2., 3., 1.]);
+        let x = -1e30_f32;
+        let r = Poly::eval_poly_ratio(&p1, &p2, x);
+        let naive = p1.eval(&x) / p2.eval(&x);
+        assert!(naive.is_nan());
+        assert!((0. - r).abs() < 1e-16);
     }
 
     #[test]
