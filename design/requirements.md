@@ -54,6 +54,7 @@ FR1.11 On polynomial it is possible to perform arithmetical operations, both bet
 - multiplication between polynomials both with the convolution method and the fast Fourier transform method [8] (by value, by ref)
 - addition, subtraction, multiplication, and division with a scalar (by value, by ref)
 - calculation of the derivative and the integral of the polynomial (by ref)
+- evaluation of polynomial ratios avoiding overflows (by ref)
 
 #### Formatting
 

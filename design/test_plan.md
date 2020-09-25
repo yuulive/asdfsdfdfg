@@ -362,6 +362,8 @@ Calculation of the real and complex roots of a polynomial of first, second and t
 
 Arithmetic operations defined between polynomial and with real numbers.
 
+Evaluation of polynomial ratios without overflows.
+
 Multiplication through fast Fourier transformation.
 
 #### fft
