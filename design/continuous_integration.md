@@ -14,10 +14,10 @@ The pipeline is made by the following list of stage and jobs:
 
 1. build
   - build:oldest library compilation with the minimum supported `Rust` version, both in debug and release mode
-  - build:latest library compilation with the latest `Rust` version, both in debug and in release mode
+  - build:latest library compilation with the latest `Rust` version, both in debug and in release mode, it is executed also in merge request events
 
 2. test
-  - test:run execution of all tests present in the library with the latest `Rust` version, both in debug and in release mode
+  - test:run execution of all tests present in the library with the latest `Rust` version, both in debug and in release mode, it is executed also in merge request events
   - cover execution of test coverage program `tarpaulin`
 
 3. examples

@@ -23,9 +23,16 @@ build:oldest:
   <<: *build_definition
   image: 'rust:1.38-alpine'
   allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
 
 build:latest:
   <<: *build_definition
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 test:run:
   stage: test
@@ -35,6 +42,10 @@ test:run:
     - "rustc --version && cargo --version"
     - cargo test --verbose
     - cargo test --verbose --release
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 cover:
   stage: test
@@ -52,6 +63,9 @@ cover:
     paths:
       - tarpaulin-report.html
   allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
 
 examples:run:
   stage: examples
@@ -60,6 +74,9 @@ examples:run:
     - "rustc --version && cargo --version"
     - make all_examples
   needs: ["test:run"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
 
 pages:
   stage: doc
@@ -71,10 +88,10 @@ pages:
   artifacts:
     paths:
       - public
-  only:
-    - master
   # Do not fetch artifacts from previous stages
   dependencies: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
 
 package:build:
   stage: package
@@ -84,6 +101,9 @@ package:build:
     - cargo package --verbose
   # Do not fetch artifacts from previous stages
   dependencies: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
 
 publish:send:
   stage: publish
@@ -92,6 +112,6 @@ publish:send:
     - cargo publish --verbose
   # Do not fetch artifacts from previous stages
   dependencies: []
-  only:
-    - master
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: manual
