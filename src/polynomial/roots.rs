@@ -14,7 +14,7 @@ pub(super) struct RootsFinder<T> {
     /// Polynomial
     poly: Poly<T>,
     /// Polynomial derivative
-    der: Poly<T>,
+    derivative: Poly<T>,
     /// Solution, roots of the polynomial
     solution: Vec<Complex<T>>,
     /// Maximum iterations of the algorithm
@@ -28,7 +28,7 @@ impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
     ///
     /// * `poly` - polynomial whose roots have to be found.
     pub(super) fn new(poly: Poly<T>) -> Self {
-        let der = poly.derive();
+        let derivative = poly.derive();
 
         // Set the initial root approximation.
         let initial_guess = init(&poly);
@@ -37,7 +37,7 @@ impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
 
         Self {
             poly,
-            der,
+            derivative,
             solution: initial_guess,
             iterations: 30,
         }
@@ -81,7 +81,7 @@ impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
 
             for (i, d) in done.iter_mut().enumerate() {
                 let solution_i = self.solution[i];
-                let derivative = self.der.eval(&solution_i);
+                let derivative = self.derivative.eval(&solution_i);
 
                 let a_xki: Complex<T> = self
                     .solution
