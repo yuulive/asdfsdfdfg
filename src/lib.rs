@@ -61,6 +61,7 @@ extern crate quickcheck;
 extern crate quickcheck_macros;
 
 pub mod controller;
+pub mod error;
 pub mod linear_system;
 pub mod plots;
 pub mod polynomial;
@@ -71,6 +72,7 @@ pub mod units;
 pub mod utils;
 
 // Export from crate root.
+pub use error::Error;
 pub use linear_system::{continuous::Ss, discrete::Ssd};
 pub use polynomial::Poly;
 pub use transfer_function::{
