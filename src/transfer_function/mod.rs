@@ -33,6 +33,7 @@ use std::{
 };
 
 use crate::{
+    error::{Error, ErrorKind},
     linear_system::{self, SsGen},
     polynomial::Poly,
     polynomial_matrix::{MatrixOfPoly, PolyMatrix},
@@ -255,7 +256,7 @@ macro_rules! from_ss_to_tr {
             ///
             /// It returns an error if the linear system is not single input
             /// single output.
-            pub fn new_from_siso(ss: &SsGen<$ty, U>) -> Result<Self, &'static str> {
+            pub fn new_from_siso(ss: &SsGen<$ty, U>) -> Result<Self, Error> {
                 let (pc, a_inv) = $laverrier(&ss.a);
                 let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
                 let rest = PolyMatrix::multiply(&pc, &ss.d);
@@ -263,7 +264,7 @@ macro_rules! from_ss_to_tr {
                 if let Some(num) = MatrixOfPoly::from(tf).single() {
                     Ok(Self::new(num.clone(), pc))
                 } else {
-                    Err("Linear system is not Single Input Single Output")
+                    Err(Error::new_internal(ErrorKind::NoSisoSystem))
                 }
             }
         }
