@@ -3,24 +3,37 @@
 use std::{error, fmt};
 
 /// Struct to represent the error values in this library.
+/// Used in `Result<T, E>` `Err(E)` variant.
 pub struct Error {
     /// Internal representation of the error.
     repr: Repr,
 }
 
+/// Internal representation variants of the Error type.
 #[derive(Debug)]
 enum Repr {
+    /// Errors that are created by this library.
     Internal(ErrorKind),
+    // Add if necessary additional variants that wrap errors given by used libraries.
 }
 
+/// Enumeration of Error variants internal to this library.
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum ErrorKind {
+    /// The given system is not single input single output.
     NoSisoSystem,
+    /// The given transfer function has a zero denominator.
     ZeroPolynomialDenominator,
+    /// The given transfer function has no poles.
     NoPolesDenominator,
 }
 
 impl Error {
+    /// Create a new internal error.
+    ///
+    /// # Arguments
+    ///
+    /// `kind` - kind of internal error
     pub(crate) fn new_internal(kind: ErrorKind) -> Self {
         Error {
             repr: Repr::Internal(kind),
@@ -53,6 +66,7 @@ impl fmt::Debug for Error {
 }
 
 impl ErrorKind {
+    /// Generate the string representation of the `ErrorKind` variants.
     fn as_str(&self) -> &'static str {
         match *self {
             ErrorKind::NoSisoSystem => "Linear system is not Single Input Single Output",
