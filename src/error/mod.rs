@@ -71,8 +71,21 @@ mod tests {
     #[test]
     fn display_error() {
         let err = Error::new_internal(ErrorKind::NoSisoSystem);
-        println!("{}", err);
-        println!("{:?}", err);
-        panic!();
+        assert!(!err.to_string().is_empty());
+        assert!(!format!("{:?}", err).is_empty());
+        assert_eq!(ErrorKind::NoSisoSystem.as_str(), err.to_string());
+
+        let err = Error::new_internal(ErrorKind::ZeroPolynomialDenominator);
+        assert!(!err.to_string().is_empty());
+        assert!(!format!("{:?}", err).is_empty());
+        assert_eq!(
+            ErrorKind::ZeroPolynomialDenominator.as_str(),
+            err.to_string()
+        );
+
+        let err = Error::new_internal(ErrorKind::NoPolesDenominator);
+        assert!(!err.to_string().is_empty());
+        assert!(!format!("{:?}", err).is_empty());
+        assert_eq!(ErrorKind::NoPolesDenominator.as_str(), err.to_string());
     }
 }
