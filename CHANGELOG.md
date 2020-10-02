@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0] Unreleased
+## Added
+## Changed
+### API Changes
+- Implemented a custom Error type
+## Fixed
+
 ## [0.8.0] - 2020-08-30
 ## Added
 - Documentation of the specification of the library

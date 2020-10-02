@@ -201,3 +201,7 @@ FR8.2 Common discrete time signals are defined:
 - null signal
 - impulse signal
 - step signal
+
+### Error type
+
+FR9.1 The library shall expose a custom `Error` type that implements the `std::error::Error` trait.
