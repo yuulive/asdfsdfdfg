@@ -12,7 +12,7 @@ use num_traits::{Float, FloatConst, MulAdd};
 
 /// Struct for the calculation of Polar plots
 #[derive(Clone, Debug)]
-pub struct Polar<T: Float> {
+pub struct Iter<T: Float> {
     /// Transfer function
     tf: Tf<T>,
     /// Number of intervals of the plot
@@ -25,7 +25,7 @@ pub struct Polar<T: Float> {
     index: T,
 }
 
-impl<T: Float + MulAdd<Output = T>> Polar<T> {
+impl<T: Float + MulAdd<Output = T>> Iter<T> {
     /// Create a `Polar` struct
     ///
     /// # Arguments
@@ -98,7 +98,7 @@ impl<T: Float> Data<T> {
 }
 
 /// Implementation of the Iterator trait for `Polar` struct
-impl<T: Float + MulAdd<Output = T>> Iterator for Polar<T> {
+impl<T: Float + MulAdd<Output = T>> Iterator for Iter<T> {
     type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -118,7 +118,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for Polar<T> {
 }
 
 /// Trait for the implementation of polar plot for a linear system.
-pub trait PolarPlot<T: Float + FloatConst> {
+pub trait Polar<T: Float + FloatConst> {
     /// Create a `Polar` struct
     ///
     /// # Arguments
@@ -138,7 +138,7 @@ pub trait PolarPlot<T: Float + FloatConst> {
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
-    ) -> Polar<T>;
+    ) -> Iter<T>;
 }
 
 #[cfg(test)]
@@ -149,7 +149,7 @@ mod tests {
     #[test]
     fn create_iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = Polar::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Iter::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
         assert_relative_eq!(20., iter.intervals);
         assert_relative_eq!(1., iter.base_freq_exp);
         assert_relative_eq!(0., iter.index);
@@ -169,7 +169,7 @@ mod tests {
     #[test]
     fn iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = Polar::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Iter::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
         // 20 steps -> 21 iteration
         assert_eq!(21, iter.count());
     }

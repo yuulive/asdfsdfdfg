@@ -19,9 +19,9 @@ use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 
 use crate::{
     plots::{
-        bode::{Bode, BodePlot},
-        polar::{Polar, PolarPlot},
-        root_locus::RootLocus,
+        bode::{self, Bode},
+        polar::{self, Polar},
+        root_locus,
     },
     transfer_function::TfGen,
     units::{RadiansPerSecond, Seconds, ToDecibel},
@@ -232,8 +232,8 @@ impl<T: ComplexField + Float + RealField> Tf<T> {
     /// let locus = l.root_locus_iter(0.1, 1.0, 0.05);
     /// assert_eq!(19, locus.count());
     /// ```
-    pub fn root_locus_iter(self, min_k: T, max_k: T, step: T) -> RootLocus<T> {
-        RootLocus::new(self, min_k, max_k, step)
+    pub fn root_locus_iter(self, min_k: T, max_k: T, step: T) -> root_locus::Iter<T> {
+        root_locus::Iter::new(self, min_k, max_k, step)
     }
 }
 
@@ -259,26 +259,26 @@ impl<T> Tf<T> {
 }
 
 /// Implementation of the Bode plot for a transfer function
-impl<T: ToDecibel + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf<T> {
+impl<T: ToDecibel + Float + FloatConst + MulAdd<Output = T>> Bode<T> for Tf<T> {
     fn bode(
         self,
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
-    ) -> Bode<T> {
-        Bode::new(self, min_freq, max_freq, step)
+    ) -> bode::Iter<T> {
+        bode::Iter::new(self, min_freq, max_freq, step)
     }
 }
 
 /// Implementation of the polar plot for a transfer function
-impl<T: Float + FloatConst + MulAdd<Output = T>> PolarPlot<T> for Tf<T> {
+impl<T: Float + FloatConst + MulAdd<Output = T>> Polar<T> for Tf<T> {
     fn polar(
         self,
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
-    ) -> Polar<T> {
-        Polar::new(self, min_freq, max_freq, step)
+    ) -> polar::Iter<T> {
+        polar::Iter::new(self, min_freq, max_freq, step)
     }
 }
 

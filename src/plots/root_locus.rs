@@ -11,7 +11,7 @@ use crate::transfer_function::continuous::Tf;
 
 /// Struct for root locus plot
 #[derive(Clone, Debug)]
-pub struct RootLocus<T: Float> {
+pub struct Iter<T: Float> {
     /// Transfer function
     tf: Tf<T>,
     /// Transfer constant
@@ -24,7 +24,7 @@ pub struct RootLocus<T: Float> {
     index: T,
 }
 
-impl<T: Float> RootLocus<T> {
+impl<T: Float> Iter<T> {
     /// Create a `RootLocus` struct
     ///
     /// # Arguments
@@ -79,7 +79,7 @@ impl<T: Float> Data<T> {
     }
 }
 
-impl<T: ComplexField + Float + MulAdd<Output = T> + RealField> Iterator for RootLocus<T> {
+impl<T: ComplexField + Float + MulAdd<Output = T> + RealField> Iterator for Iter<T> {
     type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -107,13 +107,13 @@ mod tests {
     #[should_panic]
     fn fail_new1() {
         let tf = Tf::new(poly!(1.), poly!(0., 1.));
-        RootLocus::new(tf, 0.1, 0.2, 0.);
+        Iter::new(tf, 0.1, 0.2, 0.);
     }
 
     #[test]
     #[should_panic]
     fn fail_new2() {
         let tf = Tf::new(poly!(1.), poly!(0., 1.));
-        RootLocus::new(tf, 0.9, 0.2, 0.1);
+        Iter::new(tf, 0.9, 0.2, 0.1);
     }
 }
