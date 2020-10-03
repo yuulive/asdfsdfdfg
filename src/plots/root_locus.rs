@@ -3,7 +3,7 @@
 //! Trajectories of the poles when the system is put in feedback with a pure
 //! constant controller
 
-use nalgebra::{ComplexField, RealField};
+use nalgebra::RealField;
 use num_complex::Complex;
 use num_traits::{Float, MulAdd};
 
@@ -11,7 +11,7 @@ use crate::transfer_function::continuous::Tf;
 
 /// Struct for root locus plot
 #[derive(Clone, Debug)]
-pub struct Iter<T: Float> {
+pub struct RootLocus<T: Float> {
     /// Transfer function
     tf: Tf<T>,
     /// Transfer constant
@@ -20,12 +20,10 @@ pub struct Iter<T: Float> {
     intervals: T,
     /// Step size
     step: T,
-    /// Current index of iterator
-    index: T,
 }
 
-impl<T: Float> Iter<T> {
-    /// Create a `RootLocus` struct
+impl<T: Float> RootLocus<T> {
+    /// Create a `RootLocus` plot struct
     ///
     /// # Arguments
     ///
@@ -53,6 +51,26 @@ impl<T: Float> Iter<T> {
             min_k,
             intervals,
             step,
+        }
+    }
+}
+
+/// Struct for root locus plot
+#[derive(Clone, Debug)]
+pub struct IntoIter<T: Float> {
+    /// Root locus plot
+    plot: RootLocus<T>,
+    /// Current index of iterator
+    index: T,
+}
+
+impl<T: Float + MulAdd<Output = T> + RealField> IntoIterator for RootLocus<T> {
+    type Item = Data<T>;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Self::IntoIter {
+            plot: self,
             index: T::zero(),
         }
     }
@@ -60,14 +78,14 @@ impl<T: Float> Iter<T> {
 
 /// Struct to hold the data for the root locus plot.
 #[derive(Debug)]
-pub struct Data<T: Float> {
+pub struct Data<T> {
     /// Transfer constant
     k: T,
     /// Roots at the given transfer constant
     output: Vec<Complex<T>>,
 }
 
-impl<T: Float> Data<T> {
+impl<T: Copy> Data<T> {
     /// Get the transfer constant.
     pub fn k(&self) -> T {
         self.k
@@ -79,20 +97,21 @@ impl<T: Float> Data<T> {
     }
 }
 
-impl<T: ComplexField + Float + MulAdd<Output = T> + RealField> Iterator for Iter<T> {
+impl<T: Float + MulAdd<Output = T> + RealField> Iterator for IntoIter<T> {
     type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index > self.intervals {
+        let plot = &self.plot;
+        if self.index > plot.intervals {
             None
         } else {
             // k = step * index + min_k, is used to avoid loss of precision
             // of k += step, due to floating point addition
-            let k = MulAdd::mul_add(self.step, self.index, self.min_k);
+            let k = MulAdd::mul_add(plot.step, self.index, plot.min_k);
             self.index += T::one();
             Some(Self::Item {
                 k,
-                output: self.tf.root_locus(k),
+                output: plot.tf.root_locus(k),
             })
         }
     }
@@ -107,13 +126,13 @@ mod tests {
     #[should_panic]
     fn fail_new1() {
         let tf = Tf::new(poly!(1.), poly!(0., 1.));
-        Iter::new(tf, 0.1, 0.2, 0.);
+        RootLocus::new(tf, 0.1, 0.2, 0.);
     }
 
     #[test]
     #[should_panic]
     fn fail_new2() {
         let tf = Tf::new(poly!(1.), poly!(0., 1.));
-        Iter::new(tf, 0.9, 0.2, 0.1);
+        RootLocus::new(tf, 0.9, 0.2, 0.1);
     }
 }

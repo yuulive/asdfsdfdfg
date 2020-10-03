@@ -11,7 +11,7 @@
 //! * polar plot
 //! * static gain
 
-use nalgebra::{ComplexField, RealField};
+use nalgebra::RealField;
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
@@ -21,7 +21,7 @@ use crate::{
     plots::{
         bode::{self, Bode},
         polar::{Polar, PolarT},
-        root_locus,
+        root_locus::RootLocus,
     },
     transfer_function::TfGen,
     units::{RadiansPerSecond, Seconds, ToDecibel},
@@ -175,7 +175,7 @@ impl<T: Float> Tf<T> {
     }
 }
 
-impl<T: ComplexField + Float + RealField> Tf<T> {
+impl<T: Float + RealField> Tf<T> {
     /// System stability. Checks if all poles are negative.
     ///
     /// # Example
@@ -229,11 +229,11 @@ impl<T: ComplexField + Float + RealField> Tf<T> {
     /// use num_complex::Complex;
     /// use automatica::{poly, Poly, Tf};
     /// let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
-    /// let locus = l.root_locus_iter(0.1, 1.0, 0.05);
+    /// let locus = l.root_locus_plot(0.1, 1.0, 0.05).into_iter();
     /// assert_eq!(19, locus.count());
     /// ```
-    pub fn root_locus_iter(self, min_k: T, max_k: T, step: T) -> root_locus::Iter<T> {
-        root_locus::Iter::new(self, min_k, max_k, step)
+    pub fn root_locus_plot(self, min_k: T, max_k: T, step: T) -> RootLocus<T> {
+        RootLocus::new(self, min_k, max_k, step)
     }
 }
 
@@ -394,9 +394,8 @@ mod tests {
     #[test]
     fn root_locus_iterations() {
         let l = Tf::new(poly!(1.0_f32), Poly::new_from_roots(&[0., -3., -5.]));
-        let loci = l.root_locus_iter(1., 130., 1.);
+        let loci = l.root_locus_plot(1., 130., 1.).into_iter();
         let last = loci.last().unwrap();
-        dbg!(&last);
         assert_relative_eq!(130., last.k());
         assert_eq!(3, last.output().len());
         assert!(last.output().iter().any(|r| r.re > 0.));

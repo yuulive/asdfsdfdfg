@@ -53,7 +53,7 @@ fn root_locus_plot() {
     // Example 13.2.
     let tf = Tf::new(poly!(1.0_f64), Poly::new_from_roots(&[0., -3., -5.]));
 
-    let loci = tf.root_locus_iter(1., 130., 1.);
+    let loci = tf.root_locus_plot(1., 130., 1.);
     for locus in loci {
         let out = locus.output();
         if locus.k() < 120. {

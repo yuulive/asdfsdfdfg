@@ -7,7 +7,7 @@ fn main() {
 
     println!("T:\n{}\n", tf);
 
-    let loci = tf.root_locus_iter(0.1, 1.0, 0.05);
+    let loci = tf.root_locus_plot(0.1, 1.0, 0.05);
     for locus in loci {
         let out = locus.output();
         println!(
