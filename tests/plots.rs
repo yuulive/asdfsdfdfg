@@ -3,7 +3,7 @@ extern crate automatica;
 extern crate approx;
 
 use automatica::{
-    plots::{bode::Bode, polar::Polar},
+    plots::{bode::Bode, polar::PolarT},
     poly, Poly, RadiansPerSecond, Tf,
 };
 
@@ -34,11 +34,12 @@ fn bode_plot() {
 fn polar_plot() {
     let tf = Tf::new(poly!(5.), Poly::new_from_roots(&[-1., -10.]));
     let p = tf.polar(RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
+    let points = p.into_iter();
 
-    assert!(p.clone().all(|x| x.magnitude() < 1.));
+    assert!(points.clone().all(|x| x.magnitude() < 1.));
     // Assert that the values are decreasing.
     assert!(
-        p.fold((true, 1.0), |acc, x| (
+        points.fold((true, 1.0), |acc, x| (
             acc.0 && x.magnitude() < acc.1,
             x.magnitude()
         ))

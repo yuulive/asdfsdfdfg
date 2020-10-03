@@ -20,7 +20,7 @@ use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 use crate::{
     plots::{
         bode::{self, Bode},
-        polar::{self, Polar},
+        polar::{Polar, PolarT},
         root_locus,
     },
     transfer_function::TfGen,
@@ -271,14 +271,14 @@ impl<T: ToDecibel + Float + FloatConst + MulAdd<Output = T>> Bode<T> for Tf<T> {
 }
 
 /// Implementation of the polar plot for a transfer function
-impl<T: Float + FloatConst + MulAdd<Output = T>> Polar<T> for Tf<T> {
+impl<T: Float + FloatConst + MulAdd<Output = T>> PolarT<T> for Tf<T> {
     fn polar(
         self,
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
-    ) -> polar::Iter<T> {
-        polar::Iter::new(self, min_freq, max_freq, step)
+    ) -> Polar<T> {
+        Polar::new(self, min_freq, max_freq, step)
     }
 }
 

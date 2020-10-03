@@ -10,9 +10,9 @@ use crate::{transfer_function::continuous::Tf, units::RadiansPerSecond};
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd};
 
-/// Struct for the calculation of Polar plots
+/// Struct representing a Polar plot.
 #[derive(Clone, Debug)]
-pub struct Iter<T: Float> {
+pub struct Polar<T: Float + MulAdd<Output = T>> {
     /// Transfer function
     tf: Tf<T>,
     /// Number of intervals of the plot
@@ -21,12 +21,10 @@ pub struct Iter<T: Float> {
     step: T,
     /// Start frequency exponent
     base_freq_exp: T,
-    /// Current data index
-    index: T,
 }
 
-impl<T: Float + MulAdd<Output = T>> Iter<T> {
-    /// Create a `Polar` struct
+impl<T: Float + MulAdd<Output = T>> Polar<T> {
+    /// Create a `Polar` plot struct
     ///
     /// # Arguments
     ///
@@ -58,12 +56,32 @@ impl<T: Float + MulAdd<Output = T>> Iter<T> {
             intervals,
             step,
             base_freq_exp: min,
+        }
+    }
+}
+
+impl<T: Float + MulAdd<Output = T>> IntoIterator for Polar<T> {
+    type Item = Data<T>;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Self::IntoIter {
+            plot: self,
             index: T::zero(),
         }
     }
 }
 
-/// Struct to hold the data returned by the Polar iterator
+/// Struct for the Polar plot data point iteration.
+#[derive(Clone, Debug)]
+pub struct IntoIter<T: Float + MulAdd<Output = T>> {
+    /// Polar plot
+    plot: Polar<T>,
+    /// Current data index
+    index: T,
+}
+
+/// Struct to hold the data returned by the Polar iterator.
 #[derive(Clone, Copy, Debug)]
 pub struct Data<T> {
     /// Output
@@ -98,27 +116,28 @@ impl<T: Float> Data<T> {
 }
 
 /// Implementation of the Iterator trait for `Polar` struct
-impl<T: Float + MulAdd<Output = T>> Iterator for Iter<T> {
+impl<T: Float + MulAdd<Output = T>> Iterator for IntoIter<T> {
     type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index > self.intervals {
+        let plot = &self.plot;
+        if self.index > plot.intervals {
             None
         } else {
-            let freq_exponent = MulAdd::mul_add(self.step, self.index, self.base_freq_exp);
+            let freq_exponent = MulAdd::mul_add(plot.step, self.index, plot.base_freq_exp);
             // Casting is safe for both f32 and f64, representation is exact.
             let omega = T::from(10.0_f32).unwrap().powf(freq_exponent);
             let j_omega = Complex::<T>::new(T::zero(), omega);
             self.index = self.index + T::one();
             Some(Data {
-                output: self.tf.eval(&j_omega),
+                output: plot.tf.eval(&j_omega),
             })
         }
     }
 }
 
 /// Trait for the implementation of polar plot for a linear system.
-pub trait Polar<T: Float + FloatConst> {
+pub trait PolarT<T: Float + FloatConst + MulAdd<Output = T>> {
     /// Create a `Polar` struct
     ///
     /// # Arguments
@@ -138,7 +157,7 @@ pub trait Polar<T: Float + FloatConst> {
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
-    ) -> Iter<T>;
+    ) -> Polar<T>;
 }
 
 #[cfg(test)]
@@ -149,9 +168,9 @@ mod tests {
     #[test]
     fn create_iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = Iter::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
-        assert_relative_eq!(20., iter.intervals);
-        assert_relative_eq!(1., iter.base_freq_exp);
+        let iter = Polar::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1).into_iter();
+        assert_relative_eq!(20., iter.plot.intervals);
+        assert_relative_eq!(1., iter.plot.base_freq_exp);
         assert_relative_eq!(0., iter.index);
     }
 
@@ -169,7 +188,7 @@ mod tests {
     #[test]
     fn iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = Iter::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Polar::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1).into_iter();
         // 20 steps -> 21 iteration
         assert_eq!(21, iter.count());
     }
