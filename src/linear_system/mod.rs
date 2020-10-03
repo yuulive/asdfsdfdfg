@@ -32,7 +32,12 @@ use std::{
 };
 
 use crate::{
-    polynomial, polynomial::Poly, polynomial_matrix::PolyMatrix, transfer_function::TfGen, Time,
+    error::{Error, ErrorKind},
+    polynomial,
+    polynomial::Poly,
+    polynomial_matrix::PolyMatrix,
+    transfer_function::TfGen,
+    Time,
 };
 
 /// State-space representation of a linear system
@@ -376,12 +381,12 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// # Errors
     ///
     /// It returns an error if the transfer function has no poles.
-    pub fn new_observability_realization(tf: &TfGen<T, U>) -> Result<Self, &'static str> {
+    pub fn new_observability_realization(tf: &TfGen<T, U>) -> Result<Self, Error> {
         // Get the denominator in the monic form mantaining the original gain.
         let tf_norm = tf.normalize();
         let order = match tf_norm.den().degree() {
             Some(d) => d,
-            None => return Err("Transfer functions cannot have zero polynomial denominator"),
+            None => return Err(Error::new_internal(ErrorKind::ZeroPolynomialDenominator)),
         };
         let num = {
             // Extend the numerator coefficients with zeros to the length of the
@@ -456,12 +461,12 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// # Errors
     ///
     /// It returns an error if the transfer function has no poles.
-    pub fn new_controllability_realization(tf: &TfGen<T, U>) -> Result<Self, &'static str> {
+    pub fn new_controllability_realization(tf: &TfGen<T, U>) -> Result<Self, Error> {
         // Get the denominator in the monic form mantaining the original gain.
         let tf_norm = tf.normalize();
         let order = match tf_norm.den().degree() {
             Some(d) => d,
-            None => return Err("Transfer functions cannot have zero polynomial denominator"),
+            None => return Err(Error::new_internal(ErrorKind::ZeroPolynomialDenominator)),
         };
         let num = {
             // Extend the numerator coefficients with zeros to the length of the
@@ -512,7 +517,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
 ///
 /// The transfer function shall be in normalized from, i.e. the highest
 /// coefficient of the denominator shall be 1.
-fn observability_canonical_form<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
+fn observability_canonical_form<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, Error>
 where
     T: ComplexField + Float + RealField,
     U: Time,
@@ -533,7 +538,7 @@ where
             debug_assert!(comp.is_square());
             Ok(comp)
         }
-        _ => Err("Denominator has no poles"),
+        _ => Err(Error::new_internal(ErrorKind::NoPolesDenominator)),
     }
 }
 
@@ -541,7 +546,7 @@ where
 ///
 /// The transfer function shall be in normalized from, i.e. the highest
 /// coefficient of the denominator shall be 1.
-fn controllability_canonical_form<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
+fn controllability_canonical_form<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, Error>
 where
     T: ComplexField + Float + RealField,
     U: Time,
@@ -562,7 +567,7 @@ where
             debug_assert!(comp.is_square());
             Ok(comp)
         }
-        _ => Err("Denominator has no poles"),
+        _ => Err(Error::new_internal(ErrorKind::NoPolesDenominator)),
     }
 }
 

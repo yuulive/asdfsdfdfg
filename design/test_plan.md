@@ -476,6 +476,10 @@ Determination of the pulse and the dump of a complex number.
 
 Zip two iterators with different lengths, also through a function, at the shortest elements are added.
 
+### Module error
+
+String and debug string representation of Error.
+
 ## Documentation tests
 
 Every public method of the library shall have a documentation in the source code, in addition there shall be an example of the use of the method.
