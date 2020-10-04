@@ -4,7 +4,7 @@ use num_complex::Complex;
 use num_traits::One;
 
 use automatica::{
-    plots::bode::Bode,
+    plots::bode::BodeT,
     units::{RadiansPerSecond, ToDecibel},
     Poly, Tf,
 };
@@ -26,7 +26,7 @@ fn main() {
 
     println!("\nBode Plot:");
     let b = tf.bode(RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
-    for g in b.into_db_deg() {
+    for g in b.into_iter().into_db_deg() {
         println!(
             "f: {:.3} rad/s, m: {:.3} dB, f: {:.1} °",
             g.angular_frequency(),

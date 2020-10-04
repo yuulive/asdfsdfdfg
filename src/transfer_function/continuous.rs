@@ -19,12 +19,12 @@ use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 
 use crate::{
     plots::{
-        bode::{self, Bode},
+        bode::{Bode, BodeT},
         polar::{Polar, PolarT},
         root_locus::RootLocus,
     },
     transfer_function::TfGen,
-    units::{RadiansPerSecond, Seconds, ToDecibel},
+    units::{RadiansPerSecond, Seconds},
     Continuous,
 };
 
@@ -259,14 +259,14 @@ impl<T> Tf<T> {
 }
 
 /// Implementation of the Bode plot for a transfer function
-impl<T: ToDecibel + Float + FloatConst + MulAdd<Output = T>> Bode<T> for Tf<T> {
+impl<T: Float + FloatConst> BodeT<T> for Tf<T> {
     fn bode(
         self,
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
-    ) -> bode::Iter<T> {
-        bode::Iter::new(self, min_freq, max_freq, step)
+    ) -> Bode<T> {
+        Bode::new(self, min_freq, max_freq, step)
     }
 }
 
@@ -319,7 +319,7 @@ mod tests {
     fn bode() {
         let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
         let b = tf.bode(RadiansPerSecond(0.1), RadiansPerSecond(100.0), 0.1);
-        for g in b.into_db_deg() {
+        for g in b.into_iter().into_db_deg() {
             assert!(g.magnitude() < 0.);
             assert!(g.phase() < 0.);
         }
