@@ -152,6 +152,7 @@ impl Ss<f64> {
 mod tests {
     use super::*;
 
+    #[allow(clippy::many_single_char_names)]
     #[test]
     fn equilibrium() {
         let a = [-1., 1., -1., 0.25];

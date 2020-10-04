@@ -365,6 +365,7 @@ impl<T> TimeEvolution<T> {
 mod tests {
     use super::*;
 
+    #[allow(clippy::many_single_char_names)]
     #[test]
     fn equilibrium() {
         let a = &[0., 0.8, 0.4, 1., 0., 0., 0., 1., 0.7];

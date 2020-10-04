@@ -26,8 +26,11 @@ fn equilibrium() {
     let d = [0.];
     let sys = Ss::new_from_slice(2, 1, 1, &a, &b, &c, &d);
     let eq = sys.equilibrium(&[1.]).unwrap();
-    assert_eq!(&[1., 0.], eq.x());
-    assert_eq!(&[0.], eq.y());
+    assert_eq!(2, eq.x().len());
+    assert_relative_eq!(1., eq.x()[0]);
+    assert_relative_eq!(0., eq.x()[1]);
+    assert_eq!(1, eq.y().len());
+    assert_relative_eq!(0., eq.y()[0]);
 }
 
 /// TC3.3

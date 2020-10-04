@@ -964,19 +964,27 @@ mod tests {
     #[test]
     fn poly_creation_coeffs() {
         let c = [4.3, 5.32];
-        assert_eq!(c, Poly::new_from_coeffs(&c).coeffs.as_slice());
+        for (c1, c2) in c.iter().zip(Poly::new_from_coeffs(&c).coeffs) {
+            assert_relative_eq!(*c1, c2);
+        }
 
         let c2 = [0., 1., 1., 0., 0., 0.];
-        assert_eq!([0., 1., 1.], Poly::new_from_coeffs(&c2).coeffs.as_slice());
+        for (i, c) in c2[..3].iter().zip(Poly::new_from_coeffs(&c2).coeffs) {
+            assert_relative_eq!(*i, c);
+        }
 
         let zero: [f64; 1] = [0.];
-        assert_eq!(zero, poly!(0., 0.).coeffs.as_slice());
+        for (z, c) in zero.iter().zip(poly!(0., 0.).coeffs) {
+            assert_relative_eq!(*z, c);
+        }
 
         let int = [1, 2, 3, 4, 5];
         assert_eq!(int, Poly::new_from_coeffs(&int).coeffs.as_slice());
 
         let float = [0.1_f32, 0.34, 3.43];
-        assert_eq!(float, Poly::new_from_coeffs(&float).coeffs.as_slice());
+        for (f, c) in float.iter().zip(Poly::new_from_coeffs(&float).coeffs) {
+            assert_relative_eq!(*f, c);
+        }
 
         assert_eq!(
             Poly::new_from_coeffs(&[1, 2, 3]),
@@ -1115,12 +1123,12 @@ mod tests {
         let p1 = poly!(1., 2., 3.);
         let p2 = poly!(4., 5.);
         let x = 2.;
-        let r = Poly::eval_poly_ratio(&p1, &p2, x);
-        assert_eq!(p1.eval(&x) / p2.eval(&x), r);
+        let r1 = Poly::eval_poly_ratio(&p1, &p2, x);
+        assert_relative_eq!(p1.eval(&x) / p2.eval(&x), r1);
 
         let y = 0.5;
-        let r = Poly::eval_poly_ratio(&p1, &p2, y);
-        assert_eq!(p1.eval(&y) / p2.eval(&y), r);
+        let r2 = Poly::eval_poly_ratio(&p1, &p2, y);
+        assert_relative_eq!(p1.eval(&y) / p2.eval(&y), r2);
     }
 
     #[test]
@@ -1322,7 +1330,9 @@ mod tests_roots {
     fn real_3_roots_eigen() {
         let roots = &[-1., 1., 0.];
         let p = Poly::new_from_roots(roots);
-        assert_eq!(roots, p.real_roots().unwrap().as_slice());
+        for (r, rr) in roots.iter().zip(p.real_roots().unwrap()) {
+            assert_relative_eq!(*r, rr);
+        }
     }
 
     #[test]

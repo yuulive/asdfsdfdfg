@@ -38,7 +38,7 @@ fn main() {
 
     println!("Linear system:\n{}", &sys);
 
-    let G = TfMatrix::from(sys.clone());
+    let G = TfMatrix::from(sys);
     let G11 = Tf::new(G[[0, 0]].clone(), G.den());
     let G12 = Tf::new(G[[0, 1]].clone(), G.den());
 

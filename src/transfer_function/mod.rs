@@ -679,7 +679,10 @@ mod tests {
     #[test]
     fn print() {
         let tf = TfGen::<_, Continuous>::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
-        assert_eq!("1\n─────\n1 +1s", format!("{}", tf));
+        assert_eq!(
+            "1\n\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n1 +1s",
+            format!("{}", tf)
+        );
     }
 
     #[test]
