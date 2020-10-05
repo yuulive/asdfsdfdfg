@@ -137,7 +137,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for IntoIter<T> {
 }
 
 /// Trait for the implementation of polar plot for a linear system.
-pub trait PolarT<T: Float + FloatConst + MulAdd<Output = T>> {
+pub trait PolarPlotter<T: Float + FloatConst + MulAdd<Output = T>> {
     /// Create a `Polar` struct
     ///
     /// # Arguments

@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate automatica;
 
-use automatica::{plots::polar::PolarT, Poly, RadiansPerSecond, Tf};
+use automatica::{plots::polar::PolarPlotter, Poly, RadiansPerSecond, Tf};
 
 fn main() {
     let tf = Tf::new(poly!(5.), Poly::new_from_roots(&[-1., -10.]));

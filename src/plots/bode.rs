@@ -154,7 +154,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for IntoIter<T> {
 }
 
 /// Trait for the implementation of Bode plot for a linear system.
-pub trait BodeT<T: FloatConst + Num> {
+pub trait BodePlotter<T: FloatConst + Num> {
     /// Create a `Bode` struct
     ///
     /// # Arguments

@@ -3,7 +3,7 @@ extern crate automatica;
 extern crate approx;
 
 use automatica::{
-    plots::{bode::BodeT, polar::PolarT},
+    plots::{bode::BodePlotter, polar::PolarPlotter},
     poly, Poly, RadiansPerSecond, Tf,
 };
 

@@ -4,7 +4,7 @@ use num_complex::Complex;
 use num_traits::One;
 
 use automatica::{
-    plots::bode::BodeT,
+    plots::bode::BodePlotter,
     units::{RadiansPerSecond, ToDecibel},
     Poly, Tf,
 };
