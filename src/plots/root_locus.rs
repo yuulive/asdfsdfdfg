@@ -14,10 +14,10 @@ use crate::transfer_function::continuous::Tf;
 pub struct RootLocus<T: Float> {
     /// Transfer function
     tf: Tf<T>,
-    /// Transfer constant
+    /// Minimum transfer constant of the plot
     min_k: T,
-    /// Number of intervals to compute
-    intervals: T,
+    /// Maximum transfer constant of the plot
+    max_k: T,
     /// Step size
     step: T,
 }
@@ -45,11 +45,10 @@ impl<T: Float> RootLocus<T> {
             "Maximum transfer constant must be greater than the minimum transfer constant."
         );
 
-        let intervals = ((max_k - min_k) / step).floor();
         Self {
             tf,
             min_k,
-            intervals,
+            max_k,
             step,
         }
     }
@@ -58,8 +57,14 @@ impl<T: Float> RootLocus<T> {
 /// Struct for root locus plot
 #[derive(Clone, Debug)]
 pub struct IntoIter<T: Float> {
-    /// Root locus plot
-    plot: RootLocus<T>,
+    /// Transfer function
+    tf: Tf<T>,
+    /// Minimum transfer constant
+    min_k: T,
+    /// Step size
+    step: T,
+    /// Number of intervals to compute
+    intervals: T,
     /// Current index of iterator
     index: T,
 }
@@ -69,8 +74,12 @@ impl<T: Float + MulAdd<Output = T> + RealField> IntoIterator for RootLocus<T> {
     type IntoIter = IntoIter<T>;
 
     fn into_iter(self) -> Self::IntoIter {
+        let intervals = num_traits::Float::floor((self.max_k - self.min_k) / self.step);
         Self::IntoIter {
-            plot: self,
+            tf: self.tf,
+            min_k: self.min_k,
+            step: self.step,
+            intervals,
             index: T::zero(),
         }
     }
@@ -101,17 +110,16 @@ impl<T: Float + MulAdd<Output = T> + RealField> Iterator for IntoIter<T> {
     type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let plot = &self.plot;
-        if self.index > plot.intervals {
+        if self.index > self.intervals {
             None
         } else {
             // k = step * index + min_k, is used to avoid loss of precision
             // of k += step, due to floating point addition
-            let k = MulAdd::mul_add(plot.step, self.index, plot.min_k);
+            let k = MulAdd::mul_add(self.step, self.index, self.min_k);
             self.index += T::one();
             Some(Self::Item {
                 k,
-                output: plot.tf.root_locus(k),
+                output: self.tf.root_locus(k),
             })
         }
     }
