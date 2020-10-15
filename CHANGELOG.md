@@ -2,7 +2,11 @@
 
 ## [0.9.0] Unreleased
 ## Added
+- Evaluation of polynomial ratios that avoids overflows
 ## Changed
+- Add and example for a car suspension system
+- Changed division method for complex numbers
+- Decoupled a plot (polar, Bode, root locus) from the iterator that supplies points
 ### API Changes
 - Implemented a custom Error type
 ## Fixed
