@@ -18,12 +18,12 @@ use num_traits::{Float, FloatConst, MulAdd, Num};
 pub struct Bode<T: Num> {
     /// Transfer function
     tf: Tf<T>,
-    /// Number of intervals of the plot
-    intervals: T,
+    /// Minimum angular frequency of the plot
+    min_freq: RadiansPerSecond<T>,
+    /// Maximum angular frequency of the plot
+    max_freq: RadiansPerSecond<T>,
     /// Step between frequencies
     step: T,
-    /// Start frequency
-    base_freq: RadiansPerSecond<T>,
 }
 
 impl<T: Float> Bode<T> {
@@ -51,14 +51,11 @@ impl<T: Float> Bode<T> {
         assert!(step > T::zero());
         assert!(min_freq < max_freq);
 
-        let min = min_freq.0.log10();
-        let max = max_freq.0.log10();
-        let intervals = ((max - min) / step).floor();
         Self {
             tf,
-            intervals,
+            min_freq,
+            max_freq,
             step,
-            base_freq: RadiansPerSecond(min),
         }
     }
 }
@@ -68,8 +65,14 @@ impl<T: Float + MulAdd<Output = T>> IntoIterator for Bode<T> {
     type IntoIter = IntoIter<T>;
 
     fn into_iter(self) -> Self::IntoIter {
+        let min = self.min_freq.0.log10();
+        let max = self.max_freq.0.log10();
+        let intervals = ((max - min) / self.step).floor();
         Self::IntoIter {
-            plot: self,
+            tf: self.tf,
+            intervals,
+            step: self.step,
+            base_freq: RadiansPerSecond(min),
             index: T::zero(),
         }
     }
@@ -78,8 +81,14 @@ impl<T: Float + MulAdd<Output = T>> IntoIterator for Bode<T> {
 /// Struct for the Polar plot data point iteration.
 #[derive(Clone, Debug)]
 pub struct IntoIter<T: Float> {
-    /// Bode plot
-    plot: Bode<T>,
+    /// Transfer function
+    tf: Tf<T>,
+    /// Number of intervals of the plot
+    intervals: T,
+    /// Step between frequencies
+    step: T,
+    /// Start frequency
+    base_freq: RadiansPerSecond<T>,
     /// Current data index
     index: T,
 }
@@ -133,15 +142,14 @@ impl<T: Float + MulAdd<Output = T>> Iterator for IntoIter<T> {
     type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let plot = &self.plot;
-        if self.index > plot.intervals {
+        if self.index > self.intervals {
             None
         } else {
-            let freq_exponent = MulAdd::mul_add(plot.step, self.index, plot.base_freq.0);
+            let freq_exponent = MulAdd::mul_add(self.step, self.index, self.base_freq.0);
             // Casting is safe for both f32 and f64, representation is exact.
             let omega = T::from(10.0_f32).unwrap().powf(freq_exponent);
             let j_omega = Complex::<T>::new(T::zero(), omega);
-            let g = plot.tf.eval(&j_omega);
+            let g = self.tf.eval(&j_omega);
             //self.index += T::one();
             self.index = self.index + T::one();
             Some(Data {
@@ -203,8 +211,8 @@ mod tests {
     fn create_iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
         let iter = Bode::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1).into_iter();
-        assert_relative_eq!(20., iter.plot.intervals);
-        assert_eq!(RadiansPerSecond(1.), iter.plot.base_freq);
+        assert_relative_eq!(20., iter.intervals);
+        assert_eq!(RadiansPerSecond(1.), iter.base_freq);
         assert_relative_eq!(0., iter.index);
     }
 
