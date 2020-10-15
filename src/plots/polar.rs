@@ -5,16 +5,16 @@
 //!
 //! Functions use angular frequencies as default inputs.
 
-use crate::{transfer_function::continuous::Tf, units::RadiansPerSecond};
+use crate::units::RadiansPerSecond;
 
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd, Num};
 
 /// Struct representing a Polar plot.
 #[derive(Clone, Debug)]
-pub struct Polar<T: Num> {
+pub struct Polar<T: Num, U: Plotter<T>> {
     /// Transfer function
-    tf: Tf<T>,
+    tf: U,
     /// Minimum angular frequency of the plot
     min_freq: RadiansPerSecond<T>,
     /// Maximum angular frequency of the plot
@@ -23,7 +23,7 @@ pub struct Polar<T: Num> {
     step: T,
 }
 
-impl<T: Float + MulAdd<Output = T>> Polar<T> {
+impl<T: Float + MulAdd<Output = T>, U: Plotter<T>> Polar<T, U> {
     /// Create a `Polar` plot struct
     ///
     /// # Arguments
@@ -38,9 +38,9 @@ impl<T: Float + MulAdd<Output = T>> Polar<T> {
     /// # Panics
     ///
     /// Panics if the step is not strictly positive of the minimum frequency
-    /// is not lower than the maximum frequency
-    pub(crate) fn new(
-        tf: Tf<T>,
+    /// is not lower than the maximum frequency.
+    pub fn new(
+        tf: U,
         min_freq: RadiansPerSecond<T>,
         max_freq: RadiansPerSecond<T>,
         step: T,
@@ -57,9 +57,38 @@ impl<T: Float + MulAdd<Output = T>> Polar<T> {
     }
 }
 
-impl<T: Float + MulAdd<Output = T>> IntoIterator for Polar<T> {
+impl<T: Float + FloatConst + MulAdd<Output = T>, U: Plotter<T>> Polar<T, U> {
+    /// Create a `Polar` plot struct
+    ///
+    /// # Arguments
+    ///
+    /// * `tf` - Transfer function to plot
+    /// * `min_freq` - Minimum angular frequency of the plot
+    /// * `step` - Step between frequencies
+    ///
+    /// `step` shall be in logarithmic scale. Use 0.1 to have 10 point per decade
+    ///
+    /// # Panics
+    ///
+    /// Panics if the step is not strictly positive of the minimum frequency
+    /// is not lower than pi.
+    pub fn new_discrete(tf: U, min_freq: RadiansPerSecond<T>, step: T) -> Self {
+        let pi = RadiansPerSecond(T::PI());
+        assert!(step > T::zero());
+        assert!(min_freq < pi);
+
+        Self {
+            tf,
+            min_freq,
+            max_freq: pi,
+            step,
+        }
+    }
+}
+
+impl<T: Float + MulAdd<Output = T>, U: Plotter<T>> IntoIterator for Polar<T, U> {
     type Item = Data<T>;
-    type IntoIter = IntoIter<T>;
+    type IntoIter = IntoIter<T, U>;
 
     fn into_iter(self) -> Self::IntoIter {
         let min = self.min_freq.0.log10();
@@ -77,9 +106,9 @@ impl<T: Float + MulAdd<Output = T>> IntoIterator for Polar<T> {
 
 /// Struct for the Polar plot data point iteration.
 #[derive(Clone, Debug)]
-pub struct IntoIter<T: Float + MulAdd<Output = T>> {
+pub struct IntoIter<T: Float + MulAdd<Output = T>, U: Plotter<T>> {
     /// Transfer function
-    tf: Tf<T>,
+    tf: U,
     /// Number of intervals of the plot
     intervals: T,
     /// Step between frequencies
@@ -125,7 +154,8 @@ impl<T: Float> Data<T> {
 }
 
 /// Implementation of the Iterator trait for `Polar` struct
-impl<T: Float + MulAdd<Output = T>> Iterator for IntoIter<T> {
+// impl<T: Float + MulAdd<Output = T>> Iterator for IntoIter<T, Continuous> {
+impl<T: Float + MulAdd<Output = T>, U: Plotter<T>> Iterator for IntoIter<T, U> {
     type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -135,43 +165,29 @@ impl<T: Float + MulAdd<Output = T>> Iterator for IntoIter<T> {
             let freq_exponent = MulAdd::mul_add(self.step, self.index, self.base_freq_exp);
             // Casting is safe for both f32 and f64, representation is exact.
             let omega = T::from(10.0_f32).unwrap().powf(freq_exponent);
-            let j_omega = Complex::<T>::new(T::zero(), omega);
+            // let j_omega = Complex::<T>::new(T::zero(), omega);
             self.index = self.index + T::one();
             Some(Data {
-                output: self.tf.eval(&j_omega),
+                output: self.tf.evalp(omega),
             })
         }
     }
 }
 
-/// Trait for the implementation of polar plot for a linear system.
-pub trait PolarPlotter<T: Float + FloatConst + MulAdd<Output = T>> {
-    /// Create a `Polar` struct
+/// Determine how the transfer function is evaluate in plots.
+pub trait Plotter<T> {
+    /// Evaluate the transfer function at the given value.
     ///
     /// # Arguments
     ///
-    /// * `min_freq` - Minimum angular frequency of the plot
-    /// * `max_freq` - Maximum angular frequency of the plot
-    /// * `step` - Step between frequencies
-    ///
-    /// `step` shall be in logarithmic scale. Use 0.1 to have 10 point per decade
-    ///
-    /// # Panics
-    ///
-    /// Panics if the step is not strictly positive of the minimum frequency
-    /// is not lower than the maximum frequency
-    fn polar(
-        self,
-        min_freq: RadiansPerSecond<T>,
-        max_freq: RadiansPerSecond<T>,
-        step: T,
-    ) -> Polar<T>;
+    /// * `s` - value at which the function is evaluated
+    fn evalp(&self, s: T) -> Complex<T>;
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::poly;
+    use crate::{poly, transfer_function::continuous::Tf};
 
     #[test]
     fn create_iterator() {

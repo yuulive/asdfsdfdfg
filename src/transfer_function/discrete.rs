@@ -24,7 +24,7 @@ use std::{
     ops::{Add, Div, Mul},
 };
 
-use crate::{transfer_function::TfGen, Discrete};
+use crate::{plots::polar::Plotter, transfer_function::TfGen, Discrete};
 
 /// Discrete transfer function
 pub type Tfz<T> = TfGen<T, Discrete>;
@@ -352,6 +352,12 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let current_input = self.iter.next()?;
         arma_iter!(self, current_input)
+    }
+}
+
+impl<T: Float> Plotter<T> for Tfz<T> {
+    fn evalp(&self, theta: T) -> Complex<T> {
+        self.eval(&Complex::from_polar(&T::one(), &theta))
     }
 }
 
