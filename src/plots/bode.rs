@@ -11,25 +11,23 @@ use crate::{
 };
 
 use num_complex::Complex;
-use num_traits::{Float, FloatConst, MulAdd};
+use num_traits::{Float, FloatConst, MulAdd, Num};
 
 /// Struct for the calculation of Bode plots
 #[derive(Clone, Debug)]
-pub struct Bode<T: Float> {
+pub struct Bode<T: Num> {
     /// Transfer function
     tf: Tf<T>,
-    /// Number of intervals of the plot
-    intervals: T,
+    /// Minimum angular frequency of the plot
+    min_freq: RadiansPerSecond<T>,
+    /// Maximum angular frequency of the plot
+    max_freq: RadiansPerSecond<T>,
     /// Step between frequencies
     step: T,
-    /// Start frequency
-    base_freq: RadiansPerSecond<T>,
-    /// Current data index
-    index: T,
 }
 
-impl<T: ToDecibel + Float + MulAdd<Output = T>> Bode<T> {
-    /// Create a `Bode` struct
+impl<T: Float> Bode<T> {
+    /// Create a `Bode` plot struct
     ///
     /// # Arguments
     ///
@@ -53,18 +51,49 @@ impl<T: ToDecibel + Float + MulAdd<Output = T>> Bode<T> {
         assert!(step > T::zero());
         assert!(min_freq < max_freq);
 
-        let min = min_freq.0.log10();
-        let max = max_freq.0.log10();
-        let intervals = ((max - min) / step).floor();
         Self {
             tf,
-            intervals,
+            min_freq,
+            max_freq,
             step,
+        }
+    }
+}
+
+impl<T: Float + MulAdd<Output = T>> IntoIterator for Bode<T> {
+    type Item = Data<T>;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let min = self.min_freq.0.log10();
+        let max = self.max_freq.0.log10();
+        let intervals = ((max - min) / self.step).floor();
+        Self::IntoIter {
+            tf: self.tf,
+            intervals,
+            step: self.step,
             base_freq: RadiansPerSecond(min),
             index: T::zero(),
         }
     }
+}
 
+/// Struct for the Polar plot data point iteration.
+#[derive(Clone, Debug)]
+pub struct IntoIter<T: Float> {
+    /// Transfer function
+    tf: Tf<T>,
+    /// Number of intervals of the plot
+    intervals: T,
+    /// Step between frequencies
+    step: T,
+    /// Start frequency
+    base_freq: RadiansPerSecond<T>,
+    /// Current data index
+    index: T,
+}
+
+impl<T: Float + MulAdd<Output = T> + ToDecibel> IntoIter<T> {
     /// Convert `Bode` into decibels and degrees
     pub fn into_db_deg(self) -> impl Iterator<Item = Data<T>> {
         self.map(|g| Data {
@@ -77,8 +106,8 @@ impl<T: ToDecibel + Float + MulAdd<Output = T>> Bode<T> {
 
 /// Struct to hold the data returned by the Bode iterator
 #[derive(Debug, PartialEq)]
-pub struct Data<T: Float> {
-    /// Angular frequency (rad)
+pub struct Data<T: Num> {
+    /// Angular frequency (rad/s)
     angular_frequency: RadiansPerSecond<T>,
     /// Magnitude (absolute value or dB)
     magnitude: T,
@@ -109,7 +138,7 @@ impl<T: Float + FloatConst> Data<T> {
 }
 
 /// Implementation of the Iterator trait for `Bode` struct
-impl<T: Float + MulAdd<Output = T>> Iterator for Bode<T> {
+impl<T: Float + MulAdd<Output = T>> Iterator for IntoIter<T> {
     type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -133,7 +162,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for Bode<T> {
 }
 
 /// Trait for the implementation of Bode plot for a linear system.
-pub trait BodePlot<T: Float + FloatConst> {
+pub trait BodePlotter<T: FloatConst + Num> {
     /// Create a `Bode` struct
     ///
     /// # Arguments
@@ -181,7 +210,7 @@ mod tests {
     #[test]
     fn create_iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = Bode::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Bode::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1).into_iter();
         assert_relative_eq!(20., iter.intervals);
         assert_eq!(RadiansPerSecond(1.), iter.base_freq);
         assert_relative_eq!(0., iter.index);
@@ -190,7 +219,7 @@ mod tests {
     #[test]
     fn create_iterator_db_deg() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = Bode::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Bode::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1).into_iter();
         let iter2 = iter.into_db_deg();
         let res = iter2.last().unwrap();
         assert_eq!(RadiansPerSecond(1000.), res.angular_frequency());
@@ -216,7 +245,7 @@ mod tests {
     #[test]
     fn iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = Bode::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Bode::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1).into_iter();
         // 20 steps -> 21 iteration
         assert_eq!(21, iter.count());
     }

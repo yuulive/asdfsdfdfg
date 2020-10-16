@@ -8,25 +8,23 @@
 use crate::{transfer_function::continuous::Tf, units::RadiansPerSecond};
 
 use num_complex::Complex;
-use num_traits::{Float, FloatConst, MulAdd};
+use num_traits::{Float, FloatConst, MulAdd, Num};
 
-/// Struct for the calculation of Polar plots
+/// Struct representing a Polar plot.
 #[derive(Clone, Debug)]
-pub struct Polar<T: Float> {
+pub struct Polar<T: Num> {
     /// Transfer function
     tf: Tf<T>,
-    /// Number of intervals of the plot
-    intervals: T,
+    /// Minimum angular frequency of the plot
+    min_freq: RadiansPerSecond<T>,
+    /// Maximum angular frequency of the plot
+    max_freq: RadiansPerSecond<T>,
     /// Step between frequencies
     step: T,
-    /// Start frequency exponent
-    base_freq_exp: T,
-    /// Current data index
-    index: T,
 }
 
 impl<T: Float + MulAdd<Output = T>> Polar<T> {
-    /// Create a `Polar` struct
+    /// Create a `Polar` plot struct
     ///
     /// # Arguments
     ///
@@ -50,20 +48,49 @@ impl<T: Float + MulAdd<Output = T>> Polar<T> {
         assert!(step > T::zero());
         assert!(min_freq < max_freq);
 
-        let min = min_freq.0.log10();
-        let max = max_freq.0.log10();
-        let intervals = ((max - min) / step).floor();
         Self {
             tf,
-            intervals,
+            min_freq,
+            max_freq,
             step,
+        }
+    }
+}
+
+impl<T: Float + MulAdd<Output = T>> IntoIterator for Polar<T> {
+    type Item = Data<T>;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let min = self.min_freq.0.log10();
+        let max = self.max_freq.0.log10();
+        let intervals = ((max - min) / self.step).floor();
+        Self::IntoIter {
+            tf: self.tf,
+            intervals,
+            step: self.step,
             base_freq_exp: min,
             index: T::zero(),
         }
     }
 }
 
-/// Struct to hold the data returned by the Polar iterator
+/// Struct for the Polar plot data point iteration.
+#[derive(Clone, Debug)]
+pub struct IntoIter<T: Float + MulAdd<Output = T>> {
+    /// Transfer function
+    tf: Tf<T>,
+    /// Number of intervals of the plot
+    intervals: T,
+    /// Step between frequencies
+    step: T,
+    /// Start frequency exponent
+    base_freq_exp: T,
+    /// Current data index
+    index: T,
+}
+
+/// Struct to hold the data returned by the Polar iterator.
 #[derive(Clone, Copy, Debug)]
 pub struct Data<T> {
     /// Output
@@ -98,7 +125,7 @@ impl<T: Float> Data<T> {
 }
 
 /// Implementation of the Iterator trait for `Polar` struct
-impl<T: Float + MulAdd<Output = T>> Iterator for Polar<T> {
+impl<T: Float + MulAdd<Output = T>> Iterator for IntoIter<T> {
     type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -118,7 +145,7 @@ impl<T: Float + MulAdd<Output = T>> Iterator for Polar<T> {
 }
 
 /// Trait for the implementation of polar plot for a linear system.
-pub trait PolarPlot<T: Float + FloatConst> {
+pub trait PolarPlotter<T: Float + FloatConst + MulAdd<Output = T>> {
     /// Create a `Polar` struct
     ///
     /// # Arguments
@@ -149,7 +176,7 @@ mod tests {
     #[test]
     fn create_iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = Polar::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Polar::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1).into_iter();
         assert_relative_eq!(20., iter.intervals);
         assert_relative_eq!(1., iter.base_freq_exp);
         assert_relative_eq!(0., iter.index);
@@ -169,7 +196,7 @@ mod tests {
     #[test]
     fn iterator() {
         let tf = Tf::new(poly!(2., 3.), poly!(1., 1., 1.));
-        let iter = Polar::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1);
+        let iter = Polar::new(tf, RadiansPerSecond(10.), RadiansPerSecond(1000.), 0.1).into_iter();
         // 20 steps -> 21 iteration
         assert_eq!(21, iter.count());
     }
