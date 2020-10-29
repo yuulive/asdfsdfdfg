@@ -3,7 +3,7 @@ extern crate automatica;
 extern crate approx;
 
 use automatica::{
-    plots::{bode::BodePlotter, polar::PolarPlotter},
+    plots::{bode::BodePlotter, polar::Polar},
     poly, Poly, RadiansPerSecond, Tf,
 };
 
@@ -33,7 +33,7 @@ fn bode_plot() {
 #[test]
 fn polar_plot() {
     let tf = Tf::new(poly!(5.), Poly::new_from_roots(&[-1., -10.]));
-    let p = tf.polar(RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
+    let p = Polar::new(tf, RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
     let points = p.into_iter();
 
     assert!(points.clone().all(|x| x.magnitude() < 1.));

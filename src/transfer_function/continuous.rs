@@ -13,15 +13,15 @@
 
 use nalgebra::RealField;
 use num_complex::Complex;
-use num_traits::{Float, FloatConst, MulAdd};
+use num_traits::{Float, FloatConst};
 
 use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 
 use crate::{
     plots::{
         bode::{Bode, BodePlotter},
-        polar::{Polar, PolarPlotter},
         root_locus::RootLocus,
+        Plotter,
     },
     transfer_function::TfGen,
     units::{RadiansPerSecond, Seconds},
@@ -270,15 +270,14 @@ impl<T: Float + FloatConst> BodePlotter<T> for Tf<T> {
     }
 }
 
-/// Implementation of the polar plot for a transfer function
-impl<T: Float + FloatConst + MulAdd<Output = T>> PolarPlotter<T> for Tf<T> {
-    fn polar(
-        self,
-        min_freq: RadiansPerSecond<T>,
-        max_freq: RadiansPerSecond<T>,
-        step: T,
-    ) -> Polar<T> {
-        Polar::new(self, min_freq, max_freq, step)
+impl<T: Float> Plotter<T> for Tf<T> {
+    /// Evaluate the transfer function at the given value.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - angular frequency at which the function is evaluated
+    fn eval_point(&self, s: T) -> Complex<T> {
+        self.eval(&Complex::new(T::zero(), s))
     }
 }
 
@@ -289,7 +288,7 @@ mod tests {
     use std::str::FromStr;
 
     use super::*;
-    use crate::{poly, polynomial::Poly};
+    use crate::{plots::polar::Polar, poly, polynomial::Poly};
 
     #[test]
     fn delay() {
@@ -328,7 +327,7 @@ mod tests {
     #[test]
     fn polar() {
         let tf = Tf::new(poly!(5.), Poly::new_from_roots(&[-1., -10.]));
-        let p = tf.polar(RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
+        let p = Polar::new(tf, RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
         for g in p {
             assert!(g.magnitude() < 1.);
             assert!(g.phase() < 0.);
