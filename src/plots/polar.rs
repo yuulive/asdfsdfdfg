@@ -122,11 +122,18 @@ pub struct IntoIter<T: Float + MulAdd<Output = T>, U: Plotter<T>> {
 /// Struct to hold the data returned by the Polar iterator.
 #[derive(Clone, Copy, Debug)]
 pub struct Data<T> {
+    /// Frequency
+    freq: T,
     /// Output
     output: Complex<T>,
 }
 
 impl<T: Float> Data<T> {
+    /// Get the frequency
+    pub fn freq(&self) -> T {
+        self.freq
+    }
+
     /// Get the output
     pub fn output(&self) -> Complex<T> {
         self.output
@@ -167,6 +174,7 @@ impl<T: Float + MulAdd<Output = T>, U: Plotter<T>> Iterator for IntoIter<T, U> {
             let omega = T::from(10.0_f32).unwrap().powf(freq_exponent);
             self.index = self.index + T::one();
             Some(Data {
+                freq: omega,
                 output: self.tf.eval_point(omega),
             })
         }
@@ -176,7 +184,10 @@ impl<T: Float + MulAdd<Output = T>, U: Plotter<T>> Iterator for IntoIter<T, U> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{poly, transfer_function::continuous::Tf};
+    use crate::{
+        poly,
+        transfer_function::{continuous::Tf, discrete::Tfz},
+    };
 
     #[test]
     fn create_iterator() {
@@ -188,10 +199,21 @@ mod tests {
     }
 
     #[test]
+    fn create_discrete() {
+        let tf = Tfz::new(poly!(2., 3.), poly!(1., 1., 1.));
+        let iter = Polar::new_discrete(tf, RadiansPerSecond(0.01), 0.1).into_iter();
+        assert!(iter.last().unwrap().freq() <= std::f32::consts::PI);
+    }
+
+    #[test]
     fn data_struct() {
         let c = Complex::new(3., 4.);
-        let p = Data { output: c };
+        let p = Data {
+            freq: 1.,
+            output: c,
+        };
         assert_eq!(c, p.output());
+        assert_relative_eq!(1., p.freq());
         assert_relative_eq!(3., p.real());
         assert_relative_eq!(4., p.imag());
         assert_relative_eq!(5., p.magnitude());
