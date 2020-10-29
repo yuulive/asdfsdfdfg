@@ -271,6 +271,11 @@ impl<T: Float + FloatConst> BodePlotter<T> for Tf<T> {
 }
 
 impl<T: Float> Plotter<T> for Tf<T> {
+    /// Evaluate the transfer function at the given value.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - angular frequency at which the function is evaluated
     fn eval_point(&self, s: T) -> Complex<T> {
         self.eval(&Complex::new(T::zero(), s))
     }

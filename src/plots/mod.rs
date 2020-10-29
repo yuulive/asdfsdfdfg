@@ -14,12 +14,12 @@ pub mod root_locus;
 
 use num_complex::Complex;
 
-/// Determine how the transfer function is evaluate in plots.
+/// Determine how the transfer function is evaluated in plots.
 pub trait Plotter<T> {
     /// Evaluate the transfer function at the given value.
     ///
     /// # Arguments
     ///
-    /// * `s` - value at which the function is evaluated
-    fn eval_point(&self, s: T) -> Complex<T>;
+    /// * `x` - value at which the function is evaluated
+    fn eval_point(&self, x: T) -> Complex<T>;
 }

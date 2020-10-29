@@ -356,6 +356,12 @@ where
 }
 
 impl<T: Float> Plotter<T> for Tfz<T> {
+    /// Evaluate the transfer function at the given value.
+    ///
+    /// # Arguments
+    ///
+    /// * `theta` - angle at which the function is evaluated.
+    /// Evaluation occurs at G(e^(i*theta)).
     fn eval_point(&self, theta: T) -> Complex<T> {
         self.eval(&Complex::from_polar(&T::one(), &theta))
     }
