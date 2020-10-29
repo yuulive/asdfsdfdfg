@@ -5,10 +5,10 @@
 //!
 //! Functions use angular frequencies as default inputs.
 
-use crate::units::RadiansPerSecond;
-
 use num_complex::Complex;
 use num_traits::{Float, FloatConst, MulAdd, Num};
+
+use crate::{plots::Plotter, units::RadiansPerSecond};
 
 /// Struct representing a Polar plot.
 #[derive(Clone, Debug)]
@@ -165,23 +165,12 @@ impl<T: Float + MulAdd<Output = T>, U: Plotter<T>> Iterator for IntoIter<T, U> {
             let freq_exponent = MulAdd::mul_add(self.step, self.index, self.base_freq_exp);
             // Casting is safe for both f32 and f64, representation is exact.
             let omega = T::from(10.0_f32).unwrap().powf(freq_exponent);
-            // let j_omega = Complex::<T>::new(T::zero(), omega);
             self.index = self.index + T::one();
             Some(Data {
-                output: self.tf.evalp(omega),
+                output: self.tf.eval_point(omega),
             })
         }
     }
-}
-
-/// Determine how the transfer function is evaluate in plots.
-pub trait Plotter<T> {
-    /// Evaluate the transfer function at the given value.
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - value at which the function is evaluated
-    fn evalp(&self, s: T) -> Complex<T>;
 }
 
 #[cfg(test)]

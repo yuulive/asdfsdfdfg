@@ -20,8 +20,8 @@ use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 use crate::{
     plots::{
         bode::{Bode, BodePlotter},
-        polar::Plotter,
         root_locus::RootLocus,
+        Plotter,
     },
     transfer_function::TfGen,
     units::{RadiansPerSecond, Seconds},
@@ -271,7 +271,7 @@ impl<T: Float + FloatConst> BodePlotter<T> for Tf<T> {
 }
 
 impl<T: Float> Plotter<T> for Tf<T> {
-    fn evalp(&self, s: T) -> Complex<T> {
+    fn eval_point(&self, s: T) -> Complex<T> {
         self.eval(&Complex::new(T::zero(), s))
     }
 }

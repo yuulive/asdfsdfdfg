@@ -24,7 +24,7 @@ use std::{
     ops::{Add, Div, Mul},
 };
 
-use crate::{plots::polar::Plotter, transfer_function::TfGen, Discrete};
+use crate::{plots::Plotter, transfer_function::TfGen, Discrete};
 
 /// Discrete transfer function
 pub type Tfz<T> = TfGen<T, Discrete>;
@@ -356,7 +356,7 @@ where
 }
 
 impl<T: Float> Plotter<T> for Tfz<T> {
-    fn evalp(&self, theta: T) -> Complex<T> {
+    fn eval_point(&self, theta: T) -> Complex<T> {
         self.eval(&Complex::from_polar(&T::one(), &theta))
     }
 }
