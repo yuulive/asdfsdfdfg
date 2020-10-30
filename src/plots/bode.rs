@@ -190,7 +190,10 @@ impl<T: Float + MulAdd<Output = T>, U: Plotter<T>> Iterator for IntoIter<T, U> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{poly, transfer_function::continuous::Tf};
+    use crate::{
+        poly,
+        transfer_function::{continuous::Tf, discrete::Tfz},
+    };
 
     #[test]
     fn create_iterator() {
@@ -199,6 +202,13 @@ mod tests {
         assert_relative_eq!(20., iter.intervals);
         assert_eq!(RadiansPerSecond(1.), iter.base_freq);
         assert_relative_eq!(0., iter.index);
+    }
+
+    #[test]
+    fn create_discrete() {
+        let tf = Tfz::new(poly!(2., 3.), poly!(1., 1., 1.));
+        let iter = Bode::new_discrete(tf, RadiansPerSecond(0.01), 0.1).into_iter();
+        assert!(iter.last().unwrap().angular_frequency().0 < std::f32::consts::PI);
     }
 
     #[test]
