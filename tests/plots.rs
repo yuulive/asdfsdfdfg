@@ -3,7 +3,7 @@ extern crate automatica;
 extern crate approx;
 
 use automatica::{
-    plots::{bode::BodePlotter, polar::Polar},
+    plots::{bode::Bode, polar::Polar},
     poly, Poly, RadiansPerSecond, Tf,
 };
 
@@ -20,7 +20,7 @@ fn bode_plot() {
         poly!(1., 2. * xi / omega, (omega * omega).recip()),
     );
 
-    let bode = tf.bode(RadiansPerSecond(0.1), RadiansPerSecond(10.), 0.1);
+    let bode = Bode::new(tf, RadiansPerSecond(0.1), RadiansPerSecond(10.), 0.1);
     let data: Vec<_> = bode.into_iter().into_db_deg().collect();
 
     // At resonance frequency, 1 rad/s is the 10th element of the iterator.

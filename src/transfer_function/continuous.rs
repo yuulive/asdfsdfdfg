@@ -13,18 +13,14 @@
 
 use nalgebra::RealField;
 use num_complex::Complex;
-use num_traits::{Float, FloatConst};
+use num_traits::Float;
 
 use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 
 use crate::{
-    plots::{
-        bode::{Bode, BodePlotter},
-        root_locus::RootLocus,
-        Plotter,
-    },
+    plots::{root_locus::RootLocus, Plotter},
     transfer_function::TfGen,
-    units::{RadiansPerSecond, Seconds},
+    units::Seconds,
     Continuous,
 };
 
@@ -258,18 +254,6 @@ impl<T> Tf<T> {
     }
 }
 
-/// Implementation of the Bode plot for a transfer function
-impl<T: Float + FloatConst> BodePlotter<T> for Tf<T> {
-    fn bode(
-        self,
-        min_freq: RadiansPerSecond<T>,
-        max_freq: RadiansPerSecond<T>,
-        step: T,
-    ) -> Bode<T> {
-        Bode::new(self, min_freq, max_freq, step)
-    }
-}
-
 impl<T: Float> Plotter<T> for Tf<T> {
     /// Evaluate the transfer function at the given value.
     ///
@@ -288,7 +272,12 @@ mod tests {
     use std::str::FromStr;
 
     use super::*;
-    use crate::{plots::polar::Polar, poly, polynomial::Poly};
+    use crate::{
+        plots::{bode::Bode, polar::Polar},
+        poly,
+        polynomial::Poly,
+        units::RadiansPerSecond,
+    };
 
     #[test]
     fn delay() {
@@ -317,7 +306,7 @@ mod tests {
     #[test]
     fn bode() {
         let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
-        let b = tf.bode(RadiansPerSecond(0.1), RadiansPerSecond(100.0), 0.1);
+        let b = Bode::new(tf, RadiansPerSecond(0.1), RadiansPerSecond(100.0), 0.1);
         for g in b.into_iter().into_db_deg() {
             assert!(g.magnitude() < 0.);
             assert!(g.phase() < 0.);
