@@ -9,6 +9,8 @@
 - Decoupled a plot (polar, Bode, root locus) from the iterator that supplies points
 ### API Changes
 - Implemented a custom Error type
+- Refactored Polar struct
+- Refactored Bode struct
 ## Fixed
 
 ## [0.8.0] - 2020-08-30
