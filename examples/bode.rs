@@ -5,8 +5,9 @@ use num_traits::One;
 
 use automatica::{
     plots::bode::Bode,
+    poly,
     units::{RadiansPerSecond, ToDecibel},
-    Poly, Tf,
+    Poly, Tf, Tfz,
 };
 
 #[allow(clippy::non_ascii_literal)]
@@ -27,6 +28,19 @@ fn main() {
     println!("\nBode Plot:");
     let b = Bode::new(tf, RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
     for g in b.into_iter().into_db_deg() {
+        println!(
+            "f: {:.3} rad/s, m: {:.3} dB, f: {:.1} °",
+            g.angular_frequency(),
+            g.magnitude(),
+            g.phase()
+        );
+    }
+
+    let k = 0.5;
+    let tfz = Tfz::new(poly!(1. - k), poly!(-k, 1.));
+    println!("\nDiscrete function T:\n{}\n", tfz);
+    let pz = Bode::new_discrete(tfz, RadiansPerSecond(0.01), 0.1);
+    for g in pz.into_iter().into_db_deg() {
         println!(
             "f: {:.3} rad/s, m: {:.3} dB, f: {:.1} °",
             g.angular_frequency(),
