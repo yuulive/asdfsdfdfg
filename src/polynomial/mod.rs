@@ -779,8 +779,8 @@ impl<T: Float> Poly<T> {
     ///
     /// # Arguments
     ///
-    /// * `a` - numerator of the polynomial ratio.
-    /// * `b` - denominator of the polynomial ratio.
+    /// * `numerator` - numerator of the polynomial ratio.
+    /// * `denominator` - denominator of the polynomial ratio.
     /// * `x` - Value at which the polynomial ratio is evaluated.
     ///
     /// # Example
@@ -794,18 +794,18 @@ impl<T: Float> Poly<T> {
     /// assert!(naive.is_nan());
     /// assert!((0.- r).abs() < 1e-16);
     /// ```
-    pub fn eval_poly_ratio(a: &Self, b: &Self, x: T) -> T {
+    pub fn eval_poly_ratio(numerator: &Self, denominator: &Self, x: T) -> T {
         // When the `x` value is less than one evaluate the polynomial ratio
         // at `1/x` reversing the coefficients.
         if x.abs() <= T::one() {
-            let n = a.eval_by_val(x);
-            let d = b.eval_by_val(x);
+            let n = numerator.eval_by_val(x);
+            let d = denominator.eval_by_val(x);
             n / d
         } else {
             let x = x.recip();
             // Zip and extend the smaller polynomial with zeros.
             // Evaluate the reversed polynomial.
-            let (n, d) = utils::zip_longest(&a.coeffs, &b.coeffs, &T::zero())
+            let (n, d) = utils::zip_longest(&numerator.coeffs, &denominator.coeffs, &T::zero())
                 .fold((T::zero(), T::zero()), |acc, c| {
                     (acc.0 * x + *c.0, acc.1 * x + *c.1)
                 });

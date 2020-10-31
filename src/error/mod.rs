@@ -67,8 +67,8 @@ impl fmt::Debug for Error {
 
 impl ErrorKind {
     /// Generate the string representation of the `ErrorKind` variants.
-    fn as_str(&self) -> &'static str {
-        match *self {
+    fn as_str(self) -> &'static str {
+        match self {
             ErrorKind::NoSisoSystem => "Linear system is not Single Input Single Output",
             ErrorKind::ZeroPolynomialDenominator => {
                 "Transfer functions cannot have zero polynomial denominator"

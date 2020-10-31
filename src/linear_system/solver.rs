@@ -135,7 +135,7 @@ where
     }
 
     /// Runge-Kutta order 4 method.
-    #[allow(clippy::cast_precision_loss)]
+    #[allow(clippy::cast_precision_loss, clippy::similar_names)]
     fn main_iteration_rk4(&mut self) -> Option<Step<T>> {
         // y_n+1 = y_n + h/6(k1 + 2*k2 + 2*k3 + k4) + O(h^4)
         // k1 = f(t_n, y_n)
