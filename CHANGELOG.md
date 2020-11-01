@@ -11,6 +11,7 @@
 - Implemented a custom Error type
 - Refactored Polar struct
 - Refactored Bode struct
+- Removed DiscreteTime trait
 ## Fixed
 
 ## [0.8.0] - 2020-08-30

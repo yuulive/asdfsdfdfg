@@ -1,6 +1,4 @@
-use automatica::{
-    linear_system::discrete::DiscreteTime, Discretization, Poly, Ss, Tf, TfMatrix, Tfz,
-};
+use automatica::{Discretization, Poly, Ss, Tf, TfMatrix, Tfz};
 use num_traits::One;
 
 #[allow(non_snake_case)]
