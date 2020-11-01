@@ -89,63 +89,6 @@ where
     left.into_iter().zip(right).map(move |(l, r)| f(l, r))
 }
 
-/// Zip two iterators extending the shorter one with the provided `fill` value.
-///
-/// # Arguments
-///
-/// * `left` - first iterator
-/// * `right` - second iterator
-/// * `fill` - default value
-#[allow(dead_code)]
-pub(crate) fn zip_longest_old<II, T>(left: II, right: II, fill: T) -> Vec<(T, T)>
-where
-    II: IntoIterator<Item = T>,
-    T: Copy,
-{
-    let mut left_iter = left.into_iter();
-    let mut right_iter = right.into_iter();
-    let hint = left_iter.size_hint().0.max(right_iter.size_hint().0);
-    let mut result = Vec::<(T, T)>::with_capacity(hint.saturating_add(1));
-    loop {
-        match (left_iter.next(), right_iter.next()) {
-            (Some(l), Some(r)) => result.push((l, r)),
-            (Some(l), None) => result.push((l, fill)),
-            (None, Some(r)) => result.push((fill, r)),
-            _ => break,
-        }
-    }
-    result
-}
-
-/// Zip two iterators  with the given function extending the shorter one
-/// with the provided `fill` value.
-///
-/// # Arguments
-///
-/// * `left` - first iterator
-/// * `right` - second iterator
-/// * `fill` - default value
-/// * `f` - function used to zip the two iterators
-#[allow(dead_code)]
-pub(crate) fn zip_longest_with_old<T, F>(left: &[T], right: &[T], fill: T, mut f: F) -> Vec<T>
-where
-    T: Copy,
-    F: FnMut(T, T) -> T,
-{
-    let mut result = Vec::<T>::with_capacity(left.len().max(right.len()));
-    let mut left_iter = left.iter();
-    let mut right_iter = right.iter();
-    loop {
-        match (left_iter.next(), right_iter.next()) {
-            (Some(&l), Some(&r)) => result.push(f(l, r)),
-            (Some(&l), None) => result.push(f(l, fill)),
-            (None, Some(&r)) => result.push(f(fill, r)),
-            _ => break,
-        }
-    }
-    result
-}
-
 #[derive(Clone, Debug)]
 pub(crate) struct ZipLongest<I, J>
 where
@@ -240,31 +183,34 @@ mod tests {
 
     #[test]
     fn zip_longest_left() {
-        let a = zip_longest_old(1..=4, 6..=7, 0);
-        assert_eq!(vec![(1, 6), (2, 7), (3, 0), (4, 0)], a);
+        let a = zip_longest(1..=4, 6..=7, 0);
+        assert_eq!(vec![(1, 6), (2, 7), (3, 0), (4, 0)], a.collect::<Vec<_>>());
     }
 
     #[test]
     fn zip_longest_right() {
-        let a = zip_longest_old(['a', 'b'].iter(), ['a', 'b', 'c', 'd'].iter(), &'z');
+        let a = zip_longest(['a', 'b'].iter(), ['a', 'b', 'c', 'd'].iter(), &'z');
         assert_eq!(
             vec![(&'a', &'a'), (&'b', &'b'), (&'z', &'c'), (&'z', &'d')],
-            a
+            a.collect::<Vec<_>>()
         );
     }
 
     #[test]
     fn zip_longest_with_left() {
-        let a = zip_longest_with_old(&[1, 2, 3, 4], &[6, 7], 0, |x, y| x + y);
-        assert_eq!(vec![7, 9, 3, 4], a);
+        let a = zip_longest_with(&[1, 2, 3, 4], &[6, 7], &0, |x, y| x + y);
+        assert_eq!(vec![7, 9, 3, 4], a.collect::<Vec<_>>());
     }
 
     #[test]
     fn zip_longest_with_right() {
-        let a = zip_longest_with_old(&[true, false], &[false, true, true, false], true, |x, y| {
-            x && y
-        });
-        assert_eq!(vec![false, false, true, false], a);
+        let a = zip_longest_with(
+            &[true, false],
+            &[false, true, true, false],
+            &true,
+            |&x, &y| x && y,
+        );
+        assert_eq!(vec![false, false, true, false], a.collect::<Vec<_>>());
     }
 
     #[test]
