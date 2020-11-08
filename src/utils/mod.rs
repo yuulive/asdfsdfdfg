@@ -109,6 +109,7 @@ where
 /// * `fill` - default value
 pub(crate) fn zip_longest<I, J>(a: I, b: J, fill: I::Item) -> ZipLongest<I::IntoIter, J::IntoIter>
 where
+    I::Item: Clone,
     I: IntoIterator,
     J: IntoIterator<Item = I::Item>,
 {
