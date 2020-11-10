@@ -23,9 +23,13 @@
           <li><a href="continuous_integration.html">Continuous integration</a></li>
           <li><a href="references.html">References</a></li>
         </ul>
+        <h2 id="sections">Sections</h2>
+        <nav id="toc">
+          $toc$
+        </nav>
         <h2 id="external-links">External links</h2>
         <ul>
-          <li><a href="https://gitlab.com/daingun/automatica">Repository</a></li>
+          <li><a href="https://gitlab.com/daingun/automatica">Source code repository</a></li>
           <li><a href="https://crates.io/crates/automatica">Crate registry</a></li>
           <li><a href="https://docs.rs/automatica">API documentation</a></li>
         </ul>
