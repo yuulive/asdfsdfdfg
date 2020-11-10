@@ -22,34 +22,34 @@ The library needs the `rustc` compiler for the compilation with a version equal 
 The list of the needed dependencies for the compilations of the library is the following:
 
 - num-traits
-  * 'trait' system for numeric types, allows the writing of generic numerical methods
-  * source: [https://crates.io/crates/num-traits]
-  * version: 0.2
+    * 'trait' system for numeric types, allows the writing of generic numerical methods
+    * source: [https://crates.io/crates/num-traits]
+    * version: 0.2
 - num-complex
-  * complex numbers
-  * source: [https://crates.io/crates/num-complex]
-  * version: 0.2
+    * complex numbers
+    * source: [https://crates.io/crates/num-complex]
+    * version: 0.2
 - nalgebra
-  * linear algebra, matrices, operations on matrices, decomposition and eigenvalues calculation
-  * source: [https://crates.io/crates/nalgebra]
-  * version: 0.18.0
+    * linear algebra, matrices, operations on matrices, decomposition and eigenvalues calculation
+    * source: [https://crates.io/crates/nalgebra]
+    * version: 0.18.0
 - ndarray
-  * multidimensional vectors, allows non numerical elements
-  * source: [https://crates.io/crates/ndarray]
-  * version: 0.12.1
+    * multidimensional vectors, allows non numerical elements
+    * source: [https://crates.io/crates/ndarray]
+    * version: 0.12.1
 - approx
-  * approximate equality for floating pint numbers
-  * source: [https://crates.io/crates/approx]
-  * version: 0.3.2
+    * approximate equality for floating pint numbers
+    * source: [https://crates.io/crates/approx]
+    * version: 0.3.2
 The following dependencies are necessary for the development phase:
 - quickcheck
-  * randomized tests
-  * source: [https://crates.io/crates/quickcheck]
-  * version: 0.9
+    * randomized tests
+    * source: [https://crates.io/crates/quickcheck]
+    * version: 0.9
 - quickcheck_macros
-  * support macros for randomized tests
-  * source: [https://crates.io/crates/quickcheck_macros]
-  * version: 0.9
+    * support macros for randomized tests
+    * source: [https://crates.io/crates/quickcheck_macros]
+    * version: 0.9
 
 ### Communications interfaces
 
