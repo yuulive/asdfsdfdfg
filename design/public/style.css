@@ -1,0 +1,14 @@
+.container {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+}
+
+.sidebar {
+    grid-column: 1;
+}
+
+.content {
+    grid-column: 2;
+}
+
+
