@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="generator" content="pandoc">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title></title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <header>
+      <h1 class="title">Automatica</h1>
+    </header>
+    <div class="container">
+      <div class="sidebar">
+        <h2 id="table-of-contents">Table of contents</h2>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="introduction.html">Introduction</a></li>
+          <li><a href="description.html">Description</a></li>
+          <li><a href="requirements.html">Requirements</a></li>
+          <li><a href="test_plan.html">Test plan</a></li>
+          <li><a href="continuous_integration.html">Continuous integration</a></li>
+          <li><a href="references.html">References</a></li>
+        </ul>
+        <h2 id="sections">Sections</h2>
+        <nav id="toc">
+          <ul>
+          <li><a href="#continuous-integration">Continuous integration</a><ul>
+          <li><a href="#description">Description</a></li>
+          <li><a href="#structure">Structure</a></li>
+          </ul></li>
+          </ul>
+        </nav>
+        <h2 id="external-links">External links</h2>
+        <ul>
+          <li><a href="https://gitlab.com/daingun/automatica">Source code repository</a></li>
+          <li><a href="https://crates.io/crates/automatica">Crate registry</a></li>
+          <li><a href="https://docs.rs/automatica">API documentation</a></li>
+        </ul>
+      </div>
+      <div class="content">
+        <h1 id="continuous-integration">Continuous integration</h1>
+        <h2 id="description">Description</h2>
+        <p>The use of GitLab platform for the management of the source code of the library, allows the management of the continuous integration activities.</p>
+        <p>The process of continuous integration allows to have the certainty that, after changes to the library, the code can compile and that all tests are executed.</p>
+        <p>The pipeline is executed every time that the changes to the source code are pushed to the repository. Failures during the process are reported by email.</p>
+        <h2 id="structure">Structure</h2>
+        <p>The pipeline is made by the following list of stage and jobs:</p>
+        <ol type="1">
+        <li>build</li>
+        </ol>
+        <ul>
+        <li>build:oldest library compilation with the minimum supported <code>Rust</code> version, both in debug and release mode</li>
+        <li>build:latest library compilation with the latest <code>Rust</code> version, both in debug and in release mode, it is executed also in merge request events</li>
+        </ul>
+        <ol start="2" type="1">
+        <li>test</li>
+        </ol>
+        <ul>
+        <li>test:run execution of all tests present in the library with the latest <code>Rust</code> version, both in debug and in release mode, it is executed also in merge request events</li>
+        <li>cover execution of test coverage program <code>tarpaulin</code></li>
+        </ul>
+        <ol start="3" type="1">
+        <li>examples</li>
+        </ol>
+        <ul>
+        <li>examples:run compilation and execution of the examples of the library using the latest <code>Rust</code> version</li>
+        </ul>
+        <ol start="4" type="1">
+        <li>doc</li>
+        </ol>
+        <ul>
+        <li>pages creation of documentation pages in HTML format and publishing through the GitLab pages service, this job is executed only on master branch</li>
+        </ul>
+        <ol start="5" type="1">
+        <li>package</li>
+        </ol>
+        <ul>
+        <li>package:build verification of the creation of the library package</li>
+        </ul>
+        <ol start="6" type="1">
+        <li>publish</li>
+        </ol>
+        <ul>
+        <li>publish:send creation of publishing on the public registry of the library package, this job is executed only on master branch and its activation is manual</li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

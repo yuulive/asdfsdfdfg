@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="generator" content="pandoc">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title></title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <header>
+      <h1 class="title">Automatica</h1>
+    </header>
+    <div class="container">
+      <div class="sidebar">
+        <h2 id="table-of-contents">Table of contents</h2>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="introduction.html">Introduction</a></li>
+          <li><a href="description.html">Description</a></li>
+          <li><a href="requirements.html">Requirements</a></li>
+          <li><a href="test_plan.html">Test plan</a></li>
+          <li><a href="continuous_integration.html">Continuous integration</a></li>
+          <li><a href="references.html">References</a></li>
+        </ul>
+        <h2 id="sections">Sections</h2>
+        <nav id="toc">
+          <ul>
+          <li><a href="#introduction">Introduction</a><ul>
+          <li><a href="#purpose">Purpose</a></li>
+          <li><a href="#scope">Scope</a></li>
+          <li><a href="#definitions-acronyms-and-abbreviations">Definitions, acronyms and abbreviations</a></li>
+          <li><a href="#overview">Overview</a></li>
+          </ul></li>
+          </ul>
+        </nav>
+        <h2 id="external-links">External links</h2>
+        <ul>
+          <li><a href="https://gitlab.com/daingun/automatica">Source code repository</a></li>
+          <li><a href="https://crates.io/crates/automatica">Crate registry</a></li>
+          <li><a href="https://docs.rs/automatica">API documentation</a></li>
+        </ul>
+      </div>
+      <div class="content">
+        <h1 id="introduction">Introduction</h1>
+        <h2 id="purpose">Purpose</h2>
+        <p>This SRS (Software Requirements Specification) has the purpose of supplying the reference for the high level description of the software, of its design and its verification.</p>
+        <p>This document is addressed to those that intend to use this library in their software or those that intend to contribute to the development of the library.</p>
+        <h2 id="scope">Scope</h2>
+        <p>The name of the library is <code>automatica</code>. The chosen programming language for the development is <code>Rust</code> [11].</p>
+        <p>The version control system is <code>git</code> [12] and the source code is hosted on <code>Gitlab</code> at the following link:</p>
+        <p>[https://gitlab.com/daingun/automatica]</p>
+        <p>The access to the public registry crates.io [13] is available at the following link:</p>
+        <p>[https://crates.io/crates/automatica]</p>
+        <p>The library supplies an infrastructure that contains calculation methods for the design of computer aided control systems. This software does not supply an interface with the final user.</p>
+        <p>The applications of this library should be low level (or system level) functions. The advantage is having fast and optimized low level calculations.</p>
+        <h2 id="definitions-acronyms-and-abbreviations">Definitions, acronyms and abbreviations</h2>
+        <p>Polynomial: algebraic sum of monomials made by a coefficient and a literal part;</p>
+        <p>Time invariant linear system: mathematical model of a physical object that interacts with the external world, whose functions of the state representation are linear and do not explicitly depend on time;</p>
+        <p>State representation: representation of a system through a state equation and an output transformation;</p>
+        <p>Transfer function: external representation of a system, it is equal to the ratio between the Laplace transforms of the forced output and the input that caused it;</p>
+        <p>SISO: single input single output, mono-variable system with only one input and output variable;</p>
+        <p>MIMO: multiple input multiple output, system with more than one input and output variables;</p>
+        <p>by value: the method parameter is passed as value;</p>
+        <p>by ref: the method parameter is passed as reference;</p>
+        <p>in place: the method parameter is passed as mutable reference;</p>
+        <p>FR: Functional requirement;</p>
+        <p>TC: Test case.</p>
+        <h2 id="overview">Overview</h2>
+        <p>This SRS is subdivided in a general description of the library that contains the interfaces and the requirements for the software, a description of specific and functional requirements of the library that describe what it is able to execute, a description of the test plan both black box and white box type, a description of the continuous integration process and the collection of the UML diagrams that describe the library structure.</p>
+      </div>
+    </div>
+  </body>
+</html>

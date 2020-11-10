@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="generator" content="pandoc">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title></title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <header>
+      <h1 class="title">Automatica</h1>
+    </header>
+    <div class="container">
+      <div class="sidebar">
+        <h2 id="table-of-contents">Table of contents</h2>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="introduction.html">Introduction</a></li>
+          <li><a href="description.html">Description</a></li>
+          <li><a href="requirements.html">Requirements</a></li>
+          <li><a href="test_plan.html">Test plan</a></li>
+          <li><a href="continuous_integration.html">Continuous integration</a></li>
+          <li><a href="references.html">References</a></li>
+        </ul>
+        <h2 id="sections">Sections</h2>
+        <nav id="toc">
+          <ul>
+          <li><a href="#overall-description">Overall description</a><ul>
+          <li><a href="#product-perspective">Product perspective</a></li>
+          <li><a href="#product-functions">Product functions</a></li>
+          <li><a href="#user-characteristics">User characteristics</a></li>
+          <li><a href="#constraints">Constraints</a></li>
+          </ul></li>
+          </ul>
+        </nav>
+        <h2 id="external-links">External links</h2>
+        <ul>
+          <li><a href="https://gitlab.com/daingun/automatica">Source code repository</a></li>
+          <li><a href="https://crates.io/crates/automatica">Crate registry</a></li>
+          <li><a href="https://docs.rs/automatica">API documentation</a></li>
+        </ul>
+      </div>
+      <div class="content">
+        <h1 id="overall-description">Overall description</h1>
+        <h2 id="product-perspective">Product perspective</h2>
+        <h3 id="system-interfaces">System interfaces</h3>
+        <p>The library can be used on platforms on which the support for compilation exists. For a reference to the available platforms it is possible to refer to the official list [14].</p>
+        <h3 id="user-interfaces">User interfaces</h3>
+        <p>This library is not designed to have a direct interaction with the user, therefore there are not user interfaces.</p>
+        <h3 id="hardware-interfaces">Hardware Interfaces</h3>
+        <p>This library does not directly interact with the hardware, it uses the function made available by the <code>Rust</code> standard library and the operating system in use.</p>
+        <h3 id="software-interfaces">Software interfaces</h3>
+        <p>The library needs the <code>rustc</code> compiler for the compilation with a version equal of greater than 1.38.</p>
+        <p>The list of the needed dependencies for the compilations of the library is the following:</p>
+        <ul>
+        <li>num-traits
+        <ul>
+        <li>'trait' system for numeric types, allows the writing of generic numerical methods</li>
+        <li>source: [https://crates.io/crates/num-traits]</li>
+        <li>version: 0.2</li>
+        </ul></li>
+        <li>num-complex
+        <ul>
+        <li>complex numbers</li>
+        <li>source: [https://crates.io/crates/num-complex]</li>
+        <li>version: 0.2</li>
+        </ul></li>
+        <li>nalgebra
+        <ul>
+        <li>linear algebra, matrices, operations on matrices, decomposition and eigenvalues calculation</li>
+        <li>source: [https://crates.io/crates/nalgebra]</li>
+        <li>version: 0.18.0</li>
+        </ul></li>
+        <li>ndarray
+        <ul>
+        <li>multidimensional vectors, allows non numerical elements</li>
+        <li>source: [https://crates.io/crates/ndarray]</li>
+        <li>version: 0.12.1</li>
+        </ul></li>
+        <li>approx
+        <ul>
+        <li>approximate equality for floating pint numbers</li>
+        <li>source: [https://crates.io/crates/approx]</li>
+        <li>version: 0.3.2 The following dependencies are necessary for the development phase:</li>
+        </ul></li>
+        <li>quickcheck
+        <ul>
+        <li>randomized tests</li>
+        <li>source: [https://crates.io/crates/quickcheck]</li>
+        <li>version: 0.9</li>
+        </ul></li>
+        <li>quickcheck_macros
+        <ul>
+        <li>support macros for randomized tests</li>
+        <li>source: [https://crates.io/crates/quickcheck_macros]</li>
+        <li>version: 0.9</li>
+        </ul></li>
+        </ul>
+        <h3 id="communications-interfaces">Communications interfaces</h3>
+        <p>This library does not have network interfaces.</p>
+        <h3 id="memory">Memory</h3>
+        <p>There are not memory limits for the use of this library.</p>
+        <h2 id="product-functions">Product functions</h2>
+        <p>The library allows the design by software of time invariant linear systems. It is possible to calculate is properties like the stability, the poles, the zeros and determine the time evolution of the system given an input and an initial state.</p>
+        <p>It is available the possibility to convert the representation of the system from states variables to transfer function and vice-versa.</p>
+        <p>Both discrete time and continuous time system are representable, continuous time systems can be discretized.</p>
+        <p>It is possible to generate the points for Bode diagrams, polar diagram and root locus diagram.</p>
+        <p>In the library a modulus for the polynomial calculation is available, include the arithmetical operations and the methods for the calculation of the roots of the polynomial.</p>
+        <h2 id="user-characteristics">User characteristics</h2>
+        <p>The user of this library is required to have engineering knowledge in the design of control systems.</p>
+        <h2 id="constraints">Constraints</h2>
+        <p>There are non constraints in the use of this library. Regarding the development, the correctness must be the first aim.</p>
+      </div>
+    </div>
+  </body>
+</html>
