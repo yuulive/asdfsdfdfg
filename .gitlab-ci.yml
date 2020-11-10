@@ -9,9 +9,6 @@ stages:
   - package
   - publish
 
-variables:
-  DOC_FOLDER: target/doc
-
 .build_template: &build_definition
   stage: build
   script:
@@ -80,11 +77,8 @@ examples:run:
 
 pages:
   stage: doc
-  # Do not use make because it is not included in Alpine
   script:
-    - cargo doc --no-deps
-    - cp -R $DOC_FOLDER public
-    - echo '<meta http-equiv="refresh" content="0; url=automatica/index.html">' > public/index.html
+    - cp -v design/public/* public
   artifacts:
     paths:
       - public
