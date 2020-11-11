@@ -46,7 +46,7 @@ test:run:
 
 cover:
   stage: test
-  # Tarpaulin do not work in Alpine image.
+  # Tarpaulin does not work in Alpine image.
   image: 'rust:slim'
   before_script:
     - apt-get update
@@ -67,6 +67,8 @@ cover:
 examples:run:
   stage: examples
   image: 'rust:slim'
+  before_script:
+    - apt-get install -y --no-install-recommends make
   script:
     - "rustc --version && cargo --version"
     - make all_examples
