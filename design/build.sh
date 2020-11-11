@@ -7,8 +7,6 @@ for file in ./*.md ; do
         f="${f#./}"
         # Remove the ending '.md'
         f="${file%.md}"
-        # echo "$f"
-        # pandoc -s -t html5 --toc --toc-depth=2 --template template.html5 -o public/"$f".html "$file"
         pandoc \
             --standalone \
             --to=html5 \
