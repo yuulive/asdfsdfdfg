@@ -50,7 +50,7 @@ cover:
   image: 'rust:slim'
   before_script:
     - apt-get update
-    - apt-get install -y --no-install-recommends curl grep cut wget tar
+    - apt-get install -y --no-install-recommends curl grep coreutils wget tar gzip
     - >
       curl -s https://api.github.com/repos/xd009642/tarpaulin/releases/latest
       | grep "browser_download_url"
