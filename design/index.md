@@ -3,8 +3,9 @@
 This library allows the definition and the manipulation of time invariant linear systems (LTI) both continuous and discrete time.
 
 The available representations for the LTI are:
-* state representation: calculation of poles, equilibrium point, observability and controllability matrices, evolution of the system with time; for continuous time system the discretization is available;
-* transfer function representation: calculation of poles and zeros, evaluation of the function, arithmetical operations, positive and negative feedback, static gain, initial value, sensitivity functions, discretization of continuous time transfer functions and ARMA representation for discrete time.
+
+- state representation: calculation of poles, equilibrium point, observability and controllability matrices, evolution of the system with time; for continuous time system the discretization is available;
+- transfer function representation: calculation of poles and zeros, evaluation of the function, arithmetical operations, positive and negative feedback, static gain, initial value, sensitivity functions, discretization of continuous time transfer functions and ARMA representation for discrete time.
 
 Conversions are available between the two representations.
 
