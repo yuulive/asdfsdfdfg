@@ -1,3 +1,8 @@
+---
+title: References
+license: CC BY-SA 4.0
+---
+
 # References
 
 [1] P. Bolzern, R. Scattolini, N. Schiavoni, Fondamenti di controlli automatici, McGraw-Hill Education, 2015
@@ -18,16 +23,16 @@
 
 [9] A. M. Andrew, Another Efficient Algorithm for Convex Hulls in Two Dimensions, Info. Proc. Letters 9, 216-219 (1979)
 
-[10] Faddeev-LeVerrier algorithm, Wikipedia, [https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm](https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm)
+[10] Faddeev-LeVerrier algorithm, Wikipedia, <https://en.wikipedia.org/wiki/Faddeev%E2%80%93LeVerrier_algorithm>
 
-[11] Rust language [https://www.rust-lang.org/](https://www.rust-lang.org/)
+[11] <https://www.rust-lang.org/>
 
-[12] Git, distributed version control system [https://git-scm.com/](https://git-scm.com/)
+[12] <https://git-scm.com/>
 
-[13] Crate registry [https://crates.io/](https://crates.io/)
+[13] <https://crates.io/>
 
-[14] List of supported platforms [https://forge.rust-lang.org/release/platform-support.html](https://forge.rust-lang.org/release/platform-support.html)
+[14] <https://forge.rust-lang.org/release/platform-support.html>
 
-[15] Test coverage software [https://crates.io/crates/cargo-tarpaulin](https://crates.io/crates/cargo-tarpaulin)
+[15] <https://crates.io/crates/cargo-tarpaulin>
 
 [16] Jenkins, M. & Traub, Joseph. (1975). Principles for Testing Polynomial Zerofinding Programs. ACM Transactions on Mathematical Software (TOMS). 1. 26-34. 10.1145/355626.355632.

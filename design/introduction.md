@@ -1,3 +1,8 @@
+---
+title: Introduction
+license: CC BY-SA 4.0
+---
+
 # Introduction
 
 ## Purpose
@@ -12,11 +17,11 @@ The name of the library is `automatica`. The chosen programming language for the
 
 The version control system is `git` [12] and the source code is hosted on `Gitlab` at the following link:
 
-[https://gitlab.com/daingun/automatica](https://gitlab.com/daingun/automatica)
+<https://gitlab.com/daingun/automatica>
 
 The access to the public registry crates.io [13] is available at the following link:
 
-[https://crates.io/crates/automatica](https://crates.io/crates/automatica)
+<https://crates.io/crates/automatica>
 
 The library supplies an infrastructure that contains calculation methods for the design of computer aided control systems. This software does not supply an interface with the final user.
 

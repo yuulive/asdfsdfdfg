@@ -1,3 +1,8 @@
+---
+title: Continuous Integration
+license: CC BY-SA 4.0
+---
+
 # Continuous integration
 
 ## Description

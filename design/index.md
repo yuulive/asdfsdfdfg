@@ -1,3 +1,8 @@
+---
+title: Home page
+license: CC BY-SA 4.0
+---
+
 ## Automatic Control Systems Library
 
 This library allows the definition and the manipulation of time invariant linear systems (LTI) both continuous and discrete time.
