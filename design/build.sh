@@ -10,6 +10,7 @@ for file in ./*.md ; do
         pandoc \
             --standalone \
             --to=html5 \
+            --mathml \
             --table-of-contents --toc-depth=2 \
             --template=template.html5 \
             --output=public/"$f".html \
