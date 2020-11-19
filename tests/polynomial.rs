@@ -3,6 +3,7 @@ extern crate automatica;
 extern crate approx;
 
 use automatica::{poly, Poly};
+use num_complex::Complex;
 use num_traits::{One, Zero};
 
 /// TC1.1
@@ -312,4 +313,67 @@ fn equimodular_zeros() {
         assert!(relative_eq!(r.norm(), 100.) || relative_eq!(r.norm(), 0.01));
     }
     assert_eq!(20, r9.len());
+}
+
+/// TC1.13
+#[test]
+fn defects_in_algorithm() {
+    let a_1: f64 = 1e3;
+    let p10_1 = Poly::new_from_roots(&[a_1, 1., a_1.recip()]);
+    let r10_1 = p10_1.iterative_roots();
+    assert!(r10_1.iter().all(|c| relative_eq!(c.im, 0.)));
+    assert!(r10_1.contains(&Complex::new(1e-3, 0.)));
+    assert!(r10_1.contains(&Complex::new(1., 0.)));
+    assert!(r10_1.contains(&Complex::new(1e3, 0.)));
+
+    let a_2: f64 = 1e6;
+    let p10_2 = Poly::new_from_roots(&[a_2, 1., a_2.recip()]);
+    let r10_2 = p10_2.iterative_roots();
+    assert!(r10_2.iter().all(|c| relative_eq!(c.im, 0.)));
+    assert!(r10_2.contains(&Complex::new(1e-6, 0.)));
+    assert!(r10_2.contains(&Complex::new(1., 0.)));
+    assert!(r10_2.contains(&Complex::new(1e6, 0.)));
+
+    let a_3: f64 = 1e9;
+    let p10_3 = Poly::new_from_roots(&[a_3, 1., a_3.recip()]);
+    let r10_3 = p10_3.iterative_roots();
+    assert!(r10_3.iter().all(|c| relative_eq!(c.im, 0.)));
+    assert!(r10_3.contains(&Complex::new(1e-9, 0.)));
+    assert!(r10_3.contains(&Complex::new(1., 0.)));
+    assert!(r10_3.contains(&Complex::new(1e9, 0.)));
+}
+
+/// TC1.14
+#[test]
+fn defects_on_circle() {
+    use std::iter;
+    // Roots on circle,
+    // r = circle radius, n = polynomial degree
+    let c = |r: f64, n: usize| {
+        iter::once(-r)
+            .chain(iter::repeat(0.).take(n - 1))
+            .chain(iter::once(1.))
+    };
+
+    // n roots of 0.9^n are on a circle of radius 0.9
+    let n_1 = 0.9_f64.powi(30);
+    let p11_1 = Poly::new_from_coeffs_iter(c(1., 30)) * Poly::new_from_coeffs_iter(c(n_1, 30));
+    let r11_1 = p11_1.iterative_roots();
+    for r in &r11_1 {
+        assert!(relative_eq!(r.norm(), 1.) || relative_eq!(r.norm(), 0.9));
+    }
+
+    let n_2 = 0.9_f64.powi(40);
+    let p11_2 = Poly::new_from_coeffs_iter(c(1., 40)) * Poly::new_from_coeffs_iter(c(n_2, 40));
+    let r11_2 = p11_2.iterative_roots();
+    for r in &r11_2 {
+        assert!(relative_eq!(r.norm(), 1.) || relative_eq!(r.norm(), 0.9));
+    }
+
+    let n_3 = 0.9_f64.powi(50);
+    let p11_3 = Poly::new_from_coeffs_iter(c(1., 50)) * Poly::new_from_coeffs_iter(c(n_3, 50));
+    let r11_3 = p11_3.iterative_roots();
+    for r in &r11_3 {
+        assert!(relative_eq!(r.norm(), 1.) || relative_eq!(r.norm(), 0.9));
+    }
 }

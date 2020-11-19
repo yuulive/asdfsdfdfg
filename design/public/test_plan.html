@@ -121,7 +121,19 @@
         <pre><code>tests/polynomial/equimodular_zeros</code></pre>
         <ul>
         <li>input: P9</li>
-        <li>outpu: there shall be 20 roots, all root must have a modulus of either 100 or 0.01</li>
+        <li>output: there shall be 20 roots, all root must have a modulus of either 100 or 0.01</li>
+        </ul>
+        <p><em>TC1.13</em> Test defects in the root finding algorithm ([16] page 8).</p>
+        <pre><code>tests/polynomial/defects_in_algorithm</code></pre>
+        <ul>
+        <li>input: P10</li>
+        <li>output: all roots must be equal to the one use to build the polynomials</li>
+        </ul>
+        <p><em>TC1.14</em> Test defects in the root finding algorithm by calculating roots on a unit circle and a circle of radius 0.9 ([16] page 8).</p>
+        <pre><code>tests/polynomial/defects_on_circle</code></pre>
+        <ul>
+        <li>input: P11</li>
+        <li>output: all roots must have modulus of either 1.0 or 0.9</li>
         </ul>
         <h3 id="linear-systems">Linear systems</h3>
         <p><em>TC2.1</em> The initial value of the output of the system in response to a step is the limit to infinity of its transfer function ([1], para. 5.4.1).</p>

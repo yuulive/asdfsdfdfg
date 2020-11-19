@@ -95,7 +95,21 @@ Tests have defined the path in the test files, the inputs and the expected outpu
     tests/polynomial/equimodular_zeros
 
 - input: P9
-- outpu: there shall be 20 roots, all root must have a modulus of either 100 or 0.01
+- output: there shall be 20 roots, all root must have a modulus of either 100 or 0.01
+
+*TC1.13* Test defects in the root finding algorithm ([16] page 8).
+
+    tests/polynomial/defects_in_algorithm
+
+- input: P10
+- output: all roots must be equal to the one use to build the polynomials
+
+*TC1.14* Test defects in the root finding algorithm by calculating roots on a unit circle and a circle of radius 0.9 ([16] page 8).
+
+    tests/polynomial/defects_on_circle
+
+- input: P11
+- output: all roots must have modulus of either 1.0 or 0.9
 
 ### Linear systems
 
