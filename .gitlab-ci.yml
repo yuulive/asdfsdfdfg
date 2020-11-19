@@ -57,7 +57,7 @@ cover:
       | cut -d '"' -f 4
       | wget -q -i - -O -
       | tar -xzp
-    - mv cargo-tarpaulin $CARGO_HOME
+    - mv cargo-tarpaulin $CARGO_HOME/bin
   script:
     - "rustc --version && cargo --version"
     - cargo tarpaulin -v --exclude-files cargo -o Html
