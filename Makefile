@@ -12,11 +12,15 @@ examples = arma_channel \
 		   suspension \
 		   transfer_function
 
-.PHONY : all_examples clippy doc $(examples)
+.PHONY : all_examples clippy doc $(examples) html
 
 # Create documentation without dependencies.
 doc:
 	cargo doc --no-deps
+
+# Build html documentation from markdown files.
+html:
+	cd design/ && ./build.sh
 
 # Clippy linting for code, tests and examples with pedantic lints
 clippy:
