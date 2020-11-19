@@ -226,6 +226,7 @@ mod tests {
         );
     }
 
+    #[allow(clippy::map_identity)]
     #[test]
     fn zip_longest_two_iters_non_copy() {
         // test zip_longest with iterator of different type non Copy

@@ -316,6 +316,7 @@ fn equimodular_zeros() {
 }
 
 /// TC1.13
+#[allow(clippy::similar_names)]
 #[test]
 fn defects_in_algorithm() {
     let a_1: f64 = 1e3;
@@ -344,6 +345,7 @@ fn defects_in_algorithm() {
 }
 
 /// TC1.14
+#[allow(clippy::similar_names)]
 #[test]
 fn defects_on_circle() {
     use std::iter;
