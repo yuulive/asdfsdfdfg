@@ -17,8 +17,8 @@
     </header>
     <div class="container">
       <div class="sidebar dark-background">
-        <div id="table-of-contents">
-          <h2>Table of contents</h2>
+        <div id="sections">
+          <h2>Sections</h2>
           <ul>
             <li><a href="index.html">Home</a></li>
             <li><a href="introduction.html">Introduction</a></li>
@@ -28,17 +28,21 @@
             <li><a href="continuous_integration.html">Continuous integration</a></li>
             <li><a href="references.html">References</a></li>
           </ul>
-          <h2 id="sections">Sections</h2>
         </div>
-        <nav id="toc">
-          $toc$
-        </nav>
-        <h2 id="external-links">External links</h2>
-        <ul>
-          <li><a href="https://gitlab.com/daingun/automatica">Source code repository</a></li>
-          <li><a href="https://crates.io/crates/automatica">Crate registry</a></li>
-          <li><a href="https://docs.rs/automatica">API documentation</a></li>
-        </ul>
+        <div id="table-of-contents">
+          <h2>Table of contents</h2>
+          <nav id="toc">
+            $toc$
+          </nav>
+        </div>
+        <div id="external-links">
+          <h2>External links</h2>
+          <ul>
+            <li><a href="https://gitlab.com/daingun/automatica">Source code repository</a></li>
+            <li><a href="https://crates.io/crates/automatica">Crate registry</a></li>
+            <li><a href="https://docs.rs/automatica">API documentation</a></li>
+          </ul>
+        </div>
       </div>
       <div class="content">
         $body$

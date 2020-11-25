@@ -3,7 +3,7 @@ body, h1 {
 }
 
 .dark-background {
-    background: rgb(61,79,93);
+    background: rgb(25, 51, 85);
     color: #fff;
 }
 
@@ -36,12 +36,17 @@ header a {
     text-decoration: none;
 }
 
+#sections li, #external-links li {
+    padding-top: 0.5em;
+}
+
 #toc > ul {
     list-style: disclosure-open;
     padding-left: 1em;
 }
 
 #toc > ul > li > ul {
+    list-style: circle;
     padding-left: 1em;
 }
 
