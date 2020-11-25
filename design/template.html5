@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="./style.css">
   </head>
   <body>
-    <header>
+    <header class="dark-background">
       <h1 class="title">Automatica</h1>
       <div id="license">
         This work is licensed under
@@ -16,18 +16,20 @@
       </div>
     </header>
     <div class="container">
-      <div class="sidebar">
-        <h2 id="table-of-contents">Table of contents</h2>
-        <ul>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="introduction.html">Introduction</a></li>
-          <li><a href="description.html">Description</a></li>
-          <li><a href="requirements.html">Requirements</a></li>
-          <li><a href="test_plan.html">Test plan</a></li>
-          <li><a href="continuous_integration.html">Continuous integration</a></li>
-          <li><a href="references.html">References</a></li>
-        </ul>
-        <h2 id="sections">Sections</h2>
+      <div class="sidebar dark-background">
+        <div id="table-of-contents">
+          <h2>Table of contents</h2>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="introduction.html">Introduction</a></li>
+            <li><a href="description.html">Description</a></li>
+            <li><a href="requirements.html">Requirements</a></li>
+            <li><a href="test_plan.html">Test plan</a></li>
+            <li><a href="continuous_integration.html">Continuous integration</a></li>
+            <li><a href="references.html">References</a></li>
+          </ul>
+          <h2 id="sections">Sections</h2>
+        </div>
         <nav id="toc">
           $toc$
         </nav>
