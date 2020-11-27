@@ -5,8 +5,8 @@ stages:
   - build
   - test
   - examples
-  - doc
   - package
+  - doc
   - publish
 
 .build_template: &build_definition
@@ -84,18 +84,6 @@ examples:run:
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_BRANCH == "development"'
 
-pages:
-  stage: doc
-  script:
-    - cp -v design/public/* public
-  artifacts:
-    paths:
-      - public
-  # Do not fetch artifacts from previous stages
-  dependencies: []
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
-
 package:build:
   stage: package
   script:
@@ -108,6 +96,20 @@ package:build:
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_BRANCH == "development"'
 
+pages:
+  stage: doc
+  script:
+    - cp -v design/public/*.{html,css} public
+  artifacts:
+    paths:
+      - public
+  # Do not fetch artifacts from previous stages
+  dependencies: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: manual
+      allow_failure: true
+
 publish:send:
   stage: publish
   script:
@@ -118,3 +120,4 @@ publish:send:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
       when: manual
+      allow_failure: true

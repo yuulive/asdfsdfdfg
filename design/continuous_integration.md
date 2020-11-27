@@ -28,11 +28,11 @@ The pipeline is made by the following list of stage and jobs:
 3. examples
   - *examples:run* compilation and execution of the examples of the library using the latest `Rust` version
 
-4. doc
-  - *pages* creation of documentation pages in HTML format and publishing through the GitLab pages service, this job is executed only on master branch
-
-5. package
+4. package
   - *package:build* verification of the creation of the library package
+
+5. doc
+  - *pages* creation of documentation pages in HTML format and publishing through the GitLab pages service, this job is executed only on master branch and its activation is manual
 
 6. publish
   - *publish:send* creation of publishing on the public registry of the library package, this job is executed only on master branch and its activation is manual
