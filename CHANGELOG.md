@@ -13,6 +13,7 @@
 - Refactored Bode struct
 - Removed DiscreteTime trait
 ## Fixed
+- Changed complex number division method
 
 ## [0.8.0] - 2020-08-30
 ## Added
