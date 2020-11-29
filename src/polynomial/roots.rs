@@ -132,36 +132,31 @@ fn init<T>(poly: &Poly<T>) -> Vec<Complex<T>>
 where
     T: Float + FloatConst + NumCast,
 {
-    // set = Vec<(k as usize, k as Float, ln(c_k) as Float)>
-    let set: Vec<(usize, T, T)> = poly
+    // set = Iterator<Item = (k as usize, k as Float, ln(c_k) as Float)>
+    let set = poly
         .coeffs
         .iter()
         .enumerate()
-        .map(|(k, c)| (k, T::from(k).unwrap(), c.abs().ln()))
-        .collect();
+        .map(|(k, c)| (k, T::from(k).unwrap(), c.abs().ln()));
 
     // Convex hull
     // ch = Vec<(k as usize, k as Float)>
-    let ch: Vec<_> = convex_hull_top(&set)
+    let ch: Vec<_> = convex_hull_top(set)
         .iter()
         .map(|&(a, b, _)| (a, b))
         .collect();
 
-    // r = Vec<(k_(i+1) - k_i as usize, r as Float)>
-    let r: Vec<(usize, T)> = ch
-        .windows(2)
-        .map(|w| {
-            // w[1] = k_(i+1), w[0] = k_i
-            let tmp = (poly.coeffs[w[0].0] / poly.coeffs[w[1].0]).abs();
-            (w[1].0 - w[0].0, tmp.powf((w[1].1 - w[0].1).recip()))
-        })
-        .collect();
+    // r = Iterator<Item = (k_(i+1) - k_i as usize, r as Float)>
+    let r = ch.windows(2).map(|w| {
+        // w[1] = k_(i+1), w[0] = k_i
+        let tmp = (poly.coeffs[w[0].0] / poly.coeffs[w[1].0]).abs();
+        (w[1].0 - w[0].0, tmp.powf((w[1].1 - w[0].1).recip()))
+    });
 
     // Initial values
     let tau = (T::one() + T::one()) * FloatConst::PI();
     let initial: Vec<Complex<T>> = r
-        .iter()
-        .flat_map(|&(n_k, r)| {
+        .flat_map(|(n_k, r)| {
             let n_k_f = T::from(n_k).unwrap();
             (0..n_k).map(move |i| {
                 let i_f = T::from(i).unwrap();
@@ -170,6 +165,7 @@ where
             })
         })
         .collect();
+
     initial
 }
 
@@ -191,25 +187,34 @@ where
 /// Monotone chain Andrew's algorithm. The algorithm is a variant of Graham scan
 /// which sorts the points lexicographically by their coordinates.
 /// <https://en.wikipedia.org/wiki/Convex_hull_algorithms>
-fn convex_hull_top<T>(set: &[(usize, T, T)]) -> Vec<(usize, T, T)>
+fn convex_hull_top<I, T>(set: I) -> Vec<(usize, T, T)>
 where
+    I: IntoIterator<Item = (usize, T, T)>,
     T: Clone + Mul<Output = T> + PartialOrd + Sub<Output = T> + Zero,
 {
-    let mut stack = Vec::<(usize, T, T)>::from(&set[..2]);
+    let mut iter = set.into_iter();
+    let mut stack = Vec::<(usize, T, T)>::with_capacity(2);
+    if let Some(first) = iter.next() {
+        stack.push(first);
+    }
+    if let Some(second) = iter.next() {
+        stack.push(second);
+    }
 
-    for p in set.iter().skip(2) {
+    // iter will continue from the 3rd element if any.
+    for p in iter {
         loop {
             let length = stack.len();
             // There shall be at least 2 elements in the stack.
             if length < 2 {
                 break;
             }
-            let next_to_top = stack.get(length - 2).unwrap();
-            let top = stack.last().unwrap();
+            let next_to_top = stack.get(length - 2).unwrap().clone();
+            let top = stack.last().unwrap().clone();
 
             let turn = turn(
-                (next_to_top.1.clone(), next_to_top.2.clone()),
-                (top.1.clone(), top.2.clone()),
+                (next_to_top.1, next_to_top.2),
+                (top.1, top.2),
                 (p.1.clone(), p.2.clone()),
             );
             // Remove the top of the stack if it is not a strict turn to the right.
