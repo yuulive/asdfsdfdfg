@@ -142,7 +142,10 @@ where
 
     // Convex hull
     // ch = Vec<(k as usize, k as Float)>
-    let ch = convex_hull_top(&set);
+    let ch: Vec<_> = convex_hull_top(&set)
+        .iter()
+        .map(|&(a, b, _)| (a, b))
+        .collect();
 
     // r = Vec<(k_(i+1) - k_i as usize, r as Float)>
     let r: Vec<(usize, T)> = ch
@@ -188,7 +191,7 @@ where
 /// Monotone chain Andrew's algorithm. The algorithm is a variant of Graham scan
 /// which sorts the points lexicographically by their coordinates.
 /// <https://en.wikipedia.org/wiki/Convex_hull_algorithms>
-fn convex_hull_top<T>(set: &[(usize, T, T)]) -> Vec<(usize, T)>
+fn convex_hull_top<T>(set: &[(usize, T, T)]) -> Vec<(usize, T, T)>
 where
     T: Clone + Mul<Output = T> + PartialOrd + Sub<Output = T> + Zero,
 {
@@ -218,9 +221,8 @@ where
         stack.push(p.clone());
     }
 
-    let res: Vec<_> = stack.iter().map(|(a, b, _c)| (*a, b.clone())).collect();
-    // res is already sorted by k.
-    res
+    // stack is already sorted by k.
+    stack
 }
 
 /// Difine the type of turn.
