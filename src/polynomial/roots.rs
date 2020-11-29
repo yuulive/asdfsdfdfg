@@ -192,9 +192,7 @@ fn convex_hull_top<T>(set: &[(usize, T, T)]) -> Vec<(usize, T)>
 where
     T: Clone + Mul<Output = T> + PartialOrd + Sub<Output = T> + Zero,
 {
-    let mut stack = Vec::<(usize, T, T)>::new();
-    stack.push(set[0].clone());
-    stack.push(set[1].clone());
+    let mut stack = Vec::<(usize, T, T)>::from(&set[..2]);
 
     for p in set.iter().skip(2) {
         loop {
@@ -206,17 +204,16 @@ where
             let next_to_top = stack.get(length - 2).unwrap();
             let top = stack.last().unwrap();
 
-            let cp = cross_product(
+            let turn = turn(
                 (next_to_top.1.clone(), next_to_top.2.clone()),
                 (top.1.clone(), top.2.clone()),
                 (p.1.clone(), p.2.clone()),
             );
-            // Remove the top if it is not a strict turn to the right.
-            if cp < T::zero() {
-                break;
-            } else {
-                stack.pop();
-            }
+            // Remove the top of the stack if it is not a strict turn to the right.
+            match turn {
+                Turn::Right => break,
+                _ => stack.pop(),
+            };
         }
         stack.push(p.clone());
     }
@@ -226,7 +223,41 @@ where
     res
 }
 
-/// Compute the cross product of (p1 - p0) and (p2 - p0)
+/// Difine the type of turn.
+#[derive(Debug, PartialEq)]
+enum Turn {
+    /// Strictly left.
+    Left,
+    /// Strictly straight (forward or backward).
+    Straight,
+    /// Strictly right.
+    Right,
+}
+
+/// Define if two vectors turn right, left or are aligned.
+/// First vector (p1 - p0).
+/// Second vector (p2 - p0).
+///
+/// # Reference
+///
+/// T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein,
+/// Introduction to Algorithms, 3rd edition, McGraw-Hill Education, 2009,
+/// paragraph 33.1
+fn turn<T>(p0: (T, T), p1: (T, T), p2: (T, T)) -> Turn
+where
+    T: Clone + Mul<Output = T> + PartialOrd + Sub<Output = T> + Zero,
+{
+    let cp = cross_product((p0.0, p0.1), (p1.0, p1.1), (p2.0, p2.1));
+    if cp < T::zero() {
+        Turn::Right
+    } else if cp > T::zero() {
+        Turn::Left
+    } else {
+        Turn::Straight
+    }
+}
+
+/// Compute the cross product of (p1 - p0) x (p2 - p0)
 ///
 /// `(p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)`
 ///
@@ -239,9 +270,9 @@ fn cross_product<T>(p0: (T, T), p1: (T, T), p2: (T, T)) -> T
 where
     T: Clone + Mul<Output = T> + Sub<Output = T>,
 {
-    let first = (p1.0 - p0.0.clone(), p1.1 - p0.1.clone());
-    let second = (p2.0 - p0.0, p2.1 - p0.1);
-    first.0 * second.1 - second.0 * first.1
+    let first_vec = (p1.0 - p0.0.clone(), p1.1 - p0.1.clone());
+    let second_vec = (p2.0 - p0.0, p2.1 - p0.1);
+    first_vec.0 * second_vec.1 - second_vec.0 * first_vec.1
 }
 
 /// Calculate the complex roots of the quadratic equation x^2 + b*x + c = 0.
@@ -304,6 +335,33 @@ pub(super) fn real_quadratic_roots_impl<T: Float>(b: T, c: T) -> Option<(T, T)> 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn vector_cross_product() {
+        let cp1 = cross_product((0, 0), (0, 1), (1, 0));
+        assert_eq!(-1, cp1);
+
+        let cp2 = cross_product((0, 0), (1, 1), (2, 2));
+        assert_eq!(0, cp2);
+
+        let cp3 = cross_product((0, 0), (0, -1), (1, 0));
+        assert_eq!(1, cp3);
+    }
+
+    #[test]
+    fn vector_turn() {
+        let turn1 = turn((0, 0), (0, 1), (1, 0));
+        assert_eq!(Turn::Right, turn1);
+
+        let turn2 = turn((0, 0), (1, 1), (2, 2));
+        assert_eq!(Turn::Straight, turn2);
+
+        let turn3 = turn((0, 0), (0, -1), (1, 0));
+        assert_eq!(Turn::Left, turn3);
+
+        let turn4 = turn((0, 0), (-3, 1), (3, -1));
+        assert_eq!(Turn::Straight, turn4);
+    }
 
     #[test]
     fn iterative_roots_finder() {
