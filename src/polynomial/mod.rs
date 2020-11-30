@@ -46,8 +46,10 @@ pub struct Poly<T> {
 /// # Example
 /// ```
 /// #[macro_use] extern crate automatica;
-/// let p = poly!(1., 2., 3.);
-/// assert_eq!(Some(2), p.degree());
+/// use automatica::polynomial::Poly;
+/// let p1 = poly!(1, 2, 3);
+/// let p2 = Poly::new_from_coeffs(&[1, 2, 3]);
+/// assert_eq!(p1, p2);
 /// ```
 #[macro_export]
 macro_rules! poly {
