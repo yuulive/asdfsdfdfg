@@ -94,14 +94,14 @@ impl_display!(RadiansPerSecond);
 impl<T: Num + FloatConst> From<Hertz<T>> for RadiansPerSecond<T> {
     /// Convert Hertz into radians per second.
     fn from(hz: Hertz<T>) -> Self {
-        Self((T::PI() + T::PI()) * hz.0)
+        Self(T::TAU() * hz.0)
     }
 }
 
 impl<T: Num + FloatConst> From<RadiansPerSecond<T>> for Hertz<T> {
     /// Convert radians per second into Hertz.
     fn from(rps: RadiansPerSecond<T>) -> Self {
-        Self(rps.0 / (T::PI() + T::PI()))
+        Self(rps.0 / T::TAU())
     }
 }
 

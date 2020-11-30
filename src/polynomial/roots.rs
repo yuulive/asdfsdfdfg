@@ -175,7 +175,7 @@ where
     });
 
     // Initial values
-    let tau = (T::one() + T::one()) * FloatConst::PI();
+    let tau = T::TAU();
     let initial: Vec<Complex<T>> = r
         .flat_map(|(n_k, r)| {
             let n_k_f = T::from(n_k).unwrap();
