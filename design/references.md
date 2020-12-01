@@ -1,5 +1,6 @@
 ---
 title: References
+version: 0.9.0
 license: CC BY-SA 4.0
 ---
 

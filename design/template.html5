@@ -43,6 +43,10 @@
             <li><a href="https://docs.rs/automatica">API documentation</a></li>
           </ul>
         </div>
+        <div id="version">
+          <h2>Version</h2>
+          $version$
+        </div>
       </div>
       <div class="content">
         $body$
