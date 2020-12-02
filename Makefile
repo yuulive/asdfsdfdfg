@@ -12,7 +12,7 @@ examples = arma_channel \
 		   suspension \
 		   transfer_function
 
-.PHONY : all_examples clippy doc $(examples) html
+.PHONY : all_examples clippy doc $(examples) html update-version
 
 # Create documentation without dependencies.
 doc:
@@ -32,3 +32,9 @@ all_examples: $(examples)
 # '$@' is the name of the target
 $(examples):
 	$(RUNEXAMPLE) $@
+
+# Update version
+# run as:
+#    make update-version VERSION=0.10.0
+update-version:
+	./update-version.sh $(VERSION)
