@@ -6,7 +6,7 @@ use num_traits::Float;
 use std::fmt::Debug;
 
 /// Trait to tag Continuous or Discrete types
-pub trait Time: Debug {}
+pub trait Time: Clone + Debug {}
 
 /// Type for continuous systems
 #[derive(Clone, Copy, Debug, PartialEq)]

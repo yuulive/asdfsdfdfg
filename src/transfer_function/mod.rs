@@ -59,14 +59,8 @@ impl<T: Float, U: Time> TfGen<T, U> {
     ///
     /// * `num` - Transfer function numerator
     /// * `den` - Transfer function denominator
-    ///
-    /// Panics
-    ///
-    /// If either numerator of denominator is zero the method panics.
     #[must_use]
     pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
-        assert!(!num.is_zero());
-        assert!(!den.is_zero());
         Self {
             num,
             den,
@@ -179,7 +173,8 @@ impl<T: Float, U: Time> TfGen<T, U> {
         }
     }
 
-    /// Normalization of transfer function
+    /// Normalization of transfer function. If the denominator is zero the same
+    /// transfer function is returned.
     ///
     /// from:
     /// ```text
@@ -203,6 +198,9 @@ impl<T: Float, U: Time> TfGen<T, U> {
     /// ```
     #[must_use]
     pub fn normalize(&self) -> Self {
+        if self.den.is_zero() {
+            return self.clone();
+        }
         let (den, an) = self.den.monic();
         let num = &self.num / an;
         Self {
@@ -212,7 +210,8 @@ impl<T: Float, U: Time> TfGen<T, U> {
         }
     }
 
-    /// In place normalization of transfer function
+    /// In place normalization of transfer function. If the denominator is zero
+    /// no operation is done.
     ///
     /// from:
     /// ```text
@@ -236,6 +235,9 @@ impl<T: Float, U: Time> TfGen<T, U> {
     /// assert_eq!(expected, tfz);
     /// ```
     pub fn normalize_mut(&mut self) {
+        if self.den.is_zero() {
+            return;
+        }
         let an = self.den.monic_mut();
         self.num.div_mut(an);
     }
