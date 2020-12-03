@@ -54,13 +54,7 @@ impl fmt::Display for Error {
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.repr {
-            Repr::Internal(kind) => write!(
-                f,
-                "Error: {}, [file: {}, line: {}]",
-                kind.as_str(),
-                file!(),
-                line!()
-            ),
+            Repr::Internal(kind) => write!(f, "Error: {:?}", kind),
         }
     }
 }
