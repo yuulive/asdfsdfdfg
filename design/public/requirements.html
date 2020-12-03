@@ -108,11 +108,12 @@
         <p><em>FR4.7</em> For discrete time systems it shall be possible to determine the evolution with time of the system given an input function or given an input supplied by and iterator, returns an iterator.</p>
         <h3 id="transfer-functions-1">Transfer functions [1]</h3>
         <h4 id="creation">Creation</h4>
-        <p><em>FR5.1</em> The user shall be able to create transfer functions given two polynomials for the numerator and the denominator, for continuous and discrete time systems, it is not possible to use null polynomials for the numerator and the denominator.</p>
+        <p><em>FR5.1</em> The user shall be able to create transfer functions given two polynomials for the numerator and the denominator, for continuous and discrete time systems.</p>
         <p><em>FR5.2</em> It is possible to create a transfer function with a conversion from a linear system SISO [10].</p>
         <p><em>FR5.3</em> It is possible to define a time delay function, both continuous and discrete time.</p>
         <h4 id="properties-2">Properties</h4>
         <p><em>FR5.4</em> From the transfer function it is possible to extract is properties, i.e. the calculation of poles and zeros, both real and complex, the evaluation of the transfer function with real and complex numbers, the determination of the static gain and the initial value as response to a unity step.</p>
+        <p><em>FR5.4a</em> The transfer function can be normalized (also in place), i.e. the denominator shall be in monic form and the numerator modified to preserve the gain. If the denominator is zero do not perform actions.</p>
         <h4 id="manipulation">Manipulation</h4>
         <p><em>FR5.5</em> It shall be possible to obtain a reference to the numerator and the denominator, normalise the transfer function, with a monic denominator (by ref, in place).</p>
         <p><em>FR5.6</em> From a transfer function it is possible to obtain the transfer function of the system with a unity negative or positive feedback.</p>

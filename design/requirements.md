@@ -127,7 +127,7 @@ It is possible to operate on same polynomial properties:
 
 #### Creation
 
-*FR5.1* The user shall be able to create transfer functions given two polynomials for the numerator and the denominator, for continuous and discrete time systems, it is not possible to use null polynomials for the numerator and the denominator.
+*FR5.1* The user shall be able to create transfer functions given two polynomials for the numerator and the denominator, for continuous and discrete time systems.
 
 *FR5.2* It is possible to create a transfer function with a conversion from a linear system SISO [10].
 
@@ -136,6 +136,8 @@ It is possible to operate on same polynomial properties:
 #### Properties
 
 *FR5.4* From the transfer function it is possible to extract is properties, i.e. the calculation of poles and zeros, both real and complex, the evaluation of the transfer function with real and complex numbers, the determination of the static gain and the initial value as response to a unity step.
+
+*FR5.4a* The transfer function can be normalized (also in place), i.e. the denominator shall be in monic form and the numerator modified to preserve the gain. If the denominator is zero do not perform actions.
 
 #### Manipulation
 
