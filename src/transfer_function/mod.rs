@@ -699,4 +699,19 @@ mod tests {
         let expected = TfGen::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
         assert_eq!(expected, tfz);
     }
+
+    #[test]
+    fn failed_conversion_from_ss() {
+        let ss = crate::Ss::new_from_slice(
+            2,
+            2,
+            1,
+            &[1., 1., 1., 1.],
+            &[1., 1., 1., 1.],
+            &[1., 1.],
+            &[1., 1.],
+        );
+        let res = TfGen::<f32, Continuous>::new_from_siso(&ss);
+        assert!(res.is_err());
+    }
 }
