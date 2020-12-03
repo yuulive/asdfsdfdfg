@@ -922,4 +922,16 @@ mod tests {
         let mo = sys.osservability();
         assert_eq!((2, 2, vec![1., 1., -1., 5.]), mo);
     }
+
+    #[test]
+    fn linear_system_display() {
+        let a = [-1., 3., 0., 2.];
+        let b = [1., 2.];
+        let c = [1., 1.];
+        let d = [0.];
+
+        let sys = SsGen::<_, Continuous>::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let string = format!("{}", &sys);
+        assert!(!string.is_empty());
+    }
 }
