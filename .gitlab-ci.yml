@@ -60,7 +60,7 @@ cover:
     - mv cargo-tarpaulin $CARGO_HOME/bin
   script:
     - "rustc --version && cargo --version"
-    - cargo tarpaulin -v --exclude-files cargo -o Html
+    - cargo tarpaulin -v --ignore-tests --exclude-files cargo -o Html
   coverage: '/\d+\.\d+\% coverage/'
   artifacts:
     paths:
