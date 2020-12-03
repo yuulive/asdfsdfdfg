@@ -868,6 +868,38 @@ mod tests {
     }
 
     #[test]
+    fn failed_observability_realization() {
+        use crate::transfer_function::discrete::Tfz;
+        let tf = Tfz::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_coeffs(&[0.]));
+        let ss = SsGen::new_observability_realization(&tf);
+        assert!(ss.is_err());
+    }
+
+    #[test]
+    fn failed_observability_canonical_form() {
+        use crate::transfer_function::discrete::Tfz;
+        let tf = Tfz::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_coeffs(&[1.]));
+        let matrix = observability_canonical_form(&tf);
+        assert!(matrix.is_err());
+    }
+
+    #[test]
+    fn failed_controllability_realization() {
+        use crate::transfer_function::discrete::Tfz;
+        let tf = Tfz::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_coeffs(&[0.]));
+        let ss = SsGen::new_controllability_realization(&tf);
+        assert!(ss.is_err());
+    }
+
+    #[test]
+    fn failed_controllability_canonical_form() {
+        use crate::transfer_function::discrete::Tfz;
+        let tf = Tfz::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_coeffs(&[1.]));
+        let matrix = controllability_canonical_form(&tf);
+        assert!(matrix.is_err());
+    }
+
+    #[test]
     fn controllability() {
         let a = [-1., 3., 0., 2.];
         let b = [1., 2.];
