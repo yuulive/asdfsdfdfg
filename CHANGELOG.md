@@ -7,6 +7,7 @@
 - Add and example for a car suspension system
 - Changed division method for complex numbers
 - Decoupled a plot (polar, Bode, root locus) from the iterator that supplies points
+- Removed limitation in the creation of transfer function with zero numerator or denominator
 ### API Changes
 - Implemented a custom Error type
 - Refactored Polar struct
