@@ -98,8 +98,11 @@ package:build:
 
 pages:
   stage: doc
+  image: 'alpine:latest'
   script:
-    - cp -v design/public/*.{html,css} public
+    - mkdir -p public/
+    - cp -v design/public/*.html public
+    - cp -v design/public/*.css public
   artifacts:
     paths:
       - public

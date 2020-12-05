@@ -1,5 +1,7 @@
 # Automatica - Automatic Control Systems Library
 
+[Home page and software specification](https://daingun.gitlab.io/automatica)
+
 [Repository](https://gitlab.com/daingun/automatica)
 
 [Crate registry](https://crates.io/crates/automatica)
