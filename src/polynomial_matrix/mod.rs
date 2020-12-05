@@ -444,7 +444,7 @@ mod tests {
     fn format_polymatrix_zero_coefficient() {
         let v = vec![DMatrix::<f32>::zeros(1, 2), DMatrix::identity(1, 2)];
         let pm = PolyMatrix::new_from_coeffs(&v);
-        assert!(format!("{}", &pm).starts_with("+"));
+        assert!(format!("{}", &pm).starts_with('+'));
     }
 
     #[test]

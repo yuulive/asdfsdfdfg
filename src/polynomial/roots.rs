@@ -242,10 +242,10 @@ where
             if length < 2 {
                 break;
             }
-            let next_to_top = stack.get(length - 2).unwrap().clone();
-            let top = stack.last().unwrap().clone();
+            let next_to_top = stack.get(length - 2).unwrap();
+            let top = stack.last().unwrap();
 
-            let turn = turn(next_to_top, top, p.clone());
+            let turn = turn(next_to_top, top, &p);
             // Remove the top of the stack if it is not a strict turn to the right.
             match turn {
                 Turn::Right => break,
@@ -268,7 +268,7 @@ where
 /// T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein,
 /// Introduction to Algorithms, 3rd edition, McGraw-Hill Education, 2009,
 /// paragraph 33.1
-fn turn<P, T>(p0: P, p1: P, p2: P) -> Turn
+fn turn<P, T>(p0: &P, p1: &P, p2: &P) -> Turn
 where
     P: Point2D<T>,
     T: Clone + Mul<Output = T> + PartialOrd + Sub<Output = T> + Zero,
@@ -292,7 +292,7 @@ where
 /// T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein,
 /// Introduction to Algorithms, 3rd edition, McGraw-Hill Education, 2009,
 /// paragraph 33.1
-fn cross_product<P, T>(p0: P, p1: P, p2: P) -> T
+fn cross_product<P, T>(p0: &P, p1: &P, p2: &P) -> T
 where
     P: Point2D<T>,
     T: Clone + Mul<Output = T> + Sub<Output = T>,
@@ -378,30 +378,30 @@ mod tests {
 
     #[test]
     fn point_implementation() {
-        let t = turn(Point(1., 1.), Point(2., 9.), Point(12., -4.));
+        let t = turn(&Point(1., 1.), &Point(2., 9.), &Point(12., -4.));
         assert_eq!(Turn::Right, t);
     }
 
     #[test]
     fn vector_cross_product() {
         let cp1 = cross_product(
-            CoeffPoint(0, 0, 0),
-            CoeffPoint(0, 0, 1),
-            CoeffPoint(0, 1, 0),
+            &CoeffPoint(0, 0, 0),
+            &CoeffPoint(0, 0, 1),
+            &CoeffPoint(0, 1, 0),
         );
         assert_eq!(-1, cp1);
 
         let cp2 = cross_product(
-            CoeffPoint(0, 0, 0),
-            CoeffPoint(0, 1, 1),
-            CoeffPoint(0, 2, 2),
+            &CoeffPoint(0, 0, 0),
+            &CoeffPoint(0, 1, 1),
+            &CoeffPoint(0, 2, 2),
         );
         assert_eq!(0, cp2);
 
         let cp3 = cross_product(
-            CoeffPoint(0, 0, 0),
-            CoeffPoint(0, 0, -1),
-            CoeffPoint(0, 1, 0),
+            &CoeffPoint(0, 0, 0),
+            &CoeffPoint(0, 0, -1),
+            &CoeffPoint(0, 1, 0),
         );
         assert_eq!(1, cp3);
     }
@@ -409,30 +409,30 @@ mod tests {
     #[test]
     fn vector_turn() {
         let turn1 = turn(
-            CoeffPoint(0, 0, 0),
-            CoeffPoint(0, 0, 1),
-            CoeffPoint(0, 1, 0),
+            &CoeffPoint(0, 0, 0),
+            &CoeffPoint(0, 0, 1),
+            &CoeffPoint(0, 1, 0),
         );
         assert_eq!(Turn::Right, turn1);
 
         let turn2 = turn(
-            CoeffPoint(0, 0, 0),
-            CoeffPoint(0, 1, 1),
-            CoeffPoint(0, 2, 2),
+            &CoeffPoint(0, 0, 0),
+            &CoeffPoint(0, 1, 1),
+            &CoeffPoint(0, 2, 2),
         );
         assert_eq!(Turn::Straight, turn2);
 
         let turn3 = turn(
-            CoeffPoint(0, 0, 0),
-            CoeffPoint(0, 0, -1),
-            CoeffPoint(0, 1, 0),
+            &CoeffPoint(0, 0, 0),
+            &CoeffPoint(0, 0, -1),
+            &CoeffPoint(0, 1, 0),
         );
         assert_eq!(Turn::Left, turn3);
 
         let turn4 = turn(
-            CoeffPoint(0, 0, 0),
-            CoeffPoint(0, -3, 1),
-            CoeffPoint(0, 3, -1),
+            &CoeffPoint(0, 0, 0),
+            &CoeffPoint(0, -3, 1),
+            &CoeffPoint(0, 3, -1),
         );
         assert_eq!(Turn::Straight, turn4);
     }
