@@ -125,7 +125,7 @@ where
         let m = 1 << s;
         let m_f = T::from(m).unwrap();
         let exp = sign * tau / m_f;
-        let w_n = Complex::from_polar(&T::one(), &exp);
+        let w_n = Complex::from_polar(T::one(), exp);
         for k in (0..n).step_by(m) {
             let mut w = Complex::one();
             for j in 0..m / 2 {

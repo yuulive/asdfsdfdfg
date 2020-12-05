@@ -13,7 +13,7 @@
 //! suitable for stiff systems.
 
 use approx::{AbsDiffEq, RelativeEq};
-use nalgebra::{ComplexField, DMatrix, DVector, Dynamic, Scalar, LU};
+use nalgebra::{ComplexField, DMatrix, DVector, Dynamic, Scalar, SimdPartialOrd, LU};
 use num_traits::{Float, Signed};
 
 use std::{
@@ -275,7 +275,7 @@ where
 impl<'a, F, T> Rkf45<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
-    T: AddAssign + Float + MulAssign + Rkf45Const + Scalar + Signed + SubAssign,
+    T: AddAssign + Float + MulAssign + Rkf45Const + Scalar + Signed + SimdPartialOrd + SubAssign,
 {
     /// Create a solver using Runge-Kutta-Fehlberg method
     ///
@@ -401,7 +401,7 @@ where
 impl<'a, F, T> Iterator for Rkf45<'a, F, T>
 where
     F: Fn(Seconds<T>) -> Vec<T>,
-    T: AddAssign + Float + MulAssign + Rkf45Const + Signed + Scalar + SubAssign,
+    T: AddAssign + Float + MulAssign + Rkf45Const + Signed + Scalar + SimdPartialOrd + SubAssign,
 {
     type Item = StepWithError<T>;
 
