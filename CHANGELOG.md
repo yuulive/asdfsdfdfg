@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.9.0] Unreleased
+## [0.9.0] - 2020-12-05
 ## Added
 - Evaluation of polynomial ratios that avoids overflows
 ## Changed
