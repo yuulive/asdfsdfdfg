@@ -323,7 +323,7 @@ impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul for &Poly<T> {
         }
         // The number of coefficients is at least one.
         // No need to trim since the last coefficient is not zero.
-        Poly::new_from_coeffs(&new_coeffs)
+        Poly { coeffs: new_coeffs }
     }
 }
 
@@ -502,8 +502,11 @@ impl<T: Float + FloatConst> Poly<T> {
         // Extract the real parts of the result.
         // Keep the first res_length elements since is the number of coefficients
         // of the result.
+        // No need to trim since the last coefficient cannot be zero.
         let coeffs = y.iter().map(|c| c.re).take(res_length);
-        Poly::new_from_coeffs_iter(coeffs)
+        Poly {
+            coeffs: coeffs.collect(),
+        }
     }
 }
 
@@ -515,6 +518,7 @@ impl<T: Clone + Num> Div<T> for Poly<T> {
         for c in &mut self.coeffs {
             *c = c.clone() / rhs.clone();
         }
+        // Division with integers may leave 0 terms.
         self.trim();
         // The polynomial cannot be empty, trim has already the postcondition.
         self

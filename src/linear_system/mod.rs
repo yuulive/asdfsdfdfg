@@ -32,7 +32,12 @@ use std::{
 };
 
 use crate::{
-    polynomial, polynomial::Poly, polynomial_matrix::PolyMatrix, transfer_function::TfGen, Time,
+    error::{Error, ErrorKind},
+    polynomial,
+    polynomial::Poly,
+    polynomial_matrix::PolyMatrix,
+    transfer_function::TfGen,
+    Time,
 };
 
 /// State-space representation of a linear system
@@ -376,12 +381,12 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// # Errors
     ///
     /// It returns an error if the transfer function has no poles.
-    pub fn new_observability_realization(tf: &TfGen<T, U>) -> Result<Self, &'static str> {
+    pub fn new_observability_realization(tf: &TfGen<T, U>) -> Result<Self, Error> {
         // Get the denominator in the monic form mantaining the original gain.
         let tf_norm = tf.normalize();
         let order = match tf_norm.den().degree() {
             Some(d) => d,
-            None => return Err("Transfer functions cannot have zero polynomial denominator"),
+            None => return Err(Error::new_internal(ErrorKind::ZeroPolynomialDenominator)),
         };
         let num = {
             // Extend the numerator coefficients with zeros to the length of the
@@ -456,12 +461,12 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// # Errors
     ///
     /// It returns an error if the transfer function has no poles.
-    pub fn new_controllability_realization(tf: &TfGen<T, U>) -> Result<Self, &'static str> {
+    pub fn new_controllability_realization(tf: &TfGen<T, U>) -> Result<Self, Error> {
         // Get the denominator in the monic form mantaining the original gain.
         let tf_norm = tf.normalize();
         let order = match tf_norm.den().degree() {
             Some(d) => d,
-            None => return Err("Transfer functions cannot have zero polynomial denominator"),
+            None => return Err(Error::new_internal(ErrorKind::ZeroPolynomialDenominator)),
         };
         let num = {
             // Extend the numerator coefficients with zeros to the length of the
@@ -512,7 +517,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
 ///
 /// The transfer function shall be in normalized from, i.e. the highest
 /// coefficient of the denominator shall be 1.
-fn observability_canonical_form<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
+fn observability_canonical_form<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, Error>
 where
     T: ComplexField + Float + RealField,
     U: Time,
@@ -533,7 +538,7 @@ where
             debug_assert!(comp.is_square());
             Ok(comp)
         }
-        _ => Err("Denominator has no poles"),
+        _ => Err(Error::new_internal(ErrorKind::NoPolesDenominator)),
     }
 }
 
@@ -541,7 +546,7 @@ where
 ///
 /// The transfer function shall be in normalized from, i.e. the highest
 /// coefficient of the denominator shall be 1.
-fn controllability_canonical_form<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, &'static str>
+fn controllability_canonical_form<T, U>(tf: &TfGen<T, U>) -> Result<DMatrix<T>, Error>
 where
     T: ComplexField + Float + RealField,
     U: Time,
@@ -562,7 +567,7 @@ where
             debug_assert!(comp.is_square());
             Ok(comp)
         }
-        _ => Err("Denominator has no poles"),
+        _ => Err(Error::new_internal(ErrorKind::NoPolesDenominator)),
     }
 }
 
@@ -863,6 +868,38 @@ mod tests {
     }
 
     #[test]
+    fn failed_observability_realization() {
+        use crate::transfer_function::discrete::Tfz;
+        let tf = Tfz::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_coeffs(&[0.]));
+        let ss = SsGen::new_observability_realization(&tf);
+        assert!(ss.is_err());
+    }
+
+    #[test]
+    fn failed_observability_canonical_form() {
+        use crate::transfer_function::discrete::Tfz;
+        let tf = Tfz::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_coeffs(&[1.]));
+        let matrix = observability_canonical_form(&tf);
+        assert!(matrix.is_err());
+    }
+
+    #[test]
+    fn failed_controllability_realization() {
+        use crate::transfer_function::discrete::Tfz;
+        let tf = Tfz::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_coeffs(&[0.]));
+        let ss = SsGen::new_controllability_realization(&tf);
+        assert!(ss.is_err());
+    }
+
+    #[test]
+    fn failed_controllability_canonical_form() {
+        use crate::transfer_function::discrete::Tfz;
+        let tf = Tfz::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_coeffs(&[1.]));
+        let matrix = controllability_canonical_form(&tf);
+        assert!(matrix.is_err());
+    }
+
+    #[test]
     fn controllability() {
         let a = [-1., 3., 0., 2.];
         let b = [1., 2.];
@@ -884,5 +921,17 @@ mod tests {
         let sys = SsGen::<_, Continuous>::new_from_slice(2, 1, 1, &a, &b, &c, &d);
         let mo = sys.osservability();
         assert_eq!((2, 2, vec![1., 1., -1., 5.]), mo);
+    }
+
+    #[test]
+    fn linear_system_display() {
+        let a = [-1., 3., 0., 2.];
+        let b = [1., 2.];
+        let c = [1., 1.];
+        let d = [0.];
+
+        let sys = SsGen::<_, Continuous>::new_from_slice(2, 1, 1, &a, &b, &c, &d);
+        let string = format!("{}", &sys);
+        assert!(!string.is_empty());
     }
 }

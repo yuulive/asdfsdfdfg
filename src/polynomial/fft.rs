@@ -118,7 +118,8 @@ where
         Transform::Direct => T::one(),
         Transform::Inverse => -T::one(),
     };
-    let tau = (T::one() + T::one()) * FloatConst::PI();
+
+    let tau = T::TAU();
 
     for s in 1..=bits {
         let m = 1 << s;

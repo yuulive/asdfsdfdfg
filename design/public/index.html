@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="generator" content="pandoc">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Home page</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <header class="dark-background">
+      <h1 class="title">Automatica</h1>
+      <div id="license">
+        This work is licensed under
+        <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>
+      </div>
+    </header>
+    <div class="container">
+      <div class="sidebar dark-background">
+        <div id="sections">
+          <h2>Sections</h2>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="introduction.html">Introduction</a></li>
+            <li><a href="description.html">Description</a></li>
+            <li><a href="requirements.html">Requirements</a></li>
+            <li><a href="test_plan.html">Test plan</a></li>
+            <li><a href="continuous_integration.html">Continuous integration</a></li>
+            <li><a href="references.html">References</a></li>
+          </ul>
+        </div>
+        <div id="table-of-contents">
+          <h2>Table of contents</h2>
+          <nav id="toc">
+            <ul>
+            <li><a href="#automatic-control-systems-library">Automatic Control Systems Library</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div id="external-links">
+          <h2>External links</h2>
+          <ul>
+            <li><a href="https://gitlab.com/daingun/automatica">Source code repository</a></li>
+            <li><a href="https://crates.io/crates/automatica">Crate registry</a></li>
+            <li><a href="https://docs.rs/automatica">API documentation</a></li>
+          </ul>
+        </div>
+        <div id="version">
+          <h2>Version</h2>
+          0.9.0
+        </div>
+      </div>
+      <div class="content">
+        <h2 id="automatic-control-systems-library">Automatic Control Systems Library</h2>
+        <p>This library allows the definition and the manipulation of time invariant linear systems (LTI) both continuous and discrete time.</p>
+        <p>The available representations for the LTI are:</p>
+        <ul>
+        <li>state representation: calculation of poles, equilibrium point, observability and controllability matrices, evolution of the system with time; for continuous time system the discretization is available;</li>
+        <li>transfer function representation: calculation of poles and zeros, evaluation of the function, arithmetical operations, positive and negative feedback, static gain, initial value, sensitivity functions, discretization of continuous time transfer functions and ARMA representation for discrete time.</li>
+        </ul>
+        <p>Conversions are available between the two representations.</p>
+        <p>This library contains also a module for the creation and manipulation of polynomials, necessary for the transfer functions, for which all the arithmetical operations, the derivative, the integration, the evaluation with real and complex numbers are defined, real and complex roots can be calculated.</p>
+        <p>The time evolution of continuous time systems is performed through different integrators, explicit, implicit and adaptive.</p>
+        <p>From the continuous time transfer functions it is possible to generate the data for Bode, polar and root locus plots.</p>
+        <p>It is also possible to define PID controllers.</p>
+      </div>
+    </div>
+  </body>
+</html>

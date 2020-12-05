@@ -1,6 +1,10 @@
 # Automatica - Automatic Control Systems Library
 
-[Documentation](https://daingun.gitlab.io/automatica)
+[Repository](https://gitlab.com/daingun/automatica)
+
+[Crate registry](https://crates.io/crates/automatica)
+
+[Documentation](https://docs.rs/automatica)
 
 ## State-Space representation
 

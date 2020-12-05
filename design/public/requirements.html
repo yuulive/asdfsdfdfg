@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="generator" content="pandoc">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Specific Requirements</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <header class="dark-background">
+      <h1 class="title">Automatica</h1>
+      <div id="license">
+        This work is licensed under
+        <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>
+      </div>
+    </header>
+    <div class="container">
+      <div class="sidebar dark-background">
+        <div id="sections">
+          <h2>Sections</h2>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="introduction.html">Introduction</a></li>
+            <li><a href="description.html">Description</a></li>
+            <li><a href="requirements.html">Requirements</a></li>
+            <li><a href="test_plan.html">Test plan</a></li>
+            <li><a href="continuous_integration.html">Continuous integration</a></li>
+            <li><a href="references.html">References</a></li>
+          </ul>
+        </div>
+        <div id="table-of-contents">
+          <h2>Table of contents</h2>
+          <nav id="toc">
+            <ul>
+            <li><a href="#specific-requirements">Specific requirements</a><ul>
+            <li><a href="#external-interfaces">External interfaces</a></li>
+            <li><a href="#functional-requirements">Functional requirements</a></li>
+            </ul></li>
+            </ul>
+          </nav>
+        </div>
+        <div id="external-links">
+          <h2>External links</h2>
+          <ul>
+            <li><a href="https://gitlab.com/daingun/automatica">Source code repository</a></li>
+            <li><a href="https://crates.io/crates/automatica">Crate registry</a></li>
+            <li><a href="https://docs.rs/automatica">API documentation</a></li>
+          </ul>
+        </div>
+        <div id="version">
+          <h2>Version</h2>
+          0.9.0
+        </div>
+      </div>
+      <div class="content">
+        <h1 id="specific-requirements">Specific requirements</h1>
+        <h2 id="external-interfaces">External interfaces</h2>
+        <h3 id="data-structures">Data structures</h3>
+        <p>This library must present as interface structures of the <code>Rust</code> standard library, or structure created by this library.</p>
+        <p>Using as interface as structure defined in a dependency exposes the internal implementation ad forces the use of that dependency.</p>
+        <h3 id="numbers-and-units-of-measurement">Numbers and units of measurement</h3>
+        <p>Where the quantity and the related unit of measurement is identifiable, the latter shall be used as interface in place of primitive numeric types.</p>
+        <h2 id="functional-requirements">Functional requirements</h2>
+        <h3 id="polynomials">Polynomials</h3>
+        <h4 id="polynomial-creation">Polynomial creation</h4>
+        <p><em>FR1.1</em> The user shall be able to create polynomials with real coefficients, supplying the coefficients of the roots, both as list or as iterator.</p>
+        <p><em>FR1.2</em> In particular the coefficients shall be supplied from the lowest to the highest degree monomial. It is necessary to put zeros where the monomial is null.</p>
+        <p><em>FR1.3</em> Both the null polynomial and the unity polynomial can be created.</p>
+        <h4 id="indexing">Indexing</h4>
+        <p><em>FR1.4</em> The coefficients can be indexed, the index of the monomial is equal to its degree. The indexed coefficient shall be modifiable.</p>
+        <h4 id="properties">Properties</h4>
+        <p>It is possible to operate on same polynomial properties:</p>
+        <p><em>FR1.5</em> Degree calculation (it is undefined for null polynomial) (by ref);</p>
+        <p><em>FR1.6</em> Extension of the polynomial with zeros in the highest degree monomials (in place);</p>
+        <p><em>FR1.7</em> The transformation into a monic polynomial and the return of the leading coefficient (in place, by ref);</p>
+        <p><em>FR1.8</em> Evaluation of a polynomial both with real and complex numbers using Horner’s method (by value, by ref);</p>
+        <p><em>FR1.9</em> Rounding towards zero of the coefficients given an absolute tolerance (by ref, in place).</p>
+        <h4 id="roots">Roots</h4>
+        <p><em>FR1.10</em> It is possible to calculate the roots of a polynomial. In the case of complex roots both the eigenvalues and iterative [3, 4, 5, 6, 8, 9] methods are available. In the case the user needs real roots, a result is supplied (with eigenvalues method) only in the case that all roots are real.</p>
+        <h4 id="arithmetical-operations-and-infinitesimal-calculus">Arithmetical operations and infinitesimal calculus</h4>
+        <p><em>FR1.11</em> On polynomial it is possible to perform arithmetical operations, both between polynomials and scalars, and operations of infinitesimal calculus: - negation of the polynomial (by value, by ref) - addition, subtraction, division and division reminder [7] between polynomials (by value, by ref) - multiplication between polynomials both with the convolution method and the fast Fourier transform method [8] (by value, by ref) - addition, subtraction, multiplication, and division with a scalar (by value, by ref) - calculation of the derivative and the integral of the polynomial (by ref) - evaluation of polynomial ratios avoiding overflows (by ref)</p>
+        <h4 id="formatting">Formatting</h4>
+        <p><em>FR1.12</em> It is available a standard formatting for the output of the polynomial as string.</p>
+        <h4 id="polynomial-matrices">Polynomial matrices</h4>
+        <p><em>FR1.13</em> The matrices of polynomials cannot be directly created by the user, they are considered an internal implementation and they are not externally accessible. It is possible to index them and format them for the output as strings</p>
+        <h3 id="units-of-measurement">Units of measurement</h3>
+        <h4 id="units">Units</h4>
+        <p><em>FR2.1</em> The library defines the following units of measurement, whose floating point value can be publicly accessed: - decibel - seconds (time) - Hertz (frequency) - radians per second (angular frequency)</p>
+        <p><em>FR2.2</em> The formatting of units is done as floating point numbers and in exponential form.</p>
+        <h4 id="conversions">Conversions</h4>
+        <p><em>FR2.3</em> The following conversions between units of measurement are available: - conversion Hertz - radians per second - inversion Hertz - seconds</p>
+        <h3 id="utilities">Utilities</h3>
+        <h4 id="pulse-and-damp">Pulse and damp</h4>
+        <p><em>FR3.1</em> Given a complex number it is possible to calculate the natural pulse and the damp [1].</p>
+        <h3 id="time-invariant-linear-system---state-representation-1">Time invariant linear system - state representation [1]</h3>
+        <h4 id="linear-system-creation">Linear system creation</h4>
+        <p><em>FR4.1</em> It is possible to create linear systems both continuous and discrete time, it is necessary to insert the dimensions of the system and supply every matrix as a vector with elements row-wise.</p>
+        <p><em>FR4.2</em> The linear system can be created by the realization of a transfer function.</p>
+        <h4 id="properties-1">Properties</h4>
+        <p><em>FR4.3</em> The user shall be able to obtain the properties of the linear system, i.e. the dimensions of the system (number of inputs, states and outputs), the complex poles of the system, the equilibrium points, the controllability matrix, the observability matrix. It shall be possible to determine if the system is stable.</p>
+        <h4 id="formatting-1">Formatting</h4>
+        <p><em>FR4.4</em> It is available a standard formatting for the output of the linear system as string.</p>
+        <h4 id="continuous-time-system">Continuous time system</h4>
+        <p><em>FR4.5</em> For continuous time systems shall be available integrator for the evolution of the system with time [2]: - Runge-Kutta method of second and fourth order, returns an iterator; - Runge-Kutta-Fehlberg method of order 4/5 with adaptive steps, returns and iterator; - Radau method of order 3 with 2 steps, returns an iterator.</p>
+        <p><em>FR4.6</em> It shall be possible to discretize a system using forward Euler, backward Euler and Tustin methods.</p>
+        <h4 id="discrete-time-system">Discrete time system</h4>
+        <p><em>FR4.7</em> For discrete time systems it shall be possible to determine the evolution with time of the system given an input function or given an input supplied by and iterator, returns an iterator.</p>
+        <h3 id="transfer-functions-1">Transfer functions [1]</h3>
+        <h4 id="creation">Creation</h4>
+        <p><em>FR5.1</em> The user shall be able to create transfer functions given two polynomials for the numerator and the denominator, for continuous and discrete time systems.</p>
+        <p><em>FR5.2</em> It is possible to create a transfer function with a conversion from a linear system SISO [10].</p>
+        <p><em>FR5.3</em> It is possible to define a time delay function, both continuous and discrete time.</p>
+        <h4 id="properties-2">Properties</h4>
+        <p><em>FR5.4</em> From the transfer function it is possible to extract is properties, i.e. the calculation of poles and zeros, both real and complex, the evaluation of the transfer function with real and complex numbers, the determination of the static gain and the initial value as response to a unity step.</p>
+        <p><em>FR5.4a</em> The transfer function can be normalized (also in place), i.e. the denominator shall be in monic form and the numerator modified to preserve the gain. If the denominator is zero do not perform actions.</p>
+        <h4 id="manipulation">Manipulation</h4>
+        <p><em>FR5.5</em> It shall be possible to obtain a reference to the numerator and the denominator, normalise the transfer function, with a monic denominator (by ref, in place).</p>
+        <p><em>FR5.6</em> From a transfer function it is possible to obtain the transfer function of the system with a unity negative or positive feedback.</p>
+        <h4 id="formatting-2">Formatting</h4>
+        <p><em>FR5.7</em> It is available a standard formatting for the transfer function as string.</p>
+        <h4 id="arithmetical-operations">Arithmetical operations</h4>
+        <p><em>FR5.8</em> It is possible to perform the following arithmetical operations on transfer functions: - reciprocal of a transfer function (in place, by ref and by value) - negation of a transfer function (by ref, by value) - addition between transfer functions (by ref, by value) - subtraction between transfer functions (by ref, by value) - multiplication between transfer functions (by ref, by value) - division between transfer functions (by ref, by value)</p>
+        <h4 id="continuous-time">Continuous time</h4>
+        <p><em>FR5.9</em> For the continuous time transfer functions it is possible to calculate the initial value of the derivative in response to a unity step, the root locus for a given gain in feedback and determine, given a controller, the sensitivity, the complementary sensitivity and the control sensitivity functions.</p>
+        <p><em>FR5.10</em> It is possible to generate the points for the Bode diagram, the polar diagram and the root locus diagram of the transfer function.</p>
+        <p><em>FR5.11</em> It shall be possible to discretize a continuous time transfer function with forward Euler, backward Euler and Tustin methods.</p>
+        <h4 id="discrete-time">Discrete time</h4>
+        <p><em>FR5.12</em> Given a discrete time transfer function it is possible to create an autoregressive moving average representation with a function as input or with an iterator input, in order to determine the time evolution of the system.</p>
+        <h4 id="matrix-of-transfer-functions">Matrix of transfer functions</h4>
+        <p><em>FR5.13</em> From a time invariant MIMO linear system it is possible to create a matrix of transfer functions [10]. From this matrix it is possible to extract the characteristic polynomial common to every transfer functions, evaluate the matrix given a vector of complex numbers and index the numerators of the elements of the matrix.</p>
+        <h3 id="diagrams-1">Diagrams [1]</h3>
+        <h4 id="bode-diagram">Bode diagram</h4>
+        <p><em>FR6.1</em> The user can obtain the points of the Bode diagram, the points are returned as iterators of the modulus and the phase, it is available the conversion of the values into decibel and degrees.</p>
+        <h4 id="polar-diagram">Polar diagram</h4>
+        <p><em>FR6.2</em> The user can obtain the points of the polar diagram, the points are returned as an iterator of complex numbers.</p>
+        <h4 id="root-locus-diagram">Root locus diagram</h4>
+        <p><em>FR6.3</em> The user can obtain the points of the root locus diagram, the points are returned as an iterator of the transfer constant and the roots.</p>
+        <h3 id="proportional-integral-derivative-controller-pid-1">Proportional-integral-derivative controller (PID) [1]</h3>
+        <p><em>FR7.1</em> The user can create ideal and real PID controllers, from the controllers it is possible to generate the transfer function of the given PID.</p>
+        <h3 id="signals-1">Signals [1]</h3>
+        <h4 id="continuous-signals">Continuous signals</h4>
+        <p><em>FR8.1</em> Common continuous time signals are defined: - null signal - impulse signal - step signal - sinusoidal signal</p>
+        <h4 id="discrete-signals">Discrete signals</h4>
+        <p><em>FR8.2</em> Common discrete time signals are defined: - null signal - impulse signal - step signal</p>
+        <h3 id="error-type">Error type</h3>
+        <p><em>FR9.1</em> The library shall expose a custom <code>Error</code> type that implements the <code>std::error::Error</code> trait.</p>
+      </div>
+    </div>
+  </body>
+</html>

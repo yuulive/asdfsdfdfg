@@ -3,7 +3,7 @@
 //! Trajectories of the poles when the system is put in feedback with a pure
 //! constant controller
 
-use nalgebra::{ComplexField, RealField};
+use nalgebra::RealField;
 use num_complex::Complex;
 use num_traits::{Float, MulAdd};
 
@@ -14,18 +14,16 @@ use crate::transfer_function::continuous::Tf;
 pub struct RootLocus<T: Float> {
     /// Transfer function
     tf: Tf<T>,
-    /// Transfer constant
+    /// Minimum transfer constant of the plot
     min_k: T,
-    /// Number of intervals to compute
-    intervals: T,
+    /// Maximum transfer constant of the plot
+    max_k: T,
     /// Step size
     step: T,
-    /// Current index of iterator
-    index: T,
 }
 
 impl<T: Float> RootLocus<T> {
-    /// Create a `RootLocus` struct
+    /// Create a `RootLocus` plot struct
     ///
     /// # Arguments
     ///
@@ -47,12 +45,41 @@ impl<T: Float> RootLocus<T> {
             "Maximum transfer constant must be greater than the minimum transfer constant."
         );
 
-        let intervals = ((max_k - min_k) / step).floor();
         Self {
             tf,
             min_k,
-            intervals,
+            max_k,
             step,
+        }
+    }
+}
+
+/// Struct for root locus plot
+#[derive(Clone, Debug)]
+pub struct IntoIter<T: Float> {
+    /// Transfer function
+    tf: Tf<T>,
+    /// Minimum transfer constant
+    min_k: T,
+    /// Step size
+    step: T,
+    /// Number of intervals to compute
+    intervals: T,
+    /// Current index of iterator
+    index: T,
+}
+
+impl<T: Float + MulAdd<Output = T> + RealField> IntoIterator for RootLocus<T> {
+    type Item = Data<T>;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let intervals = num_traits::Float::floor((self.max_k - self.min_k) / self.step);
+        Self::IntoIter {
+            tf: self.tf,
+            min_k: self.min_k,
+            step: self.step,
+            intervals,
             index: T::zero(),
         }
     }
@@ -60,14 +87,14 @@ impl<T: Float> RootLocus<T> {
 
 /// Struct to hold the data for the root locus plot.
 #[derive(Debug)]
-pub struct Data<T: Float> {
+pub struct Data<T> {
     /// Transfer constant
     k: T,
     /// Roots at the given transfer constant
     output: Vec<Complex<T>>,
 }
 
-impl<T: Float> Data<T> {
+impl<T: Copy> Data<T> {
     /// Get the transfer constant.
     pub fn k(&self) -> T {
         self.k
@@ -79,7 +106,7 @@ impl<T: Float> Data<T> {
     }
 }
 
-impl<T: ComplexField + Float + MulAdd<Output = T> + RealField> Iterator for RootLocus<T> {
+impl<T: Float + MulAdd<Output = T> + RealField> Iterator for IntoIter<T> {
     type Item = Data<T>;
 
     fn next(&mut self) -> Option<Self::Item> {

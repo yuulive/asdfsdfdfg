@@ -1,6 +1,6 @@
 [package]
 name = "automatica"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["daingun <>"]
 edition = "2018"
 description = "Automatic control systems library"
@@ -10,7 +10,7 @@ repository = "https://gitlab.com/daingun/automatica"
 license = "GPL-3.0-only"
 keywords = ["control", "system", "signal", "engineering", "polynomial"]
 categories = ["science", "mathematics", "simulation"]
-exclude = [".gitlab-ci.yml", ".gitignore", "Makefile", "/design"]
+exclude = [".gitlab-ci.yml", ".gitignore", "Makefile", "/design", "update-version.sh"]
 
 [badges]
 gitlab = { repository = "daingun/automatica", branch = "master" }

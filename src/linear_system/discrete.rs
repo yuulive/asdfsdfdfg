@@ -83,7 +83,7 @@ impl<T: Scalar> Ssd<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::{linear_system::discrete::DiscreteTime, Discretization, Ssd};
+    /// use automatica::{Discretization, Ssd};
     /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
     /// let evo = disc_sys.evolution_fn(20, impulse, &[0., 0.]);
@@ -116,7 +116,7 @@ impl<T: Scalar> Ssd<T> {
     /// # Example
     /// ```
     /// use std::iter;
-    /// use automatica::{linear_system::discrete::DiscreteTime, Discretization, Ssd};
+    /// use automatica::{Discretization, Ssd};
     /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = iter::once(vec![1.]).chain(iter::repeat(vec![0.])).take(20);
     /// let evo = disc_sys.evolution_iter(impulse, &[0., 0.]);
@@ -156,18 +156,7 @@ impl<T: ComplexField + Float + RealField> Ssd<T> {
     }
 }
 
-/// Trait for the discretization of continuous time linear systems.
-pub trait DiscreteTime<T: Scalar> {
-    /// Convert a linear system into a discrete system.
-    ///
-    /// # Arguments
-    ///
-    /// * `st` - sample time
-    /// * `method` - discretization method
-    fn discretize(&self, st: T, method: Discretization) -> Option<Ssd<T>>;
-}
-
-impl<T: ComplexField + Float> DiscreteTime<T> for Ss<T> {
+impl<T: ComplexField + Float> Ss<T> {
     /// Convert a linear system into a discrete system.
     ///
     /// # Arguments
@@ -178,14 +167,14 @@ impl<T: ComplexField + Float> DiscreteTime<T> for Ss<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::{linear_system::discrete::DiscreteTime, Discretization, Ss};
+    /// use automatica::{Discretization, Ss};
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
     /// let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
     /// let evo = disc_sys.evolution_fn(20, |t| vec![1.], &[0., 0.]);
     /// let last = evo.last().unwrap();
     /// assert_relative_eq!(0.25, last.state()[1], max_relative = 0.01);
     /// ```
-    fn discretize(&self, st: T, method: Discretization) -> Option<Ssd<T>> {
+    pub fn discretize(&self, st: T, method: Discretization) -> Option<Ssd<T>> {
         match method {
             Discretization::ForwardEuler => self.forward_euler(st),
             Discretization::BackwardEuler => self.backward_euler(st),
@@ -365,6 +354,7 @@ impl<T> TimeEvolution<T> {
 mod tests {
     use super::*;
 
+    #[allow(clippy::many_single_char_names)]
     #[test]
     fn equilibrium() {
         let a = &[0., 0.8, 0.4, 1., 0., 0., 0., 1., 0.7];

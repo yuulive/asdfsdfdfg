@@ -5,12 +5,9 @@ stages:
   - build
   - test
   - examples
-  - doc
   - package
+  - doc
   - publish
-
-variables:
-  DOC_FOLDER: target/doc
 
 .build_template: &build_definition
   stage: build
@@ -23,58 +20,69 @@ build:oldest:
   <<: *build_definition
   image: 'rust:1.38-alpine'
   allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
 
 build:latest:
   <<: *build_definition
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 test:run:
   stage: test
-  image: 'rust:latest'
+  image: 'rust:slim'
   needs: ["build:latest"]
   script:
     - "rustc --version && cargo --version"
     - cargo test --verbose
     - cargo test --verbose --release
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 cover:
   stage: test
-  # Tarpaulin do not work in Alpine image.
-  image: 'rust:latest'
+  # Tarpaulin does not work in Alpine image.
+  image: 'rust:slim'
   before_script:
     - apt-get update
-    - apt-get install -y --no-install-recommends libssl-dev pkg-config cmake zlib1g-dev
-    - cargo install cargo-tarpaulin
+    - apt-get install -y --no-install-recommends curl grep coreutils wget tar gzip
+    - >
+      curl -s https://api.github.com/repos/xd009642/tarpaulin/releases/latest
+      | grep "browser_download_url"
+      | cut -d '"' -f 4
+      | wget -q -i - -O -
+      | tar -xzp
+    - mv cargo-tarpaulin $CARGO_HOME/bin
   script:
     - "rustc --version && cargo --version"
-    - cargo tarpaulin -v --exclude-files cargo -o Html
+    - cargo tarpaulin -v --ignore-tests --exclude-files cargo -o Html
   coverage: '/\d+\.\d+\% coverage/'
   artifacts:
     paths:
       - tarpaulin-report.html
   allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
 
 examples:run:
   stage: examples
-  image: 'rust:latest'
+  image: 'rust:slim'
+  before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends make
   script:
     - "rustc --version && cargo --version"
     - make all_examples
   needs: ["test:run"]
-
-pages:
-  stage: doc
-  # Do not use make because it is not included in Alpine
-  script:
-    - cargo doc --no-deps
-    - cp -R $DOC_FOLDER public
-    - echo '<meta http-equiv="refresh" content="0; url=automatica/index.html">' > public/index.html
-  artifacts:
-    paths:
-      - public
-  only:
-    - master
-  # Do not fetch artifacts from previous stages
-  dependencies: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
 
 package:build:
   stage: package
@@ -84,6 +92,23 @@ package:build:
     - cargo package --verbose
   # Do not fetch artifacts from previous stages
   dependencies: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
+
+pages:
+  stage: doc
+  script:
+    - cp -v design/public/*.{html,css} public
+  artifacts:
+    paths:
+      - public
+  # Do not fetch artifacts from previous stages
+  dependencies: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: manual
+      allow_failure: true
 
 publish:send:
   stage: publish
@@ -92,6 +117,7 @@ publish:send:
     - cargo publish --verbose
   # Do not fetch artifacts from previous stages
   dependencies: []
-  only:
-    - master
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: manual
+      allow_failure: true

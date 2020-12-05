@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.9.0] - 2020-12-05
+## Added
+- Evaluation of polynomial ratios that avoids overflows
+## Changed
+- Add and example for a car suspension system
+- Changed division method for complex numbers
+- Decoupled a plot (polar, Bode, root locus) from the iterator that supplies points
+- Removed limitation in the creation of transfer function with zero numerator or denominator
+### API Changes
+- Implemented a custom Error type
+- Refactored Polar struct
+- Refactored Bode struct
+- Removed DiscreteTime trait
+## Fixed
+- Changed complex number division method
+
 ## [0.8.0] - 2020-08-30
 ## Added
 - Documentation of the specification of the library

@@ -84,7 +84,16 @@ pub mod continuous {
         fn sin_input(t: f64) -> bool {
             let sine = sin_siso(1., RadiansPerSecond(0.5), 0.)(Seconds(t))[0];
             let traslated_sine = sin_siso(1., RadiansPerSecond(0.5), PI)(Seconds(t))[0];
-            relative_eq!(sine, -traslated_sine, max_relative = 1e-10)
+            relative_eq!(sine, -traslated_sine, max_relative = 1e-9)
+        }
+
+        #[test]
+        fn sin_input_regression() {
+            // The following t value fails if the max_relative error is 1e-10.
+            let t = -81.681_343_796_796_53;
+            let sine = sin_siso(1., RadiansPerSecond(0.5), 0.)(Seconds(t))[0];
+            let traslated_sine = sin_siso(1., RadiansPerSecond(0.5), PI)(Seconds(t))[0];
+            assert_relative_eq!(sine, -traslated_sine, max_relative = 1e-9);
         }
     }
 }

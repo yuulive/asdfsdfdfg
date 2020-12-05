@@ -11,20 +11,16 @@
 //! * polar plot
 //! * static gain
 
-use nalgebra::{ComplexField, RealField};
+use nalgebra::RealField;
 use num_complex::Complex;
-use num_traits::{Float, FloatConst, MulAdd};
+use num_traits::Float;
 
 use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 
 use crate::{
-    plots::{
-        bode::{Bode, BodePlot},
-        polar::{Polar, PolarPlot},
-        root_locus::RootLocus,
-    },
+    plots::{root_locus::RootLocus, Plotter},
     transfer_function::TfGen,
-    units::{RadiansPerSecond, Seconds, ToDecibel},
+    units::Seconds,
     Continuous,
 };
 
@@ -175,7 +171,7 @@ impl<T: Float> Tf<T> {
     }
 }
 
-impl<T: ComplexField + Float + RealField> Tf<T> {
+impl<T: Float + RealField> Tf<T> {
     /// System stability. Checks if all poles are negative.
     ///
     /// # Example
@@ -229,10 +225,10 @@ impl<T: ComplexField + Float + RealField> Tf<T> {
     /// use num_complex::Complex;
     /// use automatica::{poly, Poly, Tf};
     /// let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
-    /// let locus = l.root_locus_iter(0.1, 1.0, 0.05);
+    /// let locus = l.root_locus_plot(0.1, 1.0, 0.05).into_iter();
     /// assert_eq!(19, locus.count());
     /// ```
-    pub fn root_locus_iter(self, min_k: T, max_k: T, step: T) -> RootLocus<T> {
+    pub fn root_locus_plot(self, min_k: T, max_k: T, step: T) -> RootLocus<T> {
         RootLocus::new(self, min_k, max_k, step)
     }
 }
@@ -258,27 +254,14 @@ impl<T> Tf<T> {
     }
 }
 
-/// Implementation of the Bode plot for a transfer function
-impl<T: ToDecibel + Float + FloatConst + MulAdd<Output = T>> BodePlot<T> for Tf<T> {
-    fn bode(
-        self,
-        min_freq: RadiansPerSecond<T>,
-        max_freq: RadiansPerSecond<T>,
-        step: T,
-    ) -> Bode<T> {
-        Bode::new(self, min_freq, max_freq, step)
-    }
-}
-
-/// Implementation of the polar plot for a transfer function
-impl<T: Float + FloatConst + MulAdd<Output = T>> PolarPlot<T> for Tf<T> {
-    fn polar(
-        self,
-        min_freq: RadiansPerSecond<T>,
-        max_freq: RadiansPerSecond<T>,
-        step: T,
-    ) -> Polar<T> {
-        Polar::new(self, min_freq, max_freq, step)
+impl<T: Float> Plotter<T> for Tf<T> {
+    /// Evaluate the transfer function at the given value.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - angular frequency at which the function is evaluated
+    fn eval_point(&self, s: T) -> Complex<T> {
+        self.eval(&Complex::new(T::zero(), s))
     }
 }
 
@@ -289,7 +272,12 @@ mod tests {
     use std::str::FromStr;
 
     use super::*;
-    use crate::{poly, polynomial::Poly};
+    use crate::{
+        plots::{bode::Bode, polar::Polar},
+        poly,
+        polynomial::Poly,
+        units::RadiansPerSecond,
+    };
 
     #[test]
     fn delay() {
@@ -318,8 +306,8 @@ mod tests {
     #[test]
     fn bode() {
         let tf = Tf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
-        let b = tf.bode(RadiansPerSecond(0.1), RadiansPerSecond(100.0), 0.1);
-        for g in b.into_db_deg() {
+        let b = Bode::new(tf, RadiansPerSecond(0.1), RadiansPerSecond(100.0), 0.1);
+        for g in b.into_iter().into_db_deg() {
             assert!(g.magnitude() < 0.);
             assert!(g.phase() < 0.);
         }
@@ -328,7 +316,7 @@ mod tests {
     #[test]
     fn polar() {
         let tf = Tf::new(poly!(5.), Poly::new_from_roots(&[-1., -10.]));
-        let p = tf.polar(RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
+        let p = Polar::new(tf, RadiansPerSecond(0.1), RadiansPerSecond(10.0), 0.1);
         for g in p {
             assert!(g.magnitude() < 1.);
             assert!(g.phase() < 0.);
@@ -394,9 +382,8 @@ mod tests {
     #[test]
     fn root_locus_iterations() {
         let l = Tf::new(poly!(1.0_f32), Poly::new_from_roots(&[0., -3., -5.]));
-        let loci = l.root_locus_iter(1., 130., 1.);
+        let loci = l.root_locus_plot(1., 130., 1.).into_iter();
         let last = loci.last().unwrap();
-        dbg!(&last);
         assert_relative_eq!(130., last.k());
         assert_eq!(3, last.output().len());
         assert!(last.output().iter().any(|r| r.re > 0.));

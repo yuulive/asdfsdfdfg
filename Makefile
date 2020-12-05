@@ -9,13 +9,18 @@ examples = arma_channel \
 		   polar \
 		   poly \
 		   root_locus \
+		   suspension \
 		   transfer_function
 
-.PHONY : all_examples clippy doc $(examples)
+.PHONY : all_examples clippy doc $(examples) html update-version
 
 # Create documentation without dependencies.
 doc:
 	cargo doc --no-deps
+
+# Build html documentation from markdown files.
+html:
+	cd design/ && ./build.sh
 
 # Clippy linting for code, tests and examples with pedantic lints
 clippy:
@@ -27,3 +32,9 @@ all_examples: $(examples)
 # '$@' is the name of the target
 $(examples):
 	$(RUNEXAMPLE) $@
+
+# Update version
+# run as:
+#    make update-version VERSION=0.10.0
+update-version:
+	./update-version.sh $(VERSION)

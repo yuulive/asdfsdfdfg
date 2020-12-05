@@ -29,7 +29,7 @@ use std::{
     ops::{Add, Div, Index, IndexMut, Mul, Neg},
 };
 
-use crate::polynomial::roots::RootsFinder;
+use crate::{polynomial::roots::RootsFinder, utils};
 
 /// Polynomial object
 ///
@@ -46,8 +46,10 @@ pub struct Poly<T> {
 /// # Example
 /// ```
 /// #[macro_use] extern crate automatica;
-/// let p = poly!(1., 2., 3.);
-/// assert_eq!(Some(2), p.degree());
+/// use automatica::polynomial::Poly;
+/// let p1 = poly!(1, 2, 3);
+/// let p2 = Poly::new_from_coeffs(&[1, 2, 3]);
+/// assert_eq!(p1, p2);
 /// ```
 #[macro_export]
 macro_rules! poly {
@@ -374,7 +376,7 @@ impl<T: ComplexField + Float + RealField> Poly<T> {
     }
 }
 
-impl<T: Float + FloatConst> Poly<T> {
+impl<T: Debug + Float + FloatConst> Poly<T> {
     /// Calculate the complex roots of the polynomial
     /// using Aberth-Ehrlich method.
     ///
@@ -772,6 +774,48 @@ impl<T> Poly<T> {
     }
 }
 
+impl<T: Float> Poly<T> {
+    /// Evaluate the ratio between to polynomials at the given value.
+    /// This implementation avoids overflow issues when evaluating the
+    /// numerator and the denominator separately.
+    ///
+    /// # Arguments
+    ///
+    /// * `numerator` - numerator of the polynomial ratio.
+    /// * `denominator` - denominator of the polynomial ratio.
+    /// * `x` - Value at which the polynomial ratio is evaluated.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::Poly;
+    /// let p1 = Poly::new_from_coeffs(&[4., 5., 1.]);
+    /// let p2 = Poly::new_from_coeffs(&[1., 2., 3., 1.]);
+    /// let x = -1e30_f32;
+    /// let r = Poly::eval_poly_ratio(&p1, &p2, x);
+    /// let naive = p1.eval(&x) / p2.eval(&x);
+    /// assert!(naive.is_nan());
+    /// assert!((0.- r).abs() < 1e-16);
+    /// ```
+    pub fn eval_poly_ratio(numerator: &Self, denominator: &Self, x: T) -> T {
+        // When the `x` value is less than one evaluate the polynomial ratio
+        // at `1/x` reversing the coefficients.
+        if x.abs() <= T::one() {
+            let n = numerator.eval_by_val(x);
+            let d = denominator.eval_by_val(x);
+            n / d
+        } else {
+            let x = x.recip();
+            // Zip and extend the smaller polynomial with zeros.
+            // Evaluate the reversed polynomial.
+            let (n, d) = utils::zip_longest(&numerator.coeffs, &denominator.coeffs, &T::zero())
+                .fold((T::zero(), T::zero()), |acc, c| {
+                    (acc.0 * x + *c.0, acc.1 * x + *c.1)
+                });
+            n / d
+        }
+    }
+}
+
 /// Implement read only indexing of polynomial returning its coefficients.
 ///
 /// # Panics
@@ -869,7 +913,7 @@ impl<T: Display + Zero> Display for Poly<T> {
             // The polynomial shall be never empty.
             unreachable!();
         } else if self.len() == 1 {
-            return write!(f, "{}", self[0]);
+            return Display::fmt(&self[0], f);
         }
         let mut s = String::new();
         let mut sep = "";
@@ -916,24 +960,33 @@ mod tests {
         assert_eq!("0", format!("{}", Poly::<i16>::zero()));
         assert_eq!("0", format!("{}", Poly::<i16>::new_from_coeffs(&[])));
         assert_eq!("1 +2s^3 -4s^4", format!("{}", poly!(1, 0, 0, 2, -4)));
+        assert_eq!("1.235", format!("{:.3}", Poly::new_from_coeffs(&[1.23456])));
     }
 
     #[test]
     fn poly_creation_coeffs() {
         let c = [4.3, 5.32];
-        assert_eq!(c, Poly::new_from_coeffs(&c).coeffs.as_slice());
+        for (c1, c2) in c.iter().zip(Poly::new_from_coeffs(&c).coeffs) {
+            assert_relative_eq!(*c1, c2);
+        }
 
         let c2 = [0., 1., 1., 0., 0., 0.];
-        assert_eq!([0., 1., 1.], Poly::new_from_coeffs(&c2).coeffs.as_slice());
+        for (i, c) in c2[..3].iter().zip(Poly::new_from_coeffs(&c2).coeffs) {
+            assert_relative_eq!(*i, c);
+        }
 
         let zero: [f64; 1] = [0.];
-        assert_eq!(zero, poly!(0., 0.).coeffs.as_slice());
+        for (z, c) in zero.iter().zip(poly!(0., 0.).coeffs) {
+            assert_relative_eq!(*z, c);
+        }
 
         let int = [1, 2, 3, 4, 5];
         assert_eq!(int, Poly::new_from_coeffs(&int).coeffs.as_slice());
 
         let float = [0.1_f32, 0.34, 3.43];
-        assert_eq!(float, Poly::new_from_coeffs(&float).coeffs.as_slice());
+        for (f, c) in float.iter().zip(Poly::new_from_coeffs(&float).coeffs) {
+            assert_relative_eq!(*f, c);
+        }
 
         assert_eq!(
             Poly::new_from_coeffs(&[1, 2, 3]),
@@ -1065,6 +1118,30 @@ mod tests {
         let r1 = p.eval_by_val(0.);
         let r2 = p.eval(&0.);
         assert_relative_eq!(r1, r2);
+    }
+
+    #[test]
+    fn poly_ratio_evaluation() {
+        let p1 = poly!(1., 2., 3.);
+        let p2 = poly!(4., 5.);
+        let x = 2.;
+        let r1 = Poly::eval_poly_ratio(&p1, &p2, x);
+        assert_relative_eq!(p1.eval(&x) / p2.eval(&x), r1);
+
+        let y = 0.5;
+        let r2 = Poly::eval_poly_ratio(&p1, &p2, y);
+        assert_relative_eq!(p1.eval(&y) / p2.eval(&y), r2);
+    }
+
+    #[test]
+    fn poly_ratio_overflow() {
+        let p1 = Poly::new_from_coeffs(&[4., 5., 1.]);
+        let p2 = Poly::new_from_coeffs(&[1., 2., 3., 1.]);
+        let x = -1e30_f32;
+        let r = Poly::eval_poly_ratio(&p1, &p2, x);
+        let naive = p1.eval(&x) / p2.eval(&x);
+        assert!(naive.is_nan());
+        assert!((0. - r).abs() < 1e-16);
     }
 
     #[test]
@@ -1255,7 +1332,9 @@ mod tests_roots {
     fn real_3_roots_eigen() {
         let roots = &[-1., 1., 0.];
         let p = Poly::new_from_roots(roots);
-        assert_eq!(roots, p.real_roots().unwrap().as_slice());
+        for (r, rr) in roots.iter().zip(p.real_roots().unwrap()) {
+            assert_relative_eq!(*r, rr);
+        }
     }
 
     #[test]

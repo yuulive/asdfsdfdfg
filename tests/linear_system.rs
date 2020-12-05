@@ -97,7 +97,7 @@ fn initial_value() {
 
     let limit = g.eval(&1e30);
     let mut evo = sys.rk2(|_| vec![1.], &[0., 0.], Seconds(0.1), 25);
-    let init = evo.nth(0).unwrap().output()[0];
+    let init = evo.next().unwrap().output()[0];
 
     assert_relative_eq!(0., limit);
     assert_relative_eq!(0., init);

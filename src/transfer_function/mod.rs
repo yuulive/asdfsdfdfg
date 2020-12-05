@@ -33,6 +33,7 @@ use std::{
 };
 
 use crate::{
+    error::{Error, ErrorKind},
     linear_system::{self, SsGen},
     polynomial::Poly,
     polynomial_matrix::{MatrixOfPoly, PolyMatrix},
@@ -58,14 +59,8 @@ impl<T: Float, U: Time> TfGen<T, U> {
     ///
     /// * `num` - Transfer function numerator
     /// * `den` - Transfer function denominator
-    ///
-    /// Panics
-    ///
-    /// If either numerator of denominator is zero the method panics.
     #[must_use]
     pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
-        assert!(!num.is_zero());
-        assert!(!den.is_zero());
         Self {
             num,
             den,
@@ -178,7 +173,8 @@ impl<T: Float, U: Time> TfGen<T, U> {
         }
     }
 
-    /// Normalization of transfer function
+    /// Normalization of transfer function. If the denominator is zero the same
+    /// transfer function is returned.
     ///
     /// from:
     /// ```text
@@ -202,6 +198,9 @@ impl<T: Float, U: Time> TfGen<T, U> {
     /// ```
     #[must_use]
     pub fn normalize(&self) -> Self {
+        if self.den.is_zero() {
+            return self.clone();
+        }
         let (den, an) = self.den.monic();
         let num = &self.num / an;
         Self {
@@ -211,7 +210,8 @@ impl<T: Float, U: Time> TfGen<T, U> {
         }
     }
 
-    /// In place normalization of transfer function
+    /// In place normalization of transfer function. If the denominator is zero
+    /// no operation is done.
     ///
     /// from:
     /// ```text
@@ -235,6 +235,9 @@ impl<T: Float, U: Time> TfGen<T, U> {
     /// assert_eq!(expected, tfz);
     /// ```
     pub fn normalize_mut(&mut self) {
+        if self.den.is_zero() {
+            return;
+        }
         let an = self.den.monic_mut();
         self.num.div_mut(an);
     }
@@ -255,7 +258,7 @@ macro_rules! from_ss_to_tr {
             ///
             /// It returns an error if the linear system is not single input
             /// single output.
-            pub fn new_from_siso(ss: &SsGen<$ty, U>) -> Result<Self, &'static str> {
+            pub fn new_from_siso(ss: &SsGen<$ty, U>) -> Result<Self, Error> {
                 let (pc, a_inv) = $laverrier(&ss.a);
                 let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
                 let rest = PolyMatrix::multiply(&pc, &ss.d);
@@ -263,7 +266,7 @@ macro_rules! from_ss_to_tr {
                 if let Some(num) = MatrixOfPoly::from(tf).single() {
                     Ok(Self::new(num.clone(), pc))
                 } else {
-                    Err("Linear system is not Single Input Single Output")
+                    Err(Error::new_internal(ErrorKind::NoSisoSystem))
                 }
             }
         }
@@ -678,7 +681,10 @@ mod tests {
     #[test]
     fn print() {
         let tf = TfGen::<_, Continuous>::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
-        assert_eq!("1\n─────\n1 +1s", format!("{}", tf));
+        assert_eq!(
+            "1\n\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n1 +1s",
+            format!("{}", tf)
+        );
     }
 
     #[test]
@@ -694,5 +700,20 @@ mod tests {
         tfz.normalize_mut();
         let expected = TfGen::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
         assert_eq!(expected, tfz);
+    }
+
+    #[test]
+    fn failed_conversion_from_ss() {
+        let ss = crate::Ss::new_from_slice(
+            2,
+            2,
+            1,
+            &[1., 1., 1., 1.],
+            &[1., 1., 1., 1.],
+            &[1., 1.],
+            &[1., 1.],
+        );
+        let res = TfGen::<f32, Continuous>::new_from_siso(&ss);
+        assert!(res.is_err());
     }
 }

@@ -2,7 +2,6 @@
 extern crate automatica;
 
 use automatica::{
-    linear_system::discrete::DiscreteTime,
     signals::{continuous, discrete},
     Discretization, Seconds, Ss, Tf,
 };
