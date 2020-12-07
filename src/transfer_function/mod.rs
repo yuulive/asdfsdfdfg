@@ -21,7 +21,7 @@ pub mod discrete;
 pub mod discretization;
 pub mod matrix;
 
-use nalgebra::{ComplexField, RealField};
+use nalgebra::RealField;
 use num_complex::Complex;
 use num_traits::{Float, Inv, One, Signed, Zero};
 
@@ -112,7 +112,7 @@ impl<T: Clone, U: Time> Inv for TfGen<T, U> {
     }
 }
 
-impl<T: ComplexField + Debug + Float + RealField, U: Time> TfGen<T, U> {
+impl<T: Float + RealField, U: Time> TfGen<T, U> {
     /// Calculate the poles of the transfer function
     #[must_use]
     pub fn real_poles(&self) -> Option<Vec<T>> {

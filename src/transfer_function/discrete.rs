@@ -12,7 +12,7 @@
 //! * backward Euler method
 //! * Tustin (trapezoidal) method
 
-use nalgebra::{ComplexField, RealField};
+use nalgebra::RealField;
 use num_complex::Complex;
 use num_traits::{Float, Zero};
 
@@ -90,7 +90,7 @@ impl<'a, T: 'a + Add<&'a T, Output = T> + Div<Output = T> + Zero> Tfz<T> {
     }
 }
 
-impl<T: ComplexField + Float + RealField> Tfz<T> {
+impl<T: Float + RealField> Tfz<T> {
     /// System stability. Checks if all poles are inside the unit circle.
     ///
     /// # Example
