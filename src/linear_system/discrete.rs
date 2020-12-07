@@ -152,7 +152,7 @@ impl<T: ComplexField + Float + RealField> Ssd<T> {
     /// ```
     #[must_use]
     pub fn is_stable(&self) -> bool {
-        self.poles().iter().all(|p| p.abs() < T::one())
+        self.poles().iter().all(|p| p.norm() < T::one())
     }
 }
 

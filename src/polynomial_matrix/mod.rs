@@ -187,7 +187,7 @@ impl<T: Mul<Output = T> + MulAssign<T> + Scalar + Zero> PolyMatrix<T> {
     /// * `poly` - Polynomial
     /// * `matrix` - Matrix
     pub(crate) fn multiply(poly: &Poly<T>, matrix: &DMatrix<T>) -> PolyMatrix<T> {
-        let result = poly.as_slice().iter().map(|&c| matrix * c);
+        let result = poly.as_slice().iter().map(|c| matrix * c.clone());
         PolyMatrix::new_from_iter(result)
     }
 }
@@ -227,7 +227,7 @@ impl<T: Display + Scalar + Zero> Display for PolyMatrix<T> {
         let mut s = String::new();
         let mut sep = "";
         for (i, c) in self.matr_coeffs.iter().enumerate() {
-            if c.iter().all(|&x| x == T::zero()) {
+            if c.iter().all(|x| x == &T::zero()) {
                 continue;
             }
             s.push_str(sep);

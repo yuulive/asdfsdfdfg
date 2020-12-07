@@ -102,7 +102,7 @@ impl<T: ComplexField + Float + RealField> Tfz<T> {
     /// ```
     #[must_use]
     pub fn is_stable(&self) -> bool {
-        self.complex_poles().iter().all(|p| p.abs() < T::one())
+        self.complex_poles().iter().all(|p| p.norm() < T::one())
     }
 }
 
@@ -363,7 +363,7 @@ impl<T: Float> Plotter<T> for Tfz<T> {
     /// * `theta` - angle at which the function is evaluated.
     /// Evaluation occurs at G(e^(i*theta)).
     fn eval_point(&self, theta: T) -> Complex<T> {
-        self.eval(&Complex::from_polar(&T::one(), &theta))
+        self.eval(&Complex::from_polar(T::one(), theta))
     }
 }
 
