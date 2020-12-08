@@ -35,7 +35,9 @@ build:latest:
 
 test:run:
   stage: test
-  image: 'rust:slim'
+  image: 'rust:alpine'
+  before_script:
+    - apk add musl-dev
   needs: ["build:latest"]
   script:
     - "rustc --version && cargo --version"
