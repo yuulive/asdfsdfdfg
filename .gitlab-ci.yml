@@ -1,6 +1,3 @@
-default:
-  image: 'rust:alpine'
-
 stages:
   - build
   - test
@@ -19,6 +16,8 @@ stages:
 build:oldest:
   <<: *build_definition
   image: 'rust:1.38-alpine'
+  before_script:
+    - apk add musl-dev
   allow_failure: true
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
@@ -26,6 +25,9 @@ build:oldest:
 
 build:latest:
   <<: *build_definition
+  image: 'rust:alpine'
+  before_script:
+    - apk add musl-dev
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_BRANCH == "development"'
@@ -86,6 +88,9 @@ examples:run:
 
 package:build:
   stage: package
+  image: 'rust:alpine'
+  before_script:
+    - apk add musl-dev
   script:
     - "rustc --version && cargo --version"
     - cargo package --list --verbose
@@ -115,6 +120,9 @@ pages:
 
 publish:send:
   stage: publish
+  image: 'rust:alpine'
+  before_script:
+    - apk add musl-dev
   script:
     - "rustc --version && cargo --version"
     - cargo publish --verbose
