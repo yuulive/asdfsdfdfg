@@ -61,6 +61,7 @@ extern crate quickcheck;
 extern crate quickcheck_macros;
 
 pub mod controller;
+pub mod enums;
 pub mod error;
 pub mod linear_system;
 pub mod plots;
@@ -72,6 +73,7 @@ pub mod units;
 pub mod utils;
 
 // Export from crate root.
+pub use enums::{Continuous, Discrete, Discretization, Time};
 pub use error::Error;
 pub use linear_system::{continuous::Ss, discrete::Ssd};
 pub use polynomial::Poly;
@@ -79,4 +81,3 @@ pub use transfer_function::{
     continuous::Tf, discrete::Tfz, discretization::TfDiscretization, matrix::TfMatrix,
 };
 pub use units::{Decibel, Hertz, RadiansPerSecond, Seconds};
-pub use utils::{Continuous, Discrete, Discretization, Time};

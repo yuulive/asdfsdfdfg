@@ -33,11 +33,11 @@ use std::{
 };
 
 use crate::{
+    enums::Time,
     error::{Error, ErrorKind},
     linear_system::{self, SsGen},
     polynomial::Poly,
     polynomial_matrix::{MatrixOfPoly, PolyMatrix},
-    Time,
 };
 
 /// Transfer function representation of a linear system

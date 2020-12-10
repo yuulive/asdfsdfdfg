@@ -17,10 +17,10 @@ use std::{
 };
 
 use crate::{
+    enums::Time,
     linear_system::{self, SsGen},
     polynomial::Poly,
     polynomial_matrix::{MatrixOfPoly, PolyMatrix},
-    Time,
 };
 
 /// Matrix of transfer functions

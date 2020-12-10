@@ -12,7 +12,7 @@ use num_traits::{Float, MulAdd, Num};
 
 use std::fmt::Debug;
 
-use crate::{transfer_function::continuous::Tf, units::Seconds, Discretization};
+use crate::{enums::Discretization, transfer_function::continuous::Tf, units::Seconds};
 
 /// Discretization of a transfer function
 #[derive(Debug)]

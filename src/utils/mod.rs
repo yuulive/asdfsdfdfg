@@ -3,32 +3,6 @@
 use num_complex::Complex;
 use num_traits::Float;
 
-use std::fmt::Debug;
-
-/// Trait to tag Continuous or Discrete types
-pub trait Time: Clone + Debug {}
-
-/// Type for continuous systems
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Continuous {}
-impl Time for Continuous {}
-
-/// Type for discrete systems
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Discrete {}
-impl Time for Discrete {}
-
-/// Discretization algorithm.
-#[derive(Clone, Copy, Debug)]
-pub enum Discretization {
-    /// Forward Euler
-    ForwardEuler,
-    /// Backward Euler
-    BackwardEuler,
-    /// Tustin (trapezoidal rule)
-    Tustin,
-}
-
 /// Calculate the natural pulse of a complex number, it corresponds to its modulus.
 ///
 /// # Arguments
