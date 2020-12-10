@@ -98,23 +98,34 @@ impl<T: Float> Pid<T> {
     /// assert_eq!(tf, pid.tf());
     /// ```
     pub fn tf(&self) -> Tf<T> {
-        if let Some(n) = self.n {
-            let a0 = self.kp * n;
-            let a1 = self.kp * (self.ti * n + self.td);
-            let a2 = self.kp * self.ti * self.td * (T::one() + n);
-            let b0 = T::zero();
-            let b1 = self.ti * n;
-            let b2 = self.ti * self.td;
-            Tf::new(
-                Poly::new_from_coeffs(&[a0, a1, a2]),
-                Poly::new_from_coeffs(&[b0, b1, b2]),
-            )
-        } else {
-            Tf::new(
-                Poly::new_from_coeffs(&[T::one(), self.ti, self.ti * self.td]),
-                Poly::new_from_coeffs(&[T::zero(), self.ti / self.kp]),
-            )
-        }
+        self.n
+            .map_or_else(|| self.tf_from_ideal_pid(), |n| self.tf_from_real_pid(n))
+    }
+
+    /// Calculate the transfer function of a real PID controller
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - Constant for additional pole
+    fn tf_from_real_pid(&self, n: T) -> Tf<T> {
+        let a0 = self.kp * n;
+        let a1 = self.kp * (self.ti * n + self.td);
+        let a2 = self.kp * self.ti * self.td * (T::one() + n);
+        let b0 = T::zero();
+        let b1 = self.ti * n;
+        let b2 = self.ti * self.td;
+        Tf::new(
+            Poly::new_from_coeffs(&[a0, a1, a2]),
+            Poly::new_from_coeffs(&[b0, b1, b2]),
+        )
+    }
+
+    /// Calculate the transfer function of an ideal PID controller
+    fn tf_from_ideal_pid(&self) -> Tf<T> {
+        Tf::new(
+            Poly::new_from_coeffs(&[T::one(), self.ti, self.ti * self.td]),
+            Poly::new_from_coeffs(&[T::zero(), self.ti / self.kp]),
+        )
     }
 }
 
