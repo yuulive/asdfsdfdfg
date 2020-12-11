@@ -60,6 +60,7 @@ extern crate quickcheck;
 #[macro_use(quickcheck)]
 extern crate quickcheck_macros;
 
+pub mod complex;
 pub mod controller;
 pub mod enums;
 pub mod error;
@@ -73,6 +74,7 @@ pub mod units;
 pub mod utils;
 
 // Export from crate root.
+pub use complex::{damp, pulse};
 pub use enums::{Continuous, Discrete, Discretization, Time};
 pub use error::Error;
 pub use linear_system::{continuous::Ss, discrete::Ssd};
