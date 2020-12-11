@@ -325,6 +325,15 @@ Tests have defined the path in the test files, the inputs and the expected outpu
 - input: $G(s)=\frac{k}{s\left(3+s\right)\left(5+s\right)}$
 - output: 3 branches, symmetric, limit value for stability =120
 
+### Complex
+
+*TC6.1* The damping of zero is equal to -1.
+
+    tests/complex/damping_of_zero
+
+- input: 0+0i
+- output: -1
+
 ## White box testing
 
 Every module must contain a test submodule, whose purpose it to test all the functions present inside the module.
@@ -523,15 +532,21 @@ Conversion between Hertz and radians per second. Inversion between seconds and H
 
 Formatting of units of measurement as strings.
 
-### Module utils
-
-Determination of the pulse and the dump of a complex number.
+### Module iterator
 
 Zip two iterators with different lengths, also through a function, at the shortest elements are added.
 
 ### Module error
 
 String and debug string representation of Error.
+
+### Module enums
+
+Currently no test can be defined for enumerations.
+
+### Module complex
+
+Calculation of the natural pulse and the damping of a complex number, that represents a zero or a pole.
 
 ## Documentation tests
 

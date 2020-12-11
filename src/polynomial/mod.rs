@@ -29,7 +29,7 @@ use std::{
     ops::{Add, Div, Index, IndexMut, Mul, Neg},
 };
 
-use crate::{polynomial::roots::RootsFinder, utils};
+use crate::{iterator, polynomial::roots::RootsFinder};
 
 /// Polynomial object
 ///
@@ -807,7 +807,7 @@ impl<T: Float> Poly<T> {
             let x = x.recip();
             // Zip and extend the smaller polynomial with zeros.
             // Evaluate the reversed polynomial.
-            let (n, d) = utils::zip_longest(&numerator.coeffs, &denominator.coeffs, &T::zero())
+            let (n, d) = iterator::zip_longest(&numerator.coeffs, &denominator.coeffs, &T::zero())
                 .fold((T::zero(), T::zero()), |acc, c| {
                     (acc.0 * x + *c.0, acc.1 * x + *c.1)
                 });

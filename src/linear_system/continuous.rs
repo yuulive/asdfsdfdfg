@@ -7,12 +7,12 @@ use nalgebra::{ComplexField, DVector, RealField};
 use num_traits::Float;
 
 use crate::{
+    enums::Continuous,
     linear_system::{
         solver::{Order, Radau, Rk, Rkf45},
         Equilibrium, SsGen,
     },
     units::Seconds,
-    Continuous,
 };
 
 /// State-space representation of continuous time linear system

@@ -88,9 +88,7 @@ It is possible to operate on same polynomial properties:
 - conversion Hertz - radians per second
 - inversion Hertz - seconds
 
-### Utilities
-
-#### Pulse and damp
+### Complex numbers extension methods
 
 *FR3.1* Given a complex number it is possible to calculate the natural pulse and the damp [1].
 
@@ -213,3 +211,9 @@ It is possible to operate on same polynomial properties:
 ### Error type
 
 *FR9.1* The library shall expose a custom `Error` type that implements the `std::error::Error` trait.
+
+### Enumerations
+
+*FR10.1* The library defines enumerations that cannot be instantiated and implement the `Time` trait, `Continuous` for continuous time systems, `Discrete` for discrete time systems.
+
+*FR10.2* Define `Discretization` enumeration with variants `ForwardEuler`, `BackwardEuler` and `Tustin` to indicate the type of discretization.

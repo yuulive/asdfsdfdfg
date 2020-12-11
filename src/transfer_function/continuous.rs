@@ -18,10 +18,10 @@ use num_traits::Float;
 use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 
 use crate::{
+    enums::Continuous,
     plots::{root_locus::RootLocus, Plotter},
     transfer_function::TfGen,
     units::Seconds,
-    Continuous,
 };
 
 /// Continuous transfer function

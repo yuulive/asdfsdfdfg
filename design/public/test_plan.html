@@ -275,6 +275,13 @@
         <li>input: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo stretchy="false" form="prefix">(</mo><mi>s</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mfrac><mi>k</mi><mrow><mi>s</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>3</mn><mo>+</mo><mi>s</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>5</mn><mo>+</mo><mi>s</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">G(s)=\frac{k}{s\left(3+s\right)\left(5+s\right)}</annotation></semantics></math></li>
         <li>output: 3 branches, symmetric, limit value for stability =120</li>
         </ul>
+        <h3 id="complex">Complex</h3>
+        <p><em>TC6.1</em> The damping of zero is equal to -1.</p>
+        <pre><code>tests/complex/damping_of_zero</code></pre>
+        <ul>
+        <li>input: 0+0i</li>
+        <li>output: -1</li>
+        </ul>
         <h2 id="white-box-testing">White box testing</h2>
         <p>Every module must contain a test submodule, whose purpose it to test all the functions present inside the module.</p>
         <p>This tests are dependent from the implementation of the method, it is not given a detailed description, but the requirements are listed and what the test shall verify. More information must be added in the source code.</p>
@@ -374,11 +381,14 @@
         <p>Creation of decibel from floating point numbers.</p>
         <p>Conversion between Hertz and radians per second. Inversion between seconds and Hertz.</p>
         <p>Formatting of units of measurement as strings.</p>
-        <h3 id="module-utils">Module utils</h3>
-        <p>Determination of the pulse and the dump of a complex number.</p>
+        <h3 id="module-iterator">Module iterator</h3>
         <p>Zip two iterators with different lengths, also through a function, at the shortest elements are added.</p>
         <h3 id="module-error">Module error</h3>
         <p>String and debug string representation of Error.</p>
+        <h3 id="module-enums">Module enums</h3>
+        <p>Currently no test can be defined for enumerations.</p>
+        <h3 id="module-complex">Module complex</h3>
+        <p>Calculation of the natural pulse and the damping of a complex number, that represents a zero or a pole.</p>
         <h2 id="documentation-tests">Documentation tests</h2>
         <p>Every public method of the library shall have a documentation in the source code, in addition there shall be an example of the use of the method.</p>
         <p>This example it will compiled and executed during the test phase, ensuring that the documentation remains aligned with the code modifications.</p>

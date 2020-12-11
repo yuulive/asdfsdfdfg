@@ -32,12 +32,12 @@ use std::{
 };
 
 use crate::{
+    enums::Time,
     error::{Error, ErrorKind},
     polynomial,
     polynomial::Poly,
     polynomial_matrix::PolyMatrix,
     transfer_function::TfGen,
-    Time,
 };
 
 /// State-space representation of a linear system

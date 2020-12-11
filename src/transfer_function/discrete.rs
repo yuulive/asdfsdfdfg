@@ -24,7 +24,7 @@ use std::{
     ops::{Add, Div, Mul},
 };
 
-use crate::{plots::Plotter, transfer_function::TfGen, Discrete};
+use crate::{enums::Discrete, plots::Plotter, transfer_function::TfGen};
 
 /// Discrete transfer function
 pub type Tfz<T> = TfGen<T, Discrete>;

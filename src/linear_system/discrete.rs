@@ -18,8 +18,8 @@ use std::{
 };
 
 use crate::{
+    enums::{Discrete, Discretization},
     linear_system::{continuous::Ss, Equilibrium, SsGen},
-    Discrete, Discretization,
 };
 
 /// State-space representation of discrete time linear system
