@@ -88,9 +88,7 @@ It is possible to operate on same polynomial properties:
 - conversion Hertz - radians per second
 - inversion Hertz - seconds
 
-### Utilities
-
-#### Pulse and damp
+### Complex numbers extension methods
 
 *FR3.1* Given a complex number it is possible to calculate the natural pulse and the damp [1].
 
