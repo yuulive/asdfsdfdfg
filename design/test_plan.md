@@ -533,6 +533,10 @@ Zip two iterators with different lengths, also through a function, at the shorte
 
 String and debug string representation of Error.
 
+### Module enums
+
+Currently no test can be defined for enumerations.
+
 ## Documentation tests
 
 Every public method of the library shall have a documentation in the source code, in addition there shall be an example of the use of the method.
