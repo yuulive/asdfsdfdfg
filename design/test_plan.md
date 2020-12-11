@@ -325,6 +325,15 @@ Tests have defined the path in the test files, the inputs and the expected outpu
 - input: $G(s)=\frac{k}{s\left(3+s\right)\left(5+s\right)}$
 - output: 3 branches, symmetric, limit value for stability =120
 
+### Complex
+
+*TC6.1* The damping of zero is equal to -1.
+
+    tests/complex/damping_of_zero
+
+- input: 0+0i
+- output: -1
+
 ## White box testing
 
 Every module must contain a test submodule, whose purpose it to test all the functions present inside the module.
@@ -536,6 +545,10 @@ String and debug string representation of Error.
 ### Module enums
 
 Currently no test can be defined for enumerations.
+
+### Module complex
+
+Calculation of the natural pulse and the damp of a complex number, that represents a zero or a pole.
 
 ## Documentation tests
 

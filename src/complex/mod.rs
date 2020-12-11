@@ -20,11 +20,11 @@ pub fn pulse<T: Float>(c: Complex<T>) -> T {
     c.norm()
 }
 
-/// Calculate the damp of a complex number, it corresponds to the cosine of the
+/// Calculate the damping of a complex number, it corresponds to the cosine of the
 /// angle between the segment joining the complex number to the origin and the
 /// real negative semiaxis.
 ///
-/// By definition the damp of 0+0i is -1.
+/// By definition the damping of 0+0i is -1.
 ///
 /// # Arguments
 ///
@@ -40,7 +40,7 @@ pub fn pulse<T: Float>(c: Complex<T>) -> T {
 pub fn damp<T: Float>(c: Complex<T>) -> T {
     let w = c.norm();
     if w == T::zero() {
-        // Handle the case where the pusle is zero to avoid division by zero.
+        // Handle the case where the pulse is zero to avoid division by zero.
         -T::one()
     } else {
         -c.re / w
