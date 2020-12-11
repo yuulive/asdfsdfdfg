@@ -5,8 +5,8 @@ use num_traits::{Float, FloatConst, Num, One, Zero};
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
 use crate::{
+    iterator,
     polynomial::{fft, Poly},
-    utils,
 };
 
 /// Implementation of polynomial negation
@@ -63,7 +63,7 @@ impl<T: Clone + PartialEq + Zero> Add for &Poly<T> {
 
     fn add(self, rhs: &Poly<T>) -> Poly<T> {
         let zero = T::zero();
-        let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
+        let result = iterator::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
             x.clone() + y.clone()
         });
         // The polynomial cannot be empty.
@@ -209,7 +209,7 @@ impl<T: Clone + PartialEq + Sub<Output = T> + Zero> Sub for &Poly<T> {
 
     fn sub(self, rhs: Self) -> Poly<T> {
         let zero = T::zero();
-        let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
+        let result = iterator::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
             x.clone() - y.clone()
         });
         // The polynomial cannot be empty.
@@ -496,7 +496,7 @@ impl<T: Float + FloatConst> Poly<T> {
         let a_fft = fft::fft(a);
         let b_fft = fft::fft(b);
         // Multiply the two transforms.
-        let y_fft = utils::zip_with(&a_fft, &b_fft, |a, b| a * b).collect();
+        let y_fft = iterator::zip_with(&a_fft, &b_fft, |a, b| a * b).collect();
         // IFFT of the result.
         let y = fft::ifft(y_fft);
         // Extract the real parts of the result.

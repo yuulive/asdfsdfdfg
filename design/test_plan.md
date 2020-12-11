@@ -532,9 +532,7 @@ Conversion between Hertz and radians per second. Inversion between seconds and H
 
 Formatting of units of measurement as strings.
 
-### Module utils
-
-Determination of the pulse and the dump of a complex number.
+### Module iterator
 
 Zip two iterators with different lengths, also through a function, at the shortest elements are added.
 
@@ -548,7 +546,7 @@ Currently no test can be defined for enumerations.
 
 ### Module complex
 
-Calculation of the natural pulse and the damp of a complex number, that represents a zero or a pole.
+Calculation of the natural pulse and the damping of a complex number, that represents a zero or a pole.
 
 ## Documentation tests
 

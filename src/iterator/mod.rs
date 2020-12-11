@@ -1,4 +1,4 @@
-//! Collection of variuous utility functions.
+//! Collection of iterator extensions.
 
 /// Zip two iterators with the given function
 ///

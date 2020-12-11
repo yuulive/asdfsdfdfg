@@ -71,7 +71,7 @@ pub mod polynomial_matrix;
 pub mod signals;
 pub mod transfer_function;
 pub mod units;
-pub mod utils;
+mod iterator;
 
 // Export from crate root.
 pub use complex::{damp, pulse};
