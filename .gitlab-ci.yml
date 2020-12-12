@@ -15,7 +15,10 @@ stages:
 
 build:oldest:
   <<: *build_definition
-  image: 'rust:1.38-alpine'
+  parallel:
+    matrix:
+      - IMAGE: ['rust:1.43-alpine', 'rust:1.44-alpine', 'rust:1.45-alpine']
+  image: $IMAGE
   before_script:
     - apk add musl-dev
   allow_failure: true
