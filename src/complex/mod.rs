@@ -47,6 +47,30 @@ pub fn damp<T: Float>(c: Complex<T>) -> T {
     }
 }
 
+pub(crate) fn compdiv<T: Float>(a: Complex<T>, b: Complex<T>) -> Complex<T> {
+    if b.im.abs() <= b.re.abs() {
+        let (e, f) = compdiv_impl(a.re, a.im, b.re, b.im);
+        Complex::new(e, f)
+    } else {
+        let (e, f) = compdiv_impl(a.im, a.re, b.im, b.re);
+        Complex::new(e, -f)
+    }
+}
+
+fn compdiv_impl<T: Float>(a: T, b: T, c: T, d: T) -> (T, T) {
+    let r = d / c;
+    let t = (c + d * r).recip();
+    if r.is_zero() {
+        let e = (a + d * (b / c)) * t;
+        let f = (b - d * (a / c)) * t;
+        (e, f)
+    } else {
+        let e = (a + b * r) * t;
+        let f = (b - a * r) * t;
+        (e, f)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -65,5 +89,61 @@ mod tests {
         let zero = Complex::from_str("0").unwrap();
         assert_relative_eq!(0., pulse(zero));
         assert_relative_eq!(-1., damp(zero));
+    }
+
+    #[test]
+    fn complex_division() {
+        let p2 = |n: i32| 2.0.powf(n as f64);
+
+        let a = compdiv(Complex::new(1., 1.), Complex::new(1., 1e307));
+        assert_eq!(
+            Complex::new(1.0000000000000001e-307, -1.0000000000000001e-307),
+            a
+        );
+
+        let b = compdiv(Complex::new(1., 1.), Complex::new(1e-307, 1e-307));
+        assert_eq!(Complex::new(1.0000000000000001e307, 0.), b);
+
+        let c = compdiv(Complex::new(1e307, 1e-307), Complex::new(1e204, 1e-204));
+        assert_eq!(Complex::new(1e103, -1e-305), c);
+
+        let d1 = compdiv(Complex::new(1., 1.), Complex::new(1., p2(1023)));
+        assert_eq!(Complex::new(p2(-1023), -p2(-1023)), d1);
+
+        let d2 = compdiv(Complex::new(1., 1.), Complex::new(p2(-1023), p2(-1023)));
+        assert_eq!(Complex::new(p2(1023), 0.), d2);
+
+        let d3 = compdiv(
+            Complex::new(p2(1023), p2(-1023)),
+            Complex::new(p2(677), p2(-677)),
+        );
+        assert_eq!(Complex::new(p2(346), -p2(-1008)), d3);
+
+        let d5 = compdiv(
+            Complex::new(p2(1020), p2(-844)),
+            Complex::new(p2(656), p2(-780)),
+        );
+        assert_eq!(Complex::new(p2(364), -p2(-1072)), d5);
+
+        let d6 = compdiv(
+            Complex::new(p2(-71), p2(1021)),
+            Complex::new(p2(1001), p2(-323)),
+        );
+        assert_eq!(Complex::new(p2(-1072), p2(20)), d6);
+    }
+
+    #[test]
+    fn complex_division_limits() {
+        let c1 = Complex::new(1., 1.);
+        let c2 = Complex::new(1., -1.);
+        let c3 = Complex::new(-1., 1.);
+        let c4 = Complex::new(-1., -1.);
+
+        let zero = Complex::new(0., 0.);
+
+        assert!(compdiv(c1, zero).is_nan());
+        assert!(compdiv(c2, zero).is_nan());
+        assert!(compdiv(c3, zero).is_nan());
+        assert!(compdiv(c4, zero).is_nan());
     }
 }
