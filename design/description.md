@@ -23,7 +23,7 @@ This library does not directly interact with the hardware, it uses the function 
 
 ### Software interfaces
 
-The library needs the `rustc` compiler for the compilation with a version equal of greater than 1.38.
+The library needs the `rustc` compiler for the compilation with a version equal of greater than 1.44.
 
 The list of the needed dependencies for the compilations of the library is the following:
 
