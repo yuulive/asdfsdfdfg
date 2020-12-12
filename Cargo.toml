@@ -19,7 +19,7 @@ gitlab = { repository = "daingun/automatica", branch = "master" }
 num-traits = "0.2"
 num-complex = "0.3"
 nalgebra = "0.23"
-ndarray = "0.13"
+ndarray = "0.14"
 approx = "0.4"
 
 [dev-dependencies]

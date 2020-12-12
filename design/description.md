@@ -42,7 +42,7 @@ The list of the needed dependencies for the compilations of the library is the f
 - ndarray
     * multidimensional vectors, allows non numerical elements
     * source: <https://crates.io/crates/ndarray>
-    * version: 0.13
+    * version: 0.14
 - approx
     * approximate equality for floating pint numbers
     * source: <https://crates.io/crates/approx>
