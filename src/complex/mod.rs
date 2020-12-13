@@ -47,16 +47,34 @@ pub fn damp<T: Float>(c: Complex<T>) -> T {
     }
 }
 
+/// Division between complex numbers that avoids overflows.
+///
+/// # Arguments
+///
+/// * `a` - Dividend
+/// * `b` - Divisor
+/// Michael Baudin, Robert L. Smith, A Robust Complex Division in Scilab, 2012, arXiv:1210.4539v2 [cs.MS]
 pub(crate) fn compdiv<T: Float>(a: Complex<T>, b: Complex<T>) -> Complex<T> {
     if b.im.abs() <= b.re.abs() {
         let (e, f) = compdiv_impl(a.re, a.im, b.re, b.im);
         Complex::new(e, f)
     } else {
+        // Real and imaginary parts shall be swapped.
         let (e, f) = compdiv_impl(a.im, a.re, b.im, b.re);
+        // And the imaginary part shall change sign.
         Complex::new(e, -f)
     }
 }
 
+/// Implementation of division between complex numbers.
+///
+/// # Arguments
+///
+/// * `a` - Dividend real part if Im{divisor} <= Re{divisor} else imaginary
+/// * `b` - Dividend imaginary part if Im{divisor} <= Re{divisor} else real
+/// * `c` - Divisor real part if Im{divisor} <= Re{divisor} else imaginary
+/// * `d` - Divisor imaginary part if Im{divisor} <= Re{divisor} else real
+/// Michael Baudin, Robert L. Smith, A Robust Complex Division in Scilab, 2012, arXiv:1210.4539v2 [cs.MS]
 fn compdiv_impl<T: Float>(a: T, b: T, c: T, d: T) -> (T, T) {
     let r = d / c;
     let t = (c + d * r).recip();
@@ -91,40 +109,63 @@ mod tests {
         assert_relative_eq!(-1., damp(zero));
     }
 
-    #[test]
-    fn complex_division() {
-        let p2 = |n: i32| 2.0.powf(n as f64);
+    fn p2(n: i32) -> f64 {
+        2.0_f64.powf(n as f64)
+    }
 
+    #[test]
+    fn complex_division_a() {
         let a = compdiv(Complex::new(1., 1.), Complex::new(1., 1e307));
         assert_eq!(
             Complex::new(1.0000000000000001e-307, -1.0000000000000001e-307),
             a
         );
+    }
 
+    #[test]
+    fn complex_division_b() {
         let b = compdiv(Complex::new(1., 1.), Complex::new(1e-307, 1e-307));
         assert_eq!(Complex::new(1.0000000000000001e307, 0.), b);
+    }
 
+    #[test]
+    fn complex_division_c() {
         let c = compdiv(Complex::new(1e307, 1e-307), Complex::new(1e204, 1e-204));
         assert_eq!(Complex::new(1e103, -1e-305), c);
+    }
 
+    #[test]
+    fn complex_division_1() {
         let d1 = compdiv(Complex::new(1., 1.), Complex::new(1., p2(1023)));
         assert_eq!(Complex::new(p2(-1023), -p2(-1023)), d1);
+    }
 
+    #[test]
+    fn complex_division_2() {
         let d2 = compdiv(Complex::new(1., 1.), Complex::new(p2(-1023), p2(-1023)));
         assert_eq!(Complex::new(p2(1023), 0.), d2);
+    }
 
+    #[test]
+    fn complex_division_3() {
         let d3 = compdiv(
             Complex::new(p2(1023), p2(-1023)),
             Complex::new(p2(677), p2(-677)),
         );
         assert_eq!(Complex::new(p2(346), -p2(-1008)), d3);
+    }
 
+    #[test]
+    fn complex_division_5() {
         let d5 = compdiv(
             Complex::new(p2(1020), p2(-844)),
             Complex::new(p2(656), p2(-780)),
         );
         assert_eq!(Complex::new(p2(364), -p2(-1072)), d5);
+    }
 
+    #[test]
+    fn complex_division_6() {
         let d6 = compdiv(
             Complex::new(p2(-71), p2(1021)),
             Complex::new(p2(1001), p2(-323)),
