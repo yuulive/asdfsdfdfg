@@ -12,7 +12,7 @@ examples = arma_channel \
 		   suspension \
 		   transfer_function
 
-.PHONY : all_examples clippy doc $(examples) html update-version
+.PHONY : all_examples check-format clippy doc $(examples) html update-version
 
 # Create documentation without dependencies.
 doc:
@@ -38,3 +38,7 @@ $(examples):
 #    make update-version VERSION=0.10.0
 update-version:
 	./update-version.sh $(VERSION)
+
+# Check code format, does not apply changes
+check-format:
+	cargo fmt --all -- --check
