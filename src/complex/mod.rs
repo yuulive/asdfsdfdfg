@@ -75,6 +75,7 @@ pub(crate) fn compdiv<T: Float>(a: Complex<T>, b: Complex<T>) -> Complex<T> {
 /// * `c` - Divisor real part if Im{divisor} <= Re{divisor} else imaginary
 /// * `d` - Divisor imaginary part if Im{divisor} <= Re{divisor} else real
 /// Michael Baudin, Robert L. Smith, A Robust Complex Division in Scilab, 2012, arXiv:1210.4539v2 [cs.MS]
+#[allow(clippy::many_single_char_names)]
 fn compdiv_impl<T: Float>(a: T, b: T, c: T, d: T) -> (T, T) {
     let r = d / c;
     let t = (c + d * r).recip();
@@ -110,14 +111,14 @@ mod tests {
     }
 
     fn p2(n: i32) -> f64 {
-        2.0_f64.powf(n as f64)
+        2.0_f64.powf(f64::from(n))
     }
 
     #[test]
     fn complex_division_a() {
         let a = compdiv(Complex::new(1., 1.), Complex::new(1., 1e307));
         assert_eq!(
-            Complex::new(1.0000000000000001e-307, -1.0000000000000001e-307),
+            Complex::new(1.000_000_000_000_000_1e-307, -1.000_000_000_000_000_1e-307),
             a
         );
     }
@@ -125,7 +126,7 @@ mod tests {
     #[test]
     fn complex_division_b() {
         let b = compdiv(Complex::new(1., 1.), Complex::new(1e-307, 1e-307));
-        assert_eq!(Complex::new(1.0000000000000001e307, 0.), b);
+        assert_eq!(Complex::new(1.000_000_000_000_000_1e307, 0.), b);
     }
 
     #[test]
