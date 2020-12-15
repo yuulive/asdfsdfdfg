@@ -3,7 +3,10 @@
 ## [0.10.0] - Unreleased
 ## Added
 ## Changed
+- Updated dependencies
+- Oldest supported rustc version is 1.44
 ### API Changes
+- `utils` module has been split into different public modules: `complex`, `enums`
 ## Fixed
 
 ## [0.9.0] - 2020-12-05
