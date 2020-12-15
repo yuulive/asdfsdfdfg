@@ -1,6 +1,6 @@
 ---
 title: Home page
-version: 0.9.0
+version: 0.10.0
 license: CC BY-SA 4.0
 ---
 
