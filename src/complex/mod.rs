@@ -147,6 +147,15 @@ mod tests {
         assert_eq!(Complex::new(p2(1023), 0.), d2);
     }
 
+    // Remove this test if the implementation of complex division in
+    // num-complex crate is changed.
+    #[test]
+    #[should_panic]
+    fn complex_division_2_fail() {
+        let d2 = Complex::new(1., 1.).fdiv(Complex::new(p2(-1023), p2(-1023)));
+        assert_eq!(Complex::new(p2(1023), 0.), d2);
+    }
+
     #[test]
     fn complex_division_3() {
         let d3 = compdiv(

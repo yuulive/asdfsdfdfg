@@ -6,7 +6,7 @@ use std::{
     ops::{Mul, Sub},
 };
 
-use super::Poly;
+use {super::Poly, crate::complex};
 
 /// Structure to hold the computational data for polynomial root finding.
 #[derive(Debug)]
@@ -99,10 +99,10 @@ impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
                     .sum();
 
                 let fraction = if derivative.is_zero() {
-                    -Complex::<T>::one().fdiv(a_xki)
+                    complex::compdiv(-Complex::<T>::one(), a_xki)
                 } else {
-                    let n_xki = self.poly.eval(&solution_i).fdiv(derivative);
-                    n_xki.fdiv(Complex::<T>::one() - n_xki * a_xki)
+                    let n_xki = complex::compdiv(self.poly.eval(&solution_i), derivative);
+                    complex::compdiv(n_xki, Complex::<T>::one() - n_xki * a_xki)
                 };
                 // Overriding the root before updating the other decrease the time
                 // the algorithm converges.

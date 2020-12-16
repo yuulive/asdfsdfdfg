@@ -12,7 +12,7 @@ use num_traits::{Float, MulAdd, Num};
 
 use std::fmt::Debug;
 
-use crate::{enums::Discretization, transfer_function::continuous::Tf, units::Seconds};
+use crate::{complex, enums::Discretization, transfer_function::continuous::Tf, units::Seconds};
 
 /// Discretization of a transfer function
 #[derive(Debug)]
@@ -103,7 +103,7 @@ fn fb<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
 /// * `ts` - Sampling period
 fn tu<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
     let float = (T::one() + T::one()) / ts.0;
-    let complex = (z - T::one()).fdiv(z + T::one());
+    let complex = complex::compdiv(z - T::one(), z + T::one());
     // Complex<T> * T is implemented, not T * Complex<T>
     complex * float
 }
