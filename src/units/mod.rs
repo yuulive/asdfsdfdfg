@@ -71,18 +71,18 @@ impl ToDecibel for f32 {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-/// Unit of measurement: deciBel [dB]
+/// Unit of measurement: deciBel \[dB\]
 pub struct Decibel<T: Num>(pub T);
 
-/// Unit of measurement: seconds [s]
+/// Unit of measurement: seconds \[s\]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Seconds<T: Num>(pub T);
 
-/// Unit of measurement: Hertz [Hz]
+/// Unit of measurement: Hertz \[Hz\]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Hertz<T: Num>(pub T);
 
-/// Unit of measurement: Radians per seconds [rad/s]
+/// Unit of measurement: Radians per seconds \[rad/s\]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct RadiansPerSecond<T: Num>(pub T);
 
