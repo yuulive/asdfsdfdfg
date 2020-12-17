@@ -2,9 +2,11 @@ extern crate automatica;
 #[macro_use]
 extern crate approx;
 
-use automatica::{poly, Poly};
-use num_complex::Complex;
-use num_traits::{One, Zero};
+use automatica::{
+    num_complex::Complex,
+    num_traits::{One, Zero},
+    poly, Poly,
+};
 
 /// TC1.1
 #[test]

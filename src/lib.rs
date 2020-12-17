@@ -55,10 +55,12 @@
 extern crate approx;
 
 #[cfg(test)]
-extern crate quickcheck;
-#[cfg(test)]
 #[macro_use(quickcheck)]
 extern crate quickcheck_macros;
+
+pub extern crate nalgebra;
+pub extern crate num_complex;
+pub extern crate num_traits;
 
 pub mod complex;
 pub mod controller;
@@ -74,12 +76,12 @@ pub mod transfer_function;
 pub mod units;
 
 // Export from crate root.
-pub use complex::{damp, pulse};
-pub use enums::{Continuous, Discrete, Discretization, Time};
-pub use error::Error;
-pub use linear_system::{continuous::Ss, discrete::Ssd};
-pub use polynomial::Poly;
-pub use transfer_function::{
+pub use crate::complex::{damp, pulse};
+pub use crate::enums::{Continuous, Discrete, Discretization, Time};
+pub use crate::error::Error;
+pub use crate::linear_system::{continuous::Ss, discrete::Ssd};
+pub use crate::polynomial::Poly;
+pub use crate::transfer_function::{
     continuous::Tf, discrete::Tfz, discretization::TfDiscretization, matrix::TfMatrix,
 };
-pub use units::{Decibel, Hertz, RadiansPerSecond, Seconds};
+pub use crate::units::{Decibel, Hertz, RadiansPerSecond, Seconds};
