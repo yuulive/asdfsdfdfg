@@ -90,6 +90,25 @@ fn compdiv_impl<T: Float>(a: T, b: T, c: T, d: T) -> (T, T) {
     }
 }
 
+#[allow(clippy::many_single_char_names)]
+fn compinv<T: Float>(n: Complex<T>) -> Complex<T> {
+    let c = n.re;
+    let d = n.im;
+    if d.abs() <= c.abs() {
+        let r = d / c;
+        let t = (c + d * r).recip();
+        let e = t;
+        let f = -r * t;
+        Complex::new(e, f)
+    } else {
+        let r = c / d;
+        let t = (c * r + d).recip();
+        let e = r * t;
+        let f = -t;
+        Complex::new(e, f)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -196,5 +215,10 @@ mod tests {
         assert!(compdiv(c2, zero).is_nan());
         assert!(compdiv(c3, zero).is_nan());
         assert!(compdiv(c4, zero).is_nan());
+    }
+
+    #[test]
+    fn complex_inversion_limits() {
+        assert!(compinv(Complex::new(0., 0.)).is_nan());
     }
 }
