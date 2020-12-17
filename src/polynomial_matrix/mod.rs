@@ -5,7 +5,7 @@
 use nalgebra::{DMatrix, Scalar};
 use ndarray::{Array, Array2};
 use num_complex::Complex;
-use num_traits::{Float, NumAssignOps, One, Signed, Zero};
+use num_traits::{Float, NumAssignOps, One, Zero};
 
 use std::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign};
 use std::{
@@ -345,7 +345,7 @@ impl<T: Scalar + Zero> From<PolyMatrix<T>> for MatrixOfPoly<T> {
 }
 
 /// Implementation of matrix of polynomials printing
-impl<T: Display + Signed> Display for MatrixOfPoly<T> {
+impl<T: Display + Zero> Display for MatrixOfPoly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", self.matrix)
     }
