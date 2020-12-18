@@ -516,8 +516,7 @@ impl<T: Float> Poly<T> {
 ///
 /// # Example
 ///```
-/// use num_complex::Complex;
-/// use automatica::polynomial;
+/// use automatica::{num_complex::Complex, polynomial};
 /// let actual = polynomial::complex_quadratic_roots(0., 1.);
 /// assert_eq!((-Complex::i(), Complex::i()), actual);
 ///```
@@ -691,8 +690,7 @@ impl<T: Clone + Div<Output = T> + NumCast + PartialEq + Zero> Poly<T> {
 //     ///
 //     /// # Example
 //     /// ```
-//     /// use automatica::{Eval, polynomial::Poly};
-//     /// use num_complex::Complex;
+//     /// use automatica::{Eval, num_complex::Complex, polynomial::Poly};
 //     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
 //     /// assert_eq!(18., p.eval(3.));
 //     /// assert_eq!(Complex::new(-18., 0.), p.eval(Complex::new(0., 3.)));
@@ -729,8 +727,7 @@ impl<T: Clone> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::Poly;
-    /// use num_complex::Complex;
+    /// use automatica::{num_complex::Complex, Poly};
     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
     /// assert_eq!(18., p.eval_by_val(3.));
     /// assert_eq!(Complex::new(-18., 0.), p.eval_by_val(Complex::new(0., 3.)));
@@ -755,8 +752,7 @@ impl<T> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::Poly;
-    /// use num_complex::Complex;
+    /// use automatica::{num_complex::Complex, Poly};
     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
     /// assert_eq!(18., p.eval(&3.));
     /// assert_eq!(Complex::new(-18., 0.), p.eval(&Complex::new(0., 3.)));
@@ -859,8 +855,7 @@ impl<T> IndexMut<usize> for Poly<T> {
 ///
 /// # Example
 /// ```
-/// use automatica::polynomial::Poly;
-/// use num_traits::Zero;
+/// use automatica::{num_traits::Zero, polynomial::Poly};
 /// let zero = Poly::<u8>::zero();
 /// assert!(zero.is_zero());
 /// ```
@@ -881,8 +876,7 @@ impl<T: Clone + PartialEq + Zero> Zero for Poly<T> {
 ///
 /// # Example
 /// ```
-/// use automatica::polynomial::Poly;
-/// use num_traits::One;
+/// use automatica::{num_traits::One, polynomial::Poly};
 /// let one = Poly::<u8>::one();
 /// assert!(one.is_one());
 /// ```

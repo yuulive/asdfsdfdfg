@@ -60,7 +60,7 @@ impl<T: Float> TfDiscretization<T> {
     ///     Seconds,
     ///     Tf
     /// };
-    /// use num_complex::Complex64;
+    /// use automatica::num_complex::Complex64;
     /// let tf = Tf::new(
     ///     Poly::new_from_coeffs(&[2., 20.]),
     ///     Poly::new_from_coeffs(&[1., 0.1]),

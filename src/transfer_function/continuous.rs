@@ -38,8 +38,7 @@ impl<T: Float> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use num_complex::Complex;
-    /// use automatica::{Seconds, Tf};
+    /// use automatica::{num_complex::Complex, Seconds, Tf};
     /// let d = Tf::delay(Seconds(2.));
     /// assert_eq!(1., d(Complex::new(0., 10.)).norm());
     /// ```
@@ -194,8 +193,7 @@ impl<T: Float + RealField> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use num_complex::Complex;
-    /// use automatica::{poly, Poly, Tf};
+    /// use automatica::{num_complex::Complex, poly, Poly, Tf};
     /// let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
     /// let locus = l.root_locus(0.25);
     /// assert_eq!(Complex::new(-1.5, 0.), locus[0]);
@@ -222,8 +220,7 @@ impl<T: Float + RealField> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use num_complex::Complex;
-    /// use automatica::{poly, Poly, Tf};
+    /// use automatica::{num_complex::Complex, poly, Poly, Tf};
     /// let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
     /// let locus = l.root_locus_plot(0.1, 1.0, 0.05).into_iter();
     /// assert_eq!(19, locus.count());

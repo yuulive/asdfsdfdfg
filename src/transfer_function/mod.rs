@@ -429,7 +429,7 @@ impl<T: Clone, U: Time> TfGen<T, U> {
     /// # Example
     /// ```
     /// use automatica::{poly, Tf};
-    /// use num_complex::Complex as C;
+    /// use automatica::num_complex::Complex as C;
     /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
     /// assert_eq!(-8.5, tf.eval_by_val(3.));
     /// assert_eq!(C::new(0.64, -0.98), tf.eval_by_val(C::new(0., 2.0_f32)));
@@ -452,7 +452,7 @@ impl<T, U: Time> TfGen<T, U> {
     /// # Example
     /// ```
     /// use automatica::{poly, Tf};
-    /// use num_complex::Complex as C;
+    /// use automatica::num_complex::Complex as C;
     /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
     /// assert_eq!(-8.5, tf.eval(&3.));
     /// assert_eq!(C::new(0.64, -0.98), tf.eval(&C::new(0., 2.0_f32)));

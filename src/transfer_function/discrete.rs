@@ -40,8 +40,7 @@ impl<T: Float> Tfz<T> {
     ///
     /// # Example
     /// ```
-    /// use num_complex::Complex;
-    /// use automatica::{units::Seconds, Tfz};
+    /// use automatica::{num_complex::Complex, units::Seconds, Tfz};
     /// let d = Tfz::delay(2);
     /// assert_eq!(0.010000001, d(Complex::new(0., 10.0_f32)).norm());
     /// ```
