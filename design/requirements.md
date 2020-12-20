@@ -14,6 +14,8 @@ This library must present as interface structures of the `Rust` standard library
 
 Using as interface as structure defined in a dependency exposes the internal implementation ad forces the use of that dependency.
 
+When this library must expose traits from its dependencies its shall re-export those crates.
+
 ### Numbers and units of measurement
 
 Where the quantity and the related unit of measurement is identifiable, the latter shall be used as interface in place of primitive numeric types.

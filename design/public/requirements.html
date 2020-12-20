@@ -59,6 +59,7 @@
         <h3 id="data-structures">Data structures</h3>
         <p>This library must present as interface structures of the <code>Rust</code> standard library, or structure created by this library.</p>
         <p>Using as interface as structure defined in a dependency exposes the internal implementation ad forces the use of that dependency.</p>
+        <p>When this library must expose traits from its dependencies its shall re-export those crates.</p>
         <h3 id="numbers-and-units-of-measurement">Numbers and units of measurement</h3>
         <p>Where the quantity and the related unit of measurement is identifiable, the latter shall be used as interface in place of primitive numeric types.</p>
         <h2 id="functional-requirements">Functional requirements</h2>
