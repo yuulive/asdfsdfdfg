@@ -1,4 +1,3 @@
-extern crate automatica;
 #[macro_use]
 extern crate approx;
 
