@@ -227,7 +227,27 @@ mod tests {
     }
 
     #[test]
+    fn complex_inversion_algorithm() {
+        let c = Complex::new(987.32, 0.0232);
+        assert_eq!(compdiv(Complex::new(1., 0.), c), compinv(c));
+    }
+
+    #[test]
     fn complex_inversion_limits() {
         assert!(compinv(Complex::new(0., 0.)).is_nan());
+    }
+
+    #[test]
+    fn complex_inversion_real() {
+        let n = 1234.45;
+        let inv = compinv(Complex::new(n, 0.));
+        assert_eq!(Complex::new(n.recip(), 0.), inv);
+    }
+
+    #[test]
+    fn complex_inversion_imaginary() {
+        let n = 1234.45;
+        let inv = compinv(Complex::new(0., n));
+        assert_eq!(-Complex::new(0., n.recip()), inv);
     }
 }
