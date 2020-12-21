@@ -51,6 +51,7 @@ pub fn damp<T: Float>(c: Complex<T>) -> T {
 ///
 /// * `a` - Dividend
 /// * `b` - Divisor
+///
 /// Michael Baudin, Robert L. Smith, A Robust Complex Division in Scilab, 2012, arXiv:1210.4539v2 [cs.MS]
 pub(crate) fn compdiv<T: Float>(a: Complex<T>, b: Complex<T>) -> Complex<T> {
     if b.im.abs() <= b.re.abs() {
@@ -72,6 +73,7 @@ pub(crate) fn compdiv<T: Float>(a: Complex<T>, b: Complex<T>) -> Complex<T> {
 /// * `b` - Dividend imaginary part if Im{divisor} <= Re{divisor} else real
 /// * `c` - Divisor real part if Im{divisor} <= Re{divisor} else imaginary
 /// * `d` - Divisor imaginary part if Im{divisor} <= Re{divisor} else real
+///
 /// Michael Baudin, Robert L. Smith, A Robust Complex Division in Scilab, 2012, arXiv:1210.4539v2 [cs.MS]
 #[allow(clippy::many_single_char_names)]
 fn compdiv_impl<T: Float>(a: T, b: T, c: T, d: T) -> (T, T) {
@@ -88,8 +90,17 @@ fn compdiv_impl<T: Float>(a: T, b: T, c: T, d: T) -> (T, T) {
     }
 }
 
+/// Inversion of complex numbers that avoids overflows.
+///
+/// # Arguments
+///
+/// * `n` - Complex number
+///
+/// It is implemented using the division algorithm, replacing the numerator with
+/// 1+0i and simplify terms.
+/// Michael Baudin, Robert L. Smith, A Robust Complex Division in Scilab, 2012, arXiv:1210.4539v2 [cs.MS]
 #[allow(clippy::many_single_char_names)]
-fn compinv<T: Float>(n: Complex<T>) -> Complex<T> {
+pub(crate) fn compinv<T: Float>(n: Complex<T>) -> Complex<T> {
     let c = n.re;
     let d = n.im;
     if d.abs() <= c.abs() {

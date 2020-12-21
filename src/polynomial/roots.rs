@@ -99,7 +99,7 @@ impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
                     .sum();
 
                 let fraction = if derivative.is_zero() {
-                    complex::compdiv(-Complex::<T>::one(), a_xki)
+                    -complex::compinv(a_xki)
                 } else {
                     let n_xki = complex::compdiv(self.poly.eval(&solution_i), derivative);
                     complex::compdiv(n_xki, Complex::<T>::one() - n_xki * a_xki)
