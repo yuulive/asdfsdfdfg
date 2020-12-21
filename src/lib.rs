@@ -58,6 +58,8 @@ extern crate approx;
 #[macro_use(quickcheck)]
 extern crate quickcheck_macros;
 
+#[cfg(not(test))]
+pub extern crate approx;
 pub extern crate nalgebra;
 pub extern crate num_complex;
 pub extern crate num_traits;
