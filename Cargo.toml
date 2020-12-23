@@ -23,6 +23,4 @@ ndarray = "0.14"
 approx = "0.4"
 
 [dev-dependencies]
-quickcheck = "0.9"
-quickcheck_macros = "0.9"
 proptest = "0.10"
