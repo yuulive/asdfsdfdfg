@@ -484,6 +484,7 @@ mod tests {
     use super::*;
     use crate::{poly, Continuous, Discrete};
     use num_complex::Complex;
+    use proptest::prelude::*;
 
     #[test]
     fn transfer_function_creation() {
@@ -558,18 +559,22 @@ mod tests {
         );
     }
 
-    #[quickcheck]
-    fn tf_negative_feedback(b: f64) -> bool {
-        let l = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b, 1.));
-        let g = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b + 1., 1.));
-        g == l.feedback_n()
+    proptest! {
+        #[test]
+        fn qc_tf_negative_feedback(b: f64) {
+            let l = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b, 1.));
+            let g = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b + 1., 1.));
+            assert_eq!(g, l.feedback_n());
+        }
     }
 
-    #[quickcheck]
-    fn tf_positive_feedback(b: f64) -> bool {
-        let l = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b, 1.));
-        let g = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b - 1., 1.));
-        g == l.feedback_p()
+    proptest! {
+    #[test]
+        fn qc_tf_positive_feedback(b: f64) {
+            let l = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b, 1.));
+            let g = TfGen::<_, Continuous>::new(poly!(1.), poly!(-b - 1., 1.));
+            assert_eq!(g, l.feedback_p());
+        }
     }
 
     #[test]

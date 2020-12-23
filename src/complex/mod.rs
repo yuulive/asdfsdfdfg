@@ -121,6 +121,7 @@ pub(crate) fn compinv<T: Float>(n: Complex<T>) -> Complex<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::prelude::*;
     use std::str::FromStr;
 
     #[test]
@@ -226,10 +227,13 @@ mod tests {
         assert!(compdiv(c4, zero).is_nan());
     }
 
-    #[test]
-    fn complex_inversion_algorithm() {
-        let c = Complex::new(987.32, 0.0232);
-        assert_eq!(compdiv(Complex::new(1., 0.), c), compinv(c));
+    proptest! {
+        #[test]
+        fn qc_complex_inversion_algorithm(a: f64, b: f64) {
+            prop_assume!(a != 0. && b != 0.);
+            let c = Complex::new(a, b);
+            assert_eq!(compdiv(Complex::new(1., 0.), c), compinv(c));
+        }
     }
 
     #[test]

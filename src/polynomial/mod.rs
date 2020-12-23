@@ -948,6 +948,7 @@ impl<T> AsRef<[T]> for Poly<T> {
 mod tests {
     use super::*;
     use num_complex::Complex;
+    use proptest::prelude::*;
 
     #[test]
     fn poly_formatting() {
@@ -1217,9 +1218,12 @@ mod tests {
         assert!(Poly::<usize>::one().is_one());
     }
 
-    #[quickcheck]
-    fn leading_coefficient(c: f32) -> bool {
-        relative_eq!(c, poly!(1., -5., c).leading_coeff())
+    proptest! {
+        #[test]
+        fn qc_leading_coefficient(c: i8) {
+            prop_assume!(c != 0);
+            assert_eq!(c, poly!(1, -5, c).leading_coeff());
+        }
     }
 
     #[test]

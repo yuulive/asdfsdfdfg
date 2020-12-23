@@ -54,10 +54,6 @@
 #[macro_use]
 extern crate approx;
 
-#[cfg(test)]
-#[macro_use(quickcheck)]
-extern crate quickcheck_macros;
-
 #[cfg(not(test))]
 pub extern crate approx;
 pub extern crate nalgebra;

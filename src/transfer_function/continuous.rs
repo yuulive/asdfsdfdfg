@@ -265,6 +265,7 @@ impl<T: Float> Plotter<T> for Tf<T> {
 #[cfg(test)]
 mod tests {
     use num_traits::One;
+    use proptest::prelude::*;
 
     use std::str::FromStr;
 
@@ -283,10 +284,12 @@ mod tests {
         assert_relative_eq!(-1., d(Complex::new(0., 0.5)).arg());
     }
 
-    #[quickcheck]
-    fn static_gain(g: f32) -> bool {
-        let tf = Tf::new(poly!(g, -3.), poly!(1., 5., -0.5));
-        relative_eq!(g, tf.static_gain())
+    proptest! {
+    #[test]
+        fn qc_static_gain(g: f32) {
+            let tf = Tf::new(poly!(g, -3.), poly!(1., 5., -0.5));
+            assert_relative_eq!(g, tf.static_gain());
+        }
     }
 
     #[test]
