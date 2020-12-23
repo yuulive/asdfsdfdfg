@@ -50,14 +50,10 @@ The list of the needed dependencies for the compilations of the library is the f
 
 The following dependencies are necessary for the development phase:
 
-- quickcheck
+- proptest
     * randomized tests
-    * source: <https://crates.io/crates/quickcheck>
-    * version: 0.9
-- quickcheck_macros
-    * support macros for randomized tests
-    * source: <https://crates.io/crates/quickcheck_macros>
-    * version: 0.9
+    * source: <https://crates.io/crates/proptest>
+    * version: 0.10
 
 ### Communications interfaces
 
