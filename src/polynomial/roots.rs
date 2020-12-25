@@ -21,7 +21,7 @@ pub(super) struct RootsFinder<T> {
     iterations: u32,
 }
 
-impl<T: Debug + Float + FloatConst + NumCast> RootsFinder<T> {
+impl<T: Float + FloatConst + NumCast> RootsFinder<T> {
     /// Create a `RootsFinder` structure
     ///
     /// # Arguments
@@ -444,5 +444,16 @@ mod tests {
         let rf = RootsFinder::new(poly);
         let actual = rf.roots_finder();
         assert_eq!(roots.len(), actual.len());
+    }
+
+    #[test]
+    fn roots_finder_debug_string() {
+        let poly = Poly::new_from_coeffs(&[1., 2.]);
+        let rf = RootsFinder::new(poly);
+        let debug_str = format!("{:?}", &rf);
+        assert!(
+            !debug_str.is_empty(),
+            "RootsFinder<T> structure must be debuggable if T: Debug."
+        );
     }
 }
