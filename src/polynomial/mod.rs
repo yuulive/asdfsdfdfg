@@ -58,7 +58,6 @@ macro_rules! poly {
     };
 }
 
-/// Implementation methods for Poly struct
 impl<T> Poly<T> {
     /// Length of the polynomial coefficients
     fn len(&self) -> usize {
@@ -226,7 +225,6 @@ impl<T: Clone + Div<Output = T> + One> Poly<T> {
     }
 }
 
-/// Implementation methods for Poly struct
 impl<T: Clone + One> Poly<T> {
     /// Return the leading coefficient of the polynomial.
     ///
@@ -243,7 +241,6 @@ impl<T: Clone + One> Poly<T> {
     }
 }
 
-/// Implementation methods for Poly struct
 impl<T: Clone + Mul<Output = T> + Neg<Output = T> + One + PartialEq + Zero> Poly<T> {
     /// Create a new polynomial given a slice of real roots
     /// It trims any leading zeros in the high order coefficients.
@@ -295,7 +292,6 @@ impl<T: Clone + Mul<Output = T> + Neg<Output = T> + One + PartialEq + Zero> Poly
     }
 }
 
-/// Implementation methods for Poly struct
 impl<T: Float + RealField> Poly<T> {
     /// Build the companion matrix of the polynomial.
     ///
@@ -628,7 +624,6 @@ impl<T: Clone + Mul<Output = T> + NumCast + One + PartialEq + Zero> Poly<T> {
     }
 }
 
-/// Implementation methods for Poly struct
 impl<T: Clone + Div<Output = T> + NumCast + PartialEq + Zero> Poly<T> {
     /// Calculate the integral of the polynomial. When used with integral types
     /// it does not convert the coefficients to floats, division is between
