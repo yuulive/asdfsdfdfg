@@ -8,6 +8,9 @@ use std::{
 
 use {super::Poly, crate::complex};
 
+/// Default number of iterations for the iterative root finding algorithm.
+pub(super) const DEFAULT_ITERATIONS: u32 = 30;
+
 /// Structure to hold the computational data for polynomial root finding.
 #[derive(Debug)]
 pub(super) struct RootsFinder<T> {
@@ -27,7 +30,7 @@ impl<T: Float + FloatConst + NumCast> RootsFinder<T> {
     /// # Arguments
     ///
     /// * `poly` - polynomial whose roots have to be found.
-    pub(super) fn new(poly: Poly<T>) -> Self {
+    pub(super) fn new(poly: Poly<T>, iterations: u32) -> Self {
         let derivative = poly.derive();
 
         // Set the initial root approximation.
@@ -39,18 +42,8 @@ impl<T: Float + FloatConst + NumCast> RootsFinder<T> {
             poly,
             derivative,
             solution: initial_guess,
-            iterations: 30,
+            iterations,
         }
-    }
-
-    /// Define the maximum number of iterations
-    ///
-    /// # Arguments
-    ///
-    /// * `iterations` - maximum number of iterations.
-    pub(super) fn with_max_iterations(mut self, iterations: u32) -> Self {
-        self.iterations = iterations;
-        self
     }
 
     /// Algorithm to find all the complex roots of a polynomial.
@@ -441,7 +434,7 @@ mod tests {
     fn iterative_roots_finder() {
         let roots = &[10.0_f32, 10. / 323.4, 1., -2., 3.];
         let poly = Poly::new_from_roots(roots);
-        let rf = RootsFinder::new(poly);
+        let rf = RootsFinder::new(poly, DEFAULT_ITERATIONS);
         let actual = rf.roots_finder();
         assert_eq!(roots.len(), actual.len());
     }
@@ -449,7 +442,7 @@ mod tests {
     #[test]
     fn roots_finder_debug_string() {
         let poly = Poly::new_from_coeffs(&[1., 2.]);
-        let rf = RootsFinder::new(poly);
+        let rf = RootsFinder::new(poly, DEFAULT_ITERATIONS);
         let debug_str = format!("{:?}", &rf);
         assert!(
             !debug_str.is_empty(),

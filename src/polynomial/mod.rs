@@ -385,17 +385,7 @@ impl<T: Float + FloatConst> Poly<T> {
     /// ```
     #[must_use]
     pub fn iterative_roots(&self) -> Vec<Complex<T>> {
-        let (zeros, cropped) = self.find_zero_roots();
-        let roots = match cropped.degree() {
-            Some(0) | None => Vec::new(),
-            Some(1) => cropped.complex_deg1_root(),
-            Some(2) => cropped.complex_deg2_roots(),
-            _ => {
-                let rf = RootsFinder::new(cropped);
-                rf.roots_finder()
-            }
-        };
-        extend_roots(roots, zeros)
+        self.iterative_roots_with_max(roots::DEFAULT_ITERATIONS)
     }
 
     /// Calculate the complex roots of the polynomial using companion
@@ -420,7 +410,7 @@ impl<T: Float + FloatConst> Poly<T> {
             Some(1) => cropped.complex_deg1_root(),
             Some(2) => cropped.complex_deg2_roots(),
             _ => {
-                let rf = RootsFinder::new(cropped).with_max_iterations(max_iter);
+                let rf = RootsFinder::new(cropped, max_iter);
                 rf.roots_finder()
             }
         };
