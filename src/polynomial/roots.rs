@@ -311,14 +311,12 @@ pub(super) fn complex_quadratic_roots_impl<T: Float>(b: T, c: T) -> (Complex<T>,
     let (root1_r, root1_i, root2_r, root2_i) = if d.is_zero() {
         (-b_, T::zero(), -b_, T::zero())
     } else if d.is_sign_negative() {
-        // Negative discriminant.
         let s = (-d).sqrt();
         (-b_, -s, -b_, s)
     } else {
         // Positive discriminant.
-        let s = d.sqrt();
-        let g = if b > T::zero() { T::one() } else { -T::one() };
-        let h = -(b_ + g * s);
+        let s = b.signum() * d.sqrt();
+        let h = -(b_ + s);
         (c / h, T::zero(), h, T::zero())
     };
 
@@ -339,19 +337,16 @@ pub(super) fn real_quadratic_roots_impl<T: Float>(b: T, c: T) -> Option<(T, T)> 
     let two = T::one() + T::one();
     let b_ = b / two;
     let d = b_.powi(2) - c; // Discriminant
-    let (r1, r2) = if d.is_zero() {
-        (-b_, -b_)
+    if d.is_zero() {
+        Some((-b_, -b_))
     } else if d.is_sign_negative() {
         return None;
     } else {
         // Positive discriminant.
-        let s = d.sqrt();
-        let g = if b > T::zero() { T::one() } else { -T::one() };
-        let h = -(b_ + g * s);
-        (c / h, h)
-    };
-
-    Some((r1, r2))
+        let s = b.signum() * d.sqrt();
+        let h = -(b_ + s);
+        Some((c / h, h))
+    }
 }
 
 #[cfg(test)]

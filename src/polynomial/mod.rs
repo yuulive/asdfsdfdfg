@@ -323,7 +323,7 @@ impl<T: Float + RealField> Poly<T> {
     /// # Example
     /// ```
     /// use automatica::polynomial::Poly;
-    /// let roots = &[-1., 1., 0.];
+    /// let roots = &[1., -1., 0.];
     /// let p = Poly::new_from_roots(roots);
     /// assert_eq!(roots, p.real_roots().unwrap().as_slice());
     /// ```
@@ -1297,6 +1297,10 @@ mod tests_roots {
         let root2 = -2.;
         assert_eq!(Some((root1, root2)), real_quadratic_roots(3., 2.));
 
+        let root1 = 1.;
+        let root2 = 2.;
+        assert_eq!(Some((root1, root2)), real_quadratic_roots(-3., 2.));
+
         assert_eq!(None, real_quadratic_roots(-6., 10.));
 
         let root3 = 3.;
@@ -1313,10 +1317,12 @@ mod tests_roots {
 
     #[test]
     fn real_3_roots_eigen() {
-        let roots = &[-1., 1., 0.];
+        let roots = &[-1., 0., 1.];
         let p = Poly::new_from_roots(roots);
-        for (r, rr) in roots.iter().zip(p.real_roots().unwrap()) {
-            assert_relative_eq!(*r, rr);
+        let mut sorted_roots = p.real_roots().unwrap();
+        sorted_roots.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+        for (r, rr) in roots.iter().zip(&sorted_roots) {
+            assert_relative_eq!(*r, *rr);
         }
     }
 
@@ -1339,6 +1345,10 @@ mod tests_roots {
         let root1 = Complex::<f64>::new(-1., 0.);
         let root2 = Complex::<f64>::new(-2., 0.);
         assert_eq!((root1, root2), complex_quadratic_roots(3., 2.));
+
+        let root1 = Complex::<f64>::new(1., 0.);
+        let root2 = Complex::<f64>::new(2., 0.);
+        assert_eq!((root1, root2), complex_quadratic_roots(-3., 2.));
 
         let root1 = Complex::<f64>::new(-0., -1.);
         let root2 = Complex::<f64>::new(-0., 1.);
