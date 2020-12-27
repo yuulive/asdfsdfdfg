@@ -138,6 +138,9 @@ impl<T: Clone> Point2D for CoeffPoint<T> {
 
 /// Generate the initial approximation of the polynomial roots.
 ///
+/// Theorems 12 and 13 of D. A. Bini, L. Robol, Solving secular and polynomial
+/// equations: A multiprecision algorithm, Journal of Computational and Applied Mathematics (2013)
+///
 /// # Arguments
 ///
 /// * `poly` - polynomial whose roots have to be found.
@@ -163,6 +166,9 @@ where
         .map(|&CoeffPoint(a, b, _)| (a, b))
         .collect();
 
+    // Radii of the circles around which the inital roots are placed.
+    // The number of roots per circle is equal to the difference between the
+    // indices of consecutive coefficients on the convex hull.
     // r = Iterator<Item = (k_(i+1) - k_i as usize, r as Float)>
     let r = ch.windows(2).map(|w| {
         // w[1] = k_(i+1), w[0] = k_i
@@ -170,7 +176,8 @@ where
         (w[1].0 - w[0].0, tmp.powf((w[1].1 - w[0].1).recip()))
     });
 
-    // Initial values
+    // Initial root values.
+    // For every circle of radius 'r' put 'n_k' roots on is cicumference.
     let tau = T::TAU();
     let initial: Vec<Complex<T>> = r
         .flat_map(|(n_k, r)| {
