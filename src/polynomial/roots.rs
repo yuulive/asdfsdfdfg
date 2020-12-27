@@ -177,8 +177,8 @@ where
             let n_k_f = T::from(n_k).unwrap();
             (0..n_k).map(move |i| {
                 let i_f = T::from(i).unwrap();
-                let ex = tau * i_f / n_k_f;
-                (Complex::i() * ex).exp() * r
+                let theta = tau * i_f / n_k_f;
+                Complex::from_polar(r, theta)
             })
         })
         .collect();
