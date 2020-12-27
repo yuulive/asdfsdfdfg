@@ -418,8 +418,6 @@ Rounding towards zero of the coefficients.
 
 Creation of the companion matrix.
 
-Calculation of the real and complex roots of a polynomial of first, second and third degree, both with the method of eigenvalues and the iterative method. The null roots shall be removed from the calculation.
-
 #### arithmetic
 
 Arithmetic operations defined between polynomial and with real numbers.
@@ -436,7 +434,7 @@ Calculation of the direct and inverse fast Fourier transformation.
 
 #### roots
 
-Calculation of the roots with iterative method.
+Calculation of the real and complex roots of a polynomial of any degree, both with the method of eigenvalues and the iterative method. The null roots shall be removed from the calculation.
 
 ### Module polynomial_matrix
 
