@@ -113,22 +113,25 @@ impl<T: Float + FloatConst + NumCast> RootsFinder<T> {
 }
 
 /// Trait representing a 2-dimensional point.
-trait Point2D<T> {
+trait Point2D {
+    /// Type of abscissa and ordinate.
+    type Output;
     /// Abscissa.
-    fn x(&self) -> T;
+    fn x(&self) -> Self::Output;
     /// Ordinate.
-    fn y(&self) -> T;
+    fn y(&self) -> Self::Output;
 }
 
 /// Internal struct to hold the point to calculate the convex hull
 #[derive(Clone, Debug)]
 struct CoeffPoint<T: Clone>(usize, T, T);
 
-impl<T: Clone> Point2D<T> for CoeffPoint<T> {
-    fn x(&self) -> T {
+impl<T: Clone> Point2D for CoeffPoint<T> {
+    type Output = T;
+    fn x(&self) -> Self::Output {
         self.1.clone()
     }
-    fn y(&self) -> T {
+    fn y(&self) -> Self::Output {
         self.2.clone()
     }
 }
@@ -212,11 +215,11 @@ enum Turn {
 /// Monotone chain Andrew's algorithm. The algorithm is a variant of Graham scan
 /// which sorts the points lexicographically by their coordinates.
 /// <https://en.wikipedia.org/wiki/Convex_hull_algorithms>
-fn convex_hull_top<I, P, T>(set: I) -> Vec<P>
+fn convex_hull_top<I, P>(set: I) -> Vec<P>
 where
     I: IntoIterator<Item = P>,
-    P: Clone + Point2D<T>,
-    T: Clone + Mul<Output = T> + PartialOrd + Sub<Output = T> + Zero,
+    P: Clone + Point2D,
+    P::Output: Mul<Output = P::Output> + PartialOrd + Sub<Output = P::Output> + Zero,
 {
     let mut iter = set.into_iter();
     let mut stack = Vec::<P>::with_capacity(2);
@@ -261,15 +264,15 @@ where
 /// T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein,
 /// Introduction to Algorithms, 3rd edition, McGraw-Hill Education, 2009,
 /// paragraph 33.1
-fn turn<P, T>(p0: &P, p1: &P, p2: &P) -> Turn
+fn turn<P>(p0: &P, p1: &P, p2: &P) -> Turn
 where
-    P: Point2D<T>,
-    T: Clone + Mul<Output = T> + PartialOrd + Sub<Output = T> + Zero,
+    P: Point2D,
+    P::Output: Mul<Output = P::Output> + PartialOrd + Sub<Output = P::Output> + Zero,
 {
     let cp = cross_product(p0, p1, p2);
-    if cp < T::zero() {
+    if cp < P::Output::zero() {
         Turn::Right
-    } else if cp > T::zero() {
+    } else if cp > P::Output::zero() {
         Turn::Left
     } else {
         Turn::Straight
@@ -285,10 +288,10 @@ where
 /// T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein,
 /// Introduction to Algorithms, 3rd edition, McGraw-Hill Education, 2009,
 /// paragraph 33.1
-fn cross_product<P, T>(p0: &P, p1: &P, p2: &P) -> T
+fn cross_product<P>(p0: &P, p1: &P, p2: &P) -> P::Output
 where
-    P: Point2D<T>,
-    T: Clone + Mul<Output = T> + Sub<Output = T>,
+    P: Point2D,
+    P::Output: Mul<Output = P::Output> + Sub<Output = P::Output>,
 {
     let first_vec_x = p1.x() - p0.x();
     let first_vec_y = p1.y() - p0.y();
@@ -355,11 +358,12 @@ mod tests {
 
     struct Point(f32, f32);
 
-    impl Point2D<f32> for Point {
-        fn x(&self) -> f32 {
+    impl Point2D for Point {
+        type Output = f32;
+        fn x(&self) -> Self::Output {
             self.0
         }
-        fn y(&self) -> f32 {
+        fn y(&self) -> Self::Output {
             self.1
         }
     }
