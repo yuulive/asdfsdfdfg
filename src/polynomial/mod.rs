@@ -16,6 +16,7 @@
 //! * zero and unit polynomials
 
 pub mod arithmetic;
+mod convex_hull;
 mod fft;
 mod roots;
 
