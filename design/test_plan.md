@@ -436,6 +436,10 @@ Calculation of the direct and inverse fast Fourier transformation.
 
 Calculation of the real and complex roots of a polynomial of any degree, both with the method of eigenvalues and the iterative method. The null roots shall be removed from the calculation.
 
+#### convex hull
+
+Top convex hull of a set of points. Vectors turns and vectors cross product.
+
 ### Module polynomial_matrix
 
 #### PolyMatrix
