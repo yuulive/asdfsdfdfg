@@ -133,9 +133,20 @@ where
 mod tests {
     use super::*;
 
-    struct Point(i32, i32);
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    struct P(i32, i32);
 
-    impl Point2D for Point {
+    impl Point2D for P {
+        type Output = i32;
+        fn x(&self) -> Self::Output {
+            self.0
+        }
+        fn y(&self) -> Self::Output {
+            self.1
+        }
+    }
+
+    impl Point2D for &P {
         type Output = i32;
         fn x(&self) -> Self::Output {
             self.0
@@ -147,28 +158,44 @@ mod tests {
 
     #[test]
     fn vector_cross_product() {
-        let cp1 = cross_product(&Point(0, 0), &Point(0, 1), &Point(1, 0));
+        let cp1 = cross_product(&P(0, 0), &P(0, 1), &P(1, 0));
         assert_eq!(-1, cp1);
 
-        let cp2 = cross_product(&Point(0, 0), &Point(1, 1), &Point(2, 2));
+        let cp2 = cross_product(&P(0, 0), &P(1, 1), &P(2, 2));
         assert_eq!(0, cp2);
 
-        let cp3 = cross_product(&Point(0, 0), &Point(0, -1), &Point(1, 0));
+        let cp3 = cross_product(&P(0, 0), &P(0, -1), &P(1, 0));
         assert_eq!(1, cp3);
     }
 
     #[test]
     fn vector_turn() {
-        let turn1 = turn(&Point(0, 0), &Point(0, 1), &Point(1, 0));
+        let turn1 = turn(&P(0, 0), &P(0, 1), &P(1, 0));
         assert_eq!(Turn::Right, turn1);
 
-        let turn2 = turn(&Point(0, 0), &Point(1, 1), &Point(2, 2));
+        let turn2 = turn(&P(0, 0), &P(1, 1), &P(2, 2));
         assert_eq!(Turn::Straight, turn2);
 
-        let turn3 = turn(&Point(0, 0), &Point(0, -1), &Point(1, 0));
+        let turn3 = turn(&P(0, 0), &P(0, -1), &P(1, 0));
         assert_eq!(Turn::Left, turn3);
 
-        let turn4 = turn(&Point(0, 0), &Point(-3, 1), &Point(3, -1));
+        let turn4 = turn(&P(0, 0), &P(-3, 1), &P(3, -1));
         assert_eq!(Turn::Straight, turn4);
+    }
+
+    #[test]
+    fn top_hull() {
+        let set = [P(0, 0), P(1, -2), P(2, 3), P(3, 3), P(4, -5)];
+        let ch = convex_hull_top(&set);
+        let expected = vec![&P(0, 0), &P(2, 3), &P(3, 3), &P(4, -5)];
+        assert_eq!(expected, ch);
+    }
+
+    #[test]
+    fn top_hull_valley() {
+        let set = [P(0, 0), P(1, -2), P(2, -3), P(3, 0)];
+        let ch = convex_hull_top(&set);
+        let expected = vec![&P(0, 0), &P(3, 0)];
+        assert_eq!(expected, ch);
     }
 }
