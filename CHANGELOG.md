@@ -3,10 +3,12 @@
 ## [0.10.0] - Unreleased
 ## Added
 ## Changed
-- Updated dependencies
-- Oldest supported rustc version is 1.44
+- Updated dependencies to latest available versions
+- Oldest supported rustc version has been increased to 1.44
+- Changed random testing library from quickcheck to proptest
 ### API Changes
 - `utils` module has been split into different public modules: `complex`, `enums`
+- External dependencies are now re-exported from this library
 ## Fixed
 
 ## [0.9.0] - 2020-12-05
