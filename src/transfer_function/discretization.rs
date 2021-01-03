@@ -8,7 +8,7 @@
 //! and Tustin (Trapezoidal).
 
 use num_complex::Complex;
-use num_traits::{Float, MulAdd, Num};
+use num_traits::{Float, Num};
 
 use std::fmt::Debug;
 
@@ -108,7 +108,7 @@ fn tu<T: Float>(z: Complex<T>, ts: Seconds<T>) -> Complex<T> {
     complex * float
 }
 
-impl<T: Float + MulAdd<Output = T>> TfDiscretization<T> {
+impl<T: Float> TfDiscretization<T> {
     /// Evaluate the discretization of the transfer function
     ///
     /// # Arguments
