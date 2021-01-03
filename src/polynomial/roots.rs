@@ -456,14 +456,14 @@ mod tests {
         let root2 = -2.;
         assert_eq!(Some((root1, root2)), real_quadratic_roots_impl(3., 2.));
 
-        let root1 = 1.;
-        let root2 = 2.;
-        assert_eq!(Some((root1, root2)), real_quadratic_roots_impl(-3., 2.));
+        let root3 = 1.;
+        let root4 = 2.;
+        assert_eq!(Some((root3, root4)), real_quadratic_roots_impl(-3., 2.));
 
         assert_eq!(None, real_quadratic_roots_impl(-6., 10.));
 
-        let root3 = 3.;
-        assert_eq!(Some((root3, root3)), real_quadratic_roots_impl(-6., 9.));
+        let root5 = 3.;
+        assert_eq!(Some((root5, root5)), real_quadratic_roots_impl(-6., 9.));
     }
 
     #[test]
@@ -649,6 +649,7 @@ mod tests {
         );
     }
 
+    #[allow(clippy::float_cmp)]
     #[test]
     fn coeffpoint_implementation() {
         let cp = &CoeffPoint(1, 2., -3.);
