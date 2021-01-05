@@ -653,6 +653,36 @@ impl<T: Clone + Div<Output = T>> Poly<T> {
     }
 }
 
+impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> Poly<T> {
+    /// Calculate the power of a polynomial. With the exponentiation by squaring.
+    ///
+    /// #Arguments
+    ///
+    /// * `exp` - Positive integer exponent
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::poly;
+    /// let p = poly!(0, 0, 1);
+    /// let pow = p.powi(4);
+    /// assert_eq!(poly!(0, 0, 0, 0, 0, 0, 0, 0, 1), pow);
+    /// ```
+    #[must_use]
+    pub fn powi(&self, exp: u32) -> Self {
+        let mut n = exp;
+        let mut y = Self::one();
+        let mut z = (*self).clone();
+        while n > 0 {
+            if n % 2 == 1 {
+                y = &y * &z;
+            }
+            z = &z * &z;
+            n /= 2;
+        }
+        y
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -868,5 +898,15 @@ mod tests {
     fn two_poly_rem_ref() {
         let r = &poly!(-4., 0., -2., 1.) % &poly!(-3., 1.);
         assert_eq!(poly!(5.), r);
+    }
+
+    #[test]
+    fn poly_pow() {
+        let p = poly!(0, 0, 1);
+        let pow = p.powi(4);
+        assert_eq!(poly!(0, 0, 0, 0, 0, 0, 0, 0, 1), pow);
+        let p2 = poly!(1, 1);
+        let pow2 = p2.powi(5);
+        assert_eq!(poly!(1, 5, 10, 10, 5, 1), pow2);
     }
 }
