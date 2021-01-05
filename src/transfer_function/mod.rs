@@ -307,6 +307,12 @@ impl<T: Float, U: Time> Add for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     fn add(self, rhs: Self) -> Self::Output {
+        if self.is_zero() {
+            return rhs.clone();
+        }
+        if rhs.is_zero() {
+            return self.clone();
+        }
         let (num, den) = if self.den == rhs.den {
             (&self.num + &rhs.num, self.den.clone())
         } else {
@@ -325,6 +331,12 @@ impl<T: Float, U: Time> Add for TfGen<T, U> {
     type Output = Self;
 
     fn add(mut self, rhs: Self) -> Self {
+        if self.is_zero() {
+            return rhs;
+        }
+        if rhs.is_zero() {
+            return self;
+        }
         if self.den == rhs.den {
             self.num = self.num + rhs.num;
             self
@@ -343,6 +355,12 @@ impl<T: Float, U: Time> Sub for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     fn sub(self, rhs: Self) -> Self::Output {
+        if self.is_zero() {
+            return -rhs.clone();
+        }
+        if rhs.is_zero() {
+            return self.clone();
+        }
         let (num, den) = if self.den == rhs.den {
             (&self.num - &rhs.num, self.den.clone())
         } else {
@@ -361,6 +379,12 @@ impl<T: Float, U: Time> Sub for TfGen<T, U> {
     type Output = Self;
 
     fn sub(mut self, rhs: Self) -> Self {
+        if self.is_zero() {
+            return -rhs;
+        }
+        if rhs.is_zero() {
+            return self;
+        }
         if self.den == rhs.den {
             self.num = self.num - rhs.num;
             self
@@ -378,6 +402,9 @@ impl<T: Float, U: Time> Mul for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     fn mul(self, rhs: Self) -> Self::Output {
+        if self.is_zero() || rhs.is_zero() {
+            return Self::Output::zero();
+        }
         let num = &self.num * &rhs.num;
         let den = &self.den * &rhs.den;
         Self::Output::new(num, den)
@@ -389,6 +416,9 @@ impl<T: Float, U: Time> Mul for TfGen<T, U> {
     type Output = Self;
 
     fn mul(mut self, rhs: Self) -> Self {
+        if self.is_zero() || rhs.is_zero() {
+            return Self::Output::zero();
+        }
         self.num = self.num * rhs.num;
         self.den = self.den * rhs.den;
         self
@@ -401,6 +431,11 @@ impl<T: Float, U: Time> Div for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     fn div(self, rhs: Self) -> Self::Output {
+        match (self.is_zero(), rhs.is_zero()) {
+            (true, false) => return Self::Output::zero(),
+            (false, true) => return Self::Output::zero().inv(),
+            _ => (),
+        };
         let num = &self.num * &rhs.den;
         let den = &self.den * &rhs.num;
         Self::Output::new(num, den)
@@ -413,6 +448,11 @@ impl<T: Float, U: Time> Div for TfGen<T, U> {
     type Output = Self;
 
     fn div(mut self, rhs: Self) -> Self {
+        match (self.is_zero(), rhs.is_zero()) {
+            (true, false) => return Self::Output::zero(),
+            (false, true) => return Self::Output::zero().inv(),
+            _ => (),
+        };
         self.num = self.num * rhs.den;
         self.den = self.den * rhs.num;
         self
