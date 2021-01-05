@@ -1,5 +1,6 @@
-use automatica::{Discretization, Poly, Ss, Tf, TfMatrix, Tfz};
 use num_traits::One;
+
+use automatica::{Discretization, Poly, Seconds, Ss, Tf, TfMatrix, Tfz};
 
 #[allow(non_snake_case)]
 fn main() {
@@ -66,8 +67,16 @@ fn main() {
         println!("{:.3}", p);
     }
 
+    let tfzR = R
+        .discretize(Seconds(5.0e-3), Discretization::Tustin)
+        .normalize();
+    println!("\nDiscrete regulator by Tustin method:\n{}", tfzR);
+
     let ssR = Ss::new_observability_realization(&R).unwrap();
     let sdR = ssR.discretize(5.0e-3, Discretization::Tustin).unwrap();
-    let tfzR = Tfz::<f64>::new_from_siso(&sdR).unwrap();
-    println!("\nDiscrete regulator:\n{}", tfzR);
+    let disc_sysR = Tfz::<f64>::new_from_siso(&sdR).unwrap();
+    println!(
+        "\nDiscrete regulator by Tustin method, discretizing linear sys:\n{}",
+        disc_sysR
+    );
 }
