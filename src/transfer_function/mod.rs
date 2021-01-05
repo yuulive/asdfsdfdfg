@@ -349,6 +349,15 @@ impl<T: Float, U: Time> Add for TfGen<T, U> {
     }
 }
 
+impl<T: Float, U: Time> Add<T> for TfGen<T, U> {
+    type Output = Self;
+
+    fn add(mut self, rhs: T) -> Self {
+        self.num = self.num + &self.den * rhs;
+        self
+    }
+}
+
 /// Implementation of transfer function subtraction
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Sub for &TfGen<T, U> {
