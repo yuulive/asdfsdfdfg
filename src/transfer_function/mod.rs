@@ -419,6 +419,20 @@ impl<T: Float, U: Time> Div for TfGen<T, U> {
     }
 }
 
+impl<T: Float, U: Time> Zero for TfGen<T, U> {
+    fn zero() -> Self {
+        Self {
+            num: Poly::new_from_coeffs(&[T::zero()]),
+            den: Poly::new_from_coeffs(&[T::one()]),
+            time: PhantomData::<U>,
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.num.is_zero() && !self.den.is_zero()
+    }
+}
+
 impl<T: Clone, U: Time> TfGen<T, U> {
     /// Evaluate the transfer function.
     ///
