@@ -805,4 +805,16 @@ mod tests {
         let res = TfGen::<f32, Continuous>::new_from_siso(&ss);
         assert!(res.is_err());
     }
+
+    #[test]
+    fn eval_trasfer_function() {
+        let s_num = Poly::new_from_coeffs(&[-1., 1.]);
+        let s_den = Poly::new_from_coeffs(&[0., 1.]);
+        let s = TfGen::<f64, Continuous>::new(s_num, s_den);
+        let p = Poly::new_from_coeffs(&[1., 2., 3.]);
+        let r = p.eval_by_val(s);
+        eprintln!("{}", &r);
+        let expected = TfGen::<f64, Continuous>::new(poly!(3., -8., 6.), poly!(0., 0., 1.));
+        assert_eq!(expected, r);
+    }
 }
