@@ -900,6 +900,14 @@ mod tests {
     }
 
     #[test]
+    fn eval_poly_of_poly() {
+        let s = poly!(-1, 1);
+        let p = poly!(1, 2, 3);
+        let r = p.eval_by_val(s);
+        assert_eq!(poly!(2, -4, 3), r);
+    }
+
+    #[test]
     fn poly_ratio_evaluation() {
         let p1 = poly!(1., 2., 3.);
         let p2 = poly!(4., 5.);
