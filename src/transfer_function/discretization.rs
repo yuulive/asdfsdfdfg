@@ -12,7 +12,13 @@ use num_traits::{Float, Num};
 
 use std::fmt::Debug;
 
-use crate::{complex, enums::Discretization, transfer_function::continuous::Tf, units::Seconds};
+use crate::{
+    complex,
+    enums::Discretization,
+    polynomial::Poly,
+    transfer_function::{continuous::Tf, discrete::Tfz},
+    units::Seconds,
+};
 
 /// Discretization of a transfer function
 #[derive(Debug)]
@@ -75,6 +81,66 @@ impl<T: Float> TfDiscretization<T> {
             Discretization::Tustin => tu,
         };
         Self::new_from_cont(tf, ts, conv)
+    }
+}
+
+impl<T: Float> Tf<T> {
+    /// Convert a continuous time transfer function into a discrete time
+    /// transfer function using the given method.
+    ///
+    /// * `ts` - Sampling period in seconds
+    /// * `method` - Discretization method
+    ///
+    /// Example
+    /// ```
+    /// use automatica::{polynomial::Poly, Discretization, Seconds, Tf, Tfz};
+    /// use automatica::num_complex::Complex64;
+    /// let tf = Tf::new(
+    ///     Poly::new_from_coeffs(&[2., 20.]),
+    ///     Poly::new_from_coeffs(&[1., 0.1]),
+    /// );
+    /// let tfz = tf.discretize(Seconds(1.), Discretization::BackwardEuler);
+    /// assert_eq!(0.1 / 1.1, tfz.real_poles().unwrap()[0]);
+    /// ```
+    pub fn discretize(&self, ts: Seconds<T>, method: Discretization) -> Tfz<T> {
+        match method {
+            Discretization::ForwardEuler => {
+                let t = ts.0.recip();
+                let s = Poly::new_from_coeffs(&[-t, t]);
+                let num = self.num.eval_by_val(s.clone());
+                let den = self.den.eval_by_val(s);
+                Tfz::new(num, den)
+            }
+            Discretization::BackwardEuler => {
+                let s_num = Poly::new_from_coeffs(&[-T::one(), T::one()]);
+                let s_den = Poly::new_from_coeffs(&[T::zero(), ts.0]);
+                discr_impl(self, &s_num, &s_den)
+            }
+            Discretization::Tustin => {
+                let k = (T::one() + T::one()) / ts.0;
+                let s_num = Poly::new_from_coeffs(&[-T::one(), T::one()]) * k;
+                let s_den = Poly::new_from_coeffs(&[T::one(), T::one()]);
+                discr_impl(self, &s_num, &s_den)
+            }
+        }
+    }
+}
+
+/// Common operations for discretization
+fn discr_impl<T: Float>(tf: &Tf<T>, s_num: &Poly<T>, s_den: &Poly<T>) -> Tfz<T> {
+    let s = Tf::new(s_num.clone(), s_den.clone());
+    let num = tf.num.eval_by_val(s.clone()).num;
+    let den = tf.den.eval_by_val(s).num;
+    match tf.relative_degree() {
+        g if g > 0 => {
+            let num = num * s_den.powi(g as u32);
+            Tfz::new(num, den)
+        }
+        g if g < 0 => {
+            let den = den * s_num.powi(-g as u32);
+            Tfz::new(num, den)
+        }
+        _ => Tfz::new(num, den),
     }
 }
 
@@ -189,5 +255,56 @@ mod tests {
         let gz = tfz.eval(z);
         assert_relative_eq!(32.753, gz.norm().to_db(), max_relative = 1e-4);
         assert_relative_eq!(114.20, gz.arg().to_degrees(), max_relative = 1e-4);
+    }
+
+    #[test]
+    fn discretization_forward_euler() {
+        let tf = Tf::new(
+            Poly::new_from_coeffs(&[2., 20.]),
+            Poly::new_from_coeffs(&[1., 0.1]),
+        );
+        let tfz = tf
+            .discretize(Seconds(1.), Discretization::ForwardEuler)
+            .normalize();
+        // (200z - 180)/(z + 9)
+        let expected = Tfz::new(
+            Poly::new_from_coeffs(&[-180., 200.]),
+            Poly::new_from_coeffs(&[9., 1.]),
+        );
+        assert_eq!(expected, tfz);
+    }
+
+    #[test]
+    fn discretization_backward_euler() {
+        let tf = Tf::new(
+            Poly::new_from_coeffs(&[2., 20.]),
+            Poly::new_from_coeffs(&[1., 0.1]),
+        );
+        let tfz = tf
+            .discretize(Seconds(1.), Discretization::BackwardEuler)
+            .normalize();
+        // (20z - 18.18)/(z - 0.09)
+        let expected = Tfz::new(
+            Poly::new_from_coeffs(&[-20. / 1.1, 20.]),
+            Poly::new_from_coeffs(&[-0.1 / 1.1, 1.]),
+        );
+        assert_eq!(expected, tfz);
+    }
+
+    #[test]
+    fn discretization_tustin() {
+        let tf = Tf::new(
+            Poly::new_from_coeffs(&[2., 20.]),
+            Poly::new_from_coeffs(&[1., 0.1]),
+        );
+        let tfz = tf
+            .discretize(Seconds(1.), Discretization::Tustin)
+            .normalize();
+        // (35z - 31.67)/(z + 0.67)
+        let expected = Tfz::new(
+            Poly::new_from_coeffs(&[-38. / 1.2, 35.]),
+            Poly::new_from_coeffs(&[0.8 / 1.2, 1.]),
+        );
+        assert_eq!(expected, tfz);
     }
 }
