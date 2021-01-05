@@ -79,6 +79,27 @@ impl<T: Float, U: Time> TfGen<T, U> {
     pub fn den(&self) -> &Poly<T> {
         &self.den
     }
+
+    /// Calculate the relative degree between denominator and numerator.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{num_traits::Inv, poly, Tfz};
+    /// let tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
+    /// let expected = tfz.relative_degree();
+    /// assert_eq!(expected, 1);
+    /// assert_eq!(tfz.inv().relative_degree(), -1);
+    /// ```
+    #[must_use]
+    #[allow(clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
+    pub fn relative_degree(&self) -> i32 {
+        match (self.den.degree(), self.num.degree()) {
+            (Some(d), Some(n)) => d as i32 - n as i32,
+            (Some(d), None) => d as i32,
+            (None, Some(n)) => -(n as i32),
+            _ => 0,
+        }
+    }
 }
 
 /// Implementation of transfer function methods
