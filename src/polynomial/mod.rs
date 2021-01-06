@@ -649,30 +649,39 @@ impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> One for Poly<T> {
 /// ```
 /// use automatica::polynomial::Poly;
 /// let p = Poly::new_from_coeffs(&[0, 1, 2, 0, 3]);
-/// assert_eq!("+1s +2s^2 +3s^4", format!("{}", p));
+/// assert_eq!("1s +2s^2 +3s^4", format!("{}", p));
 /// ```
-impl<T: Display + Zero> Display for Poly<T> {
+impl<T: Display + PartialOrd + Zero> Display for Poly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        if self.coeffs.is_empty() {
-            // The polynomial shall be never empty.
-            unreachable!();
-        } else if self.len() == 1 {
-            return Display::fmt(&self[0], f);
+        debug_assert!(!self.coeffs.is_empty());
+        if self.len() == 1 {
+            return self[0].fmt(f);
         }
-        let mut s = String::new();
-        let mut sep = "";
-        for (i, c) in self.coeffs.iter().enumerate().filter(|(_, x)| !x.is_zero()) {
-            s.push_str(sep);
-            if i == 0 {
-                s.push_str(&format!("{}", c));
-            } else if i == 1 {
-                s.push_str(&format!("{:+}s", c));
-            } else {
-                s.push_str(&format!("{:+}s^{}", c, i));
+
+        let iter = self
+            .coeffs
+            .iter()
+            .enumerate()
+            .filter(|(_, x)| !x.is_zero())
+            .enumerate();
+        for (i, (n, c)) in iter {
+            match (i, f.sign_plus(), c < &T::zero()) {
+                (0, _, _) => (),
+                (_, false, false) => write!(f, " +")?,
+                (_, _, _) => write!(f, " ")?,
             }
-            sep = " ";
+            if n == 0 {
+                c.fmt(f)?;
+            } else if n == 1 {
+                c.fmt(f)?;
+                write!(f, "s")?;
+            } else {
+                c.fmt(f)?;
+                write!(f, "s^")?;
+                write!(f, "{}", n)?;
+            }
         }
-        write!(f, "{}", s)
+        write!(f, "")
     }
 }
 
@@ -737,9 +746,12 @@ mod tests {
     #[test]
     fn poly_formatting() {
         assert_eq!("0", format!("{}", Poly::<i16>::zero()));
-        assert_eq!("0", format!("{}", Poly::<i16>::new_from_coeffs(&[])));
+        assert_eq!("0", format!("{}", Poly::<u16>::new_from_coeffs(&[])));
         assert_eq!("1 +2s^3 -4s^4", format!("{}", poly!(1, 0, 0, 2, -4)));
         assert_eq!("1.235", format!("{:.3}", Poly::new_from_coeffs(&[1.23456])));
+        let p = poly!(1.2345, -5.4321, 13.1234);
+        assert_eq!("+1.23 -5.43s +13.12s^2", format!("{:+.2}", &p));
+        assert_eq!("1.23 -5.43s +13.12s^2", format!("{:.2}", &p));
     }
 
     #[test]

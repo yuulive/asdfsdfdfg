@@ -551,7 +551,11 @@ impl<T, U: Time> TfGen<T, U> {
 }
 
 /// Implementation of transfer function printing
-impl<T: Display + One + PartialEq + Signed + Zero, U: Time> Display for TfGen<T, U> {
+impl<T, U> Display for TfGen<T, U>
+where
+    T: Display + One + PartialEq + PartialOrd + Signed + Zero,
+    U: Time,
+{
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let s_num = self.num.to_string();
         let s_den = self.den.to_string();

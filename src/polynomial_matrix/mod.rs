@@ -345,7 +345,7 @@ impl<T: Scalar + Zero> From<PolyMatrix<T>> for MatrixOfPoly<T> {
 }
 
 /// Implementation of matrix of polynomials printing
-impl<T: Display + Zero> Display for MatrixOfPoly<T> {
+impl<T: Display + PartialOrd + Zero> Display for MatrixOfPoly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", self.matrix)
     }

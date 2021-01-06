@@ -151,7 +151,10 @@ impl<T> IndexMut<[usize; 2]> for TfMatrix<T> {
 }
 
 /// Implementation of transfer function matrix printing
-impl<T: Display + One + PartialEq + Signed + Zero> fmt::Display for TfMatrix<T> {
+impl<T> fmt::Display for TfMatrix<T>
+where
+    T: Display + One + PartialEq + PartialOrd + Signed + Zero,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s_num = self.num.to_string();
         let s_den = self.den.to_string();
