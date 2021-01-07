@@ -70,13 +70,13 @@ fn main() {
     let tfzR = R
         .discretize(Seconds(5.0e-3), Discretization::Tustin)
         .normalize();
-    println!("\nDiscrete regulator by Tustin method:\n{}", tfzR);
+    println!("\nDiscrete regulator by Tustin method:\n{:.3}", tfzR);
 
     let ssR = Ss::new_observability_realization(&R).unwrap();
     let sdR = ssR.discretize(5.0e-3, Discretization::Tustin).unwrap();
     let disc_sysR = Tfz::<f64>::new_from_siso(&sdR).unwrap();
     println!(
-        "\nDiscrete regulator by Tustin method, discretizing linear sys:\n{}",
+        "\nDiscrete regulator by Tustin method, discretizing linear sys:\n{:.3}",
         disc_sysR
     );
 }
