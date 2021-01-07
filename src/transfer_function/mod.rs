@@ -557,12 +557,17 @@ where
     U: Time,
 {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        let s_num = self.num.to_string();
-        let s_den = self.den.to_string();
-
+        let (s_num, s_den) = if let Some(precision) = f.precision() {
+            let num = format!("{poly:.prec$}", poly = self.num, prec = precision);
+            let den = format!("{poly:.prec$}", poly = self.den, prec = precision);
+            (num, den)
+        } else {
+            let num = format!("{}", self.num);
+            let den = format!("{}", self.den);
+            (num, den)
+        };
         let length = s_num.len().max(s_den.len());
         let dash = "\u{2500}".repeat(length);
-
         write!(f, "{}\n{}\n{}", s_num, dash, s_den)
     }
 }
@@ -778,6 +783,12 @@ mod tests {
             "1\n\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n1 +1s",
             format!("{}", tf)
         );
+
+        let tf2 = TfGen::<_, Continuous>::new(poly!(1.123), poly!(0.987, -1.321));
+        assert_eq!(
+            "1.12\n\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n0.99 -1.32s",
+            format!("{:.2}", tf2)
+        );
     }
 
     #[test]
@@ -817,7 +828,6 @@ mod tests {
         let s = TfGen::<f64, Continuous>::new(s_num, s_den);
         let p = Poly::new_from_coeffs(&[1., 2., 3.]);
         let r = p.eval_by_val(s);
-        eprintln!("{}", &r);
         let expected = TfGen::<f64, Continuous>::new(poly!(3., -8., 6.), poly!(0., 0., 1.));
         assert_eq!(expected, r);
     }
