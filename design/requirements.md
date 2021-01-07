@@ -141,6 +141,8 @@ It is possible to operate on same polynomial properties:
 
 *FR5.4a* The transfer function can be normalized (also in place), i.e. the denominator shall be in monic form and the numerator modified to preserve the gain. If the denominator is zero do not perform actions.
 
+*FR5.4b* The relative degree is defined as the difference between the degree of the denominator and the degree of the numerator. For this calculation the degree of a null polynomial is zero.
+
 #### Manipulation
 
 *FR5.5* It shall be possible to obtain a reference to the numerator and the denominator, normalise the transfer function, with a monic denominator (by ref, in place).
