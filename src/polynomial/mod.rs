@@ -24,8 +24,7 @@ use num_complex::Complex;
 use num_traits::{Float, NumCast, One, Signed, Zero};
 
 use std::{
-    fmt,
-    fmt::{Debug, Display, Formatter},
+    fmt::{Debug, Formatter},
     ops::{Add, Div, Index, IndexMut, Mul, Neg},
 };
 
@@ -651,39 +650,52 @@ impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> One for Poly<T> {
 /// let p = Poly::new_from_coeffs(&[0, 1, 2, 0, 3]);
 /// assert_eq!("1s +2s^2 +3s^4", format!("{}", p));
 /// ```
-impl<T: Display + PartialOrd + Zero> Display for Poly<T> {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        debug_assert!(!self.coeffs.is_empty());
-        if self.len() == 1 {
-            return self[0].fmt(f);
-        }
 
-        let iter = self
-            .coeffs
-            .iter()
-            .enumerate()
-            .filter(|(_, x)| !x.is_zero())
-            .enumerate();
-        for (i, (n, c)) in iter {
-            match (i, f.sign_plus(), c < &T::zero()) {
-                (0, _, _) => (),
-                (_, false, false) => write!(f, " +")?,
-                (_, _, _) => write!(f, " ")?,
-            }
-            if n == 0 {
-                c.fmt(f)?;
-            } else if n == 1 {
-                c.fmt(f)?;
-                write!(f, "s")?;
-            } else {
-                c.fmt(f)?;
-                write!(f, "s^")?;
-                write!(f, "{}", n)?;
+macro_rules! display {
+    ($trait:path) => {
+        impl<T: $trait + PartialOrd + Zero> $trait for Poly<T> {
+            fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+                debug_assert!(!self.coeffs.is_empty());
+                if self.len() == 1 {
+                    return self[0].fmt(f);
+                }
+
+                let iter = self
+                    .coeffs
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, x)| !x.is_zero())
+                    .enumerate();
+                for (i, (n, c)) in iter {
+                    match (i, f.sign_plus(), c < &T::zero()) {
+                        (0, _, _) => (),
+                        (_, false, false) => write!(f, " +")?,
+                        (_, _, _) => write!(f, " ")?,
+                    }
+                    if n == 0 {
+                        c.fmt(f)?;
+                    } else if n == 1 {
+                        c.fmt(f)?;
+                        write!(f, "s")?;
+                    } else {
+                        c.fmt(f)?;
+                        write!(f, "s^")?;
+                        write!(f, "{}", n)?;
+                    }
+                }
+                write!(f, "")
             }
         }
-        write!(f, "")
-    }
+    };
 }
+
+display!(std::fmt::Binary);
+display!(std::fmt::Display);
+display!(std::fmt::LowerExp);
+display!(std::fmt::LowerHex);
+display!(std::fmt::Octal);
+display!(std::fmt::UpperExp);
+display!(std::fmt::UpperHex);
 
 // TODO: this trait implementation works from Rust 1.41.
 // It is similar to the method .coeffs().
@@ -752,6 +764,7 @@ mod tests {
         let p = poly!(1.2345, -5.4321, 13.1234);
         assert_eq!("+1.23 -5.43s +13.12s^2", format!("{:+.2}", &p));
         assert_eq!("1.23 -5.43s +13.12s^2", format!("{:.2}", &p));
+        assert_eq!("1.2345e0 -5.4321e0s +1.31234e1s^2", format!("{:e}", &p));
     }
 
     #[test]
