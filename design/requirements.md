@@ -133,6 +133,8 @@ It is possible to operate on same polynomial properties:
 
 *FR5.3* It is possible to define a time delay function, both continuous and discrete time.
 
+*FR5.3a* A zero transfer function is created as 0/1. Any transfer function which has a zero numerator and and a non-zero denominator is considered zero.
+
 #### Properties
 
 *FR5.4* From the transfer function it is possible to extract is properties, i.e. the calculation of poles and zeros, both real and complex, the evaluation of the transfer function with real and complex numbers, the determination of the static gain and the initial value as response to a unity step.
