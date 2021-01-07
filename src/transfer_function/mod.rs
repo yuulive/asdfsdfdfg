@@ -492,8 +492,8 @@ impl<T: Float, U: Time> Div for TfGen<T, U> {
 impl<T: Float, U: Time> Zero for TfGen<T, U> {
     fn zero() -> Self {
         Self {
-            num: Poly::new_from_coeffs(&[T::zero()]),
-            den: Poly::new_from_coeffs(&[T::one()]),
+            num: Poly::zero(),
+            den: Poly::one(),
             time: PhantomData::<U>,
         }
     }
