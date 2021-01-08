@@ -57,12 +57,14 @@ It is possible to operate on same polynomial properties:
 #### Arithmetical operations and infinitesimal calculus
 
 *FR1.11* On polynomial it is possible to perform arithmetical operations, both between polynomials and scalars, and operations of infinitesimal calculus:
+
 - negation of the polynomial (by value, by ref)
 - addition, subtraction, division and division reminder [7] between polynomials (by value, by ref)
 - multiplication between polynomials both with the convolution method and the fast Fourier transform method [8] (by value, by ref)
 - addition, subtraction, multiplication, and division with a scalar (by value, by ref)
 - calculation of the derivative and the integral of the polynomial (by ref)
 - evaluation of polynomial ratios avoiding overflows (by ref)
+- exponentiation with a positive exponent (by ref)
 
 #### Formatting
 
