@@ -46,7 +46,7 @@ It is possible to operate on same polynomial properties:
 
 *FR1.7* The transformation into a monic polynomial and the return of the leading coefficient (in place, by ref);
 
-*FR1.8* Evaluation of a polynomial both with real and complex numbers using Horner's method (by value, by ref);
+*FR1.8* Evaluation of a polynomial both with real and complex numbers, as well as other polynomials, using Horner's method (by value, by ref);
 
 *FR1.9* Rounding towards zero of the coefficients given an absolute tolerance (by ref, in place).
 
