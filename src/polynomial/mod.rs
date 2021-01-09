@@ -542,7 +542,7 @@ impl<T: Float> Poly<T> {
     /// assert!((0.- r).abs() < 1e-16);
     /// ```
     pub fn eval_poly_ratio(numerator: &Self, denominator: &Self, x: T) -> T {
-        // When the `x` value is less than one evaluate the polynomial ratio
+        // When the `x` value is greater than one evaluate the polynomial ratio
         // at `1/x` reversing the coefficients.
         if x.abs() <= T::one() {
             let n = numerator.eval_by_val(x);
