@@ -58,6 +58,33 @@ impl<T: Add<Output = T> + Clone + PartialEq + Zero> Add for Poly<T> {
 }
 
 /// Implementation of polynomial addition
+impl<'a, T> Add<&'a Poly<T>> for Poly<T>
+where
+    T: Add<&'a T, Output = T> + Clone + PartialEq + Zero,
+{
+    type Output = Self;
+
+    fn add(mut self, rhs: &'a Poly<T>) -> Self {
+        let mut result = if self.degree() < rhs.degree() {
+            for (i, c) in self.coeffs.iter_mut().enumerate() {
+                *c = c.clone() + &rhs[i];
+            }
+            let l = self.len();
+            self.coeffs.extend_from_slice(&rhs.coeffs[l..]);
+            self
+        } else {
+            for (i, c) in rhs.coeffs.iter().enumerate() {
+                self[i] = self[i].clone() + c;
+            }
+            self
+        };
+        result.trim();
+        // The polynomial cannot be empty, trim has already the postcondition.
+        result
+    }
+}
+
+/// Implementation of polynomial addition
 impl<T: Clone + PartialEq + Zero> Add for &Poly<T> {
     type Output = Poly<T>;
 
@@ -76,6 +103,19 @@ impl<T: Add<Output = T> + Clone> Add<T> for Poly<T> {
     type Output = Self;
 
     fn add(mut self, rhs: T) -> Self {
+        self[0] = self[0].clone() + rhs;
+        // Non need for trimming since the addition of a float doesn't
+        // modify the coefficients of order higher than zero.
+        // The polynomial cannot be empty.
+        self
+    }
+}
+
+/// Implementation of polynomial and real number addition
+impl<'a, T: Add<&'a T, Output = T> + Clone> Add<&'a T> for Poly<T> {
+    type Output = Self;
+
+    fn add(mut self, rhs: &'a T) -> Self {
         self[0] = self[0].clone() + rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
@@ -335,6 +375,17 @@ impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul for Poly<T> {
         // Can't reuse arguments to avoid additional allocations.
         // The two arguments can't mutate during the loops.
         Mul::mul(&self, &rhs)
+    }
+}
+
+/// Implementation of polynomial multiplication
+impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul<&Poly<T>> for Poly<T> {
+    type Output = Self;
+
+    fn mul(self, rhs: &Poly<T>) -> Self {
+        // Can't reuse arguments to avoid additional allocations.
+        // The two arguments can't mutate during the loops.
+        Mul::mul(&self, rhs)
     }
 }
 
@@ -721,6 +772,17 @@ mod tests {
     fn poly_add_real_number() {
         assert_eq!(poly!(5, 4, 3), 1 + &poly!(4, 4, 3));
         assert_eq!(poly!(6, 4, 3), &poly!(5, 4, 3) + 1);
+    }
+
+    #[test]
+    fn poly_add_ref() {
+        let p1: Poly<i32>;
+        {
+            let p2 = poly!(1, 2);
+            p1 = poly!(1) + &p2;
+        }
+        let p3 = p1 + &poly!(0, 0, 2);
+        assert_eq!(poly!(2, 2, 2), p3);
     }
 
     #[test]

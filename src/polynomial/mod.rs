@@ -928,7 +928,7 @@ mod tests {
     fn eval_poly_of_poly() {
         let s = poly!(-1, 1);
         let p = poly!(1, 2, 3);
-        let r = p.eval_by_val(s);
+        let r = p.eval(&s);
         assert_eq!(poly!(2, -4, 3), r);
     }
 
