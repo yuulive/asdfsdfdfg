@@ -17,7 +17,7 @@ use crate::{
     enums::Discretization,
     polynomial::Poly,
     transfer_function::{continuous::Tf, discrete::Tfz},
-    units::Seconds,
+    units::{RadiansPerSecond, Seconds},
 };
 
 /// Discretization of a transfer function
@@ -123,6 +123,31 @@ impl<T: Float> Tf<T> {
                 discr_impl(self, &s_num, &s_den)
             }
         }
+    }
+
+    /// Convert a continuous time transfer function into a discrete time
+    /// transfer function using Tustin method with frequency pre-warping.
+    ///
+    /// * `ts` - Sampling period in seconds
+    /// * `warp_freq` - Pre-warping frequency in radians per second
+    ///
+    /// Example
+    /// ```
+    /// use automatica::{polynomial::Poly, Discretization, RadiansPerSecond, Seconds, Tf, Tfz};
+    /// use automatica::num_complex::Complex64;
+    /// let tf = Tf::new(
+    ///     Poly::new_from_coeffs(&[2.0_f32, 20.]),
+    ///     Poly::new_from_coeffs(&[1., 0.1]),
+    /// );
+    /// let tfz = tf.discretize_with_warp(Seconds(1.), RadiansPerSecond(0.1));
+    /// assert_eq!(-0.6668982, tfz.real_poles().unwrap()[0]);
+    /// ```
+    pub fn discretize_with_warp(&self, ts: Seconds<T>, warp_freq: RadiansPerSecond<T>) -> Tfz<T> {
+        let two = T::one() + T::one();
+        let k = warp_freq.0 / (warp_freq.0 * ts.0 / two).tan();
+        let s_num = Poly::new_from_coeffs(&[-T::one(), T::one()]) * k;
+        let s_den = Poly::new_from_coeffs(&[T::one(), T::one()]);
+        discr_impl(self, &s_num, &s_den)
     }
 }
 
@@ -304,6 +329,23 @@ mod tests {
         let expected = Tfz::new(
             Poly::new_from_coeffs(&[-38. / 1.2, 35.]),
             Poly::new_from_coeffs(&[0.8 / 1.2, 1.]),
+        );
+        assert_eq!(expected, tfz);
+    }
+
+    #[test]
+    fn frequency_warping() {
+        // in scilab ss2tf(cls2dls(tf2ss(sys), 1, 0.1/2/%pi))
+        let tf = Tf::new(
+            Poly::new_from_coeffs(&[2.0_f32, 20.]),
+            Poly::new_from_coeffs(&[1., 0.1]),
+        );
+        let tfz = tf
+            .discretize_with_warp(Seconds(1.), RadiansPerSecond(0.1))
+            .normalize();
+        let expected = Tfz::new(
+            Poly::new_from_coeffs(&[-31.643282, 34.977077]),
+            Poly::new_from_coeffs(&[0.6668982, 1.]),
         );
         assert_eq!(expected, tfz);
     }

@@ -119,7 +119,7 @@ It is possible to operate on same polynomial properties:
 - Runge-Kutta-Fehlberg method of order 4/5 with adaptive steps, returns and iterator;
 - Radau method of order 3 with 2 steps, returns an iterator.
 
-*FR4.6* It shall be possible to discretize a system using forward Euler, backward Euler and Tustin methods.
+*FR4.6* It shall be possible to discretize a system using forward Euler, backward Euler and Tustin (with optional pre-warping frequency) methods.
 
 #### Discrete time system
 
