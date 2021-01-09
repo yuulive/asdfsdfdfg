@@ -2,6 +2,11 @@
 
 ## [0.10.0] - Unreleased
 ## Added
+- Zero trait to transfer functions
+- Addition between scalar and transfer function
+- Polynomial exponentiation
+- Relative degree of a transfer function
+- Discretization of a continuous time transfer function now can return a discrete time transfer function
 ## Changed
 - Updated dependencies to latest available versions
 - Oldest supported rustc version has been increased to 1.44
@@ -10,6 +15,7 @@
 - `utils` module has been split into different public modules: `complex`, `enums`
 - External dependencies are now re-exported from this library
 ## Fixed
+- Improved the formatting of polynomials and transfer functions
 
 ## [0.9.0] - 2020-12-05
 ## Added
