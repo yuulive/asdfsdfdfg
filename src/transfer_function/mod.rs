@@ -370,10 +370,21 @@ impl<T: Float, U: Time> Add for TfGen<T, U> {
     }
 }
 
+/// Implementation of transfer function addition
 impl<T: Float, U: Time> Add<T> for TfGen<T, U> {
     type Output = Self;
 
     fn add(mut self, rhs: T) -> Self {
+        self.num = self.num + &self.den * rhs;
+        self
+    }
+}
+
+/// Implementation of transfer function addition
+impl<T: Float, U: Time> Add<&T> for TfGen<T, U> {
+    type Output = Self;
+
+    fn add(mut self, rhs: &T) -> Self {
         self.num = self.num + &self.den * rhs;
         self
     }
@@ -451,6 +462,20 @@ impl<T: Float, U: Time> Mul for TfGen<T, U> {
         }
         self.num = self.num * rhs.num;
         self.den = self.den * rhs.den;
+        self
+    }
+}
+
+/// Implementation of transfer function multiplication
+impl<T: Float, U: Time> Mul<&TfGen<T, U>> for TfGen<T, U> {
+    type Output = Self;
+
+    fn mul(mut self, rhs: &TfGen<T, U>) -> Self {
+        if self.is_zero() || rhs.is_zero() {
+            return Self::Output::zero();
+        }
+        self.num = self.num * &rhs.num;
+        self.den = self.den * &rhs.den;
         self
     }
 }
@@ -827,7 +852,7 @@ mod tests {
         let s_den = Poly::new_from_coeffs(&[0., 1.]);
         let s = TfGen::<f64, Continuous>::new(s_num, s_den);
         let p = Poly::new_from_coeffs(&[1., 2., 3.]);
-        let r = p.eval_by_val(s);
+        let r = p.eval(&s);
         let expected = TfGen::<f64, Continuous>::new(poly!(3., -8., 6.), poly!(0., 0., 1.));
         assert_eq!(expected, r);
     }

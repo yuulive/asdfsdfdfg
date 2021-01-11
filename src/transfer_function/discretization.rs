@@ -102,7 +102,8 @@ impl<T: Float> Tf<T> {
     /// let tfz = tf.discretize(Seconds(1.), Discretization::BackwardEuler);
     /// assert_eq!(0.1 / 1.1, tfz.real_poles().unwrap()[0]);
     /// ```
-    pub fn discretize(&self, ts: Seconds<T>, method: Discretization) -> Tfz<T> {
+    pub fn discretize(&self, ts: Seconds<T>, method: Discretization) -> Tfz<T>
+    {
         match method {
             Discretization::ForwardEuler => {
                 let t = ts.0.recip();
@@ -154,8 +155,8 @@ impl<T: Float> Tf<T> {
 /// Common operations for discretization
 fn discr_impl<T: Float>(tf: &Tf<T>, s_num: &Poly<T>, s_den: &Poly<T>) -> Tfz<T> {
     let s = Tf::new(s_num.clone(), s_den.clone());
-    let num = tf.num.eval_by_val(s.clone()).num;
-    let den = tf.den.eval_by_val(s).num;
+    let num = tf.num.eval(&s).num;
+    let den = tf.den.eval(&s).num;
     match tf.relative_degree() {
         g if g > 0 => {
             let num = num * s_den.powi(g as u32);

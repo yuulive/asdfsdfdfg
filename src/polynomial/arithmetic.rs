@@ -407,10 +407,37 @@ impl<T: Clone + Num> Mul<T> for Poly<T> {
 }
 
 /// Implementation of polynomial and float multiplication
+impl<T: Clone + Num> Mul<&T> for Poly<T> {
+    type Output = Self;
+
+    fn mul(mut self, rhs: &T) -> Self {
+        if rhs.is_zero() {
+            Self::zero()
+        } else {
+            for c in &mut self.coeffs {
+                *c = c.clone() * rhs.clone();
+            }
+            // The polynomial cannot be empty.
+            self
+        }
+    }
+}
+
+/// Implementation of polynomial and float multiplication
 impl<T: Clone + Num> Mul<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn mul(self, rhs: T) -> Self::Output {
+        // The polynomial cannot be empty.
+        self.clone().mul(rhs)
+    }
+}
+
+/// Implementation of polynomial and float multiplication
+impl<T: Clone + Num> Mul<&T> for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn mul(self, rhs: &T) -> Self::Output {
         // The polynomial cannot be empty.
         self.clone().mul(rhs)
     }
