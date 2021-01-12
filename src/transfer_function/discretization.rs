@@ -102,8 +102,7 @@ impl<T: Float> Tf<T> {
     /// let tfz = tf.discretize(Seconds(1.), Discretization::BackwardEuler);
     /// assert_eq!(0.1 / 1.1, tfz.real_poles().unwrap()[0]);
     /// ```
-    pub fn discretize(&self, ts: Seconds<T>, method: Discretization) -> Tfz<T>
-    {
+    pub fn discretize(&self, ts: Seconds<T>, method: Discretization) -> Tfz<T> {
         match method {
             Discretization::ForwardEuler => {
                 let t = ts.0.recip();
