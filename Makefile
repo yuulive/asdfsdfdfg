@@ -14,6 +14,10 @@ examples = arma_channel \
 
 .PHONY : all_examples check-format clippy doc $(examples) html update-version
 
+# Run build, tests and examples, in debug mode
+all:
+	cargo c && cargo t && make all_examples
+
 # Create documentation without dependencies.
 doc:
 	cargo doc --no-deps
