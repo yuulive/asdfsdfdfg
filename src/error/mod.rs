@@ -17,9 +17,9 @@ enum Repr {
     // Add if necessary additional variants that wrap errors given by used libraries.
 }
 
-/// Enumeration of Error variants internal to this library.
-#[derive(Clone, Copy, Debug)]
-pub(crate) enum ErrorKind {
+/// Enumeration of Error kinds of this library.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum ErrorKind {
     /// The given system is not single input single output.
     NoSisoSystem,
     /// The given transfer function has a zero denominator.
@@ -37,6 +37,13 @@ impl Error {
     pub(crate) fn new_internal(kind: ErrorKind) -> Self {
         Error {
             repr: Repr::Internal(kind),
+        }
+    }
+
+    /// Return the kind of describing the `Error`
+    pub fn kind(&self) -> ErrorKind {
+        match self.repr {
+            Repr::Internal(kind) => kind,
         }
     }
 }
@@ -61,7 +68,7 @@ impl fmt::Debug for Error {
 
 impl ErrorKind {
     /// Generate the string representation of the `ErrorKind` variants.
-    fn as_str(self) -> &'static str {
+    pub(crate) fn as_str(self) -> &'static str {
         match self {
             ErrorKind::NoSisoSystem => "Linear system is not Single Input Single Output",
             ErrorKind::ZeroPolynomialDenominator => {
@@ -95,5 +102,17 @@ mod tests {
         assert!(!err.to_string().is_empty());
         assert!(!format!("{:?}", err).is_empty());
         assert_eq!(ErrorKind::NoPolesDenominator.as_str(), err.to_string());
+    }
+
+    #[test]
+    fn error_kind() {
+        let err = Error::new_internal(ErrorKind::NoSisoSystem);
+        assert_eq!(ErrorKind::NoSisoSystem, err.kind());
+
+        let err = Error::new_internal(ErrorKind::ZeroPolynomialDenominator);
+        assert_eq!(ErrorKind::ZeroPolynomialDenominator, err.kind());
+
+        let err = Error::new_internal(ErrorKind::NoPolesDenominator);
+        assert_eq!(ErrorKind::NoPolesDenominator, err.kind());
     }
 }
