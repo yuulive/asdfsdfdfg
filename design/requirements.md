@@ -220,6 +220,8 @@ It is possible to operate on same polynomial properties:
 
 *FR9.1* The library shall expose a custom `Error` type that implements the `std::error::Error` trait.
 
+*FR9.2* `Error` shall expose an enumeration (`ErrorKind`) that describes the kind of error, for any error native to this library or that wrap dependencies errors.
+
 ### Enumerations
 
 *FR10.1* The library defines enumerations that cannot be instantiated and implement the `Time` trait, `Continuous` for continuous time systems, `Discrete` for discrete time systems.

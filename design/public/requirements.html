@@ -156,6 +156,7 @@
         <p><em>FR8.2</em> Common discrete time signals are defined: - null signal - impulse signal - step signal</p>
         <h3 id="error-type">Error type</h3>
         <p><em>FR9.1</em> The library shall expose a custom <code>Error</code> type that implements the <code>std::error::Error</code> trait.</p>
+        <p><em>FR9.2</em> <code>Error</code> shall expose an enumeration (<code>ErrorKind</code>) that describes the kind of error, for any error native to this library or that wrap dependencies errors.</p>
         <h3 id="enumerations">Enumerations</h3>
         <p><em>FR10.1</em> The library defines enumerations that cannot be instantiated and implement the <code>Time</code> trait, <code>Continuous</code> for continuous time systems, <code>Discrete</code> for discrete time systems.</p>
         <p><em>FR10.2</em> Define <code>Discretization</code> enumeration with variants <code>ForwardEuler</code>, <code>BackwardEuler</code> and <code>Tustin</code> to indicate the type of discretization.</p>
