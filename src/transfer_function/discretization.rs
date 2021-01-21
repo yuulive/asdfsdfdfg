@@ -300,6 +300,38 @@ mod tests {
     }
 
     #[test]
+    fn discretization_forward_euler2() {
+        let tf = Tf::new(
+            Poly::new_from_coeffs(&[1., 2., 3.]),
+            Poly::new_from_coeffs(&[4., 5.]),
+        );
+        let tfz = tf
+            .discretize(Seconds(0.1), Discretization::ForwardEuler)
+            .normalize();
+        let expected = Tfz::new(
+            Poly::new_from_coeffs(&[5.62, -11.6, 6.]),
+            Poly::new_from_coeffs(&[-0.92, 1.]),
+        );
+        assert_eq!(expected, tfz);
+    }
+
+    #[test]
+    fn discretization_forward_euler3() {
+        let tf = Tf::new(
+            Poly::new_from_coeffs(&[4.0, 5.]),
+            Poly::new_from_coeffs(&[3., 2., 1.]),
+        );
+        let tfz = tf
+            .discretize(Seconds(0.1), Discretization::ForwardEuler)
+            .normalize();
+        let expected = Tfz::new(
+            Poly::new_from_coeffs(&[-0.46, 0.5]),
+            Poly::new_from_coeffs(&[0.83, -1.8, 1.]),
+        );
+        assert_eq!(expected, tfz);
+    }
+
+    #[test]
     fn discretization_backward_euler() {
         let tf = Tf::new(
             Poly::new_from_coeffs(&[2., 20.]),
