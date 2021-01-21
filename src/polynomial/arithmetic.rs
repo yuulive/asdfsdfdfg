@@ -890,6 +890,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
     fn poly_mul_real_number_ref() {
         assert_eq!(poly!(0), poly!(4, 4, 3) * &0);
         assert_eq!(poly!(10, 8, 6), poly!(5, 4, 3) * &2);

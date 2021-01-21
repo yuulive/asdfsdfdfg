@@ -152,6 +152,7 @@ impl<T: Float> Tf<T> {
 }
 
 /// Common operations for discretization
+#[allow(clippy::cast_sign_loss)]
 fn discr_impl<T: Float>(tf: &Tf<T>, s_num: &Poly<T>, s_den: &Poly<T>) -> Tfz<T> {
     let s = Tf::new(s_num.clone(), s_den.clone());
     let num = tf.num.eval(&s).num;
@@ -376,8 +377,8 @@ mod tests {
             .discretize_with_warp(Seconds(1.), RadiansPerSecond(0.1))
             .normalize();
         let expected = Tfz::new(
-            Poly::new_from_coeffs(&[-31.643282, 34.977077]),
-            Poly::new_from_coeffs(&[0.6668982, 1.]),
+            Poly::new_from_coeffs(&[-31.643_282, 34.977_077]),
+            Poly::new_from_coeffs(&[0.666_898_2, 1.]),
         );
         assert_eq!(expected, tfz);
     }

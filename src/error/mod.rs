@@ -41,6 +41,7 @@ impl Error {
     }
 
     /// Return the kind of describing the `Error`
+    #[must_use]
     pub fn kind(&self) -> ErrorKind {
         match self.repr {
             Repr::Internal(kind) => kind,

@@ -789,6 +789,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
     fn add_scalar_reference() {
         let tf = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(3., -4.));
         let actual = tf + &2.;
@@ -815,7 +816,7 @@ mod tests {
         let expected = TfGen::new(poly!(-6., 7., -6.), poly!(8., 4., -12.));
         assert_eq!(expected, actual);
         assert_eq!(expected, expected.clone() - TfGen::zero());
-        assert_eq!(-&expected, TfGen::zero() - expected.clone());
+        assert_eq!(-&expected, TfGen::zero() - expected);
     }
 
     #[test]
@@ -850,7 +851,7 @@ mod tests {
         let expected = TfGen::new(poly!(-5., -10., -15.), poly!(1., 11., 35., 25.));
         assert_eq!(expected, actual);
         assert_eq!(TfGen::zero(), expected.clone() * TfGen::zero());
-        assert_eq!(TfGen::zero(), TfGen::zero() * expected.clone());
+        assert_eq!(TfGen::zero(), TfGen::zero() * expected);
     }
 
     #[test]
@@ -872,7 +873,7 @@ mod tests {
         let expected = TfGen::new(poly!(3., 15.), poly!(1., 8., 20., 28., 15.));
         assert_eq!(expected, actual);
         assert_eq!(TfGen::zero(), &TfGen::zero() / &expected);
-        assert_eq!(f32::INFINITY, (&expected / &TfGen::zero()).eval(&1.));
+        assert!((&expected / &TfGen::zero()).eval(&1.).is_infinite());
         assert!((&TfGen::<f32, Discrete>::zero() / &TfGen::zero())
             .eval(&1.)
             .is_nan());
@@ -886,7 +887,7 @@ mod tests {
         let expected = TfGen::new(poly!(1., 7., 13., 15.), poly!(1., 7., 13., 15.));
         assert_eq!(expected, actual);
         assert_eq!(TfGen::zero(), TfGen::zero() / expected.clone());
-        assert_eq!(f32::INFINITY, (expected / TfGen::zero()).eval(&1.));
+        assert!((expected / TfGen::zero()).eval(&1.).is_infinite());
         assert!((TfGen::<f32, Discrete>::zero() / TfGen::zero())
             .eval(&1.)
             .is_nan());
