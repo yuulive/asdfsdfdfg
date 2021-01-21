@@ -810,6 +810,8 @@ mod tests {
         }
         let p3 = p1 + &poly!(0, 0, 2);
         assert_eq!(poly!(2, 2, 2), p3);
+        let p4 = p3 + &poly!(3);
+        assert_eq!(poly!(5, 2, 2), p4);
     }
 
     #[test]
@@ -882,9 +884,15 @@ mod tests {
 
     #[test]
     #[allow(clippy::identity_op)]
-    fn poly_mul_real_number() {
+    fn poly_mul_real_number_value() {
         assert_eq!(poly!(4, 4, 3), 1 * &poly!(4, 4, 3));
         assert_eq!(poly!(10, 8, 6), &poly!(5, 4, 3) * 2);
+    }
+
+    #[test]
+    fn poly_mul_real_number_ref() {
+        assert_eq!(poly!(0), poly!(4, 4, 3) * &0);
+        assert_eq!(poly!(10, 8, 6), poly!(5, 4, 3) * &2);
     }
 
     #[test]
