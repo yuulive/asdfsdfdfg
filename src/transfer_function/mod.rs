@@ -59,6 +59,12 @@ impl<T: Float, U: Time> TfGen<T, U> {
     ///
     /// * `num` - Transfer function numerator
     /// * `den` - Transfer function denominator
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
+    /// ```
     #[must_use]
     pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
         Self {
@@ -69,12 +75,28 @@ impl<T: Float, U: Time> TfGen<T, U> {
     }
 
     /// Extract transfer function numerator
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let num = poly!(1., 2.);
+    /// let tfz = Tfz::new(num.clone(), poly!(-4., 6., -2.));
+    /// assert_eq!(&num, tfz.num());
+    /// ```
     #[must_use]
     pub fn num(&self) -> &Poly<T> {
         &self.num
     }
 
     /// Extract transfer function denominator
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let den = poly!(-4., 6., -2.);
+    /// let tfz = Tfz::new(poly!(1., 2.), den.clone());
+    /// assert_eq!(&den, tfz.den());
+    /// ```
     #[must_use]
     pub fn den(&self) -> &Poly<T> {
         &self.den
@@ -614,6 +636,26 @@ mod tests {
     }
 
     #[test]
+    fn relative_degree() {
+        let tfz = TfGen::<_, Continuous>::new(poly!(1., 2.), poly!(-4., 6., -2.));
+        let expected = tfz.relative_degree();
+        assert_eq!(expected, 1);
+        assert_eq!(tfz.inv().relative_degree(), -1);
+        assert_eq!(
+            -1,
+            TfGen::<_, Continuous>::new(poly!(1., 1.), Poly::zero()).relative_degree()
+        );
+        assert_eq!(
+            1,
+            TfGen::<_, Continuous>::new(Poly::zero(), poly!(1., 1.)).relative_degree()
+        );
+        assert_eq!(
+            0,
+            TfGen::<f32, Continuous>::new(Poly::zero(), Poly::zero()).relative_degree()
+        );
+    }
+
+    #[test]
     fn evaluation() {
         let tf = TfGen::<_, Continuous>::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
         let res = tf.eval(&Complex::new(0., 0.9));
@@ -821,6 +863,9 @@ mod tests {
         let tfz = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(-4., 6., -2.));
         let expected = TfGen::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
         assert_eq!(expected, tfz.normalize());
+
+        let tfz2 = TfGen::<_, Discrete>::new(poly!(1.), poly!(0.));
+        assert_eq!(tfz2, tfz2.normalize());
     }
 
     #[test]
@@ -829,6 +874,11 @@ mod tests {
         tfz.normalize_mut();
         let expected = TfGen::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
         assert_eq!(expected, tfz);
+
+        let mut tfz2 = TfGen::<_, Discrete>::new(poly!(1.), poly!(0.));
+        let tfz3 = tfz2.clone();
+        tfz2.normalize_mut();
+        assert_eq!(tfz2, tfz3);
     }
 
     #[test]
