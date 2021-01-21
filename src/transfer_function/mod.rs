@@ -746,25 +746,29 @@ mod tests {
     }
 
     #[test]
-    fn tf_add1() {
+    fn add_references() {
         let tf1 = TfGen::<_, Continuous>::new(poly!(1., 2.), poly!(1., 5.));
         let tf2 = TfGen::new(poly!(3.), poly!(1., 5.));
         let actual = &tf1 + &tf2;
         let expected = TfGen::new(poly!(4., 2.), poly!(1., 5.));
         assert_eq!(expected, actual);
+        assert_eq!(expected, &expected + &TfGen::zero());
+        assert_eq!(expected, &TfGen::zero() + &expected);
     }
 
     #[test]
-    fn tf_add2() {
+    fn add_values() {
         let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(3., -4.));
         let tf2 = TfGen::new(poly!(3.), poly!(1., 5.));
         let actual = tf1 + tf2;
         let expected = TfGen::new(poly!(10., -5., 10.), poly!(3., 11., -20.));
         assert_eq!(expected, actual);
+        assert_eq!(expected, expected.clone() + TfGen::zero());
+        assert_eq!(expected, TfGen::zero() + expected.clone());
     }
 
     #[test]
-    fn tf_add3() {
+    fn add_multiple_values() {
         let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(3., -4.));
         let tf2 = TfGen::new(poly!(3.), poly!(1., 5.));
         let tf3 = TfGen::new(poly!(0., 4.), poly!(3., 11., -20.));
@@ -777,25 +781,45 @@ mod tests {
     }
 
     #[test]
-    fn tf_sub1() {
+    fn add_scalar_value() {
+        let tf = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(3., -4.));
+        let actual = tf + 1.;
+        let expected = TfGen::new(poly!(4., -2.), poly!(3., -4.));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn add_scalar_reference() {
+        let tf = TfGen::<_, Discrete>::new(poly!(1., 2.), poly!(3., -4.));
+        let actual = tf + &2.;
+        let expected = TfGen::new(poly!(7., -6.), poly!(3., -4.));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn sub_references() {
         let tf1 = TfGen::<_, Continuous>::new(poly!(-1., 9.), poly!(4., -1.));
         let tf2 = TfGen::new(poly!(3.), poly!(4., -1.));
         let actual = &tf1 - &tf2;
         let expected = TfGen::new(poly!(-4., 9.), poly!(4., -1.));
         assert_eq!(expected, actual);
+        assert_eq!(expected, &expected - &TfGen::zero());
+        assert_eq!(-&expected, &TfGen::zero() - &expected);
     }
 
     #[test]
-    fn tf_sub2() {
+    fn sub_values() {
         let tf1 = TfGen::<_, Discrete>::new(poly!(1., -2.), poly!(4., -4.));
         let tf2 = TfGen::new(poly!(2.), poly!(2., 3.));
         let actual = tf1 - tf2;
         let expected = TfGen::new(poly!(-6., 7., -6.), poly!(8., 4., -12.));
         assert_eq!(expected, actual);
+        assert_eq!(expected, expected.clone() - TfGen::zero());
+        assert_eq!(-&expected, TfGen::zero() - expected.clone());
     }
 
     #[test]
-    fn tf_sub3() {
+    fn sub_multiple_values() {
         let tf1 = TfGen::<_, Discrete>::new(poly!(1., -2.), poly!(4., -4.));
         let tf2 = TfGen::new(poly!(2.), poly!(2., 3.));
         let tf3 = TfGen::new(poly!(0., 2.), poly!(8., 4., -12.));
@@ -808,39 +832,70 @@ mod tests {
     }
 
     #[test]
-    fn tf_mul() {
+    fn mul_references() {
         let tf1 = TfGen::<_, Continuous>::new(poly!(1., 2., 3.), poly!(1., 5.));
         let tf2 = TfGen::new(poly!(3.), poly!(1., 6., 5.));
         let actual = &tf1 * &tf2;
         let expected = TfGen::new(poly!(3., 6., 9.), poly!(1., 11., 35., 25.));
         assert_eq!(expected, actual);
+        assert_eq!(TfGen::zero(), &expected * &TfGen::zero());
+        assert_eq!(TfGen::zero(), &TfGen::zero() * &expected);
     }
 
     #[test]
-    fn tf_mul2() {
+    fn mul_values() {
         let tf1 = TfGen::<_, Continuous>::new(poly!(1., 2., 3.), poly!(1., 5.));
         let tf2 = TfGen::new(poly!(-5.), poly!(1., 6., 5.));
         let actual = tf1 * tf2;
         let expected = TfGen::new(poly!(-5., -10., -15.), poly!(1., 11., 35., 25.));
         assert_eq!(expected, actual);
+        assert_eq!(TfGen::zero(), expected.clone() * TfGen::zero());
+        assert_eq!(TfGen::zero(), TfGen::zero() * expected.clone());
     }
 
     #[test]
-    fn tf_div1() {
+    fn mul_value_reference() {
+        let tf1 = TfGen::<_, Continuous>::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let tf2 = TfGen::new(poly!(-5.), poly!(1., 6., 5.));
+        let actual = tf1 * &tf2;
+        let expected = TfGen::new(poly!(-5., -10., -15.), poly!(1., 11., 35., 25.));
+        assert_eq!(expected, actual);
+        assert_eq!(TfGen::zero(), expected.clone() * &TfGen::zero());
+        assert_eq!(TfGen::zero(), TfGen::zero() * &expected);
+    }
+
+    #[test]
+    fn div_values() {
         let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2., 3.), poly!(1., 5.));
         let tf2 = TfGen::new(poly!(3.), poly!(1., 6., 5.));
         let actual = tf2 / tf1;
         let expected = TfGen::new(poly!(3., 15.), poly!(1., 8., 20., 28., 15.));
         assert_eq!(expected, actual);
+        assert_eq!(TfGen::zero(), &TfGen::zero() / &expected);
+        assert_eq!(f32::INFINITY, (&expected / &TfGen::zero()).eval(&1.));
+        assert!((&TfGen::<f32, Discrete>::zero() / &TfGen::zero())
+            .eval(&1.)
+            .is_nan());
     }
 
     #[test]
     #[allow(clippy::eq_op)]
-    fn tf_div2() {
+    fn div_references() {
         let tf1 = TfGen::<_, Discrete>::new(poly!(1., 2., 3.), poly!(1., 5.));
         let actual = &tf1 / &tf1;
         let expected = TfGen::new(poly!(1., 7., 13., 15.), poly!(1., 7., 13., 15.));
         assert_eq!(expected, actual);
+        assert_eq!(TfGen::zero(), TfGen::zero() / expected.clone());
+        assert_eq!(f32::INFINITY, (expected / TfGen::zero()).eval(&1.));
+        assert!((TfGen::<f32, Discrete>::zero() / TfGen::zero())
+            .eval(&1.)
+            .is_nan());
+    }
+
+    #[test]
+    fn zero_tf() {
+        assert!(TfGen::<f32, Continuous>::zero().is_zero());
+        assert!(!TfGen::<_, Discrete>::new(poly!(0.), poly!(0.)).is_zero());
     }
 
     #[test]
