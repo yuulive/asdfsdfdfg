@@ -48,7 +48,12 @@
 //!
 //! [Discrete](signals/discrete/index.html)
 
-#![warn(missing_docs)]
+#![warn(
+    missing_crate_level_docs,
+    missing_debug_implementations,
+    missing_docs,
+    unreachable_pub
+)]
 
 #[cfg(test)]
 #[macro_use]
