@@ -69,7 +69,7 @@ impl fmt::Debug for Error {
 
 impl ErrorKind {
     /// Generate the string representation of the `ErrorKind` variants.
-    pub(crate) fn as_str(self) -> &'static str {
+    fn as_str(self) -> &'static str {
         match self {
             ErrorKind::NoSisoSystem => "Linear system is not Single Input Single Output",
             ErrorKind::ZeroPolynomialDenominator => {
