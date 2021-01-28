@@ -18,6 +18,7 @@ enum Repr {
 }
 
 /// Enumeration of Error kinds of this library.
+#[allow(clippy::module_name_repetitions)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum ErrorKind {
     /// The given system is not single input single output.
