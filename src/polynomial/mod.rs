@@ -302,11 +302,11 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
     ///```
     /// use automatica::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
-    /// let actual = p.roundoff(0.01);
+    /// let actual = p.roundoff(&0.01);
     /// let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
     /// assert_eq!(expected, actual);
     ///```
-    pub fn roundoff(&self, atol: T) -> Self {
+    pub fn roundoff(&self, atol: &T) -> Self {
         let atol = atol.abs();
         let new_coeff = self
             .coeffs
@@ -325,11 +325,11 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
     ///```
     /// use automatica::Poly;
     /// let mut p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
-    /// p.roundoff_mut(0.01);
+    /// p.roundoff_mut(&0.01);
     /// let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
     /// assert_eq!(expected, p);
     ///```
-    pub fn roundoff_mut(&mut self, atol: T) {
+    pub fn roundoff_mut(&mut self, atol: &T) {
         let atol = atol.abs();
         for c in &mut self.coeffs {
             if c.abs() < atol {
@@ -1067,7 +1067,7 @@ mod tests {
     #[test]
     fn round_off_coefficients() {
         let p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
-        let actual = p.roundoff(0.01);
+        let actual = p.roundoff(&0.01);
         let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
         assert_eq!(expected, actual);
     }
@@ -1075,20 +1075,20 @@ mod tests {
     #[test]
     fn round_off_zero() {
         let zero = Poly::zero();
-        assert_eq!(zero, zero.roundoff(0.001));
+        assert_eq!(zero, zero.roundoff(&0.001));
     }
 
     #[test]
     fn round_off_returns_zero() {
         let p = Poly::new_from_coeffs(&[0.0032, 0.002, -0.0023, -0.0001]);
-        let actual = p.roundoff(0.01);
+        let actual = p.roundoff(&-0.01);
         assert_eq!(Poly::zero(), actual);
     }
 
     #[test]
     fn round_off_coefficients_mut() {
         let mut p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
-        p.roundoff_mut(0.01);
+        p.roundoff_mut(&0.01);
         let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
         assert_eq!(expected, p);
     }
