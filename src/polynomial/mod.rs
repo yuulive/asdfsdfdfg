@@ -204,7 +204,9 @@ impl<T: Clone + Div<Output = T> + One> Poly<T> {
         debug_assert!(!monic_poly.coeffs.is_empty());
         (monic_poly, lc)
     }
+}
 
+impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Poly<T> {
     /// Return the monic polynomial and the leading coefficient,
     /// it mutates the polynomial in place.
     ///
@@ -218,7 +220,7 @@ impl<T: Clone + Div<Output = T> + One> Poly<T> {
     /// ```
     pub fn monic_mut(&mut self) -> T {
         let lc = self.leading_coeff();
-        self.div_mut(lc.clone());
+        self.div_mut(&lc);
         debug_assert!(!self.coeffs.is_empty());
         lc
     }

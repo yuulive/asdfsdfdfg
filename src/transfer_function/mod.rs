@@ -282,7 +282,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
             return;
         }
         let an = self.den.monic_mut();
-        self.num.div_mut(an);
+        self.num.div_mut(&an);
     }
 }
 

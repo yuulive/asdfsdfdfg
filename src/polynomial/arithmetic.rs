@@ -709,7 +709,7 @@ fn poly_div_impl<T: Float>(mut u: Poly<T>, v: &Poly<T>) -> (Poly<T>, Poly<T>) {
     (q, u)
 }
 
-impl<T: Clone + Div<Output = T>> Poly<T> {
+impl<T: Clone + Div<Output = T> + PartialEq + Zero> Poly<T> {
     /// In place division with a scalar
     ///
     /// # Arguments
@@ -720,14 +720,14 @@ impl<T: Clone + Div<Output = T>> Poly<T> {
     /// ```
     /// use automatica::poly;
     /// let mut p = poly!(3, 4, 5);
-    /// p.div_mut(2);
+    /// p.div_mut(&2);
     /// assert_eq!(poly!(1, 2, 2), p);
     /// ```
-    pub fn div_mut(&mut self, d: T) {
+    pub fn div_mut(&mut self, d: &T) {
         for c in &mut self.coeffs {
             *c = c.clone() / d.clone();
         }
-        // The polynomial cannot be empty.
+        self.trim();
     }
 }
 
@@ -941,7 +941,7 @@ mod tests {
     #[test]
     fn poly_mutable_div() {
         let mut p = poly!(3, 4, 5);
-        p.div_mut(2);
+        p.div_mut(&2);
         assert_eq!(poly!(1, 2, 2), p);
     }
 
