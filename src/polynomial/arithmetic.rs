@@ -614,6 +614,21 @@ impl<T: Clone + Div<Output = T> + PartialEq + Zero> Div<T> for &Poly<T> {
     }
 }
 
+/// Implementation of polynomial and real number division
+impl<'a, T> Div<&'a T> for &'a Poly<T>
+where
+    T: Clone + PartialEq + Zero,
+    &'a T: Div<Output = T>,
+{
+    type Output = Poly<T>;
+
+    fn div(self, rhs: &'a T) -> Self::Output {
+        let result = self.coeffs.iter().map(|x| x / rhs);
+        // The polynomial cannot be empty.
+        Poly::new_from_coeffs_iter(result)
+    }
+}
+
 /// Implementation of division between polynomials
 ///
 /// Panics
@@ -934,9 +949,17 @@ mod tests {
         assert_eq!(poly!(4, 0, 5), poly!(8, 1, 11) / 2);
 
         let inf = std::f32::INFINITY;
-        assert_eq!(Poly::zero(), poly!(1., 0., 1.) / inf);
+        assert!((poly!(1., 0., 1.) / inf).is_zero());
 
         assert_eq!(poly!(inf, -inf, inf), poly!(1., -2.3, 1.) / 0.);
+    }
+
+    #[test]
+    fn poly_div_ref() {
+        let p1 = poly!(21, 34, -98);
+        assert_eq!(poly!(10, 17, -49), &p1 / 2);
+        assert_eq!(poly!(10, 17, -49), &p1 / &2);
+        assert!((&p1 / &100).is_zero());
     }
 
     #[test]
