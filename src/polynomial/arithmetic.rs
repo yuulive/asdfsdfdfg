@@ -290,7 +290,7 @@ macro_rules! impl_sub_for_poly {
             type Output = Poly<Self>;
 
             fn sub(self, rhs: Poly<Self>) -> Poly<Self> {
-        // The polynomial cannot be empty.
+                // The polynomial cannot be empty.
                 rhs.neg().add(self)
             }
         }
@@ -299,7 +299,7 @@ macro_rules! impl_sub_for_poly {
             type Output = Poly<Self>;
 
             fn sub(self, rhs: &Poly<Self>) -> Poly<Self> {
-        // The polynomial cannot be empty.
+                // The polynomial cannot be empty.
                 self.sub(rhs.clone())
             }
         }

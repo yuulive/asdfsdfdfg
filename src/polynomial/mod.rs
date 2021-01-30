@@ -96,7 +96,6 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
             coeffs: coeffs.into(),
         };
         p.trim();
-        debug_assert!(!p.coeffs.is_empty());
         p
     }
 
@@ -120,15 +119,12 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
             coeffs: coeffs.into_iter().collect(),
         };
         p.trim();
-        debug_assert!(!p.coeffs.is_empty());
         p
     }
 
     /// Trim the zeros coefficients of high degree terms.
     /// It will not leave an empty `coeffs` vector: zero poly is returned.
     fn trim(&mut self) {
-        // TODO try to use assert macro.
-        //.rposition(|&c| relative_ne!(c, 0.0, epsilon = epsilon, max_relative = max_relative))
         if let Some(p) = self.coeffs.iter().rposition(|c| c != &T::zero()) {
             let new_length = p + 1;
             debug_assert!(new_length > 0);
@@ -258,7 +254,6 @@ impl<T: Clone + Mul<Output = T> + Neg<Output = T> + One + PartialEq + Zero> Poly
             }
         });
         p.trim();
-        debug_assert!(!p.coeffs.is_empty());
         p
     }
 
@@ -284,7 +279,6 @@ impl<T: Clone + Mul<Output = T> + Neg<Output = T> + One + PartialEq + Zero> Poly
             }
         });
         p.trim();
-        debug_assert!(!p.coeffs.is_empty());
         p
     }
 }
@@ -335,7 +329,6 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
             }
         }
         self.trim();
-        debug_assert!(!self.coeffs.is_empty());
     }
 }
 
@@ -648,7 +641,6 @@ impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> One for Poly<T> {
 /// let p = Poly::new_from_coeffs(&[0, 1, 2, 0, 3]);
 /// assert_eq!("1s +2s^2 +3s^4", format!("{}", p));
 /// ```
-
 macro_rules! display {
     ($trait:path) => {
         impl<T: $trait + PartialOrd + Zero> $trait for Poly<T> {
