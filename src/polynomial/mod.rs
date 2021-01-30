@@ -184,7 +184,7 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
     }
 }
 
-impl<T: Clone + Div<Output = T> + One> Poly<T> {
+impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Poly<T> {
     /// Return the monic polynomial and the leading coefficient.
     ///
     /// # Example
@@ -198,10 +198,7 @@ impl<T: Clone + Div<Output = T> + One> Poly<T> {
     #[must_use]
     pub fn monic(&self) -> (Self, T) {
         let lc = self.leading_coeff();
-        let result: Vec<_> = self.coeffs.iter().map(|x| x.clone() / lc.clone()).collect();
-        let monic_poly = Self { coeffs: result };
-
-        debug_assert!(!monic_poly.coeffs.is_empty());
+        let monic_poly = self / lc.clone();
         (monic_poly, lc)
     }
 }
@@ -221,7 +218,6 @@ impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Poly<T> {
     pub fn monic_mut(&mut self) -> T {
         let lc = self.leading_coeff();
         self.div_mut(&lc);
-        debug_assert!(!self.coeffs.is_empty());
         lc
     }
 }

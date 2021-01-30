@@ -589,7 +589,7 @@ impl<T: Float + FloatConst> Poly<T> {
 }
 
 /// Implementation of polynomial and real number division
-impl<T: Clone + Num> Div<T> for Poly<T> {
+impl<T: Clone + Div<Output = T> + PartialEq + Zero> Div<T> for Poly<T> {
     type Output = Self;
 
     fn div(mut self, rhs: T) -> Self {
@@ -604,12 +604,13 @@ impl<T: Clone + Num> Div<T> for Poly<T> {
 }
 
 /// Implementation of polynomial and real number division
-impl<T: Clone + Num> Div<T> for &Poly<T> {
+impl<T: Clone + Div<Output = T> + PartialEq + Zero> Div<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn div(self, rhs: T) -> Self::Output {
+        let result = self.coeffs.iter().map(|x| x.clone() / rhs.clone());
         // The polynomial cannot be empty.
-        self.clone().div(rhs)
+        Poly::new_from_coeffs_iter(result)
     }
 }
 
