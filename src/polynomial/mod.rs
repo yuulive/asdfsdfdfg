@@ -573,6 +573,8 @@ impl<T> Index<usize> for Poly<T> {
 }
 
 /// Implement mutable indexing of polynomial returning its coefficients.
+/// Misuse of this method may invalidate some polynomial invariant.
+/// If some coefficient is zeroed a call to `roundoff` of `roundoff_mut` may be needed.
 ///
 /// # Panics
 ///
