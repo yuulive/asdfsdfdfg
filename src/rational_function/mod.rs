@@ -2,7 +2,7 @@
 
 use nalgebra::RealField;
 use num_complex::Complex;
-use num_traits::{Float, Inv, One, Signed, Zero};
+use num_traits::{Float, Inv, One, Zero};
 
 use std::{
     fmt,
@@ -22,7 +22,7 @@ pub struct Rf<T> {
 }
 
 /// Implementation of transfer function methods
-impl<T: Float> Rf<T> {
+impl<T> Rf<T> {
     /// Create a new transfer function given its numerator and denominator
     ///
     /// # Arguments
@@ -67,7 +67,9 @@ impl<T: Float> Rf<T> {
     pub fn den(&self) -> &Poly<T> {
         &self.den
     }
+}
 
+impl<T: Clone + PartialEq + Zero> Rf<T> {
     /// Calculate the relative degree between denominator and numerator.
     ///
     /// # Example
@@ -146,7 +148,7 @@ impl<T: Float + RealField> Rf<T> {
     }
 }
 
-impl<T: Float> Rf<T> {
+impl<T: Clone + PartialEq + Zero> Rf<T> {
     /// Negative feedback.
     ///
     /// ```text
@@ -162,7 +164,9 @@ impl<T: Float> Rf<T> {
             den: &self.den + &self.num,
         }
     }
+}
 
+impl<T: Clone + PartialEq + Sub<Output = T> + Zero> Rf<T> {
     /// Positive feedback
     ///
     /// ```text
@@ -178,7 +182,9 @@ impl<T: Float> Rf<T> {
             den: &self.den - &self.num,
         }
     }
+}
 
+impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Rf<T> {
     /// Normalization of transfer function. If the denominator is zero the same
     /// transfer function is returned.
     ///
@@ -247,7 +253,7 @@ impl<T: Float> Rf<T> {
 
 /// Implementation of transfer function negation.
 /// Negative sign is transferred to the numerator.
-impl<T: Float> Neg for &Rf<T> {
+impl<T: Clone + Neg<Output = T>> Neg for &Rf<T> {
     type Output = Rf<T>;
 
     fn neg(self) -> Self::Output {
@@ -260,7 +266,7 @@ impl<T: Float> Neg for &Rf<T> {
 
 /// Implementation of transfer function negation.
 /// Negative sign is transferred to the numerator.
-impl<T: Float> Neg for Rf<T> {
+impl<T: Clone + Neg<Output = T>> Neg for Rf<T> {
     type Output = Self;
 
     fn neg(mut self) -> Self::Output {
@@ -271,7 +277,7 @@ impl<T: Float> Neg for Rf<T> {
 
 /// Implementation of transfer function addition
 #[allow(clippy::suspicious_arithmetic_impl)]
-impl<T: Float> Add for &Rf<T> {
+impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> Add for &Rf<T> {
     type Output = Rf<T>;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -295,7 +301,7 @@ impl<T: Float> Add for &Rf<T> {
 
 /// Implementation of transfer function addition
 #[allow(clippy::suspicious_arithmetic_impl)]
-impl<T: Float> Add for Rf<T> {
+impl<T: Clone + One + PartialEq + Zero> Add for Rf<T> {
     type Output = Self;
 
     fn add(mut self, rhs: Self) -> Self {
@@ -318,7 +324,7 @@ impl<T: Float> Add for Rf<T> {
 }
 
 /// Implementation of transfer function addition
-impl<T: Float> Add<T> for Rf<T> {
+impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Add<T> for Rf<T> {
     type Output = Self;
 
     fn add(mut self, rhs: T) -> Self {
@@ -328,7 +334,7 @@ impl<T: Float> Add<T> for Rf<T> {
 }
 
 /// Implementation of transfer function addition
-impl<T: Float> Add<&T> for Rf<T> {
+impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Add<&T> for Rf<T> {
     type Output = Self;
 
     fn add(mut self, rhs: &T) -> Self {
@@ -339,7 +345,7 @@ impl<T: Float> Add<&T> for Rf<T> {
 
 /// Implementation of transfer function subtraction
 #[allow(clippy::suspicious_arithmetic_impl)]
-impl<T: Float> Sub for &Rf<T> {
+impl<T: Clone + Neg<Output = T> + PartialEq + Sub<Output = T> + Zero + One> Sub for &Rf<T> {
     type Output = Rf<T>;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -363,7 +369,7 @@ impl<T: Float> Sub for &Rf<T> {
 
 /// Implementation of transfer function subtraction
 #[allow(clippy::suspicious_arithmetic_impl)]
-impl<T: Float> Sub for Rf<T> {
+impl<T: Clone + Neg<Output = T> + One + PartialEq + Sub<Output = T> + Zero> Sub for Rf<T> {
     type Output = Self;
 
     fn sub(mut self, rhs: Self) -> Self {
@@ -386,7 +392,7 @@ impl<T: Float> Sub for Rf<T> {
 }
 
 /// Implementation of transfer function multiplication
-impl<T: Float> Mul for &Rf<T> {
+impl<T: Clone + One + PartialEq + Zero> Mul for &Rf<T> {
     type Output = Rf<T>;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -400,7 +406,7 @@ impl<T: Float> Mul for &Rf<T> {
 }
 
 /// Implementation of transfer function multiplication
-impl<T: Float> Mul for Rf<T> {
+impl<T: Clone + One + PartialEq + Zero> Mul for Rf<T> {
     type Output = Self;
 
     fn mul(mut self, rhs: Self) -> Self {
@@ -414,7 +420,7 @@ impl<T: Float> Mul for Rf<T> {
 }
 
 /// Implementation of transfer function multiplication
-impl<T: Float> Mul<&Rf<T>> for Rf<T> {
+impl<T: Clone + One + PartialEq + Zero> Mul<&Rf<T>> for Rf<T> {
     type Output = Self;
 
     fn mul(mut self, rhs: &Rf<T>) -> Self {
@@ -429,7 +435,7 @@ impl<T: Float> Mul<&Rf<T>> for Rf<T> {
 
 /// Implementation of transfer function division
 #[allow(clippy::suspicious_arithmetic_impl)]
-impl<T: Float> Div for &Rf<T> {
+impl<T: Clone + One + PartialEq + Zero> Div for &Rf<T> {
     type Output = Rf<T>;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -446,7 +452,7 @@ impl<T: Float> Div for &Rf<T> {
 
 /// Implementation of transfer function division
 #[allow(clippy::suspicious_arithmetic_impl)]
-impl<T: Float> Div for Rf<T> {
+impl<T: Clone + One + PartialEq + Zero> Div for Rf<T> {
     type Output = Self;
 
     fn div(mut self, rhs: Self) -> Self {
@@ -461,7 +467,7 @@ impl<T: Float> Div for Rf<T> {
     }
 }
 
-impl<T: Float> Zero for Rf<T> {
+impl<T: Clone + One + PartialEq + Zero> Zero for Rf<T> {
     fn zero() -> Self {
         Self {
             num: Poly::zero(),
@@ -524,7 +530,7 @@ impl<T> Rf<T> {
 /// Implementation of transfer function printing
 impl<T> Display for Rf<T>
 where
-    T: Display + One + PartialEq + PartialOrd + Signed + Zero,
+    T: Display + One + PartialEq + PartialOrd + Zero,
 {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let (s_num, s_den) = if let Some(precision) = f.precision() {
@@ -681,7 +687,7 @@ mod tests {
         let expected = Rf::new(poly!(10., -5., 10.), poly!(3., 11., -20.));
         assert_eq!(expected, actual);
         assert_eq!(expected, expected.clone() + Rf::zero());
-        assert_eq!(expected, Rf::zero() + expected.clone());
+        assert_eq!(expected, Rf::<f32>::zero() + expected.clone());
     }
 
     #[test]
