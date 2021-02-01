@@ -74,6 +74,7 @@ pub mod linear_system;
 pub mod plots;
 pub mod polynomial;
 pub mod polynomial_matrix;
+pub mod rational_function;
 pub mod signals;
 pub mod transfer_function;
 pub mod units;
