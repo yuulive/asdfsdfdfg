@@ -7,7 +7,7 @@ use num_traits::{Float, One, Zero};
 use std::{
     fmt,
     fmt::{Debug, Display, Formatter},
-    ops::{Add, Div, Mul, Sub},
+    ops::{Add, Div, Mul},
 };
 
 use crate::polynomial::Poly;
@@ -117,42 +117,6 @@ impl<T: Float + RealField> Rf<T> {
     #[must_use]
     pub fn complex_zeros(&self) -> Vec<Complex<T>> {
         self.num.complex_roots()
-    }
-}
-
-impl<T: Clone + PartialEq + Zero> Rf<T> {
-    /// Negative feedback.
-    ///
-    /// ```text
-    ///           L(s)
-    /// G(s) = ----------
-    ///         1 + L(s)
-    /// ```
-    /// where `self = L(s)`
-    #[must_use]
-    pub fn feedback_n(&self) -> Self {
-        Self {
-            num: self.num.clone(),
-            den: &self.den + &self.num,
-        }
-    }
-}
-
-impl<T: Clone + PartialEq + Sub<Output = T> + Zero> Rf<T> {
-    /// Positive feedback
-    ///
-    /// ```text
-    ///           L(s)
-    /// G(s) = ----------
-    ///         1 - L(s)
-    /// ```
-    /// where `self = L(s)`
-    #[must_use]
-    pub fn feedback_p(&self) -> Self {
-        Self {
-            num: self.num.clone(),
-            den: &self.den - &self.num,
-        }
     }
 }
 
@@ -297,7 +261,6 @@ mod tests {
     use crate::poly;
     use num_complex::Complex;
     use num_traits::Inv;
-    use proptest::prelude::*;
 
     #[test]
     fn transfer_function_creation() {
@@ -368,24 +331,6 @@ mod tests {
             vec![Complex32::new(-1.5, -1.), Complex32::new(-1.5, 1.)],
             tf.complex_zeros()
         );
-    }
-
-    proptest! {
-        #[test]
-        fn qc_tf_negative_feedback(b: f64) {
-            let l = Rf::new(poly!(1.), poly!(-b, 1.));
-            let g = Rf::new(poly!(1.), poly!(-b + 1., 1.));
-            assert_eq!(g, l.feedback_n());
-        }
-    }
-
-    proptest! {
-    #[test]
-        fn qc_tf_positive_feedback(b: f64) {
-            let l = Rf::new(poly!(1.), poly!(-b, 1.));
-            let g = Rf::new(poly!(1.), poly!(-b - 1., 1.));
-            assert_eq!(g, l.feedback_p());
-        }
     }
 
     #[test]
