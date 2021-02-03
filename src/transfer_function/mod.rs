@@ -141,6 +141,13 @@ impl<T: Float, U: Time> TfNew<T, U> {
     }
 
     #[must_use]
+    pub fn relative_degree(&self) -> i32 {
+        self.rf.relative_degree()
+    }
+}
+
+impl<T, U: Time> TfNew<T, U> {
+    #[must_use]
     pub fn num(&self) -> &Poly<T> {
         &self.rf.num()
     }
@@ -148,11 +155,6 @@ impl<T: Float, U: Time> TfNew<T, U> {
     #[must_use]
     pub fn den(&self) -> &Poly<T> {
         &self.rf.den()
-    }
-
-    #[must_use]
-    pub fn relative_degree(&self) -> i32 {
-        self.rf.relative_degree()
     }
 }
 

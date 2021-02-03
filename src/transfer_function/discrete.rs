@@ -24,10 +24,10 @@ use std::{
     ops::{Add, Div, Mul},
 };
 
-use crate::{enums::Discrete, plots::Plotter, transfer_function::TfGen};
+use crate::{enums::Discrete, plots::Plotter, transfer_function::TfNew};
 
 /// Discrete transfer function
-pub type Tfz<T> = TfGen<T, Discrete>;
+pub type Tfz<T> = TfNew<T, Discrete>;
 
 impl<T: Float> Tfz<T> {
     /// Time delay for discrete time transfer function.
@@ -59,11 +59,11 @@ impl<T: Float> Tfz<T> {
     /// ```
     #[must_use]
     pub fn init_value(&self) -> T {
-        let n = self.num.degree();
-        let d = self.den.degree();
+        let n = self.num().degree();
+        let d = self.den().degree();
         match n.cmp(&d) {
             Ordering::Less => T::zero(),
-            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Equal => self.num().leading_coeff() / self.den().leading_coeff(),
             Ordering::Greater => T::infinity(),
         }
     }
@@ -83,8 +83,16 @@ impl<'a, T: 'a + Add<&'a T, Output = T> + Div<Output = T> + Zero> Tfz<T> {
     /// ```
     #[must_use]
     pub fn static_gain(&'a self) -> T {
-        let n = self.num.as_slice().iter().fold(T::zero(), |acc, c| acc + c);
-        let d = self.den.as_slice().iter().fold(T::zero(), |acc, c| acc + c);
+        let n = self
+            .num()
+            .as_slice()
+            .iter()
+            .fold(T::zero(), |acc, c| acc + c);
+        let d = self
+            .den()
+            .as_slice()
+            .iter()
+            .fold(T::zero(), |acc, c| acc + c);
         n / d
     }
 }
@@ -117,8 +125,8 @@ impl<T: Float + RealField> Tfz<T> {
 macro_rules! arma {
     ($self:ident, $y_coeffs:ident, $u_coeffs:ident, $y:ident, $u:ident) => {{
         let g = $self.normalize();
-        let n_n = g.num.degree().unwrap_or(0);
-        let n_d = g.den.degree().unwrap_or(0);
+        let n_n = g.num().degree().unwrap_or(0);
+        let n_d = g.den().degree().unwrap_or(0);
         let n = n_n.max(n_d);
 
         // The front is the lowest order coefficient.
@@ -126,7 +134,7 @@ macro_rules! arma {
         // The higher degree terms are the more recent.
         // The last coefficient is always 1, because g is normalized.
         // [a0, a1, a2, ..., a(n-1), 1]
-        let mut output_coefficients = g.den.coeffs();
+        let mut output_coefficients = g.den().coeffs();
         // Remove the last coefficient by truncating the vector by one.
         // This is done because the last coefficient of the denominator corresponds
         // to the currently calculated output.
@@ -134,7 +142,7 @@ macro_rules! arma {
         // [a0, a1, a2, ..., a(n-1)]
         $y_coeffs = output_coefficients;
         // [b0, b1, b2, ..., bm]
-        $u_coeffs = g.num.coeffs();
+        $u_coeffs = g.num().coeffs();
 
         // The coefficients do not need to be extended with zeros,
         // when the coffiecients are 'zipped' with the VecDeque, the zip stops at the
