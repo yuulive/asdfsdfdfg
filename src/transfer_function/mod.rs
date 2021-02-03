@@ -44,21 +44,12 @@ use crate::{
 /// Transfer function representation of a linear system
 #[derive(Clone, Debug, PartialEq)]
 pub struct TfGen<T, U: Time> {
-    /// Transfer function numerator
-    num: Poly<T>,
-    /// Transfer function denominator
-    den: Poly<T>,
+    /// Rational function
+    rf: Rf<T>,
     /// Tag to disambiguate continuous and discrete
     time: PhantomData<U>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct TfNew<T, U: Time> {
-    rf: Rf<T>,
-    time: PhantomData<U>,
-}
-
-/// Implementation of transfer function methods
 impl<T: Float, U: Time> TfGen<T, U> {
     /// Create a new transfer function given its numerator and denominator
     ///
@@ -75,38 +66,9 @@ impl<T: Float, U: Time> TfGen<T, U> {
     #[must_use]
     pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
         Self {
-            num,
-            den,
+            rf: Rf::new(num, den),
             time: PhantomData::<U>,
         }
-    }
-
-    /// Extract transfer function numerator
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::{poly, Tfz};
-    /// let num = poly!(1., 2.);
-    /// let tfz = Tfz::new(num.clone(), poly!(-4., 6., -2.));
-    /// assert_eq!(&num, tfz.num());
-    /// ```
-    #[must_use]
-    pub fn num(&self) -> &Poly<T> {
-        &self.num
-    }
-
-    /// Extract transfer function denominator
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::{poly, Tfz};
-    /// let den = poly!(-4., 6., -2.);
-    /// let tfz = Tfz::new(poly!(1., 2.), den.clone());
-    /// assert_eq!(&den, tfz.den());
-    /// ```
-    #[must_use]
-    pub fn den(&self) -> &Poly<T> {
-        &self.den
     }
 
     /// Calculate the relative degree between denominator and numerator.
@@ -120,53 +82,42 @@ impl<T: Float, U: Time> TfGen<T, U> {
     /// assert_eq!(tfz.inv().relative_degree(), -1);
     /// ```
     #[must_use]
-    #[allow(clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
-    pub fn relative_degree(&self) -> i32 {
-        match (self.den.degree(), self.num.degree()) {
-            (Some(d), Some(n)) => d as i32 - n as i32,
-            (Some(d), None) => d as i32,
-            (None, Some(n)) => -(n as i32),
-            _ => 0,
-        }
-    }
-}
-
-impl<T: Float, U: Time> TfNew<T, U> {
-    #[must_use]
-    pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
-        Self {
-            rf: Rf::new(num, den),
-            time: PhantomData::<U>,
-        }
-    }
-
-    #[must_use]
     pub fn relative_degree(&self) -> i32 {
         self.rf.relative_degree()
     }
 }
 
-impl<T, U: Time> TfNew<T, U> {
+impl<T, U: Time> TfGen<T, U> {
+    /// Extract transfer function numerator
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let num = poly!(1., 2.);
+    /// let tfz = Tfz::new(num.clone(), poly!(-4., 6., -2.));
+    /// assert_eq!(&num, tfz.num());
+    /// ```
     #[must_use]
     pub fn num(&self) -> &Poly<T> {
         &self.rf.num()
     }
 
+    /// Extract transfer function denominator
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let den = poly!(-4., 6., -2.);
+    /// let tfz = Tfz::new(poly!(1., 2.), den.clone());
+    /// assert_eq!(&den, tfz.den());
+    /// ```
     #[must_use]
     pub fn den(&self) -> &Poly<T> {
         &self.rf.den()
     }
 }
 
-/// Implementation of transfer function methods
 impl<T, U: Time> TfGen<T, U> {
-    /// Compute the reciprocal of a transfer function in place.
-    pub fn inv_mut(&mut self) {
-        std::mem::swap(&mut self.num, &mut self.den);
-    }
-}
-
-impl<T, U: Time> TfNew<T, U> {
     /// Compute the reciprocal of a transfer function in place.
     pub fn inv_mut(&mut self) {
         self.rf.inv_mut();
@@ -175,19 +126,6 @@ impl<T, U: Time> TfNew<T, U> {
 
 impl<T: Clone, U: Time> Inv for &TfGen<T, U> {
     type Output = TfGen<T, U>;
-
-    /// Compute the reciprocal of a transfer function.
-    fn inv(self) -> Self::Output {
-        Self::Output {
-            num: self.den.clone(),
-            den: self.num.clone(),
-            time: PhantomData::<U>,
-        }
-    }
-}
-
-impl<T: Clone, U: Time> Inv for &TfNew<T, U> {
-    type Output = TfNew<T, U>;
 
     /// Compute the reciprocal of a transfer function.
     fn inv(self) -> Self::Output {
@@ -208,43 +146,7 @@ impl<T: Clone, U: Time> Inv for TfGen<T, U> {
     }
 }
 
-impl<T: Clone, U: Time> Inv for TfNew<T, U> {
-    type Output = Self;
-
-    /// Compute the reciprocal of a transfer function.
-    fn inv(mut self) -> Self::Output {
-        self.inv_mut();
-        self
-    }
-}
-
 impl<T: Float + RealField, U: Time> TfGen<T, U> {
-    /// Calculate the poles of the transfer function
-    #[must_use]
-    pub fn real_poles(&self) -> Option<Vec<T>> {
-        self.den.real_roots()
-    }
-
-    /// Calculate the poles of the transfer function
-    #[must_use]
-    pub fn complex_poles(&self) -> Vec<Complex<T>> {
-        self.den.complex_roots()
-    }
-
-    /// Calculate the zeros of the transfer function
-    #[must_use]
-    pub fn real_zeros(&self) -> Option<Vec<T>> {
-        self.num.real_roots()
-    }
-
-    /// Calculate the zeros of the transfer function
-    #[must_use]
-    pub fn complex_zeros(&self) -> Vec<Complex<T>> {
-        self.num.complex_roots()
-    }
-}
-
-impl<T: Float + RealField, U: Time> TfNew<T, U> {
     /// Calculate the poles of the transfer function
     #[must_use]
     pub fn real_poles(&self) -> Option<Vec<T>> {
@@ -271,111 +173,6 @@ impl<T: Float + RealField, U: Time> TfNew<T, U> {
 }
 
 impl<T: Float, U: Time> TfGen<T, U> {
-    /// Negative feedback.
-    ///
-    /// ```text
-    ///           L(s)
-    /// G(s) = ----------
-    ///         1 + L(s)
-    /// ```
-    /// where `self = L(s)`
-    #[must_use]
-    pub fn feedback_n(&self) -> Self {
-        Self {
-            num: self.num.clone(),
-            den: &self.den + &self.num,
-            time: PhantomData::<U>,
-        }
-    }
-
-    /// Positive feedback
-    ///
-    /// ```text
-    ///           L(s)
-    /// G(s) = ----------
-    ///         1 - L(s)
-    /// ```
-    /// where `self = L(s)`
-    #[must_use]
-    pub fn feedback_p(&self) -> Self {
-        Self {
-            num: self.num.clone(),
-            den: &self.den - &self.num,
-            time: PhantomData::<U>,
-        }
-    }
-
-    /// Normalization of transfer function. If the denominator is zero the same
-    /// transfer function is returned.
-    ///
-    /// from:
-    /// ```text
-    ///        b_n*z^n + b_(n-1)*z^(n-1) + ... + b_1*z + b_0
-    /// G(z) = ---------------------------------------------
-    ///        a_n*z^n + a_(n-1)*z^(n-1) + ... + a_1*z + a_0
-    /// ```
-    /// to:
-    /// ```text
-    ///        b'_n*z^n + b'_(n-1)*z^(n-1) + ... + b'_1*z + b'_0
-    /// G(z) = -------------------------------------------------
-    ///          z^n + a'_(n-1)*z^(n-1) + ... + a'_1*z + a'_0
-    /// ```
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::{poly, Tfz};
-    /// let tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
-    /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
-    /// assert_eq!(expected, tfz.normalize());
-    /// ```
-    #[must_use]
-    pub fn normalize(&self) -> Self {
-        if self.den.is_zero() {
-            return self.clone();
-        }
-        let (den, an) = self.den.monic();
-        let num = &self.num / an;
-        Self {
-            num,
-            den,
-            time: PhantomData,
-        }
-    }
-
-    /// In place normalization of transfer function. If the denominator is zero
-    /// no operation is done.
-    ///
-    /// from:
-    /// ```text
-    ///        b_n*z^n + b_(n-1)*z^(n-1) + ... + b_1*z + b_0
-    /// G(z) = ---------------------------------------------
-    ///        a_n*z^n + a_(n-1)*z^(n-1) + ... + a_1*z + a_0
-    /// ```
-    /// to:
-    /// ```text
-    ///        b'_n*z^n + b'_(n-1)*z^(n-1) + ... + b'_1*z + b'_0
-    /// G(z) = -------------------------------------------------
-    ///          z^n + a'_(n-1)*z^(n-1) + ... + a'_1*z + a'_0
-    /// ```
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::{poly, Tfz};
-    /// let mut tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
-    /// tfz.normalize_mut();
-    /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
-    /// assert_eq!(expected, tfz);
-    /// ```
-    pub fn normalize_mut(&mut self) {
-        if self.den.is_zero() {
-            return;
-        }
-        let an = self.den.monic_mut();
-        self.num.div_mut(&an);
-    }
-}
-
-impl<T: Float, U: Time> TfNew<T, U> {
     /// Negative feedback.
     ///
     /// ```text
@@ -495,31 +292,6 @@ macro_rules! from_ss_to_tr {
                 }
             }
         }
-        impl<U: Time> TfNew<$ty, U> {
-            /// Convert a state-space representation into transfer functions.
-            /// Conversion is available for Single Input Single Output system.
-            /// If fails if the system is not SISO
-            ///
-            /// # Arguments
-            ///
-            /// `ss` - state space linear system
-            ///
-            /// # Errors
-            ///
-            /// It returns an error if the linear system is not single input
-            /// single output.
-            pub fn new_from_siso(ss: &SsGen<$ty, U>) -> Result<Self, Error> {
-                let (pc, a_inv) = $laverrier(&ss.a);
-                let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
-                let rest = PolyMatrix::multiply(&pc, &ss.d);
-                let tf = g + rest;
-                if let Some(num) = MatrixOfPoly::from(tf).single() {
-                    Ok(Self::new(num.clone(), pc))
-                } else {
-                    Err(Error::new_internal(ErrorKind::NoSisoSystem))
-                }
-            }
-        }
     };
 }
 
@@ -530,20 +302,6 @@ from_ss_to_tr!(f32, linear_system::leverrier_f32);
 /// Negative sign is transferred to the numerator.
 impl<T: Float, U: Time> Neg for &TfGen<T, U> {
     type Output = TfGen<T, U>;
-
-    fn neg(self) -> Self::Output {
-        Self::Output {
-            num: -&self.num,
-            den: self.den.clone(),
-            time: PhantomData,
-        }
-    }
-}
-
-/// Implementation of transfer function negation.
-/// Negative sign is transferred to the numerator.
-impl<T: Float, U: Time> Neg for &TfNew<T, U> {
-    type Output = TfNew<T, U>;
 
     fn neg(self) -> Self::Output {
         Self::Output {
@@ -559,17 +317,6 @@ impl<T: Float, U: Time> Neg for TfGen<T, U> {
     type Output = Self;
 
     fn neg(mut self) -> Self::Output {
-        self.num = -self.num;
-        self
-    }
-}
-
-/// Implementation of transfer function negation.
-/// Negative sign is transferred to the numerator.
-impl<T: Float, U: Time> Neg for TfNew<T, U> {
-    type Output = Self;
-
-    fn neg(mut self) -> Self::Output {
         self.rf = Neg::neg(self.rf);
         self
     }
@@ -581,30 +328,6 @@ impl<T: Float, U: Time> Add for &TfGen<T, U> {
     type Output = TfGen<T, U>;
 
     fn add(self, rhs: Self) -> Self::Output {
-        if self.is_zero() {
-            return rhs.clone();
-        }
-        if rhs.is_zero() {
-            return self.clone();
-        }
-        let (num, den) = if self.den == rhs.den {
-            (&self.num + &rhs.num, self.den.clone())
-        } else {
-            (
-                &self.num * &rhs.den + &self.den * &rhs.num,
-                &self.den * &rhs.den,
-            )
-        };
-        Self::Output::new(num, den)
-    }
-}
-
-/// Implementation of transfer function addition
-#[allow(clippy::suspicious_arithmetic_impl)]
-impl<T: Float, U: Time> Add for &TfNew<T, U> {
-    type Output = TfNew<T, U>;
-
-    fn add(self, rhs: Self) -> Self::Output {
         Self::Output {
             rf: Add::add(&self.rf, &rhs.rf),
             time: PhantomData,
@@ -613,31 +336,7 @@ impl<T: Float, U: Time> Add for &TfNew<T, U> {
 }
 
 /// Implementation of transfer function addition
-#[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Add for TfGen<T, U> {
-    type Output = Self;
-
-    fn add(mut self, rhs: Self) -> Self {
-        if self.is_zero() {
-            return rhs;
-        }
-        if rhs.is_zero() {
-            return self;
-        }
-        if self.den == rhs.den {
-            self.num = self.num + rhs.num;
-            self
-        } else {
-            // first modify numerator.
-            self.num = &self.num * &rhs.den + &self.den * &rhs.num;
-            self.den = self.den * rhs.den;
-            self
-        }
-    }
-}
-
-/// Implementation of transfer function addition
-impl<T: Float, U: Time> Add for TfNew<T, U> {
     type Output = Self;
 
     fn add(mut self, rhs: Self) -> Self {
@@ -651,16 +350,6 @@ impl<T: Float, U: Time> Add<T> for TfGen<T, U> {
     type Output = Self;
 
     fn add(mut self, rhs: T) -> Self {
-        self.num = self.num + &self.den * rhs;
-        self
-    }
-}
-
-/// Implementation of transfer function addition
-impl<T: Float, U: Time> Add<T> for TfNew<T, U> {
-    type Output = Self;
-
-    fn add(mut self, rhs: T) -> Self {
         self.rf = Add::add(self.rf, rhs);
         self
     }
@@ -671,48 +360,14 @@ impl<T: Float, U: Time> Add<&T> for TfGen<T, U> {
     type Output = Self;
 
     fn add(mut self, rhs: &T) -> Self {
-        self.num = self.num + &self.den * rhs;
-        self
-    }
-}
-
-/// Implementation of transfer function addition
-impl<T: Float, U: Time> Add<&T> for TfNew<T, U> {
-    type Output = Self;
-
-    fn add(mut self, rhs: &T) -> Self {
         self.rf = Add::add(self.rf, rhs);
         self
     }
 }
 
 /// Implementation of transfer function subtraction
-#[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Sub for &TfGen<T, U> {
     type Output = TfGen<T, U>;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        if self.is_zero() {
-            return -rhs.clone();
-        }
-        if rhs.is_zero() {
-            return self.clone();
-        }
-        let (num, den) = if self.den == rhs.den {
-            (&self.num - &rhs.num, self.den.clone())
-        } else {
-            (
-                &self.num * &rhs.den - &self.den * &rhs.num,
-                &self.den * &rhs.den,
-            )
-        };
-        Self::Output::new(num, den)
-    }
-}
-
-/// Implementation of transfer function subtraction
-impl<T: Float, U: Time> Sub for &TfNew<T, U> {
-    type Output = TfNew<T, U>;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self::Output {
@@ -723,31 +378,7 @@ impl<T: Float, U: Time> Sub for &TfNew<T, U> {
 }
 
 /// Implementation of transfer function subtraction
-#[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Sub for TfGen<T, U> {
-    type Output = Self;
-
-    fn sub(mut self, rhs: Self) -> Self {
-        if self.is_zero() {
-            return -rhs;
-        }
-        if rhs.is_zero() {
-            return self;
-        }
-        if self.den == rhs.den {
-            self.num = self.num - rhs.num;
-            self
-        } else {
-            // first modify numerator.
-            self.num = &self.num * &rhs.den - &self.den * &rhs.num;
-            self.den = self.den * rhs.den;
-            self
-        }
-    }
-}
-
-/// Implementation of transfer function subtraction
-impl<T: Float, U: Time> Sub for TfNew<T, U> {
     type Output = Self;
 
     fn sub(mut self, rhs: Self) -> Self {
@@ -759,20 +390,6 @@ impl<T: Float, U: Time> Sub for TfNew<T, U> {
 /// Implementation of transfer function multiplication
 impl<T: Float, U: Time> Mul for &TfGen<T, U> {
     type Output = TfGen<T, U>;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        if self.is_zero() || rhs.is_zero() {
-            return Self::Output::zero();
-        }
-        let num = &self.num * &rhs.num;
-        let den = &self.den * &rhs.den;
-        Self::Output::new(num, den)
-    }
-}
-
-/// Implementation of transfer function multiplication
-impl<T: Float, U: Time> Mul for &TfNew<T, U> {
-    type Output = TfNew<T, U>;
 
     fn mul(self, rhs: Self) -> Self::Output {
         Self::Output {
@@ -787,20 +404,6 @@ impl<T: Float, U: Time> Mul for TfGen<T, U> {
     type Output = Self;
 
     fn mul(mut self, rhs: Self) -> Self {
-        if self.is_zero() || rhs.is_zero() {
-            return Self::Output::zero();
-        }
-        self.num = self.num * rhs.num;
-        self.den = self.den * rhs.den;
-        self
-    }
-}
-
-/// Implementation of transfer function multiplication
-impl<T: Float, U: Time> Mul for TfNew<T, U> {
-    type Output = Self;
-
-    fn mul(mut self, rhs: Self) -> Self {
         self.rf = Mul::mul(self.rf, rhs.rf);
         self
     }
@@ -811,45 +414,14 @@ impl<T: Float, U: Time> Mul<&TfGen<T, U>> for TfGen<T, U> {
     type Output = Self;
 
     fn mul(mut self, rhs: &TfGen<T, U>) -> Self {
-        if self.is_zero() || rhs.is_zero() {
-            return Self::Output::zero();
-        }
-        self.num = self.num * &rhs.num;
-        self.den = self.den * &rhs.den;
-        self
-    }
-}
-
-/// Implementation of transfer function multiplication
-impl<T: Float, U: Time> Mul<&TfNew<T, U>> for TfNew<T, U> {
-    type Output = Self;
-
-    fn mul(mut self, rhs: &TfNew<T, U>) -> Self {
         self.rf = Mul::mul(self.rf, &rhs.rf);
         self
     }
 }
 
 /// Implementation of transfer function division
-#[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Div for &TfGen<T, U> {
     type Output = TfGen<T, U>;
-
-    fn div(self, rhs: Self) -> Self::Output {
-        match (self.is_zero(), rhs.is_zero()) {
-            (true, false) => return Self::Output::zero(),
-            (false, true) => return Self::Output::zero().inv(),
-            _ => (),
-        };
-        let num = &self.num * &rhs.den;
-        let den = &self.den * &rhs.num;
-        Self::Output::new(num, den)
-    }
-}
-
-/// Implementation of transfer function division
-impl<T: Float, U: Time> Div for &TfNew<T, U> {
-    type Output = TfNew<T, U>;
 
     fn div(self, rhs: Self) -> Self::Output {
         Self::Output {
@@ -860,24 +432,7 @@ impl<T: Float, U: Time> Div for &TfNew<T, U> {
 }
 
 /// Implementation of transfer function division
-#[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Div for TfGen<T, U> {
-    type Output = Self;
-
-    fn div(mut self, rhs: Self) -> Self {
-        match (self.is_zero(), rhs.is_zero()) {
-            (true, false) => return Self::Output::zero(),
-            (false, true) => return Self::Output::zero().inv(),
-            _ => (),
-        };
-        self.num = self.num * rhs.den;
-        self.den = self.den * rhs.num;
-        self
-    }
-}
-
-/// Implementation of transfer function division
-impl<T: Float, U: Time> Div for TfNew<T, U> {
     type Output = Self;
 
     fn div(mut self, rhs: Self) -> Self {
@@ -887,20 +442,6 @@ impl<T: Float, U: Time> Div for TfNew<T, U> {
 }
 
 impl<T: Float, U: Time> Zero for TfGen<T, U> {
-    fn zero() -> Self {
-        Self {
-            num: Poly::zero(),
-            den: Poly::one(),
-            time: PhantomData::<U>,
-        }
-    }
-
-    fn is_zero(&self) -> bool {
-        self.num.is_zero() && !self.den.is_zero()
-    }
-}
-
-impl<T: Float, U: Time> Zero for TfNew<T, U> {
     fn zero() -> Self {
         Self {
             rf: Rf::zero(),
@@ -914,29 +455,6 @@ impl<T: Float, U: Time> Zero for TfNew<T, U> {
 }
 
 impl<T: Clone, U: Time> TfGen<T, U> {
-    /// Evaluate the transfer function.
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - Value at which the transfer function is evaluated.
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::{poly, Tf};
-    /// use automatica::num_complex::Complex as C;
-    /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
-    /// assert_eq!(-8.5, tf.eval_by_val(3.));
-    /// assert_eq!(C::new(0.64, -0.98), tf.eval_by_val(C::new(0., 2.0_f32)));
-    /// ```
-    pub fn eval_by_val<N>(&self, s: N) -> N
-    where
-        N: Add<T, Output = N> + Clone + Div<Output = N> + Mul<Output = N> + Zero,
-    {
-        self.num.eval_by_val(s.clone()) / self.den.eval_by_val(s)
-    }
-}
-
-impl<T: Clone, U: Time> TfNew<T, U> {
     /// Evaluate the transfer function.
     ///
     /// # Arguments
@@ -979,58 +497,12 @@ impl<T, U: Time> TfGen<T, U> {
         T: 'a,
         N: 'a + Add<&'a T, Output = N> + Div<Output = N> + Mul<&'a N, Output = N> + Zero,
     {
-        self.num.eval(s) / self.den.eval(s)
-    }
-}
-
-impl<T, U: Time> TfNew<T, U> {
-    /// Evaluate the transfer function.
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - Value at which the transfer function is evaluated.
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::{poly, Tf};
-    /// use automatica::num_complex::Complex as C;
-    /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
-    /// assert_eq!(-8.5, tf.eval(&3.));
-    /// assert_eq!(C::new(0.64, -0.98), tf.eval(&C::new(0., 2.0_f32)));
-    /// ```
-    pub fn eval<'a, N>(&'a self, s: &'a N) -> N
-    where
-        T: 'a,
-        N: 'a + Add<&'a T, Output = N> + Div<Output = N> + Mul<&'a N, Output = N> + Zero,
-    {
         self.rf.eval(s)
     }
 }
 
 /// Implementation of transfer function printing
 impl<T, U> Display for TfGen<T, U>
-where
-    T: Display + One + PartialEq + PartialOrd + Signed + Zero,
-    U: Time,
-{
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        let (s_num, s_den) = if let Some(precision) = f.precision() {
-            let num = format!("{poly:.prec$}", poly = self.num, prec = precision);
-            let den = format!("{poly:.prec$}", poly = self.den, prec = precision);
-            (num, den)
-        } else {
-            let num = format!("{}", self.num);
-            let den = format!("{}", self.den);
-            (num, den)
-        };
-        let length = s_num.len().max(s_den.len());
-        let dash = "\u{2500}".repeat(length);
-        write!(f, "{}\n{}\n{}", s_num, dash, s_den)
-    }
-}
-
-/// Implementation of transfer function printing
-impl<T, U> Display for TfNew<T, U>
 where
     T: Display + One + PartialEq + PartialOrd + Signed + Zero,
     U: Time,

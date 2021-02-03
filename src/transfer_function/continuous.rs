@@ -21,12 +21,12 @@ use crate::{
     enums::Continuous,
     plots::{root_locus::RootLocus, Plotter},
     rational_function::Rf,
-    transfer_function::TfNew,
+    transfer_function::TfGen,
     units::Seconds,
 };
 
 /// Continuous transfer function
-pub type Tf<T> = TfNew<T, Continuous>;
+pub type Tf<T> = TfGen<T, Continuous>;
 
 impl<T: Float> Tf<T> {
     /// Time delay for continuous time transfer function.

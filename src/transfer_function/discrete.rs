@@ -24,10 +24,10 @@ use std::{
     ops::{Add, Div, Mul},
 };
 
-use crate::{enums::Discrete, plots::Plotter, transfer_function::TfNew};
+use crate::{enums::Discrete, plots::Plotter, transfer_function::TfGen};
 
 /// Discrete transfer function
-pub type Tfz<T> = TfNew<T, Discrete>;
+pub type Tfz<T> = TfGen<T, Discrete>;
 
 impl<T: Float> Tfz<T> {
     /// Time delay for discrete time transfer function.
