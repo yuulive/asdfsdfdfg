@@ -38,6 +38,7 @@ use crate::{
     linear_system::{self, SsGen},
     polynomial::Poly,
     polynomial_matrix::{MatrixOfPoly, PolyMatrix},
+    rational_function::Rf,
 };
 
 /// Transfer function representation of a linear system
@@ -48,6 +49,12 @@ pub struct TfGen<T, U: Time> {
     /// Transfer function denominator
     den: Poly<T>,
     /// Tag to disambiguate continuous and discrete
+    time: PhantomData<U>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct TfNew<T, U: Time> {
+    rf: Rf<T>,
     time: PhantomData<U>,
 }
 
@@ -124,11 +131,43 @@ impl<T: Float, U: Time> TfGen<T, U> {
     }
 }
 
+impl<T: Float, U: Time> TfNew<T, U> {
+    #[must_use]
+    pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
+        Self {
+            rf: Rf::new(num, den),
+            time: PhantomData::<U>,
+        }
+    }
+
+    #[must_use]
+    pub fn num(&self) -> &Poly<T> {
+        &self.rf.num()
+    }
+
+    #[must_use]
+    pub fn den(&self) -> &Poly<T> {
+        &self.rf.den()
+    }
+
+    #[must_use]
+    pub fn relative_degree(&self) -> i32 {
+        self.rf.relative_degree()
+    }
+}
+
 /// Implementation of transfer function methods
 impl<T, U: Time> TfGen<T, U> {
     /// Compute the reciprocal of a transfer function in place.
     pub fn inv_mut(&mut self) {
         std::mem::swap(&mut self.num, &mut self.den);
+    }
+}
+
+impl<T, U: Time> TfNew<T, U> {
+    /// Compute the reciprocal of a transfer function in place.
+    pub fn inv_mut(&mut self) {
+        self.rf.inv_mut();
     }
 }
 
@@ -145,7 +184,29 @@ impl<T: Clone, U: Time> Inv for &TfGen<T, U> {
     }
 }
 
+impl<T: Clone, U: Time> Inv for &TfNew<T, U> {
+    type Output = TfNew<T, U>;
+
+    /// Compute the reciprocal of a transfer function.
+    fn inv(self) -> Self::Output {
+        Self::Output {
+            rf: Inv::inv(&self.rf),
+            time: PhantomData,
+        }
+    }
+}
+
 impl<T: Clone, U: Time> Inv for TfGen<T, U> {
+    type Output = Self;
+
+    /// Compute the reciprocal of a transfer function.
+    fn inv(mut self) -> Self::Output {
+        self.inv_mut();
+        self
+    }
+}
+
+impl<T: Clone, U: Time> Inv for TfNew<T, U> {
     type Output = Self;
 
     /// Compute the reciprocal of a transfer function.
@@ -178,6 +239,32 @@ impl<T: Float + RealField, U: Time> TfGen<T, U> {
     #[must_use]
     pub fn complex_zeros(&self) -> Vec<Complex<T>> {
         self.num.complex_roots()
+    }
+}
+
+impl<T: Float + RealField, U: Time> TfNew<T, U> {
+    /// Calculate the poles of the transfer function
+    #[must_use]
+    pub fn real_poles(&self) -> Option<Vec<T>> {
+        self.rf.real_poles()
+    }
+
+    /// Calculate the poles of the transfer function
+    #[must_use]
+    pub fn complex_poles(&self) -> Vec<Complex<T>> {
+        self.rf.complex_poles()
+    }
+
+    /// Calculate the zeros of the transfer function
+    #[must_use]
+    pub fn real_zeros(&self) -> Option<Vec<T>> {
+        self.rf.real_zeros()
+    }
+
+    /// Calculate the zeros of the transfer function
+    #[must_use]
+    pub fn complex_zeros(&self) -> Vec<Complex<T>> {
+        self.rf.complex_zeros()
     }
 }
 
@@ -286,9 +373,127 @@ impl<T: Float, U: Time> TfGen<T, U> {
     }
 }
 
+impl<T: Float, U: Time> TfNew<T, U> {
+    /// Negative feedback.
+    ///
+    /// ```text
+    ///           L(s)
+    /// G(s) = ----------
+    ///         1 + L(s)
+    /// ```
+    /// where `self = L(s)`
+    #[must_use]
+    pub fn feedback_n(&self) -> Self {
+        Self {
+            rf: Rf::new(self.rf.num().clone(), self.den() + self.num()),
+            time: PhantomData,
+        }
+    }
+
+    /// Positive feedback
+    ///
+    /// ```text
+    ///           L(s)
+    /// G(s) = ----------
+    ///         1 - L(s)
+    /// ```
+    /// where `self = L(s)`
+    #[must_use]
+    pub fn feedback_p(&self) -> Self {
+        Self {
+            rf: Rf::new(self.rf.num().clone(), self.den() - self.num()),
+            time: PhantomData,
+        }
+    }
+
+    /// Normalization of transfer function. If the denominator is zero the same
+    /// transfer function is returned.
+    ///
+    /// from:
+    /// ```text
+    ///        b_n*z^n + b_(n-1)*z^(n-1) + ... + b_1*z + b_0
+    /// G(z) = ---------------------------------------------
+    ///        a_n*z^n + a_(n-1)*z^(n-1) + ... + a_1*z + a_0
+    /// ```
+    /// to:
+    /// ```text
+    ///        b'_n*z^n + b'_(n-1)*z^(n-1) + ... + b'_1*z + b'_0
+    /// G(z) = -------------------------------------------------
+    ///          z^n + a'_(n-1)*z^(n-1) + ... + a'_1*z + a'_0
+    /// ```
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
+    /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
+    /// assert_eq!(expected, tfz.normalize());
+    /// ```
+    #[must_use]
+    pub fn normalize(&self) -> Self {
+        Self {
+            rf: self.rf.normalize(),
+            time: PhantomData,
+        }
+    }
+
+    /// In place normalization of transfer function. If the denominator is zero
+    /// no operation is done.
+    ///
+    /// from:
+    /// ```text
+    ///        b_n*z^n + b_(n-1)*z^(n-1) + ... + b_1*z + b_0
+    /// G(z) = ---------------------------------------------
+    ///        a_n*z^n + a_(n-1)*z^(n-1) + ... + a_1*z + a_0
+    /// ```
+    /// to:
+    /// ```text
+    ///        b'_n*z^n + b'_(n-1)*z^(n-1) + ... + b'_1*z + b'_0
+    /// G(z) = -------------------------------------------------
+    ///          z^n + a'_(n-1)*z^(n-1) + ... + a'_1*z + a'_0
+    /// ```
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tfz};
+    /// let mut tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
+    /// tfz.normalize_mut();
+    /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
+    /// assert_eq!(expected, tfz);
+    /// ```
+    pub fn normalize_mut(&mut self) {
+        self.rf.normalize_mut();
+    }
+}
+
 macro_rules! from_ss_to_tr {
     ($ty:ty, $laverrier:expr) => {
         impl<U: Time> TfGen<$ty, U> {
+            /// Convert a state-space representation into transfer functions.
+            /// Conversion is available for Single Input Single Output system.
+            /// If fails if the system is not SISO
+            ///
+            /// # Arguments
+            ///
+            /// `ss` - state space linear system
+            ///
+            /// # Errors
+            ///
+            /// It returns an error if the linear system is not single input
+            /// single output.
+            pub fn new_from_siso(ss: &SsGen<$ty, U>) -> Result<Self, Error> {
+                let (pc, a_inv) = $laverrier(&ss.a);
+                let g = a_inv.left_mul(&ss.c).right_mul(&ss.b);
+                let rest = PolyMatrix::multiply(&pc, &ss.d);
+                let tf = g + rest;
+                if let Some(num) = MatrixOfPoly::from(tf).single() {
+                    Ok(Self::new(num.clone(), pc))
+                } else {
+                    Err(Error::new_internal(ErrorKind::NoSisoSystem))
+                }
+            }
+        }
+        impl<U: Time> TfNew<$ty, U> {
             /// Convert a state-space representation into transfer functions.
             /// Conversion is available for Single Input Single Output system.
             /// If fails if the system is not SISO
@@ -335,11 +540,35 @@ impl<T: Float, U: Time> Neg for &TfGen<T, U> {
 
 /// Implementation of transfer function negation.
 /// Negative sign is transferred to the numerator.
+impl<T: Float, U: Time> Neg for &TfNew<T, U> {
+    type Output = TfNew<T, U>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
+            rf: Neg::neg(&self.rf),
+            time: PhantomData,
+        }
+    }
+}
+
+/// Implementation of transfer function negation.
+/// Negative sign is transferred to the numerator.
 impl<T: Float, U: Time> Neg for TfGen<T, U> {
     type Output = Self;
 
     fn neg(mut self) -> Self::Output {
         self.num = -self.num;
+        self
+    }
+}
+
+/// Implementation of transfer function negation.
+/// Negative sign is transferred to the numerator.
+impl<T: Float, U: Time> Neg for TfNew<T, U> {
+    type Output = Self;
+
+    fn neg(mut self) -> Self::Output {
+        self.rf = Neg::neg(self.rf);
         self
     }
 }
@@ -370,6 +599,19 @@ impl<T: Float, U: Time> Add for &TfGen<T, U> {
 
 /// Implementation of transfer function addition
 #[allow(clippy::suspicious_arithmetic_impl)]
+impl<T: Float, U: Time> Add for &TfNew<T, U> {
+    type Output = TfNew<T, U>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            rf: Add::add(&self.rf, &rhs.rf),
+            time: PhantomData,
+        }
+    }
+}
+
+/// Implementation of transfer function addition
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Add for TfGen<T, U> {
     type Output = Self;
 
@@ -393,6 +635,16 @@ impl<T: Float, U: Time> Add for TfGen<T, U> {
 }
 
 /// Implementation of transfer function addition
+impl<T: Float, U: Time> Add for TfNew<T, U> {
+    type Output = Self;
+
+    fn add(mut self, rhs: Self) -> Self {
+        self.rf = Add::add(self.rf, rhs.rf);
+        self
+    }
+}
+
+/// Implementation of transfer function addition
 impl<T: Float, U: Time> Add<T> for TfGen<T, U> {
     type Output = Self;
 
@@ -403,11 +655,31 @@ impl<T: Float, U: Time> Add<T> for TfGen<T, U> {
 }
 
 /// Implementation of transfer function addition
+impl<T: Float, U: Time> Add<T> for TfNew<T, U> {
+    type Output = Self;
+
+    fn add(mut self, rhs: T) -> Self {
+        self.rf = Add::add(self.rf, rhs);
+        self
+    }
+}
+
+/// Implementation of transfer function addition
 impl<T: Float, U: Time> Add<&T> for TfGen<T, U> {
     type Output = Self;
 
     fn add(mut self, rhs: &T) -> Self {
         self.num = self.num + &self.den * rhs;
+        self
+    }
+}
+
+/// Implementation of transfer function addition
+impl<T: Float, U: Time> Add<&T> for TfNew<T, U> {
+    type Output = Self;
+
+    fn add(mut self, rhs: &T) -> Self {
+        self.rf = Add::add(self.rf, rhs);
         self
     }
 }
@@ -437,6 +709,18 @@ impl<T: Float, U: Time> Sub for &TfGen<T, U> {
 }
 
 /// Implementation of transfer function subtraction
+impl<T: Float, U: Time> Sub for &TfNew<T, U> {
+    type Output = TfNew<T, U>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            rf: Sub::sub(&self.rf, &rhs.rf),
+            time: PhantomData,
+        }
+    }
+}
+
+/// Implementation of transfer function subtraction
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Sub for TfGen<T, U> {
     type Output = Self;
@@ -460,6 +744,16 @@ impl<T: Float, U: Time> Sub for TfGen<T, U> {
     }
 }
 
+/// Implementation of transfer function subtraction
+impl<T: Float, U: Time> Sub for TfNew<T, U> {
+    type Output = Self;
+
+    fn sub(mut self, rhs: Self) -> Self {
+        self.rf = Sub::sub(self.rf, rhs.rf);
+        self
+    }
+}
+
 /// Implementation of transfer function multiplication
 impl<T: Float, U: Time> Mul for &TfGen<T, U> {
     type Output = TfGen<T, U>;
@@ -471,6 +765,18 @@ impl<T: Float, U: Time> Mul for &TfGen<T, U> {
         let num = &self.num * &rhs.num;
         let den = &self.den * &rhs.den;
         Self::Output::new(num, den)
+    }
+}
+
+/// Implementation of transfer function multiplication
+impl<T: Float, U: Time> Mul for &TfNew<T, U> {
+    type Output = TfNew<T, U>;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            rf: Mul::mul(&self.rf, &rhs.rf),
+            time: PhantomData,
+        }
     }
 }
 
@@ -489,6 +795,16 @@ impl<T: Float, U: Time> Mul for TfGen<T, U> {
 }
 
 /// Implementation of transfer function multiplication
+impl<T: Float, U: Time> Mul for TfNew<T, U> {
+    type Output = Self;
+
+    fn mul(mut self, rhs: Self) -> Self {
+        self.rf = Mul::mul(self.rf, rhs.rf);
+        self
+    }
+}
+
+/// Implementation of transfer function multiplication
 impl<T: Float, U: Time> Mul<&TfGen<T, U>> for TfGen<T, U> {
     type Output = Self;
 
@@ -498,6 +814,16 @@ impl<T: Float, U: Time> Mul<&TfGen<T, U>> for TfGen<T, U> {
         }
         self.num = self.num * &rhs.num;
         self.den = self.den * &rhs.den;
+        self
+    }
+}
+
+/// Implementation of transfer function multiplication
+impl<T: Float, U: Time> Mul<&TfNew<T, U>> for TfNew<T, U> {
+    type Output = Self;
+
+    fn mul(mut self, rhs: &TfNew<T, U>) -> Self {
+        self.rf = Mul::mul(self.rf, &rhs.rf);
         self
     }
 }
@@ -520,6 +846,18 @@ impl<T: Float, U: Time> Div for &TfGen<T, U> {
 }
 
 /// Implementation of transfer function division
+impl<T: Float, U: Time> Div for &TfNew<T, U> {
+    type Output = TfNew<T, U>;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            rf: Div::div(&self.rf, &rhs.rf),
+            time: PhantomData,
+        }
+    }
+}
+
+/// Implementation of transfer function division
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Float, U: Time> Div for TfGen<T, U> {
     type Output = Self;
@@ -536,6 +874,16 @@ impl<T: Float, U: Time> Div for TfGen<T, U> {
     }
 }
 
+/// Implementation of transfer function division
+impl<T: Float, U: Time> Div for TfNew<T, U> {
+    type Output = Self;
+
+    fn div(mut self, rhs: Self) -> Self {
+        self.rf = Div::div(self.rf, rhs.rf);
+        self
+    }
+}
+
 impl<T: Float, U: Time> Zero for TfGen<T, U> {
     fn zero() -> Self {
         Self {
@@ -547,6 +895,19 @@ impl<T: Float, U: Time> Zero for TfGen<T, U> {
 
     fn is_zero(&self) -> bool {
         self.num.is_zero() && !self.den.is_zero()
+    }
+}
+
+impl<T: Float, U: Time> Zero for TfNew<T, U> {
+    fn zero() -> Self {
+        Self {
+            rf: Rf::zero(),
+            time: PhantomData,
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.rf.is_zero()
     }
 }
 
@@ -570,6 +931,29 @@ impl<T: Clone, U: Time> TfGen<T, U> {
         N: Add<T, Output = N> + Clone + Div<Output = N> + Mul<Output = N> + Zero,
     {
         self.num.eval_by_val(s.clone()) / self.den.eval_by_val(s)
+    }
+}
+
+impl<T: Clone, U: Time> TfNew<T, U> {
+    /// Evaluate the transfer function.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - Value at which the transfer function is evaluated.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tf};
+    /// use automatica::num_complex::Complex as C;
+    /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
+    /// assert_eq!(-8.5, tf.eval_by_val(3.));
+    /// assert_eq!(C::new(0.64, -0.98), tf.eval_by_val(C::new(0., 2.0_f32)));
+    /// ```
+    pub fn eval_by_val<N>(&self, s: N) -> N
+    where
+        N: Add<T, Output = N> + Clone + Div<Output = N> + Mul<Output = N> + Zero,
+    {
+        self.rf.eval_by_val(s)
     }
 }
 
@@ -597,6 +981,30 @@ impl<T, U: Time> TfGen<T, U> {
     }
 }
 
+impl<T, U: Time> TfNew<T, U> {
+    /// Evaluate the transfer function.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - Value at which the transfer function is evaluated.
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::{poly, Tf};
+    /// use automatica::num_complex::Complex as C;
+    /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
+    /// assert_eq!(-8.5, tf.eval(&3.));
+    /// assert_eq!(C::new(0.64, -0.98), tf.eval(&C::new(0., 2.0_f32)));
+    /// ```
+    pub fn eval<'a, N>(&'a self, s: &'a N) -> N
+    where
+        T: 'a,
+        N: 'a + Add<&'a T, Output = N> + Div<Output = N> + Mul<&'a N, Output = N> + Zero,
+    {
+        self.rf.eval(s)
+    }
+}
+
 /// Implementation of transfer function printing
 impl<T, U> Display for TfGen<T, U>
 where
@@ -616,6 +1024,17 @@ where
         let length = s_num.len().max(s_den.len());
         let dash = "\u{2500}".repeat(length);
         write!(f, "{}\n{}\n{}", s_num, dash, s_den)
+    }
+}
+
+/// Implementation of transfer function printing
+impl<T, U> Display for TfNew<T, U>
+where
+    T: Display + One + PartialEq + PartialOrd + Signed + Zero,
+    U: Time,
+{
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", self.rf)
     }
 }
 
