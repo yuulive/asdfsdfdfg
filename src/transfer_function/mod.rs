@@ -508,7 +508,7 @@ where
     U: Time,
 {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}", self.rf)
+        Display::fmt(&self.rf, f)
     }
 }
 
