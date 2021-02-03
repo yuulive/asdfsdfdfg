@@ -12,7 +12,7 @@ use std::{
 
 use crate::polynomial::Poly;
 
-pub mod arithmetic;
+mod arithmetic;
 
 /// Transfer function representation of a linear system
 #[derive(Clone, Debug, PartialEq)]
