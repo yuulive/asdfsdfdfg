@@ -1,4 +1,12 @@
 //! Rational functions
+//!
+//! Ratio whose numerator and denominator are polynomials.
+//!
+//! ```text
+//!        b_n*x^n + b_(n-1)*x^(n-1) + ... + b_1*x + b_0
+//! f(x) = ---------------------------------------------
+//!        a_m*x^m + a_(m-1)*x^(m-1) + ... + a_1*x + a_0
+//! ```
 
 use nalgebra::RealField;
 use num_complex::Complex;
