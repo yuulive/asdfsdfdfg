@@ -270,20 +270,20 @@ mod tests {
     use num_traits::Inv;
 
     #[test]
-    fn transfer_function_creation() {
+    fn rational_function_creation() {
         let num = poly!(1., 2., 3.);
         let den = poly!(-4.2, -3.12, 0.0012);
-        let tf = Rf::new(num.clone(), den.clone());
-        assert_eq!(&num, tf.num());
-        assert_eq!(&den, tf.den());
+        let rf = Rf::new(num.clone(), den.clone());
+        assert_eq!(&num, rf.num());
+        assert_eq!(&den, rf.den());
     }
 
     #[test]
     fn relative_degree() {
-        let tfz = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
-        let expected = tfz.relative_degree();
+        let rf = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
+        let expected = rf.relative_degree();
         assert_eq!(expected, 1);
-        assert_eq!(tfz.inv().relative_degree(), -1);
+        assert_eq!(rf.inv().relative_degree(), -1);
         assert_eq!(-1, Rf::new(poly!(1., 1.), Poly::zero()).relative_degree());
         assert_eq!(1, Rf::new(Poly::zero(), poly!(1., 1.)).relative_degree());
         assert_eq!(
@@ -294,88 +294,88 @@ mod tests {
 
     #[test]
     fn evaluation() {
-        let tf = Rf::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
-        let res = tf.eval(&Complex::new(0., 0.9));
+        let rf = Rf::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
+        let res = rf.eval(&Complex::new(0., 0.9));
         assert_abs_diff_eq!(0.429, res.re, epsilon = 0.001);
         assert_abs_diff_eq!(1.073, res.im, epsilon = 0.001);
     }
 
     #[test]
     fn evaluation_by_value() {
-        let tf = Rf::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
-        let res1 = tf.eval(&Complex::new(0., 0.9));
-        let res2 = tf.eval_by_val(Complex::new(0., 0.9));
+        let rf = Rf::new(poly!(-0.75, 0.25), poly!(0.75, 0.75, 1.));
+        let res1 = rf.eval(&Complex::new(0., 0.9));
+        let res2 = rf.eval_by_val(Complex::new(0., 0.9));
         assert_eq!(res1, res2);
     }
 
     #[test]
     fn poles() {
-        let tf = Rf::new(poly!(1.), poly!(6., -5., 1.));
-        assert_eq!(Some(vec![2., 3.]), tf.real_poles());
+        let rf = Rf::new(poly!(1.), poly!(6., -5., 1.));
+        assert_eq!(Some(vec![2., 3.]), rf.real_poles());
     }
 
     #[test]
     fn complex_poles() {
         use num_complex::Complex32;
-        let tf = Rf::new(poly!(1.), poly!(10., -6., 1.));
+        let rf = Rf::new(poly!(1.), poly!(10., -6., 1.));
         assert_eq!(
             vec![Complex32::new(3., -1.), Complex32::new(3., 1.)],
-            tf.complex_poles()
+            rf.complex_poles()
         );
     }
 
     #[test]
     fn zeros() {
-        let tf = Rf::new(poly!(1.), poly!(6., -5., 1.));
-        assert_eq!(None, tf.real_zeros());
+        let rf = Rf::new(poly!(1.), poly!(6., -5., 1.));
+        assert_eq!(None, rf.real_zeros());
     }
 
     #[test]
     fn complex_zeros() {
         use num_complex::Complex32;
-        let tf = Rf::new(poly!(3.25, 3., 1.), poly!(10., -3., 1.));
+        let rf = Rf::new(poly!(3.25, 3., 1.), poly!(10., -3., 1.));
         assert_eq!(
             vec![Complex32::new(-1.5, -1.), Complex32::new(-1.5, 1.)],
-            tf.complex_zeros()
+            rf.complex_zeros()
         );
     }
 
     #[test]
     fn print() {
-        let tf = Rf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
+        let rf = Rf::new(Poly::<f64>::one(), Poly::new_from_roots(&[-1.]));
         assert_eq!(
             "1\n\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n1 +1s",
-            format!("{}", tf)
+            format!("{}", rf)
         );
 
-        let tf2 = Rf::new(poly!(1.123), poly!(0.987, -1.321));
+        let rf2 = Rf::new(poly!(1.123), poly!(0.987, -1.321));
         assert_eq!(
             "1.12\n\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n0.99 -1.32s",
-            format!("{:.2}", tf2)
+            format!("{:.2}", rf2)
         );
     }
 
     #[test]
     fn normalization() {
-        let tfz = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
+        let rf = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
         let expected = Rf::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
-        assert_eq!(expected, tfz.normalize());
+        assert_eq!(expected, rf.normalize());
 
-        let tfz2 = Rf::new(poly!(1.), poly!(0.));
-        assert_eq!(tfz2, tfz2.normalize());
+        let rf2 = Rf::new(poly!(1.), poly!(0.));
+        assert_eq!(rf2, rf2.normalize());
     }
 
     #[test]
     fn normalization_mutable() {
-        let mut tfz = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
-        tfz.normalize_mut();
+        let mut rf = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
+        rf.normalize_mut();
         let expected = Rf::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
-        assert_eq!(expected, tfz);
+        assert_eq!(expected, rf);
 
-        let mut tfz2 = Rf::new(poly!(1.), poly!(0.));
-        let tfz3 = tfz2.clone();
-        tfz2.normalize_mut();
-        assert_eq!(tfz2, tfz3);
+        let mut rf2 = Rf::new(poly!(1.), poly!(0.));
+        let rf3 = rf2.clone();
+        rf2.normalize_mut();
+        assert_eq!(rf2, rf3);
     }
 
     #[test]

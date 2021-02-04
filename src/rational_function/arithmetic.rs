@@ -272,34 +272,34 @@ mod tests {
     use num_traits::Float;
 
     #[test]
-    fn tf_inversion() {
+    fn rf_inversion() {
         let num1 = poly!(1., 2., 3.);
         let den1 = poly!(-4.2, -3.12, 0.0012);
-        let tf1 = Rf::new(num1, den1);
+        let rf1 = Rf::new(num1, den1);
         let num2 = poly!(-4.2, -3.12, 0.0012);
         let den2 = poly!(1., 2., 3.);
-        let mut tf2 = Rf::new(num2, den2);
+        let mut rf2 = Rf::new(num2, den2);
 
-        assert_eq!(tf2, (&tf1).inv());
-        tf2.inv_mut();
-        assert_eq!(tf2, tf1);
+        assert_eq!(rf2, (&rf1).inv());
+        rf2.inv_mut();
+        assert_eq!(rf2, rf1);
 
-        assert_eq!(tf2.inv(), tf1.inv());
+        assert_eq!(rf2.inv(), rf1.inv());
     }
 
     #[test]
-    fn tf_neg() {
-        let tf1 = Rf::new(poly!(1., 2.), poly!(1., 5.));
-        let tf2 = Rf::new(poly!(-1., -2.), poly!(1., 5.));
-        assert_eq!(-&tf1, tf2);
-        assert_eq!(tf1, -(-(&tf1)));
+    fn rf_neg() {
+        let rf1 = Rf::new(poly!(1., 2.), poly!(1., 5.));
+        let rf2 = Rf::new(poly!(-1., -2.), poly!(1., 5.));
+        assert_eq!(-&rf1, rf2);
+        assert_eq!(rf1, -(-(&rf1)));
     }
 
     #[test]
     fn add_references() {
-        let tf1 = Rf::new(poly!(1., 2.), poly!(1., 5.));
-        let tf2 = Rf::new(poly!(3.), poly!(1., 5.));
-        let actual = &tf1 + &tf2;
+        let rf1 = Rf::new(poly!(1., 2.), poly!(1., 5.));
+        let rf2 = Rf::new(poly!(3.), poly!(1., 5.));
+        let actual = &rf1 + &rf2;
         let expected = Rf::new(poly!(4., 2.), poly!(1., 5.));
         assert_eq!(expected, actual);
         assert_eq!(expected, &expected + &Rf::zero());
@@ -308,9 +308,9 @@ mod tests {
 
     #[test]
     fn add_values() {
-        let tf1 = Rf::new(poly!(1., 2.), poly!(3., -4.));
-        let tf2 = Rf::new(poly!(3.), poly!(1., 5.));
-        let actual = tf1 + tf2;
+        let rf1 = Rf::new(poly!(1., 2.), poly!(3., -4.));
+        let rf2 = Rf::new(poly!(3.), poly!(1., 5.));
+        let actual = rf1 + rf2;
         let expected = Rf::new(poly!(10., -5., 10.), poly!(3., 11., -20.));
         assert_eq!(expected, actual);
         assert_eq!(expected, expected.clone() + Rf::zero());
@@ -319,21 +319,21 @@ mod tests {
 
     #[test]
     fn add_multiple_values() {
-        let tf1 = Rf::new(poly!(1., 2.), poly!(3., -4.));
-        let tf2 = Rf::new(poly!(3.), poly!(1., 5.));
-        let tf3 = Rf::new(poly!(0., 4.), poly!(3., 11., -20.));
-        let actual = &(&tf1 + &tf2) + &tf3;
+        let rf1 = Rf::new(poly!(1., 2.), poly!(3., -4.));
+        let rf2 = Rf::new(poly!(3.), poly!(1., 5.));
+        let rf3 = Rf::new(poly!(0., 4.), poly!(3., 11., -20.));
+        let actual = &(&rf1 + &rf2) + &rf3;
         let expected = Rf::new(poly!(10., -1., 10.), poly!(3., 11., -20.));
         assert_eq!(expected, actual);
 
-        let actual2 = (tf1 + tf2) + tf3;
+        let actual2 = (rf1 + rf2) + rf3;
         assert_eq!(actual, actual2);
     }
 
     #[test]
     fn add_scalar_value() {
-        let tf = Rf::new(poly!(1., 2.), poly!(3., -4.));
-        let actual = tf + 1.;
+        let rf = Rf::new(poly!(1., 2.), poly!(3., -4.));
+        let actual = rf + 1.;
         let expected = Rf::new(poly!(4., -2.), poly!(3., -4.));
         assert_eq!(expected, actual);
     }
@@ -341,17 +341,17 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn add_scalar_reference() {
-        let tf = Rf::new(poly!(1., 2.), poly!(3., -4.));
-        let actual = tf + &2.;
+        let rf = Rf::new(poly!(1., 2.), poly!(3., -4.));
+        let actual = rf + &2.;
         let expected = Rf::new(poly!(7., -6.), poly!(3., -4.));
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn sub_references() {
-        let tf1 = Rf::new(poly!(-1., 9.), poly!(4., -1.));
-        let tf2 = Rf::new(poly!(3.), poly!(4., -1.));
-        let actual = &tf1 - &tf2;
+        let rf1 = Rf::new(poly!(-1., 9.), poly!(4., -1.));
+        let rf2 = Rf::new(poly!(3.), poly!(4., -1.));
+        let actual = &rf1 - &rf2;
         let expected = Rf::new(poly!(-4., 9.), poly!(4., -1.));
         assert_eq!(expected, actual);
         assert_eq!(expected, &expected - &Rf::zero());
@@ -360,9 +360,9 @@ mod tests {
 
     #[test]
     fn sub_values() {
-        let tf1 = Rf::new(poly!(1., -2.), poly!(4., -4.));
-        let tf2 = Rf::new(poly!(2.), poly!(2., 3.));
-        let actual = tf1 - tf2;
+        let rf1 = Rf::new(poly!(1., -2.), poly!(4., -4.));
+        let rf2 = Rf::new(poly!(2.), poly!(2., 3.));
+        let actual = rf1 - rf2;
         let expected = Rf::new(poly!(-6., 7., -6.), poly!(8., 4., -12.));
         assert_eq!(expected, actual);
         assert_eq!(expected, expected.clone() - Rf::zero());
@@ -371,22 +371,22 @@ mod tests {
 
     #[test]
     fn sub_multiple_values() {
-        let tf1 = Rf::new(poly!(1., -2.), poly!(4., -4.));
-        let tf2 = Rf::new(poly!(2.), poly!(2., 3.));
-        let tf3 = Rf::new(poly!(0., 2.), poly!(8., 4., -12.));
-        let actual = &(&tf1 - &tf2) - &tf3;
+        let rf1 = Rf::new(poly!(1., -2.), poly!(4., -4.));
+        let rf2 = Rf::new(poly!(2.), poly!(2., 3.));
+        let rf3 = Rf::new(poly!(0., 2.), poly!(8., 4., -12.));
+        let actual = &(&rf1 - &rf2) - &rf3;
         let expected = Rf::new(poly!(-6., 5., -6.), poly!(8., 4., -12.));
         assert_eq!(expected, actual);
 
-        let actual2 = (tf1 - tf2) - tf3;
+        let actual2 = (rf1 - rf2) - rf3;
         assert_eq!(actual, actual2);
     }
 
     #[test]
     fn mul_references() {
-        let tf1 = Rf::new(poly!(1., 2., 3.), poly!(1., 5.));
-        let tf2 = Rf::new(poly!(3.), poly!(1., 6., 5.));
-        let actual = &tf1 * &tf2;
+        let rf1 = Rf::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let rf2 = Rf::new(poly!(3.), poly!(1., 6., 5.));
+        let actual = &rf1 * &rf2;
         let expected = Rf::new(poly!(3., 6., 9.), poly!(1., 11., 35., 25.));
         assert_eq!(expected, actual);
         assert_eq!(Rf::zero(), &expected * &Rf::zero());
@@ -395,9 +395,9 @@ mod tests {
 
     #[test]
     fn mul_values() {
-        let tf1 = Rf::new(poly!(1., 2., 3.), poly!(1., 5.));
-        let tf2 = Rf::new(poly!(-5.), poly!(1., 6., 5.));
-        let actual = tf1 * tf2;
+        let rf1 = Rf::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let rf2 = Rf::new(poly!(-5.), poly!(1., 6., 5.));
+        let actual = rf1 * rf2;
         let expected = Rf::new(poly!(-5., -10., -15.), poly!(1., 11., 35., 25.));
         assert_eq!(expected, actual);
         assert_eq!(Rf::zero(), expected.clone() * Rf::zero());
@@ -406,9 +406,9 @@ mod tests {
 
     #[test]
     fn mul_value_reference() {
-        let tf1 = Rf::new(poly!(1., 2., 3.), poly!(1., 5.));
-        let tf2 = Rf::new(poly!(-5.), poly!(1., 6., 5.));
-        let actual = tf1 * &tf2;
+        let rf1 = Rf::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let rf2 = Rf::new(poly!(-5.), poly!(1., 6., 5.));
+        let actual = rf1 * &rf2;
         let expected = Rf::new(poly!(-5., -10., -15.), poly!(1., 11., 35., 25.));
         assert_eq!(expected, actual);
         assert_eq!(Rf::zero(), expected.clone() * &Rf::zero());
@@ -417,9 +417,9 @@ mod tests {
 
     #[test]
     fn div_values() {
-        let tf1 = Rf::new(poly!(1., 2., 3.), poly!(1., 5.));
-        let tf2 = Rf::new(poly!(3.), poly!(1., 6., 5.));
-        let actual = tf2 / tf1;
+        let rf1 = Rf::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let rf2 = Rf::new(poly!(3.), poly!(1., 6., 5.));
+        let actual = rf2 / rf1;
         let expected = Rf::new(poly!(3., 15.), poly!(1., 8., 20., 28., 15.));
         assert_eq!(expected, actual);
         assert_eq!(Rf::zero(), &Rf::zero() / &expected);
@@ -430,8 +430,8 @@ mod tests {
     #[test]
     #[allow(clippy::eq_op)]
     fn div_references() {
-        let tf1 = Rf::new(poly!(1., 2., 3.), poly!(1., 5.));
-        let actual = &tf1 / &tf1;
+        let rf1 = Rf::new(poly!(1., 2., 3.), poly!(1., 5.));
+        let actual = &rf1 / &rf1;
         let expected = Rf::new(poly!(1., 7., 13., 15.), poly!(1., 7., 13., 15.));
         assert_eq!(expected, actual);
         assert_eq!(Rf::zero(), Rf::zero() / expected.clone());
@@ -440,7 +440,7 @@ mod tests {
     }
 
     #[test]
-    fn zero_tf() {
+    fn zero_rf() {
         assert!(Rf::<f32>::zero().is_zero());
         assert!(!Rf::new(poly!(0.), poly!(0.)).is_zero());
     }
