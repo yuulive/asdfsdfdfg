@@ -6,9 +6,9 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use crate::{polynomial::Poly, rational_function::Rf};
 
-/// Implementation of transfer function methods
+/// Implementation of rational function methods
 impl<T> Rf<T> {
-    /// Compute the reciprocal of a transfer function in place.
+    /// Compute the reciprocal of a rational function in place.
     pub fn inv_mut(&mut self) {
         std::mem::swap(&mut self.num, &mut self.den);
     }
@@ -17,7 +17,7 @@ impl<T> Rf<T> {
 impl<T: Clone> Inv for &Rf<T> {
     type Output = Rf<T>;
 
-    /// Compute the reciprocal of a transfer function.
+    /// Compute the reciprocal of a rational function.
     fn inv(self) -> Self::Output {
         Self::Output {
             num: self.den.clone(),
@@ -29,14 +29,14 @@ impl<T: Clone> Inv for &Rf<T> {
 impl<T: Clone> Inv for Rf<T> {
     type Output = Self;
 
-    /// Compute the reciprocal of a transfer function.
+    /// Compute the reciprocal of a rational function.
     fn inv(mut self) -> Self::Output {
         self.inv_mut();
         self
     }
 }
 
-/// Implementation of transfer function negation.
+/// Implementation of rational function negation.
 /// Negative sign is transferred to the numerator.
 impl<T: Clone + Neg<Output = T>> Neg for &Rf<T> {
     type Output = Rf<T>;
@@ -49,7 +49,7 @@ impl<T: Clone + Neg<Output = T>> Neg for &Rf<T> {
     }
 }
 
-/// Implementation of transfer function negation.
+/// Implementation of rational function negation.
 /// Negative sign is transferred to the numerator.
 impl<T: Clone + Neg<Output = T>> Neg for Rf<T> {
     type Output = Self;
@@ -60,7 +60,7 @@ impl<T: Clone + Neg<Output = T>> Neg for Rf<T> {
     }
 }
 
-/// Implementation of transfer function addition
+/// Implementation of rational function addition
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> Add for &Rf<T> {
     type Output = Rf<T>;
@@ -84,7 +84,7 @@ impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> Add for &Rf<T> {
     }
 }
 
-/// Implementation of transfer function addition
+/// Implementation of rational function addition
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Clone + One + PartialEq + Zero> Add for Rf<T> {
     type Output = Self;
@@ -108,7 +108,7 @@ impl<T: Clone + One + PartialEq + Zero> Add for Rf<T> {
     }
 }
 
-/// Implementation of transfer function addition
+/// Implementation of rational function addition
 impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Add<T> for Rf<T> {
     type Output = Self;
 
@@ -118,7 +118,7 @@ impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Add<T> for Rf<T> {
     }
 }
 
-/// Implementation of transfer function addition
+/// Implementation of rational function addition
 impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Add<&T> for Rf<T> {
     type Output = Self;
 
@@ -128,7 +128,7 @@ impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Add<&T> for Rf<T> {
     }
 }
 
-/// Implementation of transfer function subtraction
+/// Implementation of rational function subtraction
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Clone + Neg<Output = T> + PartialEq + Sub<Output = T> + Zero + One> Sub for &Rf<T> {
     type Output = Rf<T>;
@@ -152,7 +152,7 @@ impl<T: Clone + Neg<Output = T> + PartialEq + Sub<Output = T> + Zero + One> Sub 
     }
 }
 
-/// Implementation of transfer function subtraction
+/// Implementation of rational function subtraction
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Clone + Neg<Output = T> + One + PartialEq + Sub<Output = T> + Zero> Sub for Rf<T> {
     type Output = Self;
@@ -176,7 +176,7 @@ impl<T: Clone + Neg<Output = T> + One + PartialEq + Sub<Output = T> + Zero> Sub 
     }
 }
 
-/// Implementation of transfer function multiplication
+/// Implementation of rational function multiplication
 impl<T: Clone + One + PartialEq + Zero> Mul for &Rf<T> {
     type Output = Rf<T>;
 
@@ -190,7 +190,7 @@ impl<T: Clone + One + PartialEq + Zero> Mul for &Rf<T> {
     }
 }
 
-/// Implementation of transfer function multiplication
+/// Implementation of rational function multiplication
 impl<T: Clone + One + PartialEq + Zero> Mul for Rf<T> {
     type Output = Self;
 
@@ -204,7 +204,7 @@ impl<T: Clone + One + PartialEq + Zero> Mul for Rf<T> {
     }
 }
 
-/// Implementation of transfer function multiplication
+/// Implementation of rational function multiplication
 impl<T: Clone + One + PartialEq + Zero> Mul<&Rf<T>> for Rf<T> {
     type Output = Self;
 
@@ -218,7 +218,7 @@ impl<T: Clone + One + PartialEq + Zero> Mul<&Rf<T>> for Rf<T> {
     }
 }
 
-/// Implementation of transfer function division
+/// Implementation of rational function division
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Clone + One + PartialEq + Zero> Div for &Rf<T> {
     type Output = Rf<T>;
@@ -235,7 +235,7 @@ impl<T: Clone + One + PartialEq + Zero> Div for &Rf<T> {
     }
 }
 
-/// Implementation of transfer function division
+/// Implementation of rational function division
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<T: Clone + One + PartialEq + Zero> Div for Rf<T> {
     type Output = Self;

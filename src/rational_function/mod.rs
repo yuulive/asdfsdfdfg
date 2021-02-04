@@ -22,23 +22,22 @@ use crate::polynomial::Poly;
 
 mod arithmetic;
 
-/// Transfer function representation of a linear system
+/// Rational function
 #[derive(Clone, Debug, PartialEq)]
 pub struct Rf<T> {
-    /// Transfer function numerator
+    /// Rational function numerator
     num: Poly<T>,
-    /// Transfer function denominator
+    /// Rational function denominator
     den: Poly<T>,
 }
 
-/// Implementation of transfer function methods
 impl<T> Rf<T> {
-    /// Create a new transfer function given its numerator and denominator
+    /// Create a new rational function given its numerator and denominator
     ///
     /// # Arguments
     ///
-    /// * `num` - Transfer function numerator
-    /// * `den` - Transfer function denominator
+    /// * `num` - Rational function numerator
+    /// * `den` - Rational function denominator
     ///
     /// # Example
     /// ```
@@ -50,7 +49,7 @@ impl<T> Rf<T> {
         Self { num, den }
     }
 
-    /// Extract transfer function numerator
+    /// Extract rational function numerator
     ///
     /// # Example
     /// ```
@@ -64,7 +63,7 @@ impl<T> Rf<T> {
         &self.num
     }
 
-    /// Extract transfer function denominator
+    /// Extract rational function denominator
     ///
     /// # Example
     /// ```
@@ -103,25 +102,25 @@ impl<T: Clone + PartialEq + Zero> Rf<T> {
 }
 
 impl<T: Float + RealField> Rf<T> {
-    /// Calculate the poles of the transfer function
+    /// Calculate the poles of the rational function
     #[must_use]
     pub fn real_poles(&self) -> Option<Vec<T>> {
         self.den.real_roots()
     }
 
-    /// Calculate the poles of the transfer function
+    /// Calculate the poles of the rational function
     #[must_use]
     pub fn complex_poles(&self) -> Vec<Complex<T>> {
         self.den.complex_roots()
     }
 
-    /// Calculate the zeros of the transfer function
+    /// Calculate the zeros of the rational function
     #[must_use]
     pub fn real_zeros(&self) -> Option<Vec<T>> {
         self.num.real_roots()
     }
 
-    /// Calculate the zeros of the transfer function
+    /// Calculate the zeros of the rational function
     #[must_use]
     pub fn complex_zeros(&self) -> Vec<Complex<T>> {
         self.num.complex_roots()
@@ -129,8 +128,8 @@ impl<T: Float + RealField> Rf<T> {
 }
 
 impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Rf<T> {
-    /// Normalization of transfer function. If the denominator is zero the same
-    /// transfer function is returned.
+    /// Normalization of rational function. If the denominator is zero the same
+    /// rational function is returned.
     ///
     /// from:
     /// ```text
@@ -162,7 +161,7 @@ impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Rf<T> {
         Self { num, den }
     }
 
-    /// In place normalization of transfer function. If the denominator is zero
+    /// In place normalization of rational function. If the denominator is zero
     /// no operation is done.
     ///
     /// from:
@@ -196,11 +195,11 @@ impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Rf<T> {
 }
 
 impl<T: Clone> Rf<T> {
-    /// Evaluate the transfer function.
+    /// Evaluate the rational function.
     ///
     /// # Arguments
     ///
-    /// * `s` - Value at which the transfer function is evaluated.
+    /// * `s` - Value at which the rational function is evaluated.
     ///
     /// # Example
     /// ```
@@ -219,11 +218,11 @@ impl<T: Clone> Rf<T> {
 }
 
 impl<T> Rf<T> {
-    /// Evaluate the transfer function.
+    /// Evaluate the rational function.
     ///
     /// # Arguments
     ///
-    /// * `s` - Value at which the transfer function is evaluated.
+    /// * `s` - Value at which the rational function is evaluated.
     ///
     /// # Example
     /// ```
@@ -242,7 +241,7 @@ impl<T> Rf<T> {
     }
 }
 
-/// Implementation of transfer function printing
+/// Implementation of rational function printing
 impl<T> Display for Rf<T>
 where
     T: Display + One + PartialEq + PartialOrd + Zero,
