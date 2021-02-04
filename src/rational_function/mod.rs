@@ -42,8 +42,8 @@ impl<T> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
-    /// let tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
+    /// use automatica::{poly, Rf};
+    /// let rf = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
     /// ```
     #[must_use]
     pub fn new(num: Poly<T>, den: Poly<T>) -> Self {
@@ -54,10 +54,10 @@ impl<T> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
+    /// use automatica::{poly, Rf};
     /// let num = poly!(1., 2.);
-    /// let tfz = Tfz::new(num.clone(), poly!(-4., 6., -2.));
-    /// assert_eq!(&num, tfz.num());
+    /// let rf = Rf::new(num.clone(), poly!(-4., 6., -2.));
+    /// assert_eq!(&num, rf.num());
     /// ```
     #[must_use]
     pub fn num(&self) -> &Poly<T> {
@@ -68,10 +68,10 @@ impl<T> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
+    /// use automatica::{poly, Rf};
     /// let den = poly!(-4., 6., -2.);
-    /// let tfz = Tfz::new(poly!(1., 2.), den.clone());
-    /// assert_eq!(&den, tfz.den());
+    /// let rf = Rf::new(poly!(1., 2.), den.clone());
+    /// assert_eq!(&den, rf.den());
     /// ```
     #[must_use]
     pub fn den(&self) -> &Poly<T> {
@@ -84,11 +84,11 @@ impl<T: Clone + PartialEq + Zero> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{num_traits::Inv, poly, Tfz};
-    /// let tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
-    /// let expected = tfz.relative_degree();
+    /// use automatica::{num_traits::Inv, poly, Rf};
+    /// let rf = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
+    /// let expected = rf.relative_degree();
     /// assert_eq!(expected, 1);
-    /// assert_eq!(tfz.inv().relative_degree(), -1);
+    /// assert_eq!(rf.inv().relative_degree(), -1);
     /// ```
     #[must_use]
     #[allow(clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
@@ -147,10 +147,10 @@ impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
-    /// let tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
-    /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
-    /// assert_eq!(expected, tfz.normalize());
+    /// use automatica::{poly, Rf};
+    /// let rf = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
+    /// let expected = Rf::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
+    /// assert_eq!(expected, rf.normalize());
     /// ```
     #[must_use]
     pub fn normalize(&self) -> Self {
@@ -180,11 +180,11 @@ impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
-    /// let mut tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
-    /// tfz.normalize_mut();
-    /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
-    /// assert_eq!(expected, tfz);
+    /// use automatica::{poly, Rf};
+    /// let mut rf = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
+    /// rf.normalize_mut();
+    /// let expected = Rf::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
+    /// assert_eq!(expected, rf);
     /// ```
     pub fn normalize_mut(&mut self) {
         if self.den.is_zero() {
@@ -204,11 +204,11 @@ impl<T: Clone> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tf};
+    /// use automatica::{poly, Rf};
     /// use automatica::num_complex::Complex as C;
-    /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
-    /// assert_eq!(-8.5, tf.eval_by_val(3.));
-    /// assert_eq!(C::new(0.64, -0.98), tf.eval_by_val(C::new(0., 2.0_f32)));
+    /// let rf = Rf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
+    /// assert_eq!(-8.5, rf.eval_by_val(3.));
+    /// assert_eq!(C::new(0.64, -0.98), rf.eval_by_val(C::new(0., 2.0_f32)));
     /// ```
     pub fn eval_by_val<N>(&self, s: N) -> N
     where
@@ -227,11 +227,11 @@ impl<T> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tf};
+    /// use automatica::{poly, Rf};
     /// use automatica::num_complex::Complex as C;
-    /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
-    /// assert_eq!(-8.5, tf.eval(&3.));
-    /// assert_eq!(C::new(0.64, -0.98), tf.eval(&C::new(0., 2.0_f32)));
+    /// let rf = Rf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
+    /// assert_eq!(-8.5, rf.eval(&3.));
+    /// assert_eq!(C::new(0.64, -0.98), rf.eval(&C::new(0., 2.0_f32)));
     /// ```
     pub fn eval<'a, N>(&'a self, s: &'a N) -> N
     where
