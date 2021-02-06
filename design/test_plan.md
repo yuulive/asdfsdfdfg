@@ -458,6 +458,20 @@ Creation of a matrix whose elements are polynomial, that can be indexed.
 
 If the matrix has dimension 1x1 it is possible to extract the single element.
 
+### Module rational_function
+
+Creation of a rational function.
+
+Evaluation of a rational function given a complex number.
+
+Inversion of a function and arithmetical operations of negation, addition, subtraction, multiplication and division.
+
+Calculation of numerator and denominator roots, both real and complex.
+
+Formatting of the function as a string.
+
+Normalization of the function with a monic polynomial as denominator.
+
 ### Module signals
 
 #### continuous
