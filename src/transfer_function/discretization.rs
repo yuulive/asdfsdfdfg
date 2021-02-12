@@ -107,8 +107,8 @@ impl<T: Float> Tf<T> {
             Discretization::ForwardEuler => {
                 let t = ts.0.recip();
                 let s = Poly::new_from_coeffs(&[-t, t]);
-                let num = self.num.eval_by_val(s.clone());
-                let den = self.den.eval_by_val(s);
+                let num = self.num().eval_by_val(s.clone());
+                let den = self.den().eval_by_val(s);
                 Tfz::new(num, den)
             }
             Discretization::BackwardEuler => {
@@ -155,8 +155,8 @@ impl<T: Float> Tf<T> {
 #[allow(clippy::cast_sign_loss)]
 fn discr_impl<T: Float>(tf: &Tf<T>, s_num: &Poly<T>, s_den: &Poly<T>) -> Tfz<T> {
     let s = Tf::new(s_num.clone(), s_den.clone());
-    let num = tf.num.eval(&s).num;
-    let den = tf.den.eval(&s).num;
+    let num = tf.num().eval(&s).num().clone();
+    let den = tf.den().eval(&s).num().clone();
     match tf.relative_degree() {
         g if g > 0 => {
             let num = num * s_den.powi(g as u32);

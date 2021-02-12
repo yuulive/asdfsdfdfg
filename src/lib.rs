@@ -74,6 +74,7 @@ pub mod linear_system;
 pub mod plots;
 pub mod polynomial;
 pub mod polynomial_matrix;
+pub mod rational_function;
 pub mod signals;
 pub mod transfer_function;
 pub mod units;
@@ -84,6 +85,7 @@ pub use crate::enums::{Continuous, Discrete, Discretization, Time};
 pub use crate::error::Error;
 pub use crate::linear_system::{continuous::Ss, discrete::Ssd};
 pub use crate::polynomial::Poly;
+pub use crate::rational_function::Rf;
 pub use crate::transfer_function::{
     continuous::Tf, discrete::Tfz, discretization::TfDiscretization, matrix::TfMatrix,
 };

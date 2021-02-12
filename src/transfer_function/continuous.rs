@@ -20,6 +20,7 @@ use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 use crate::{
     enums::Continuous,
     plots::{root_locus::RootLocus, Plotter},
+    rational_function::Rf,
     transfer_function::TfGen,
     units::Seconds,
 };
@@ -57,11 +58,11 @@ impl<T: Float> Tf<T> {
     /// ```
     #[must_use]
     pub fn init_value(&self) -> T {
-        let n = self.num.degree();
-        let d = self.den.degree();
+        let n = self.num().degree();
+        let d = self.den().degree();
         match n.cmp(&d) {
             Ordering::Less => T::zero(),
-            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Equal => self.num().leading_coeff() / self.den().leading_coeff(),
             Ordering::Greater => T::infinity(),
         }
     }
@@ -77,11 +78,11 @@ impl<T: Float> Tf<T> {
     /// ```
     #[must_use]
     pub fn init_value_der(&self) -> T {
-        let n = self.num.degree();
-        let d = self.den.degree().map(|d| d - 1);
+        let n = self.num().degree();
+        let d = self.den().degree().map(|d| d - 1);
         match n.cmp(&d) {
             Ordering::Less => T::zero(),
-            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Equal => self.num().leading_coeff() / self.den().leading_coeff(),
             Ordering::Greater => T::infinity(),
         }
     }
@@ -107,11 +108,10 @@ impl<T: Float> Tf<T> {
     /// ```
     #[must_use]
     pub fn sensitivity(&self, r: &Self) -> Self {
-        let n = &self.num * &r.num;
-        let d = &self.den * &r.den;
+        let n = self.num() * r.num();
+        let d = self.den() * r.den();
         Self {
-            num: d.clone(),
-            den: n + d,
+            rf: Rf::new(d.clone(), n + d),
             time: PhantomData,
         }
     }
@@ -163,8 +163,10 @@ impl<T: Float> Tf<T> {
     #[must_use]
     pub fn control_sensitivity(&self, r: &Self) -> Self {
         Self {
-            num: &r.num * &self.den,
-            den: &r.num * &self.num + &r.den * &self.den,
+            rf: Rf::new(
+                r.num() * self.den(),
+                r.num() * self.num() + r.den() * self.den(),
+            ),
             time: PhantomData,
         }
     }
@@ -199,7 +201,7 @@ impl<T: Float + RealField> Tf<T> {
     /// assert_eq!(Complex::new(-1.5, 0.), locus[0]);
     /// ```
     pub fn root_locus(&self, k: T) -> Vec<Complex<T>> {
-        let p = &(&self.num * k) + &self.den;
+        let p = &(self.num() * k) + self.den();
         p.complex_roots()
     }
 
@@ -247,7 +249,7 @@ impl<T> Tf<T> {
     where
         &'a T: 'a + Div<&'a T, Output = T>,
     {
-        &self.num[0] / &self.den[0]
+        &self.num()[0] / &self.den()[0]
     }
 }
 

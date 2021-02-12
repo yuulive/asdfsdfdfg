@@ -139,17 +139,17 @@ It is possible to operate on same polynomial properties:
 
 #### Properties
 
-*FR5.4* From the transfer function it is possible to extract is properties, i.e. the calculation of poles and zeros, both real and complex, the evaluation of the transfer function with real and complex numbers, the determination of the static gain and the initial value as response to a unity step.
+*FR5.4* From the transfer function it is possible to extract its properties, i.e. the calculation of poles and zeros, both real and complex, the evaluation of the transfer function with real and complex numbers, the determination of the static gain and the initial value as response to a unity step.
 
-*FR5.4a* The transfer function can be normalized (also in place), i.e. the denominator shall be in monic form and the numerator modified to preserve the gain. If the denominator is zero do not perform actions.
+*FR5.5* The relative degree is defined as the difference between the degree of the denominator and the degree of the numerator. For this calculation the degree of a null polynomial is zero.
 
-*FR5.4b* The relative degree is defined as the difference between the degree of the denominator and the degree of the numerator. For this calculation the degree of a null polynomial is zero.
+*FR5.6* It shall be possible to obtain a reference to the numerator and the denominator.
 
 #### Manipulation
 
-*FR5.5* It shall be possible to obtain a reference to the numerator and the denominator, normalise the transfer function, with a monic denominator (by ref, in place).
+*FR5.7* The transfer function can be normalized, i.e. the denominator shall be in monic form and the numerator modified to preserve the gain. If the denominator is zero do not perform actions (by ref, in place).
 
-*FR5.6* From a transfer function it is possible to obtain the transfer function of the system with a unity negative or positive feedback.
+*FR5.8* From a transfer function it is possible to obtain the transfer function of the system with a unity negative or positive feedback.
 
 #### Formatting
 
@@ -158,6 +158,7 @@ It is possible to operate on same polynomial properties:
 #### Arithmetical operations
 
 *FR5.8* It is possible to perform the following arithmetical operations on transfer functions:
+
 - reciprocal of a transfer function (in place, by ref and by value)
 - negation of a transfer function (by ref, by value)
 - addition between transfer functions (by ref, by value)
@@ -227,3 +228,36 @@ It is possible to operate on same polynomial properties:
 *FR10.1* The library defines enumerations that cannot be instantiated and implement the `Time` trait, `Continuous` for continuous time systems, `Discrete` for discrete time systems.
 
 *FR10.2* Define `Discretization` enumeration with variants `ForwardEuler`, `BackwardEuler` and `Tustin` to indicate the type of discretization.
+
+### Rational functions
+
+#### Creation
+
+*FR11.1* The user shall be able to create rational functions given two polynomials for the numerator and the denominator.
+
+*FR11.2* A zero rational function is created as 0/1. Any rational function which has a zero numerator and and a non-zero denominator is considered zero.
+
+#### Properties
+
+*FR11.3* From the rational function it is possible to extract its properties, i.e. the calculation of the roots of its numerator and denominator, both real and complex, the evaluation of the rational function with real and complex numbers.
+
+*FR11.4* The rational function can be normalized (also in place), i.e. the denominator shall be in monic form and the numerator modified to preserve the gain. If the denominator is zero do not perform actions.
+
+*FR11.5* The relative degree is defined as the difference between the degree of the denominator and the degree of the numerator. For this calculation the degree of a null polynomial is zero.
+
+*FR11.6* It shall be possible to obtain a reference to the numerator and the denominator.
+
+#### Arithmetical operations
+
+*FR11.7* It is possible to perform the following arithmetical operations on rational functions:
+
+- reciprocal of a rational function (in place, by ref and by value)
+- negation of a rational function (by ref, by value)
+- addition between rational functions (by ref, by value)
+- subtraction between rational functions (by ref, by value)
+- multiplication between rational functions (by ref, by value)
+- division between rational functions (by ref, by value)
+
+#### Formatting
+
+*FR11.8* It is available a standard formatting for the rational function as string.
