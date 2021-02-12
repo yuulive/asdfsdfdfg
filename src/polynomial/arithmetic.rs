@@ -954,6 +954,7 @@ mod tests {
         assert_eq!(poly!(inf, -inf, inf), poly!(1., -2.3, 1.) / 0.);
     }
 
+    #[allow(clippy::op_ref)]
     #[test]
     fn poly_div_ref() {
         let p1 = poly!(21, 34, -98);
