@@ -4,6 +4,7 @@ examples = arma_channel \
 		   bode \
 		   discrete \
 		   discretization \
+		   epidemic \
 		   linear_system \
 		   oscillation \
 		   polar \
