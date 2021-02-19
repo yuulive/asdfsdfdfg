@@ -6,9 +6,9 @@ use num_traits::{Float, FloatConst, NumCast, One, Zero};
 /// # Arguments
 ///
 /// * `n` - power of two
-fn log2(n: usize) -> usize {
+fn log2(n: usize) -> u32 {
     // core::mem::size_of::<usize>() * 8 - 1 - n.leading_zeros() as usize
-    n.trailing_zeros() as usize
+    n.trailing_zeros()
 }
 
 /// Reorder the elements of the vector using a bit inversion permutation.
@@ -18,7 +18,7 @@ fn log2(n: usize) -> usize {
 /// * `a` - vector
 /// * `bits` - number of lower bit on which the permutation shall act
 #[allow(non_snake_case)]
-fn bit_reverse_copy<T: Clone + Zero>(a: &[T], bits: usize) -> Vec<T> {
+fn bit_reverse_copy<T: Clone + Zero>(a: &[T], bits: u32) -> Vec<T> {
     let l = a.len();
     let mut A = vec![T::zero(); l];
 
@@ -35,15 +35,8 @@ fn bit_reverse_copy<T: Clone + Zero>(a: &[T], bits: usize) -> Vec<T> {
 ///
 /// * `k` - number on which the permutation acts.
 /// * `l` - number of lower bits to reverse.
-fn rev(k: usize, l: usize) -> usize {
-    let mut r: usize = 0;
-    for shift in 0..l {
-        // Extract the "shift-th" bit.
-        let bit = (k >> shift) & 1;
-        // Push the bit to the back of the result.
-        r = (r << 1) | bit;
-    }
-    r
+fn rev(k: usize, l: u32) -> usize {
+    k.reverse_bits().rotate_left(l)
 }
 
 /// Direct Fast Fourier Transform.
