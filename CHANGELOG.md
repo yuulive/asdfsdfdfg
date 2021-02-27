@@ -7,6 +7,8 @@
 - Polynomial exponentiation
 - Relative degree of a transfer function
 - Discretization of a continuous time transfer function now can return a discrete time transfer function
+- Tustin discretization with pre-warping frequency
+- Module for rational functions
 ## Changed
 - Updated dependencies to latest available versions
 - Oldest supported rustc version has been increased to 1.44
