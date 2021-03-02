@@ -510,10 +510,7 @@ impl<T> Poly<T> {
     }
 }
 
-impl<T> Poly<T>
-where
-    T: Clone + Div<Output = T> + Neg<Output = T> + One + PartialOrd + Zero,
-{
+impl<T: Clone + Zero> Poly<T> {
     /// Evaluate the ratio between to polynomials at the given value.
     /// This implementation avoids overflow issues when evaluating the
     /// numerator and the denominator separately.
@@ -535,19 +532,22 @@ where
     /// assert!(naive.is_nan());
     /// assert!((0.- r).abs() < 1e-16);
     /// ```
-    pub fn eval_poly_ratio(numerator: &Self, denominator: &Self, x: T) -> T {
+    pub fn eval_poly_ratio<N>(numerator: &Self, denominator: &Self, x: N) -> N
+    where
+        N: Add<T, Output = N> + Clone + Div<Output = N> + Neg<Output = N> + One + PartialOrd + Zero,
+    {
         // When the `x` value is greater than one evaluate the polynomial ratio
         // at `1/x` reversing the coefficients.
-        if -T::one() <= x && x <= T::one() {
+        if -N::one() <= x && x <= N::one() {
             let n = numerator.eval_by_val(x.clone());
             let d = denominator.eval_by_val(x);
             n / d
         } else {
-            let x = T::one() / x;
+            let x = N::one() / x;
             // Zip and extend the smaller polynomial with zeros.
             // Evaluate the reversed polynomial.
             let (n, d) = iterator::zip_longest(&numerator.coeffs, &denominator.coeffs, &T::zero())
-                .fold((T::zero(), T::zero()), |acc, c| {
+                .fold((N::zero(), N::zero()), |acc, c| {
                     (
                         acc.0 * x.clone() + c.0.clone(),
                         acc.1 * x.clone() + c.1.clone(),
