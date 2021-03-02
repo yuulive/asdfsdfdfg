@@ -510,51 +510,50 @@ impl<T> Poly<T> {
     }
 }
 
-impl<T: Clone + Zero> Poly<T> {
-    /// Evaluate the ratio between to polynomials at the given value.
-    /// This implementation avoids overflow issues when evaluating the
-    /// numerator and the denominator separately.
-    ///
-    /// # Arguments
-    ///
-    /// * `numerator` - numerator of the polynomial ratio.
-    /// * `denominator` - denominator of the polynomial ratio.
-    /// * `x` - Value at which the polynomial ratio is evaluated.
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::Poly;
-    /// let p1 = Poly::new_from_coeffs(&[4., 5., 1.]);
-    /// let p2 = Poly::new_from_coeffs(&[1., 2., 3., 1.]);
-    /// let x = -1e30_f32;
-    /// let r = Poly::eval_poly_ratio(&p1, &p2, x);
-    /// let naive = p1.eval(&x) / p2.eval(&x);
-    /// assert!(naive.is_nan());
-    /// assert!((0.- r).abs() < 1e-16);
-    /// ```
-    pub fn eval_poly_ratio<N>(numerator: &Self, denominator: &Self, x: N) -> N
-    where
-        N: Add<T, Output = N> + Clone + Div<Output = N> + Neg<Output = N> + One + PartialOrd + Zero,
-    {
-        // When the `x` value is greater than one evaluate the polynomial ratio
-        // at `1/x` reversing the coefficients.
-        if -N::one() <= x && x <= N::one() {
-            let n = numerator.eval_by_val(x.clone());
-            let d = denominator.eval_by_val(x);
-            n / d
-        } else {
-            let x = N::one() / x;
-            // Zip and extend the smaller polynomial with zeros.
-            // Evaluate the reversed polynomial.
-            let (n, d) = iterator::zip_longest(&numerator.coeffs, &denominator.coeffs, &T::zero())
-                .fold((N::zero(), N::zero()), |acc, c| {
-                    (
-                        acc.0 * x.clone() + c.0.clone(),
-                        acc.1 * x.clone() + c.1.clone(),
-                    )
-                });
-            n / d
-        }
+/// Evaluate the ratio between to polynomials at the given value.
+/// This implementation avoids overflow issues when evaluating the
+/// numerator and the denominator separately.
+///
+/// # Arguments
+///
+/// * `numerator` - numerator of the polynomial ratio.
+/// * `denominator` - denominator of the polynomial ratio.
+/// * `x` - Value at which the polynomial ratio is evaluated.
+///
+/// # Example
+/// ```
+/// use automatica::{polynomial, Poly};
+/// let p1 = Poly::new_from_coeffs(&[4., 5., 1.]);
+/// let p2 = Poly::new_from_coeffs(&[1., 2., 3., 1.]);
+/// let x = -1e30_f32;
+/// let r = polynomial::eval_poly_ratio(&p1, &p2, x);
+/// let naive = p1.eval(&x) / p2.eval(&x);
+/// assert!(naive.is_nan());
+/// assert!((0.- r).abs() < 1e-16);
+/// ```
+pub fn eval_poly_ratio<T, N>(numerator: &Poly<T>, denominator: &Poly<T>, x: N) -> N
+where
+    N: Add<T, Output = N> + Clone + Div<Output = N> + Neg<Output = N> + One + PartialOrd + Zero,
+    T: Clone + Zero,
+{
+    // When the `x` value is greater than one evaluate the polynomial ratio
+    // at `1/x` reversing the coefficients.
+    if -N::one() <= x && x <= N::one() {
+        let n = numerator.eval_by_val(x.clone());
+        let d = denominator.eval_by_val(x);
+        n / d
+    } else {
+        let x = N::one() / x;
+        // Zip and extend the smaller polynomial with zeros.
+        // Evaluate the reversed polynomial.
+        let (n, d) = iterator::zip_longest(&numerator.coeffs, &denominator.coeffs, &T::zero())
+            .fold((N::zero(), N::zero()), |acc, c| {
+                (
+                    acc.0 * x.clone() + c.0.clone(),
+                    acc.1 * x.clone() + c.1.clone(),
+                )
+            });
+        n / d
     }
 }
 
@@ -935,11 +934,11 @@ mod tests {
         let p1 = poly!(1., 2., 3.);
         let p2 = poly!(4., 5.);
         let x = 2.;
-        let r1 = Poly::eval_poly_ratio(&p1, &p2, x);
+        let r1 = eval_poly_ratio(&p1, &p2, x);
         assert_relative_eq!(p1.eval(&x) / p2.eval(&x), r1);
 
         let y = 0.5;
-        let r2 = Poly::eval_poly_ratio(&p1, &p2, y);
+        let r2 = eval_poly_ratio(&p1, &p2, y);
         assert_relative_eq!(p1.eval(&y) / p2.eval(&y), r2);
     }
 
@@ -948,7 +947,7 @@ mod tests {
         let p1 = Poly::new_from_coeffs(&[4., 5., 1.]);
         let p2 = Poly::new_from_coeffs(&[1., 2., 3., 1.]);
         let x = -1e30_f32;
-        let r = Poly::eval_poly_ratio(&p1, &p2, x);
+        let r = eval_poly_ratio(&p1, &p2, x);
         let naive = p1.eval(&x) / p2.eval(&x);
         assert!(naive.is_nan());
         assert!((0. - r).abs() < 1e-16);
