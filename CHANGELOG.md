@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.10.0] - Unreleased
+## [0.10.0] - 2021-03-07
 ## Added
 - Zero trait to transfer functions
 - Addition between scalar and transfer function
