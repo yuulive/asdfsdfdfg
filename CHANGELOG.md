@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.10.0] - 2021-03-07
+## Added
+- Zero trait to transfer functions
+- Addition between scalar and transfer function
+- Polynomial exponentiation
+- Relative degree of a transfer function
+- Discretization of a continuous time transfer function now can return a discrete time transfer function
+- Tustin discretization with pre-warping frequency
+- Module for rational functions
+## Changed
+- Updated dependencies to latest available versions
+- Oldest supported rustc version has been increased to 1.44
+- Changed random testing library from quickcheck to proptest
+### API Changes
+- `utils` module has been split into different public modules: `complex`, `enums`
+- External dependencies are now re-exported from this library
+## Fixed
+- Improved the formatting of polynomials and transfer functions
+
 ## [0.9.0] - 2020-12-05
 ## Added
 - Evaluation of polynomial ratios that avoids overflows

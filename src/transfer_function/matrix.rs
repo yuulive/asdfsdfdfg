@@ -17,10 +17,11 @@ use std::{
 };
 
 use crate::{
+    complex,
+    enums::Time,
     linear_system::{self, SsGen},
     polynomial::Poly,
     polynomial_matrix::{MatrixOfPoly, PolyMatrix},
-    Time,
 };
 
 /// Matrix of transfer functions
@@ -87,7 +88,7 @@ impl<T: Float + MulAdd<Output = T>> TfMatrix<T> {
                 Zip::from(&mut res_row)
                     .and(s) // The vector of the input.
                     .and(matrix_row) // The row of the numerator matrix.
-                    .apply(|r, s, n| *r = n.eval(s).fdiv(self.den.eval(s)));
+                    .apply(|r, s, n| *r = complex::compdiv(n.eval(s), self.den.eval(s)));
             });
 
         res.sum_axis(Axis(1)).to_vec()
@@ -150,7 +151,10 @@ impl<T> IndexMut<[usize; 2]> for TfMatrix<T> {
 }
 
 /// Implementation of transfer function matrix printing
-impl<T: Display + One + PartialEq + Signed + Zero> fmt::Display for TfMatrix<T> {
+impl<T> fmt::Display for TfMatrix<T>
+where
+    T: Display + One + PartialEq + PartialOrd + Signed + Zero,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s_num = self.num.to_string();
         let s_den = self.den.to_string();

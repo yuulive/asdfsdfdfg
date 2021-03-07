@@ -16,20 +16,19 @@
 //! * zero and unit polynomials
 
 pub mod arithmetic;
+mod convex_hull;
 mod fft;
 mod roots;
 
-use nalgebra::{ComplexField, DMatrix, RealField};
 use num_complex::Complex;
-use num_traits::{Float, FloatConst, Num, NumCast, One, Signed, Zero};
+use num_traits::{Float, NumCast, One, Signed, Zero};
 
 use std::{
-    fmt,
-    fmt::{Debug, Display, Formatter},
+    fmt::{Debug, Formatter},
     ops::{Add, Div, Index, IndexMut, Mul, Neg},
 };
 
-use crate::{polynomial::roots::RootsFinder, utils};
+use crate::iterator;
 
 /// Polynomial object
 ///
@@ -58,7 +57,6 @@ macro_rules! poly {
     };
 }
 
-/// Implementation methods for Poly struct
 impl<T> Poly<T> {
     /// Length of the polynomial coefficients
     fn len(&self) -> usize {
@@ -98,7 +96,6 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
             coeffs: coeffs.into(),
         };
         p.trim();
-        debug_assert!(!p.coeffs.is_empty());
         p
     }
 
@@ -122,15 +119,12 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
             coeffs: coeffs.into_iter().collect(),
         };
         p.trim();
-        debug_assert!(!p.coeffs.is_empty());
         p
     }
 
     /// Trim the zeros coefficients of high degree terms.
     /// It will not leave an empty `coeffs` vector: zero poly is returned.
     fn trim(&mut self) {
-        // TODO try to use assert macro.
-        //.rposition(|&c| relative_ne!(c, 0.0, epsilon = epsilon, max_relative = max_relative))
         if let Some(p) = self.coeffs.iter().rposition(|c| c != &T::zero()) {
             let new_length = p + 1;
             debug_assert!(new_length > 0);
@@ -186,7 +180,7 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
     }
 }
 
-impl<T: Clone + Div<Output = T> + One> Poly<T> {
+impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Poly<T> {
     /// Return the monic polynomial and the leading coefficient.
     ///
     /// # Example
@@ -200,13 +194,12 @@ impl<T: Clone + Div<Output = T> + One> Poly<T> {
     #[must_use]
     pub fn monic(&self) -> (Self, T) {
         let lc = self.leading_coeff();
-        let result: Vec<_> = self.coeffs.iter().map(|x| x.clone() / lc.clone()).collect();
-        let monic_poly = Self { coeffs: result };
-
-        debug_assert!(!monic_poly.coeffs.is_empty());
+        let monic_poly = self / lc.clone();
         (monic_poly, lc)
     }
+}
 
+impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Poly<T> {
     /// Return the monic polynomial and the leading coefficient,
     /// it mutates the polynomial in place.
     ///
@@ -220,13 +213,11 @@ impl<T: Clone + Div<Output = T> + One> Poly<T> {
     /// ```
     pub fn monic_mut(&mut self) -> T {
         let lc = self.leading_coeff();
-        self.div_mut(lc.clone());
-        debug_assert!(!self.coeffs.is_empty());
+        self.div_mut(&lc);
         lc
     }
 }
 
-/// Implementation methods for Poly struct
 impl<T: Clone + One> Poly<T> {
     /// Return the leading coefficient of the polynomial.
     ///
@@ -243,7 +234,6 @@ impl<T: Clone + One> Poly<T> {
     }
 }
 
-/// Implementation methods for Poly struct
 impl<T: Clone + Mul<Output = T> + Neg<Output = T> + One + PartialEq + Zero> Poly<T> {
     /// Create a new polynomial given a slice of real roots
     /// It trims any leading zeros in the high order coefficients.
@@ -264,7 +254,6 @@ impl<T: Clone + Mul<Output = T> + Neg<Output = T> + One + PartialEq + Zero> Poly
             }
         });
         p.trim();
-        debug_assert!(!p.coeffs.is_empty());
         p
     }
 
@@ -290,256 +279,8 @@ impl<T: Clone + Mul<Output = T> + Neg<Output = T> + One + PartialEq + Zero> Poly
             }
         });
         p.trim();
-        debug_assert!(!p.coeffs.is_empty());
         p
     }
-}
-
-/// Implementation methods for Poly struct
-impl<T: ComplexField + Float + RealField> Poly<T> {
-    /// Build the companion matrix of the polynomial.
-    ///
-    /// Subdiagonal terms are 1., rightmost column contains the coefficients
-    /// of the monic polynomial with opposite sign.
-    fn companion(&self) -> Option<DMatrix<T>> {
-        match self.degree() {
-            Some(degree) if degree > 0 => {
-                let hi_coeff = self.coeffs[degree];
-                let comp = DMatrix::from_fn(degree, degree, |i, j| {
-                    if j == degree - 1 {
-                        -self.coeffs[i] / hi_coeff // monic polynomial
-                    } else if i == j + 1 {
-                        T::one()
-                    } else {
-                        T::zero()
-                    }
-                });
-                debug_assert!(comp.is_square());
-                Some(comp)
-            }
-            _ => None,
-        }
-    }
-
-    /// Calculate the real roots of the polynomial
-    /// using companion matrix eigenvalues decomposition.
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::polynomial::Poly;
-    /// let roots = &[-1., 1., 0.];
-    /// let p = Poly::new_from_roots(roots);
-    /// assert_eq!(roots, p.real_roots().unwrap().as_slice());
-    /// ```
-    #[must_use]
-    pub fn real_roots(&self) -> Option<Vec<T>> {
-        let (zeros, cropped) = self.find_zero_roots();
-        let roots = match cropped.degree() {
-            Some(0) | None => None,
-            Some(1) => cropped.real_deg1_root(),
-            Some(2) => cropped.real_deg2_roots(),
-            _ => {
-                // Build the companion matrix.
-                let comp = cropped.companion()?;
-                comp.eigenvalues().map(|e| e.as_slice().to_vec())
-            }
-        };
-        roots.map(|r| extend_roots(r, zeros))
-    }
-
-    /// Calculate the complex roots of the polynomial
-    /// using companion matrix eigenvalues decomposition.
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::polynomial::Poly;
-    /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
-    /// let i = num_complex::Complex::i();
-    /// assert_eq!(vec![-i, i], p.complex_roots());
-    /// ```
-    #[must_use]
-    pub fn complex_roots(&self) -> Vec<Complex<T>> {
-        let (zeros, cropped) = self.find_zero_roots();
-        let roots = match cropped.degree() {
-            Some(0) | None => Vec::new(),
-            Some(1) => cropped.complex_deg1_root(),
-            Some(2) => cropped.complex_deg2_roots(),
-            _ => {
-                let comp = match cropped.companion() {
-                    Some(comp) => comp,
-                    None => return Vec::new(),
-                };
-                comp.complex_eigenvalues().as_slice().to_vec()
-            }
-        };
-        extend_roots(roots, zeros)
-    }
-}
-
-impl<T: Debug + Float + FloatConst> Poly<T> {
-    /// Calculate the complex roots of the polynomial
-    /// using Aberth-Ehrlich method.
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::polynomial::Poly;
-    /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
-    /// let i = num_complex::Complex::i();
-    /// assert_eq!(vec![-i, i], p.iterative_roots());
-    /// ```
-    #[must_use]
-    pub fn iterative_roots(&self) -> Vec<Complex<T>> {
-        let (zeros, cropped) = self.find_zero_roots();
-        let roots = match cropped.degree() {
-            Some(0) | None => Vec::new(),
-            Some(1) => cropped.complex_deg1_root(),
-            Some(2) => cropped.complex_deg2_roots(),
-            _ => {
-                let rf = RootsFinder::new(cropped);
-                rf.roots_finder()
-            }
-        };
-        extend_roots(roots, zeros)
-    }
-
-    /// Calculate the complex roots of the polynomial using companion
-    /// Aberth-Ehrlich method, with the given iteration limit.
-    ///
-    /// # Arguments
-    ///
-    /// * `max_iter` - maximum number of iterations for the algorithm
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::polynomial::Poly;
-    /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
-    /// let i = num_complex::Complex::i();
-    /// assert_eq!(vec![-i, i], p.iterative_roots_with_max(10));
-    /// ```
-    #[must_use]
-    pub fn iterative_roots_with_max(&self, max_iter: u32) -> Vec<Complex<T>> {
-        let (zeros, cropped) = self.find_zero_roots();
-        let roots = match cropped.degree() {
-            Some(0) | None => Vec::new(),
-            Some(1) => cropped.complex_deg1_root(),
-            Some(2) => cropped.complex_deg2_roots(),
-            _ => {
-                let rf = RootsFinder::new(cropped).with_max_iterations(max_iter);
-                rf.roots_finder()
-            }
-        };
-        extend_roots(roots, zeros)
-    }
-}
-
-/// Extend a vector of roots of type `T` with `zeros` `Zero` elements.
-///
-/// # Arguments
-///
-/// * `roots` - Vector of roots
-/// * `zeros` - Number of zeros to add
-fn extend_roots<T: Clone + Zero>(mut roots: Vec<T>, zeros: usize) -> Vec<T> {
-    roots.extend(std::iter::repeat(T::zero()).take(zeros));
-    roots
-}
-
-impl<T: Clone + Num + Zero> Poly<T> {
-    /// Remove the (multiple) zero roots from a polynomial. It returns the number
-    /// of roots in zero and the polynomial without them.
-    fn find_zero_roots(&self) -> (usize, Self) {
-        if self.is_zero() {
-            return (0, Poly::zero());
-        }
-        let zeros = self.zero_roots_count();
-        let p = Self {
-            coeffs: self.coeffs().split_off(zeros),
-        };
-        (zeros, p)
-    }
-
-    /// Remove the (multiple) zero roots from a polynomial in place.
-    /// It returns the number of roots in zero.
-    #[allow(dead_code)]
-    fn find_zero_roots_mut(&mut self) -> usize {
-        if self.is_zero() {
-            return 0;
-        }
-        let zeros = self.zero_roots_count();
-        self.coeffs.drain(..zeros);
-        zeros
-    }
-
-    /// Count the first zero elements of the vector of coefficients.
-    ///
-    /// # Arguments
-    ///
-    /// * `vec` - slice of coefficients
-    fn zero_roots_count(&self) -> usize {
-        self.coeffs.iter().take_while(|c| c.is_zero()).count()
-    }
-}
-
-impl<T: Float> Poly<T> {
-    /// Calculate the complex roots of a polynomial of degree 1.
-    fn complex_deg1_root(&self) -> Vec<Complex<T>> {
-        vec![From::from(-self[0] / self[1])]
-    }
-
-    /// Calculate the complex roots of a polynomial of degree 2.
-    fn complex_deg2_roots(&self) -> Vec<Complex<T>> {
-        let b = self[1] / self[2];
-        let c = self[0] / self[2];
-        let (r1, r2) = complex_quadratic_roots(b, c);
-        vec![r1, r2]
-    }
-
-    /// Calculate the real roots of a polynomial of degree 1.
-    fn real_deg1_root(&self) -> Option<Vec<T>> {
-        Some(vec![-self[0] / self[1]])
-    }
-
-    /// Calculate the real roots of a polynomial of degree 2.
-    fn real_deg2_roots(&self) -> Option<Vec<T>> {
-        let b = self[1] / self[2];
-        let c = self[0] / self[2];
-        let (r1, r2) = real_quadratic_roots(b, c)?;
-        Some(vec![r1, r2])
-    }
-}
-
-/// Calculate the complex roots of the quadratic equation x^2 + b*x + c = 0.
-///
-/// # Arguments
-///
-/// * `b` - first degree coefficient
-/// * `c` - zero degree coefficient
-///
-/// # Example
-///```
-/// use num_complex::Complex;
-/// use automatica::polynomial;
-/// let actual = polynomial::complex_quadratic_roots(0., 1.);
-/// assert_eq!((-Complex::i(), Complex::i()), actual);
-///```
-pub fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>) {
-    roots::complex_quadratic_roots_impl(b, c)
-}
-
-/// Calculate the real roots of the quadratic equation x^2 + b*x + c = 0.
-///
-/// # Arguments
-///
-/// * `b` - first degree coefficient
-/// * `c` - zero degree coefficient
-///
-/// # Example
-///```
-/// use automatica::polynomial;
-/// let actual = polynomial::real_quadratic_roots(-2., 1.);
-/// assert_eq!(Some((1., 1.)), actual);
-///```
-pub fn real_quadratic_roots<T: Float>(b: T, c: T) -> Option<(T, T)> {
-    roots::real_quadratic_roots_impl(b, c)
 }
 
 impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
@@ -553,11 +294,11 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
     ///```
     /// use automatica::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
-    /// let actual = p.roundoff(0.01);
+    /// let actual = p.roundoff(&0.01);
     /// let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
     /// assert_eq!(expected, actual);
     ///```
-    pub fn roundoff(&self, atol: T) -> Self {
+    pub fn roundoff(&self, atol: &T) -> Self {
         let atol = atol.abs();
         let new_coeff = self
             .coeffs
@@ -576,11 +317,11 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
     ///```
     /// use automatica::Poly;
     /// let mut p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
-    /// p.roundoff_mut(0.01);
+    /// p.roundoff_mut(&0.01);
     /// let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
     /// assert_eq!(expected, p);
     ///```
-    pub fn roundoff_mut(&mut self, atol: T) {
+    pub fn roundoff_mut(&mut self, atol: &T) {
         let atol = atol.abs();
         for c in &mut self.coeffs {
             if c.abs() < atol {
@@ -588,7 +329,6 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
             }
         }
         self.trim();
-        debug_assert!(!self.coeffs.is_empty());
     }
 }
 
@@ -629,7 +369,6 @@ impl<T: Clone + Mul<Output = T> + NumCast + One + PartialEq + Zero> Poly<T> {
     }
 }
 
-/// Implementation methods for Poly struct
 impl<T: Clone + Div<Output = T> + NumCast + PartialEq + Zero> Poly<T> {
     /// Calculate the integral of the polynomial. When used with integral types
     /// it does not convert the coefficients to floats, division is between
@@ -691,8 +430,7 @@ impl<T: Clone + Div<Output = T> + NumCast + PartialEq + Zero> Poly<T> {
 //     ///
 //     /// # Example
 //     /// ```
-//     /// use automatica::{Eval, polynomial::Poly};
-//     /// use num_complex::Complex;
+//     /// use automatica::{Eval, num_complex::Complex, polynomial::Poly};
 //     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
 //     /// assert_eq!(18., p.eval(3.));
 //     /// assert_eq!(Complex::new(-18., 0.), p.eval(Complex::new(0., 3.)));
@@ -729,8 +467,7 @@ impl<T: Clone> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::Poly;
-    /// use num_complex::Complex;
+    /// use automatica::{num_complex::Complex, Poly};
     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
     /// assert_eq!(18., p.eval_by_val(3.));
     /// assert_eq!(Complex::new(-18., 0.), p.eval_by_val(Complex::new(0., 3.)));
@@ -755,8 +492,7 @@ impl<T> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::Poly;
-    /// use num_complex::Complex;
+    /// use automatica::{num_complex::Complex, Poly};
     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
     /// assert_eq!(18., p.eval(&3.));
     /// assert_eq!(Complex::new(-18., 0.), p.eval(&Complex::new(0., 3.)));
@@ -774,45 +510,50 @@ impl<T> Poly<T> {
     }
 }
 
-impl<T: Float> Poly<T> {
-    /// Evaluate the ratio between to polynomials at the given value.
-    /// This implementation avoids overflow issues when evaluating the
-    /// numerator and the denominator separately.
-    ///
-    /// # Arguments
-    ///
-    /// * `numerator` - numerator of the polynomial ratio.
-    /// * `denominator` - denominator of the polynomial ratio.
-    /// * `x` - Value at which the polynomial ratio is evaluated.
-    ///
-    /// # Example
-    /// ```
-    /// use automatica::Poly;
-    /// let p1 = Poly::new_from_coeffs(&[4., 5., 1.]);
-    /// let p2 = Poly::new_from_coeffs(&[1., 2., 3., 1.]);
-    /// let x = -1e30_f32;
-    /// let r = Poly::eval_poly_ratio(&p1, &p2, x);
-    /// let naive = p1.eval(&x) / p2.eval(&x);
-    /// assert!(naive.is_nan());
-    /// assert!((0.- r).abs() < 1e-16);
-    /// ```
-    pub fn eval_poly_ratio(numerator: &Self, denominator: &Self, x: T) -> T {
-        // When the `x` value is less than one evaluate the polynomial ratio
-        // at `1/x` reversing the coefficients.
-        if x.abs() <= T::one() {
-            let n = numerator.eval_by_val(x);
-            let d = denominator.eval_by_val(x);
-            n / d
-        } else {
-            let x = x.recip();
-            // Zip and extend the smaller polynomial with zeros.
-            // Evaluate the reversed polynomial.
-            let (n, d) = utils::zip_longest(&numerator.coeffs, &denominator.coeffs, &T::zero())
-                .fold((T::zero(), T::zero()), |acc, c| {
-                    (acc.0 * x + *c.0, acc.1 * x + *c.1)
-                });
-            n / d
-        }
+/// Evaluate the ratio between to polynomials at the given value.
+/// This implementation avoids overflow issues when evaluating the
+/// numerator and the denominator separately.
+///
+/// # Arguments
+///
+/// * `numerator` - numerator of the polynomial ratio.
+/// * `denominator` - denominator of the polynomial ratio.
+/// * `x` - Value at which the polynomial ratio is evaluated.
+///
+/// # Example
+/// ```
+/// use automatica::{polynomial, Poly};
+/// let p1 = Poly::new_from_coeffs(&[4., 5., 1.]);
+/// let p2 = Poly::new_from_coeffs(&[1., 2., 3., 1.]);
+/// let x = -1e30_f32;
+/// let r = polynomial::eval_poly_ratio(&p1, &p2, x);
+/// let naive = p1.eval(&x) / p2.eval(&x);
+/// assert!(naive.is_nan());
+/// assert!((0.- r).abs() < 1e-16);
+/// ```
+pub fn eval_poly_ratio<T, N>(numerator: &Poly<T>, denominator: &Poly<T>, x: N) -> N
+where
+    N: Add<T, Output = N> + Clone + Div<Output = N> + Neg<Output = N> + One + PartialOrd + Zero,
+    T: Clone + Zero,
+{
+    // When the `x` value is greater than one evaluate the polynomial ratio
+    // at `1/x` reversing the coefficients.
+    if -N::one() <= x && x <= N::one() {
+        let n = numerator.eval_by_val(x.clone());
+        let d = denominator.eval_by_val(x);
+        n / d
+    } else {
+        let x = N::one() / x;
+        // Zip and extend the smaller polynomial with zeros.
+        // Evaluate the reversed polynomial.
+        let (n, d) = iterator::zip_longest(&numerator.coeffs, &denominator.coeffs, &T::zero())
+            .fold((N::zero(), N::zero()), |acc, c| {
+                (
+                    acc.0 * x.clone() + c.0.clone(),
+                    acc.1 * x.clone() + c.1.clone(),
+                )
+            });
+        n / d
     }
 }
 
@@ -837,6 +578,8 @@ impl<T> Index<usize> for Poly<T> {
 }
 
 /// Implement mutable indexing of polynomial returning its coefficients.
+/// Misuse of this method may invalidate some polynomial invariant.
+/// If some coefficient is zeroed a call to `roundoff` of `roundoff_mut` may be needed.
 ///
 /// # Panics
 ///
@@ -859,8 +602,7 @@ impl<T> IndexMut<usize> for Poly<T> {
 ///
 /// # Example
 /// ```
-/// use automatica::polynomial::Poly;
-/// use num_traits::Zero;
+/// use automatica::{num_traits::Zero, polynomial::Poly};
 /// let zero = Poly::<u8>::zero();
 /// assert!(zero.is_zero());
 /// ```
@@ -881,8 +623,7 @@ impl<T: Clone + PartialEq + Zero> Zero for Poly<T> {
 ///
 /// # Example
 /// ```
-/// use automatica::polynomial::Poly;
-/// use num_traits::One;
+/// use automatica::{num_traits::One, polynomial::Poly};
 /// let one = Poly::<u8>::one();
 /// assert!(one.is_one());
 /// ```
@@ -905,32 +646,53 @@ impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> One for Poly<T> {
 /// ```
 /// use automatica::polynomial::Poly;
 /// let p = Poly::new_from_coeffs(&[0, 1, 2, 0, 3]);
-/// assert_eq!("+1s +2s^2 +3s^4", format!("{}", p));
+/// assert_eq!("1s +2s^2 +3s^4", format!("{}", p));
 /// ```
-impl<T: Display + Zero> Display for Poly<T> {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        if self.coeffs.is_empty() {
-            // The polynomial shall be never empty.
-            unreachable!();
-        } else if self.len() == 1 {
-            return Display::fmt(&self[0], f);
-        }
-        let mut s = String::new();
-        let mut sep = "";
-        for (i, c) in self.coeffs.iter().enumerate().filter(|(_, x)| !x.is_zero()) {
-            s.push_str(sep);
-            if i == 0 {
-                s.push_str(&format!("{}", c));
-            } else if i == 1 {
-                s.push_str(&format!("{:+}s", c));
-            } else {
-                s.push_str(&format!("{:+}s^{}", c, i));
+macro_rules! display {
+    ($trait:path) => {
+        impl<T: $trait + PartialOrd + Zero> $trait for Poly<T> {
+            fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+                debug_assert!(!self.coeffs.is_empty());
+                if self.len() == 1 {
+                    return self[0].fmt(f);
+                }
+
+                let iter = self
+                    .coeffs
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, x)| !x.is_zero())
+                    .enumerate();
+                for (i, (n, c)) in iter {
+                    match (i, f.sign_plus(), c < &T::zero()) {
+                        (0, _, _) => (),
+                        (_, false, false) => write!(f, " +")?,
+                        (_, _, _) => write!(f, " ")?,
+                    }
+                    if n == 0 {
+                        c.fmt(f)?;
+                    } else if n == 1 {
+                        c.fmt(f)?;
+                        write!(f, "s")?;
+                    } else {
+                        c.fmt(f)?;
+                        write!(f, "s^")?;
+                        write!(f, "{}", n)?;
+                    }
+                }
+                write!(f, "")
             }
-            sep = " ";
         }
-        write!(f, "{}", s)
-    }
+    };
 }
+
+display!(std::fmt::Binary);
+display!(std::fmt::Display);
+display!(std::fmt::LowerExp);
+display!(std::fmt::LowerHex);
+display!(std::fmt::Octal);
+display!(std::fmt::UpperExp);
+display!(std::fmt::UpperHex);
 
 // TODO: this trait implementation works from Rust 1.41.
 // It is similar to the method .coeffs().
@@ -950,17 +712,56 @@ impl<T> AsRef<[T]> for Poly<T> {
     }
 }
 
+/// Calculate the complex roots of the quadratic equation x^2 + b*x + c = 0.
+///
+/// # Arguments
+///
+/// * `b` - first degree coefficient
+/// * `c` - zero degree coefficient
+///
+/// # Example
+///```
+/// use automatica::{num_complex::Complex, polynomial};
+/// let actual = polynomial::complex_quadratic_roots(0., 1.);
+/// assert_eq!((-Complex::i(), Complex::i()), actual);
+///```
+pub fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>) {
+    roots::complex_quadratic_roots_impl(b, c)
+}
+
+/// Calculate the real roots of the quadratic equation x^2 + b*x + c = 0.
+///
+/// # Arguments
+///
+/// * `b` - first degree coefficient
+/// * `c` - zero degree coefficient
+///
+/// # Example
+///```
+/// use automatica::polynomial;
+/// let actual = polynomial::real_quadratic_roots(-2., 1.);
+/// assert_eq!(Some((1., 1.)), actual);
+///```
+pub fn real_quadratic_roots<T: Float>(b: T, c: T) -> Option<(T, T)> {
+    roots::real_quadratic_roots_impl(b, c)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use num_complex::Complex;
+    use proptest::prelude::*;
 
     #[test]
     fn poly_formatting() {
         assert_eq!("0", format!("{}", Poly::<i16>::zero()));
-        assert_eq!("0", format!("{}", Poly::<i16>::new_from_coeffs(&[])));
+        assert_eq!("0", format!("{}", Poly::<u16>::new_from_coeffs(&[])));
         assert_eq!("1 +2s^3 -4s^4", format!("{}", poly!(1, 0, 0, 2, -4)));
         assert_eq!("1.235", format!("{:.3}", Poly::new_from_coeffs(&[1.23456])));
+        let p = poly!(1.2345, -5.4321, 13.1234);
+        assert_eq!("+1.23 -5.43s +13.12s^2", format!("{:+.2}", &p));
+        assert_eq!("1.23 -5.43s +13.12s^2", format!("{:.2}", &p));
+        assert_eq!("1.2345e0 -5.4321e0s +1.31234e1s^2", format!("{:e}", &p));
     }
 
     #[test]
@@ -1121,15 +922,23 @@ mod tests {
     }
 
     #[test]
+    fn eval_poly_of_poly() {
+        let s = poly!(-1, 1);
+        let p = poly!(1, 2, 3);
+        let r = p.eval(&s);
+        assert_eq!(poly!(2, -4, 3), r);
+    }
+
+    #[test]
     fn poly_ratio_evaluation() {
         let p1 = poly!(1., 2., 3.);
         let p2 = poly!(4., 5.);
         let x = 2.;
-        let r1 = Poly::eval_poly_ratio(&p1, &p2, x);
+        let r1 = eval_poly_ratio(&p1, &p2, x);
         assert_relative_eq!(p1.eval(&x) / p2.eval(&x), r1);
 
         let y = 0.5;
-        let r2 = Poly::eval_poly_ratio(&p1, &p2, y);
+        let r2 = eval_poly_ratio(&p1, &p2, y);
         assert_relative_eq!(p1.eval(&y) / p2.eval(&y), r2);
     }
 
@@ -1138,7 +947,7 @@ mod tests {
         let p1 = Poly::new_from_coeffs(&[4., 5., 1.]);
         let p2 = Poly::new_from_coeffs(&[1., 2., 3., 1.]);
         let x = -1e30_f32;
-        let r = Poly::eval_poly_ratio(&p1, &p2, x);
+        let r = eval_poly_ratio(&p1, &p2, x);
         let naive = p1.eval(&x) / p2.eval(&x);
         assert!(naive.is_nan());
         assert!((0. - r).abs() < 1e-16);
@@ -1223,9 +1032,12 @@ mod tests {
         assert!(Poly::<usize>::one().is_one());
     }
 
-    #[quickcheck]
-    fn leading_coefficient(c: f32) -> bool {
-        relative_eq!(c, poly!(1., -5., c).leading_coeff())
+    proptest! {
+        #[test]
+        fn qc_leading_coefficient(c: i8) {
+            prop_assume!(c != 0);
+            assert_eq!(c, poly!(1, -5, c).leading_coeff());
+        }
     }
 
     #[test]
@@ -1245,12 +1057,6 @@ mod tests {
     }
 
     #[test]
-    fn failing_companion() {
-        let p = Poly::<f32>::zero();
-        assert_eq!(None, p.companion());
-    }
-
-    #[test]
     fn conversion_into_slice() {
         assert_eq!(&[3, -6, 8], poly!(3, -6, 8).as_ref());
     }
@@ -1258,7 +1064,7 @@ mod tests {
     #[test]
     fn round_off_coefficients() {
         let p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
-        let actual = p.roundoff(0.01);
+        let actual = p.roundoff(&0.01);
         let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
         assert_eq!(expected, actual);
     }
@@ -1266,20 +1072,20 @@ mod tests {
     #[test]
     fn round_off_zero() {
         let zero = Poly::zero();
-        assert_eq!(zero, zero.roundoff(0.001));
+        assert_eq!(zero, zero.roundoff(&0.001));
     }
 
     #[test]
     fn round_off_returns_zero() {
         let p = Poly::new_from_coeffs(&[0.0032, 0.002, -0.0023, -0.0001]);
-        let actual = p.roundoff(0.01);
+        let actual = p.roundoff(&-0.01);
         assert_eq!(Poly::zero(), actual);
     }
 
     #[test]
     fn round_off_coefficients_mut() {
         let mut p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
-        p.roundoff_mut(0.01);
+        p.roundoff_mut(&0.01);
         let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
         assert_eq!(expected, p);
     }
@@ -1301,179 +1107,4 @@ mod compile_fail_test {
     /// ```
     #[allow(dead_code)]
     fn b() {}
-}
-
-#[cfg(test)]
-mod tests_roots {
-    use super::*;
-    use num_complex::Complex;
-
-    #[test]
-    fn quadratic_roots_with_real_values() {
-        let root1 = -1.;
-        let root2 = -2.;
-        assert_eq!(Some((root1, root2)), real_quadratic_roots(3., 2.));
-
-        assert_eq!(None, real_quadratic_roots(-6., 10.));
-
-        let root3 = 3.;
-        assert_eq!(Some((root3, root3)), real_quadratic_roots(-6., 9.));
-    }
-
-    #[test]
-    fn real_1_root_eigen() {
-        let p = poly!(10., -2.);
-        let r = p.real_roots().unwrap();
-        assert_eq!(r.len(), 1);
-        assert_relative_eq!(5., r[0]);
-    }
-
-    #[test]
-    fn real_3_roots_eigen() {
-        let roots = &[-1., 1., 0.];
-        let p = Poly::new_from_roots(roots);
-        for (r, rr) in roots.iter().zip(p.real_roots().unwrap()) {
-            assert_relative_eq!(*r, rr);
-        }
-    }
-
-    #[test]
-    fn complex_1_root_eigen() {
-        let p = poly!(10., -2.);
-        let r = p.complex_roots();
-        assert_eq!(r.len(), 1);
-        assert_eq!(Complex::new(5., 0.), r[0]);
-    }
-
-    #[test]
-    fn complex_3_roots_eigen() {
-        let p = Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * poly!(2., 1.);
-        assert_eq!(p.complex_roots().len(), 3);
-    }
-
-    #[test]
-    fn complex_2_roots() {
-        let root1 = Complex::<f64>::new(-1., 0.);
-        let root2 = Complex::<f64>::new(-2., 0.);
-        assert_eq!((root1, root2), complex_quadratic_roots(3., 2.));
-
-        let root1 = Complex::<f64>::new(-0., -1.);
-        let root2 = Complex::<f64>::new(-0., 1.);
-        assert_eq!((root1, root2), complex_quadratic_roots(0., 1.));
-
-        let root1 = Complex::<f64>::new(3., -1.);
-        let root2 = Complex::<f64>::new(3., 1.);
-        assert_eq!((root1, root2), complex_quadratic_roots(-6., 10.));
-
-        let root1 = Complex::<f64>::new(3., 0.);
-        assert_eq!((root1, root1), complex_quadratic_roots(-6., 9.));
-    }
-
-    #[test]
-    fn none_roots_iterative() {
-        let p: Poly<f32> = Poly::zero();
-        let res = p.iterative_roots();
-        assert_eq!(0, res.len());
-        assert!(res.is_empty());
-
-        let p = poly!(5.3);
-        let res = p.iterative_roots();
-        assert_eq!(0, res.len());
-        assert!(res.is_empty());
-    }
-
-    #[test]
-    fn complex_1_roots_iterative() {
-        let root = -12.4;
-        let p = poly!(3.0 * root, 3.0);
-        let res = p.iterative_roots();
-        assert_eq!(1, res.len());
-        let expected: Complex<f64> = From::from(-root);
-        assert_eq!(expected, res[0]);
-    }
-
-    #[test]
-    fn complex_2_roots_iterative() {
-        let p = poly!(6., 5., 1.);
-        let res = p.iterative_roots();
-        assert_eq!(2, res.len());
-        let expected1: Complex<f64> = From::from(-3.);
-        let expected2: Complex<f64> = From::from(-2.);
-        assert_eq!(expected2, res[0]);
-        assert_eq!(expected1, res[1]);
-    }
-
-    #[test]
-    fn complex_3_roots_iterative() {
-        let p = Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * poly!(2., 1.);
-        assert_eq!(p.iterative_roots().len(), 3);
-    }
-
-    #[test]
-    fn complex_3_roots_with_zeros_iterative() {
-        let p = Poly::new_from_coeffs(&[0.0_f32, 0., 1.]) * poly!(2., 1.);
-        let mut roots = p.iterative_roots();
-        assert_eq!(roots.len(), 3);
-        assert_eq!(*roots.last().unwrap(), Complex::zero());
-        roots.pop();
-        assert_eq!(*roots.last().unwrap(), Complex::zero());
-    }
-
-    #[test]
-    fn none_roots_iterative_with_max() {
-        let p: Poly<f32> = Poly::zero();
-        let res = p.iterative_roots_with_max(5);
-        assert_eq!(0, res.len());
-        assert!(res.is_empty());
-
-        let p = poly!(5.3);
-        let res = p.iterative_roots_with_max(6);
-        assert_eq!(0, res.len());
-        assert!(res.is_empty());
-    }
-
-    #[test]
-    fn complex_1_roots_iterative_with_max() {
-        let root = -12.4;
-        let p = poly!(3.0 * root, 3.0);
-        let res = p.iterative_roots_with_max(5);
-        assert_eq!(1, res.len());
-        let expected: Complex<f64> = From::from(-root);
-        assert_eq!(expected, res[0]);
-    }
-
-    #[test]
-    fn complex_2_roots_iterative_with_max() {
-        let p = poly!(6., 5., 1.);
-        let res = p.iterative_roots_with_max(6);
-        assert_eq!(2, res.len());
-        let expected1: Complex<f64> = From::from(-3.);
-        let expected2: Complex<f64> = From::from(-2.);
-        assert_eq!(expected2, res[0]);
-        assert_eq!(expected1, res[1]);
-    }
-
-    #[test]
-    fn complex_3_roots_iterative_with_max() {
-        let p = Poly::new_from_coeffs(&[1.0_f32, 0., 1.]) * poly!(2., 1.);
-        assert_eq!(p.iterative_roots_with_max(7).len(), 3);
-    }
-
-    #[test]
-    fn remove_zero_roots() {
-        let p = Poly::new_from_coeffs(&[0, 0, 1, 0, 2]);
-        let (z, p2) = p.find_zero_roots();
-        assert_eq!(2, z);
-        assert_eq!(Poly::new_from_coeffs(&[1, 0, 2]), p2);
-    }
-
-    #[test]
-    fn remove_zero_roots_mut() {
-        let mut p = Poly::new_from_coeffs(&[0, 0, 1, 0, 2]);
-        let z = p.find_zero_roots_mut();
-        assert_eq!(2, z);
-        assert_eq!(Poly::new_from_coeffs(&[1, 0, 2]), p);
-
-        assert_eq!(0, Poly::<i8>::zero().find_zero_roots_mut());
-    }
 }

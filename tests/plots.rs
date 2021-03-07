@@ -1,18 +1,17 @@
-extern crate automatica;
 #[macro_use]
 extern crate approx;
 
 use automatica::{
     plots::{bode::Bode, polar::Polar},
-    poly, Poly, RadiansPerSecond, Tf,
+    poly,
+    units::ToDecibel,
+    Poly, RadiansPerSecond, Tf,
 };
 
 /// TC5.1
 #[test]
 fn bode_plot() {
     // Figure 7.8
-    use crate::automatica::units::ToDecibel;
-
     let xi = 0.1_f32;
     let omega = 1.;
     let tf = Tf::new(

@@ -32,12 +32,12 @@ use std::{
 };
 
 use crate::{
+    enums::Time,
     error::{Error, ErrorKind},
     polynomial,
     polynomial::Poly,
     polynomial_matrix::PolyMatrix,
     transfer_function::TfGen,
-    Time,
 };
 
 /// State-space representation of a linear system
@@ -629,15 +629,20 @@ mod tests {
     use crate::{polynomial_matrix::MatrixOfPoly, Continuous, Discrete};
 
     use nalgebra::DMatrix;
+    use proptest::prelude::*;
 
-    #[quickcheck]
-    fn dimensions(states: usize, inputs: usize, outputs: usize) -> bool {
-        let d = Dim {
-            states,
-            inputs,
-            outputs,
-        };
-        states == d.states() && inputs == d.inputs() && outputs == d.outputs()
+    proptest! {
+    #[test]
+        fn qc_dimensions(states: usize, inputs: usize, outputs: usize) {
+            let d = Dim {
+                states,
+                inputs,
+                outputs,
+            };
+            assert_eq!(states, d.states());
+            assert_eq!(inputs, d.inputs());
+            assert_eq!(outputs, d.outputs());
+        }
     }
 
     #[test]
@@ -694,36 +699,40 @@ mod tests {
         assert_eq!((eig1, eig2), (poles[0].re, poles[1].re));
     }
 
-    #[quickcheck]
-    fn poles_one(eig: f32) -> bool {
-        let sys = SsGen::<_, Continuous>::new_from_slice(1, 1, 1, &[eig], &[1.], &[-1.], &[0.1]);
-        let poles = sys.poles();
+    proptest! {
+        #[test]
+        fn qc_poles_one(eig: f32) {
+            let sys = SsGen::<_, Continuous>::new_from_slice(1, 1, 1, &[eig], &[1.], &[-1.], &[0.1]);
+            let poles = sys.poles();
 
-        let expected = (eig, 0.);
-        let actual = (poles[0].re, poles[0].im);
-        relative_eq!(expected.0, actual.0, max_relative = 1e-10)
-            && relative_eq!(expected.1, actual.1, max_relative = 1e-10)
+            let expected = (eig, 0.);
+            let actual = (poles[0].re, poles[0].im);
+            assert_relative_eq!(expected.0, actual.0, max_relative = 1e-10);
+            assert_relative_eq!(expected.1, actual.1, max_relative = 1e-10);
+        }
     }
 
-    #[quickcheck]
-    fn poles_two(eig1: f64, eig2: f64) -> bool {
-        let sys = SsGen::<_, Continuous>::new_from_slice(
-            2,
-            1,
-            1,
-            &[eig1, 0., 3., eig2],
-            &[1., 3.],
-            &[-1., 0.5],
-            &[0.1],
-        );
-        let poles = sys.poles();
+    proptest! {
+        #[test]
+        fn qc_poles_two(eig1 in (-1e12..1e12), eig2 in (-1e12..1e12)) {
+            let sys = SsGen::<_, Continuous>::new_from_slice(
+                2,
+                1,
+                1,
+                &[eig1, 0., 3., eig2],
+                &[1., 3.],
+                &[-1., 0.5],
+                &[0.1],
+            );
+            let poles = sys.poles();
 
-        let mut expected = [eig1, eig2];
-        expected.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
-        let mut actual = [poles[0].re, poles[1].re];
-        actual.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
-        relative_eq!(expected[0], actual[0], max_relative = 1e-10)
-            && relative_eq!(expected[1], actual[1], max_relative = 1e-10)
+            let mut expected = [eig1, eig2];
+            expected.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+            let mut actual = [poles[0].re, poles[1].re];
+            actual.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+            assert_relative_eq!(expected[0], actual[0], max_relative = 1e-10);
+            assert_relative_eq!(expected[1], actual[1], max_relative = 1e-10);
+        }
     }
 
     #[test]

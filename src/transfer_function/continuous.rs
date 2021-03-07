@@ -18,10 +18,11 @@ use num_traits::Float;
 use std::{cmp::Ordering, marker::PhantomData, ops::Div};
 
 use crate::{
+    enums::Continuous,
     plots::{root_locus::RootLocus, Plotter},
+    rational_function::Rf,
     transfer_function::TfGen,
     units::Seconds,
-    Continuous,
 };
 
 /// Continuous transfer function
@@ -38,8 +39,7 @@ impl<T: Float> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use num_complex::Complex;
-    /// use automatica::{Seconds, Tf};
+    /// use automatica::{num_complex::Complex, Seconds, Tf};
     /// let d = Tf::delay(Seconds(2.));
     /// assert_eq!(1., d(Complex::new(0., 10.)).norm());
     /// ```
@@ -58,11 +58,11 @@ impl<T: Float> Tf<T> {
     /// ```
     #[must_use]
     pub fn init_value(&self) -> T {
-        let n = self.num.degree();
-        let d = self.den.degree();
+        let n = self.num().degree();
+        let d = self.den().degree();
         match n.cmp(&d) {
             Ordering::Less => T::zero(),
-            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Equal => self.num().leading_coeff() / self.den().leading_coeff(),
             Ordering::Greater => T::infinity(),
         }
     }
@@ -78,11 +78,11 @@ impl<T: Float> Tf<T> {
     /// ```
     #[must_use]
     pub fn init_value_der(&self) -> T {
-        let n = self.num.degree();
-        let d = self.den.degree().map(|d| d - 1);
+        let n = self.num().degree();
+        let d = self.den().degree().map(|d| d - 1);
         match n.cmp(&d) {
             Ordering::Less => T::zero(),
-            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Equal => self.num().leading_coeff() / self.den().leading_coeff(),
             Ordering::Greater => T::infinity(),
         }
     }
@@ -108,11 +108,10 @@ impl<T: Float> Tf<T> {
     /// ```
     #[must_use]
     pub fn sensitivity(&self, r: &Self) -> Self {
-        let n = &self.num * &r.num;
-        let d = &self.den * &r.den;
+        let n = self.num() * r.num();
+        let d = self.den() * r.den();
         Self {
-            num: d.clone(),
-            den: n + d,
+            rf: Rf::new(d.clone(), n + d),
             time: PhantomData,
         }
     }
@@ -164,8 +163,10 @@ impl<T: Float> Tf<T> {
     #[must_use]
     pub fn control_sensitivity(&self, r: &Self) -> Self {
         Self {
-            num: &r.num * &self.den,
-            den: &r.num * &self.num + &r.den * &self.den,
+            rf: Rf::new(
+                r.num() * self.den(),
+                r.num() * self.num() + r.den() * self.den(),
+            ),
             time: PhantomData,
         }
     }
@@ -194,14 +195,13 @@ impl<T: Float + RealField> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use num_complex::Complex;
-    /// use automatica::{poly, Poly, Tf};
+    /// use automatica::{num_complex::Complex, poly, Poly, Tf};
     /// let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
     /// let locus = l.root_locus(0.25);
     /// assert_eq!(Complex::new(-1.5, 0.), locus[0]);
     /// ```
     pub fn root_locus(&self, k: T) -> Vec<Complex<T>> {
-        let p = &(&self.num * k) + &self.den;
+        let p = &(self.num() * k) + self.den();
         p.complex_roots()
     }
 
@@ -222,8 +222,7 @@ impl<T: Float + RealField> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use num_complex::Complex;
-    /// use automatica::{poly, Poly, Tf};
+    /// use automatica::{num_complex::Complex, poly, Poly, Tf};
     /// let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
     /// let locus = l.root_locus_plot(0.1, 1.0, 0.05).into_iter();
     /// assert_eq!(19, locus.count());
@@ -250,7 +249,7 @@ impl<T> Tf<T> {
     where
         &'a T: 'a + Div<&'a T, Output = T>,
     {
-        &self.num[0] / &self.den[0]
+        &self.num()[0] / &self.den()[0]
     }
 }
 
@@ -268,6 +267,7 @@ impl<T: Float> Plotter<T> for Tf<T> {
 #[cfg(test)]
 mod tests {
     use num_traits::One;
+    use proptest::prelude::*;
 
     use std::str::FromStr;
 
@@ -286,10 +286,12 @@ mod tests {
         assert_relative_eq!(-1., d(Complex::new(0., 0.5)).arg());
     }
 
-    #[quickcheck]
-    fn static_gain(g: f32) -> bool {
-        let tf = Tf::new(poly!(g, -3.), poly!(1., 5., -0.5));
-        relative_eq!(g, tf.static_gain())
+    proptest! {
+    #[test]
+        fn qc_static_gain(g: f32) {
+            let tf = Tf::new(poly!(g, -3.), poly!(1., 5., -0.5));
+            assert_relative_eq!(g, tf.static_gain());
+        }
     }
 
     #[test]

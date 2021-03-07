@@ -61,11 +61,14 @@ pub mod continuous {
     #[cfg(test)]
     mod tests {
         use super::*;
+        use proptest::prelude::*;
         use std::f64::consts::PI;
 
-        #[quickcheck]
-        fn zero_input(s: f64) -> bool {
-            relative_eq!(0., zero(1)(Seconds(s))[0])
+        proptest! {
+            #[test]
+            fn qc_zero_input(s: f64) {
+                assert_relative_eq!(0., zero(1)(Seconds(s))[0]);
+            }
         }
 
         #[test]
@@ -75,16 +78,22 @@ pub mod continuous {
             assert_relative_eq!(10., imp(Seconds(1.))[0]);
         }
 
-        #[quickcheck]
-        fn step_input(s: f64) -> bool {
-            relative_eq!(3., step(3., 1)(Seconds(s))[0])
+        proptest! {
+            #[test]
+            fn qc_step_input(s: f64) {
+                assert_relative_eq!(3., step(3., 1)(Seconds(s))[0]);
+            }
         }
 
-        #[quickcheck]
-        fn sin_input(t: f64) -> bool {
-            let sine = sin_siso(1., RadiansPerSecond(0.5), 0.)(Seconds(t))[0];
-            let traslated_sine = sin_siso(1., RadiansPerSecond(0.5), PI)(Seconds(t))[0];
-            relative_eq!(sine, -traslated_sine, max_relative = 1e-9)
+        proptest! {
+            #[test]
+            fn qc_sin_input(t in (0.0..100.0)) {
+                // Reduce the maximum input since sine may have convergence
+                // issues with big numbers.
+                let sine = sin_siso(1., RadiansPerSecond(0.5), 0.)(Seconds(t))[0];
+                let traslated_sine = sin_siso(1., RadiansPerSecond(0.5), PI)(Seconds(t))[0];
+                assert_relative_eq!(sine, -traslated_sine, max_relative = 1e-9)
+            }
         }
 
         #[test]
@@ -180,25 +189,33 @@ pub mod discrete {
     #[cfg(test)]
     mod tests {
         use super::*;
+        use proptest::prelude::*;
 
-        #[quickcheck]
-        fn zero_input(s: usize) -> bool {
-            relative_eq!(0., zero(1)(s)[0])
+        proptest! {
+            #[test]
+            fn qc_zero_input(s: usize) {
+                assert_relative_eq!(0., zero(1)(s)[0]);
+            }
         }
 
-        #[quickcheck]
-        fn step_single_input(s: f32) -> bool {
-            let f = step(s, 2);
-            relative_eq!(0., f(1)) && relative_eq!(s, f(2))
+        proptest! {
+            #[test]
+            fn qc_step_single_input(s: f32) {
+                let f = step(s, 2);
+                assert_relative_eq!(0., f(1));
+                assert_relative_eq!(s, f(2));
+            }
         }
 
-        #[quickcheck]
-        fn step_input(s: usize) -> bool {
-            let f = step_vec(3., 1, 1);
-            if s == 0 {
-                relative_eq!(0., f(s)[0])
-            } else {
-                relative_eq!(3., f(s)[0])
+        proptest! {
+            #[test]
+            fn qc_step_input(s: usize) {
+                let f = step_vec(3., 1, 1);
+                if s == 0 {
+                    assert_relative_eq!(0., f(s)[0]);
+                } else {
+                    assert_relative_eq!(3., f(s)[0]);
+                }
             }
         }
 
@@ -208,10 +225,13 @@ pub mod discrete {
             assert_relative_eq!(0., f(0)[0]);
         }
 
-        #[quickcheck]
-        fn impulse_single_input(i: f32) -> bool {
-            let f = impulse(i, 2);
-            relative_eq!(0., f(1)) && relative_eq!(i, f(2))
+        proptest! {
+            #[test]
+            fn qc_impulse_single_input(i: f32) {
+                let f = impulse(i, 2);
+                assert_relative_eq!(0., f(1));
+                assert_relative_eq!(i, f(2));
+            }
         }
 
         #[test]

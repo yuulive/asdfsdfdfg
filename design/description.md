@@ -1,6 +1,6 @@
 ---
 title: Overall Description
-version: 0.9.0
+version: 0.10.0
 license: CC BY-SA 4.0
 ---
 
@@ -23,7 +23,7 @@ This library does not directly interact with the hardware, it uses the function 
 
 ### Software interfaces
 
-The library needs the `rustc` compiler for the compilation with a version equal of greater than 1.38.
+The library needs the `rustc` compiler for the compilation with a version equal of greater than 1.44.
 
 The list of the needed dependencies for the compilations of the library is the following:
 
@@ -34,28 +34,26 @@ The list of the needed dependencies for the compilations of the library is the f
 - num-complex
     * complex numbers
     * source: <https://crates.io/crates/num-complex>
-    * version: 0.2
+    * version: 0.3
 - nalgebra
     * linear algebra, matrices, operations on matrices, decomposition and eigenvalues calculation
     * source: <https://crates.io/crates/nalgebra>
-    * version: 0.18.0
+    * version: 0.23
 - ndarray
     * multidimensional vectors, allows non numerical elements
     * source: <https://crates.io/crates/ndarray>
-    * version: 0.12.1
+    * version: 0.14
 - approx
     * approximate equality for floating pint numbers
     * source: <https://crates.io/crates/approx>
-    * version: 0.3.2
+    * version: 0.4
+
 The following dependencies are necessary for the development phase:
-- quickcheck
+
+- proptest
     * randomized tests
-    * source: <https://crates.io/crates/quickcheck>
-    * version: 0.9
-- quickcheck_macros
-    * support macros for randomized tests
-    * source: <https://crates.io/crates/quickcheck_macros>
-    * version: 0.9
+    * source: <https://crates.io/crates/proptest>
+    * version: 0.10
 
 ### Communications interfaces
 

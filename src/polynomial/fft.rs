@@ -6,27 +6,30 @@ use num_traits::{Float, FloatConst, NumCast, One, Zero};
 /// # Arguments
 ///
 /// * `n` - power of two
-fn log2(n: usize) -> usize {
+fn log2(n: usize) -> u32 {
     // core::mem::size_of::<usize>() * 8 - 1 - n.leading_zeros() as usize
-    n.trailing_zeros() as usize
+    n.trailing_zeros()
 }
 
 /// Reorder the elements of the vector using a bit inversion permutation.
 ///
 /// # Arguments
 ///
-/// * `a` - vector
-/// * `bits` - number of lower bit on which the permutation shall act
+/// * `a` - vector with a power of two length
 #[allow(non_snake_case)]
-fn bit_reverse_copy<T: Clone + Zero>(a: &[T], bits: usize) -> Vec<T> {
-    let l = a.len();
-    let mut A = vec![T::zero(); l];
+fn bit_reverse_vec<T>(a: Vec<T>) -> Vec<T> {
+    let mut a = a;
+    // The number of elements is a power of two.
+    // The number of elements is even, iterate over half of it.
+    let length = a.len();
+    let half_length = length / 2;
+    let bits = log2(length);
 
-    for k in 0..l {
+    for k in 0..half_length {
         let r = rev(k, bits);
-        *A.get_mut(r).unwrap() = a.get(k).unwrap().clone();
+        a.swap(k, r);
     }
-    A
+    a
 }
 
 /// Reverse the last `l` bits of `k`.
@@ -35,15 +38,8 @@ fn bit_reverse_copy<T: Clone + Zero>(a: &[T], bits: usize) -> Vec<T> {
 ///
 /// * `k` - number on which the permutation acts.
 /// * `l` - number of lower bits to reverse.
-fn rev(k: usize, l: usize) -> usize {
-    let mut r: usize = 0;
-    for shift in 0..l {
-        // Extract the "shift-th" bit.
-        let bit = (k >> shift) & 1;
-        // Push the bit to the back of the result.
-        r = (r << 1) | bit;
-    }
-    r
+fn rev(k: usize, l: u32) -> usize {
+    k.reverse_bits().rotate_left(l)
 }
 
 /// Direct Fast Fourier Transform.
@@ -110,9 +106,7 @@ where
     let a = extend_to_power_of_two(a);
     let n = a.len();
     debug_assert!(n.is_power_of_two());
-    let bits = log2(n);
-
-    let mut A = bit_reverse_copy(&a, bits);
+    let mut A = bit_reverse_vec(a);
 
     let sign = match dir {
         Transform::Direct => T::one(),
@@ -120,12 +114,11 @@ where
     };
 
     let tau = T::TAU();
-
-    for s in 1..=bits {
+    for s in 1..=log2(n) {
         let m = 1 << s;
         let m_f = T::from(m).unwrap();
         let exp = sign * tau / m_f;
-        let w_n = Complex::from_polar(&T::one(), &exp);
+        let w_n = Complex::from_polar(T::one(), exp);
         for k in (0..n).step_by(m) {
             let mut w = Complex::one();
             for j in 0..m / 2 {
@@ -166,10 +159,9 @@ mod tests {
     #[test]
     fn reverse_copy() {
         let a = vec![0, 1, 2, 3, 4, 5, 6, 7];
-        let l = log2(a.len());
-        let b = bit_reverse_copy(&a, l);
-        let a = vec![0, 4, 2, 6, 1, 5, 3, 7];
-        assert_eq!(a, b);
+        let b = bit_reverse_vec(a);
+        let expected = vec![0, 4, 2, 6, 1, 5, 3, 7];
+        assert_eq!(expected, b);
     }
 
     #[test]

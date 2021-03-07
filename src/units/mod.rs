@@ -71,18 +71,18 @@ impl ToDecibel for f32 {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-/// Unit of measurement: deciBel [dB]
+/// Unit of measurement: deciBel \[dB\]
 pub struct Decibel<T: Num>(pub T);
 
-/// Unit of measurement: seconds [s]
+/// Unit of measurement: seconds \[s\]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Seconds<T: Num>(pub T);
 
-/// Unit of measurement: Hertz [Hz]
+/// Unit of measurement: Hertz \[Hz\]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Hertz<T: Num>(pub T);
 
-/// Unit of measurement: Radians per seconds [rad/s]
+/// Unit of measurement: Radians per seconds \[rad/s\]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct RadiansPerSecond<T: Num>(pub T);
 
@@ -126,6 +126,7 @@ impl<T: Inv<Output = T> + Num> Inv for Hertz<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::prelude::*;
 
     #[test]
     fn decibel() {
@@ -147,34 +148,42 @@ mod tests {
         assert_eq!(rps, RadiansPerSecond::from(Hertz::from(rps)));
     }
 
-    #[quickcheck]
-    fn qc_conversion_hertz(hz: f64) -> bool {
-        relative_eq!(
-            hz,
-            Hertz::from(RadiansPerSecond::from(Hertz(hz))).0,
-            max_relative = 1e-15
-        )
+    proptest! {
+        #[test]
+        fn qc_conversion_hertz(hz in (0.0..1e12)) {
+            assert_relative_eq!(
+                hz,
+                Hertz::from(RadiansPerSecond::from(Hertz(hz))).0,
+                max_relative = 1e-15
+            );
+        }
     }
 
-    #[quickcheck]
-    fn qc_conversion_rps(rps: f64) -> bool {
-        relative_eq!(
-            rps,
-            RadiansPerSecond::from(Hertz::from(RadiansPerSecond(rps))).0,
-            max_relative = 1e-15
-        )
+    proptest! {
+        #[test]
+        fn qc_conversion_rps(rps in (0.0..1e12)) {
+            assert_relative_eq!(
+                rps,
+                RadiansPerSecond::from(Hertz::from(RadiansPerSecond(rps))).0,
+                max_relative = 1e-15
+            );
+        }
     }
 
-    #[quickcheck]
-    fn qc_conversion_s_hz(s: f32) -> bool {
-        // f32 precision.
-        relative_eq!(s, Seconds(s).inv().inv().0, max_relative = 1e-5)
+    proptest! {
+        #[test]
+        fn qc_conversion_s_hz(s in (0.0..1e12_f32)) {
+            // f32 precision.
+            assert_relative_eq!(s, Seconds(s).inv().inv().0, max_relative = 1e-5);
+        }
     }
 
-    #[quickcheck]
-    fn qc_conversion_hz_s(hz: f64) -> bool {
-        // f64 precision.
-        relative_eq!(hz, Hertz(hz).inv().inv().0, max_relative = 1e-14)
+    proptest! {
+        #[test]
+        fn qc_conversion_hz_s(hz in (0.0..1e12_f64)) {
+            // f64 precision.
+            assert_relative_eq!(hz, Hertz(hz).inv().inv().0, max_relative = 1e-14);
+        }
     }
 
     #[test]

@@ -1,5 +1,3 @@
-extern crate automatica;
-
 use automatica::{poly, Ss, Tf};
 
 /// TC2.2

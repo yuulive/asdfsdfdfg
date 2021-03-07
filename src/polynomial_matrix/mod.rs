@@ -5,7 +5,7 @@
 use nalgebra::{DMatrix, Scalar};
 use ndarray::{Array, Array2};
 use num_complex::Complex;
-use num_traits::{Float, NumAssignOps, One, Signed, Zero};
+use num_traits::{Float, NumAssignOps, One, Zero};
 
 use std::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign};
 use std::{
@@ -187,7 +187,7 @@ impl<T: Mul<Output = T> + MulAssign<T> + Scalar + Zero> PolyMatrix<T> {
     /// * `poly` - Polynomial
     /// * `matrix` - Matrix
     pub(crate) fn multiply(poly: &Poly<T>, matrix: &DMatrix<T>) -> PolyMatrix<T> {
-        let result = poly.as_slice().iter().map(|&c| matrix * c);
+        let result = poly.as_slice().iter().map(|c| matrix * c.clone());
         PolyMatrix::new_from_iter(result)
     }
 }
@@ -227,7 +227,7 @@ impl<T: Display + Scalar + Zero> Display for PolyMatrix<T> {
         let mut s = String::new();
         let mut sep = "";
         for (i, c) in self.matr_coeffs.iter().enumerate() {
-            if c.iter().all(|&x| x == T::zero()) {
+            if c.iter().all(|x| x == &T::zero()) {
                 continue;
             }
             s.push_str(sep);
@@ -345,7 +345,7 @@ impl<T: Scalar + Zero> From<PolyMatrix<T>> for MatrixOfPoly<T> {
 }
 
 /// Implementation of matrix of polynomials printing
-impl<T: Display + Signed> Display for MatrixOfPoly<T> {
+impl<T: Display + PartialOrd + Zero> Display for MatrixOfPoly<T> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", self.matrix)
     }

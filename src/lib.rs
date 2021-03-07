@@ -48,35 +48,45 @@
 //!
 //! [Discrete](signals/discrete/index.html)
 
-#![warn(missing_docs)]
+#![warn(
+    missing_crate_level_docs,
+    missing_debug_implementations,
+    missing_docs,
+    unreachable_pub
+)]
 
 #[cfg(test)]
 #[macro_use]
 extern crate approx;
 
-#[cfg(test)]
-extern crate quickcheck;
-#[cfg(test)]
-#[macro_use(quickcheck)]
-extern crate quickcheck_macros;
+#[cfg(not(test))]
+pub extern crate approx;
+pub extern crate nalgebra;
+pub extern crate num_complex;
+pub extern crate num_traits;
 
+pub mod complex;
 pub mod controller;
+pub mod enums;
 pub mod error;
+mod iterator;
 pub mod linear_system;
 pub mod plots;
 pub mod polynomial;
 pub mod polynomial_matrix;
+pub mod rational_function;
 pub mod signals;
 pub mod transfer_function;
 pub mod units;
-pub mod utils;
 
 // Export from crate root.
-pub use error::Error;
-pub use linear_system::{continuous::Ss, discrete::Ssd};
-pub use polynomial::Poly;
-pub use transfer_function::{
+pub use crate::complex::{damp, pulse};
+pub use crate::enums::{Continuous, Discrete, Discretization, Time};
+pub use crate::error::Error;
+pub use crate::linear_system::{continuous::Ss, discrete::Ssd};
+pub use crate::polynomial::Poly;
+pub use crate::rational_function::Rf;
+pub use crate::transfer_function::{
     continuous::Tf, discrete::Tfz, discretization::TfDiscretization, matrix::TfMatrix,
 };
-pub use units::{Decibel, Hertz, RadiansPerSecond, Seconds};
-pub use utils::{Continuous, Discrete, Discretization, Time};
+pub use crate::units::{Decibel, Hertz, RadiansPerSecond, Seconds};

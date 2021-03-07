@@ -1,12 +1,12 @@
 //! Arithmetic module for polynomials
 use num_complex::Complex;
-use num_traits::{Float, FloatConst, Num, One, Zero};
+use num_traits::{Float, FloatConst, One, Zero};
 
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
 use crate::{
+    iterator,
     polynomial::{fft, Poly},
-    utils,
 };
 
 /// Implementation of polynomial negation
@@ -58,12 +58,39 @@ impl<T: Add<Output = T> + Clone + PartialEq + Zero> Add for Poly<T> {
 }
 
 /// Implementation of polynomial addition
+impl<'a, T> Add<&'a Poly<T>> for Poly<T>
+where
+    T: Add<&'a T, Output = T> + Clone + PartialEq + Zero,
+{
+    type Output = Self;
+
+    fn add(mut self, rhs: &'a Poly<T>) -> Self {
+        let mut result = if self.degree() < rhs.degree() {
+            for (i, c) in self.coeffs.iter_mut().enumerate() {
+                *c = c.clone() + &rhs[i];
+            }
+            let l = self.len();
+            self.coeffs.extend_from_slice(&rhs.coeffs[l..]);
+            self
+        } else {
+            for (i, c) in rhs.coeffs.iter().enumerate() {
+                self[i] = self[i].clone() + c;
+            }
+            self
+        };
+        result.trim();
+        // The polynomial cannot be empty, trim has already the postcondition.
+        result
+    }
+}
+
+/// Implementation of polynomial addition
 impl<T: Clone + PartialEq + Zero> Add for &Poly<T> {
     type Output = Poly<T>;
 
     fn add(self, rhs: &Poly<T>) -> Poly<T> {
         let zero = T::zero();
-        let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
+        let result = iterator::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
             x.clone() + y.clone()
         });
         // The polynomial cannot be empty.
@@ -76,6 +103,19 @@ impl<T: Add<Output = T> + Clone> Add<T> for Poly<T> {
     type Output = Self;
 
     fn add(mut self, rhs: T) -> Self {
+        self[0] = self[0].clone() + rhs;
+        // Non need for trimming since the addition of a float doesn't
+        // modify the coefficients of order higher than zero.
+        // The polynomial cannot be empty.
+        self
+    }
+}
+
+/// Implementation of polynomial and real number addition
+impl<'a, T: Add<&'a T, Output = T> + Clone> Add<&'a T> for Poly<T> {
+    type Output = Self;
+
+    fn add(mut self, rhs: &'a T) -> Self {
         self[0] = self[0].clone() + rhs;
         // Non need for trimming since the addition of a float doesn't
         // modify the coefficients of order higher than zero.
@@ -209,7 +249,7 @@ impl<T: Clone + PartialEq + Sub<Output = T> + Zero> Sub for &Poly<T> {
 
     fn sub(self, rhs: Self) -> Poly<T> {
         let zero = T::zero();
-        let result = utils::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
+        let result = iterator::zip_longest_with(&self.coeffs, &rhs.coeffs, &zero, |x, y| {
             x.clone() - y.clone()
         });
         // The polynomial cannot be empty.
@@ -250,7 +290,7 @@ macro_rules! impl_sub_for_poly {
             type Output = Poly<Self>;
 
             fn sub(self, rhs: Poly<Self>) -> Poly<Self> {
-        // The polynomial cannot be empty.
+                // The polynomial cannot be empty.
                 rhs.neg().add(self)
             }
         }
@@ -259,7 +299,7 @@ macro_rules! impl_sub_for_poly {
             type Output = Poly<Self>;
 
             fn sub(self, rhs: &Poly<Self>) -> Poly<Self> {
-        // The polynomial cannot be empty.
+                // The polynomial cannot be empty.
                 self.sub(rhs.clone())
             }
         }
@@ -338,8 +378,19 @@ impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul for Poly<T> {
     }
 }
 
+/// Implementation of polynomial multiplication
+impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul<&Poly<T>> for Poly<T> {
+    type Output = Self;
+
+    fn mul(self, rhs: &Poly<T>) -> Self {
+        // Can't reuse arguments to avoid additional allocations.
+        // The two arguments can't mutate during the loops.
+        Mul::mul(&self, rhs)
+    }
+}
+
 /// Implementation of polynomial and float multiplication
-impl<T: Clone + Num> Mul<T> for Poly<T> {
+impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul<T> for Poly<T> {
     type Output = Self;
 
     fn mul(mut self, rhs: T) -> Self {
@@ -356,10 +407,37 @@ impl<T: Clone + Num> Mul<T> for Poly<T> {
 }
 
 /// Implementation of polynomial and float multiplication
-impl<T: Clone + Num> Mul<T> for &Poly<T> {
+impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul<&T> for Poly<T> {
+    type Output = Self;
+
+    fn mul(mut self, rhs: &T) -> Self {
+        if rhs.is_zero() {
+            Self::zero()
+        } else {
+            for c in &mut self.coeffs {
+                *c = c.clone() * rhs.clone();
+            }
+            // The polynomial cannot be empty.
+            self
+        }
+    }
+}
+
+/// Implementation of polynomial and float multiplication
+impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn mul(self, rhs: T) -> Self::Output {
+        // The polynomial cannot be empty.
+        self.clone().mul(rhs)
+    }
+}
+
+/// Implementation of polynomial and float multiplication
+impl<T: Clone + Mul<Output = T> + PartialEq + Zero> Mul<&T> for &Poly<T> {
+    type Output = Poly<T>;
+
+    fn mul(self, rhs: &T) -> Self::Output {
         // The polynomial cannot be empty.
         self.clone().mul(rhs)
     }
@@ -496,7 +574,7 @@ impl<T: Float + FloatConst> Poly<T> {
         let a_fft = fft::fft(a);
         let b_fft = fft::fft(b);
         // Multiply the two transforms.
-        let y_fft = utils::zip_with(&a_fft, &b_fft, |a, b| a * b).collect();
+        let y_fft = iterator::zip_with(&a_fft, &b_fft, |a, b| a * b).collect();
         // IFFT of the result.
         let y = fft::ifft(y_fft);
         // Extract the real parts of the result.
@@ -511,7 +589,7 @@ impl<T: Float + FloatConst> Poly<T> {
 }
 
 /// Implementation of polynomial and real number division
-impl<T: Clone + Num> Div<T> for Poly<T> {
+impl<T: Clone + Div<Output = T> + PartialEq + Zero> Div<T> for Poly<T> {
     type Output = Self;
 
     fn div(mut self, rhs: T) -> Self {
@@ -526,12 +604,28 @@ impl<T: Clone + Num> Div<T> for Poly<T> {
 }
 
 /// Implementation of polynomial and real number division
-impl<T: Clone + Num> Div<T> for &Poly<T> {
+impl<T: Clone + Div<Output = T> + PartialEq + Zero> Div<T> for &Poly<T> {
     type Output = Poly<T>;
 
     fn div(self, rhs: T) -> Self::Output {
+        let result = self.coeffs.iter().map(|x| x.clone() / rhs.clone());
         // The polynomial cannot be empty.
-        self.clone().div(rhs)
+        Poly::new_from_coeffs_iter(result)
+    }
+}
+
+/// Implementation of polynomial and real number division
+impl<'a, T> Div<&'a T> for &'a Poly<T>
+where
+    T: Clone + PartialEq + Zero,
+    &'a T: Div<Output = T>,
+{
+    type Output = Poly<T>;
+
+    fn div(self, rhs: &'a T) -> Self::Output {
+        let result = self.coeffs.iter().map(|x| x / rhs);
+        // The polynomial cannot be empty.
+        Poly::new_from_coeffs_iter(result)
     }
 }
 
@@ -631,7 +725,7 @@ fn poly_div_impl<T: Float>(mut u: Poly<T>, v: &Poly<T>) -> (Poly<T>, Poly<T>) {
     (q, u)
 }
 
-impl<T: Clone + Div<Output = T>> Poly<T> {
+impl<T: Clone + Div<Output = T> + PartialEq + Zero> Poly<T> {
     /// In place division with a scalar
     ///
     /// # Arguments
@@ -642,14 +736,44 @@ impl<T: Clone + Div<Output = T>> Poly<T> {
     /// ```
     /// use automatica::poly;
     /// let mut p = poly!(3, 4, 5);
-    /// p.div_mut(2);
+    /// p.div_mut(&2);
     /// assert_eq!(poly!(1, 2, 2), p);
     /// ```
-    pub fn div_mut(&mut self, d: T) {
+    pub fn div_mut(&mut self, d: &T) {
         for c in &mut self.coeffs {
             *c = c.clone() / d.clone();
         }
-        // The polynomial cannot be empty.
+        self.trim();
+    }
+}
+
+impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> Poly<T> {
+    /// Calculate the power of a polynomial. With the exponentiation by squaring.
+    ///
+    /// #Arguments
+    ///
+    /// * `exp` - Positive integer exponent
+    ///
+    /// # Example
+    /// ```
+    /// use automatica::poly;
+    /// let p = poly!(0, 0, 1);
+    /// let pow = p.powi(4);
+    /// assert_eq!(poly!(0, 0, 0, 0, 0, 0, 0, 0, 1), pow);
+    /// ```
+    #[must_use]
+    pub fn powi(&self, exp: u32) -> Self {
+        let mut n = exp;
+        let mut y = Self::one();
+        let mut z = (*self).clone();
+        while n > 0 {
+            if n % 2 == 1 {
+                y = &y * &z;
+            }
+            z = &z * &z;
+            n /= 2;
+        }
+        y
     }
 }
 
@@ -691,6 +815,19 @@ mod tests {
     fn poly_add_real_number() {
         assert_eq!(poly!(5, 4, 3), 1 + &poly!(4, 4, 3));
         assert_eq!(poly!(6, 4, 3), &poly!(5, 4, 3) + 1);
+    }
+
+    #[test]
+    fn poly_add_ref() {
+        let p1: Poly<i32>;
+        {
+            let p2 = poly!(1, 2);
+            p1 = poly!(1) + &p2;
+        }
+        let p3 = p1 + &poly!(0, 0, 2);
+        assert_eq!(poly!(2, 2, 2), p3);
+        let p4 = p3 + &poly!(3);
+        assert_eq!(poly!(5, 2, 2), p4);
     }
 
     #[test]
@@ -763,9 +900,16 @@ mod tests {
 
     #[test]
     #[allow(clippy::identity_op)]
-    fn poly_mul_real_number() {
+    fn poly_mul_real_number_value() {
         assert_eq!(poly!(4, 4, 3), 1 * &poly!(4, 4, 3));
         assert_eq!(poly!(10, 8, 6), &poly!(5, 4, 3) * 2);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn poly_mul_real_number_ref() {
+        assert_eq!(poly!(0), poly!(4, 4, 3) * &0);
+        assert_eq!(poly!(10, 8, 6), poly!(5, 4, 3) * &2);
     }
 
     #[test]
@@ -805,15 +949,24 @@ mod tests {
         assert_eq!(poly!(4, 0, 5), poly!(8, 1, 11) / 2);
 
         let inf = std::f32::INFINITY;
-        assert_eq!(Poly::zero(), poly!(1., 0., 1.) / inf);
+        assert!((poly!(1., 0., 1.) / inf).is_zero());
 
         assert_eq!(poly!(inf, -inf, inf), poly!(1., -2.3, 1.) / 0.);
+    }
+
+    #[allow(clippy::op_ref)]
+    #[test]
+    fn poly_div_ref() {
+        let p1 = poly!(21, 34, -98);
+        assert_eq!(poly!(10, 17, -49), &p1 / 2);
+        assert_eq!(poly!(10, 17, -49), &p1 / &2);
+        assert!((&p1 / &100).is_zero());
     }
 
     #[test]
     fn poly_mutable_div() {
         let mut p = poly!(3, 4, 5);
-        p.div_mut(2);
+        p.div_mut(&2);
         assert_eq!(poly!(1, 2, 2), p);
     }
 
@@ -868,5 +1021,15 @@ mod tests {
     fn two_poly_rem_ref() {
         let r = &poly!(-4., 0., -2., 1.) % &poly!(-3., 1.);
         assert_eq!(poly!(5.), r);
+    }
+
+    #[test]
+    fn poly_pow() {
+        let p = poly!(0, 0, 1);
+        let pow = p.powi(4);
+        assert_eq!(poly!(0, 0, 0, 0, 0, 0, 0, 0, 1), pow);
+        let p2 = poly!(1, 1);
+        let pow2 = p2.powi(5);
+        assert_eq!(poly!(1, 5, 10, 10, 5, 1), pow2);
     }
 }

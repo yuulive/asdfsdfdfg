@@ -12,7 +12,7 @@
 //! * backward Euler method
 //! * Tustin (trapezoidal) method
 
-use nalgebra::{ComplexField, RealField};
+use nalgebra::RealField;
 use num_complex::Complex;
 use num_traits::{Float, Zero};
 
@@ -24,7 +24,7 @@ use std::{
     ops::{Add, Div, Mul},
 };
 
-use crate::{plots::Plotter, transfer_function::TfGen, Discrete};
+use crate::{enums::Discrete, plots::Plotter, transfer_function::TfGen};
 
 /// Discrete transfer function
 pub type Tfz<T> = TfGen<T, Discrete>;
@@ -40,8 +40,7 @@ impl<T: Float> Tfz<T> {
     ///
     /// # Example
     /// ```
-    /// use num_complex::Complex;
-    /// use automatica::{units::Seconds, Tfz};
+    /// use automatica::{num_complex::Complex, units::Seconds, Tfz};
     /// let d = Tfz::delay(2);
     /// assert_eq!(0.010000001, d(Complex::new(0., 10.0_f32)).norm());
     /// ```
@@ -60,11 +59,11 @@ impl<T: Float> Tfz<T> {
     /// ```
     #[must_use]
     pub fn init_value(&self) -> T {
-        let n = self.num.degree();
-        let d = self.den.degree();
+        let n = self.num().degree();
+        let d = self.den().degree();
         match n.cmp(&d) {
             Ordering::Less => T::zero(),
-            Ordering::Equal => self.num.leading_coeff() / self.den.leading_coeff(),
+            Ordering::Equal => self.num().leading_coeff() / self.den().leading_coeff(),
             Ordering::Greater => T::infinity(),
         }
     }
@@ -84,13 +83,21 @@ impl<'a, T: 'a + Add<&'a T, Output = T> + Div<Output = T> + Zero> Tfz<T> {
     /// ```
     #[must_use]
     pub fn static_gain(&'a self) -> T {
-        let n = self.num.as_slice().iter().fold(T::zero(), |acc, c| acc + c);
-        let d = self.den.as_slice().iter().fold(T::zero(), |acc, c| acc + c);
+        let n = self
+            .num()
+            .as_slice()
+            .iter()
+            .fold(T::zero(), |acc, c| acc + c);
+        let d = self
+            .den()
+            .as_slice()
+            .iter()
+            .fold(T::zero(), |acc, c| acc + c);
         n / d
     }
 }
 
-impl<T: ComplexField + Float + RealField> Tfz<T> {
+impl<T: Float + RealField> Tfz<T> {
     /// System stability. Checks if all poles are inside the unit circle.
     ///
     /// # Example
@@ -102,7 +109,7 @@ impl<T: ComplexField + Float + RealField> Tfz<T> {
     /// ```
     #[must_use]
     pub fn is_stable(&self) -> bool {
-        self.complex_poles().iter().all(|p| p.abs() < T::one())
+        self.complex_poles().iter().all(|p| p.norm() < T::one())
     }
 }
 
@@ -118,8 +125,8 @@ impl<T: ComplexField + Float + RealField> Tfz<T> {
 macro_rules! arma {
     ($self:ident, $y_coeffs:ident, $u_coeffs:ident, $y:ident, $u:ident) => {{
         let g = $self.normalize();
-        let n_n = g.num.degree().unwrap_or(0);
-        let n_d = g.den.degree().unwrap_or(0);
+        let n_n = g.num().degree().unwrap_or(0);
+        let n_d = g.den().degree().unwrap_or(0);
         let n = n_n.max(n_d);
 
         // The front is the lowest order coefficient.
@@ -127,7 +134,7 @@ macro_rules! arma {
         // The higher degree terms are the more recent.
         // The last coefficient is always 1, because g is normalized.
         // [a0, a1, a2, ..., a(n-1), 1]
-        let mut output_coefficients = g.den.coeffs();
+        let mut output_coefficients = g.den().coeffs();
         // Remove the last coefficient by truncating the vector by one.
         // This is done because the last coefficient of the denominator corresponds
         // to the currently calculated output.
@@ -135,7 +142,7 @@ macro_rules! arma {
         // [a0, a1, a2, ..., a(n-1)]
         $y_coeffs = output_coefficients;
         // [b0, b1, b2, ..., bm]
-        $u_coeffs = g.num.coeffs();
+        $u_coeffs = g.num().coeffs();
 
         // The coefficients do not need to be extended with zeros,
         // when the coffiecients are 'zipped' with the VecDeque, the zip stops at the
@@ -363,7 +370,7 @@ impl<T: Float> Plotter<T> for Tfz<T> {
     /// * `theta` - angle at which the function is evaluated.
     /// Evaluation occurs at G(e^(i*theta)).
     fn eval_point(&self, theta: T) -> Complex<T> {
-        self.eval(&Complex::from_polar(&T::one(), &theta))
+        self.eval(&Complex::from_polar(T::one(), theta))
     }
 }
 

@@ -1,6 +1,6 @@
 ---
 title: Test Plan
-version: 0.9.0
+version: 0.10.0
 license: CC BY-SA 4.0
 ---
 
@@ -325,6 +325,15 @@ Tests have defined the path in the test files, the inputs and the expected outpu
 - input: $G(s)=\frac{k}{s\left(3+s\right)\left(5+s\right)}$
 - output: 3 branches, symmetric, limit value for stability =120
 
+### Complex
+
+*TC6.1* The damping of zero is equal to -1.
+
+    tests/complex/damping_of_zero
+
+- input: 0+0i
+- output: -1
+
 ## White box testing
 
 Every module must contain a test submodule, whose purpose it to test all the functions present inside the module.
@@ -409,8 +418,6 @@ Rounding towards zero of the coefficients.
 
 Creation of the companion matrix.
 
-Calculation of the real and complex roots of a polynomial of first, second and third degree, both with the method of eigenvalues and the iterative method. The null roots shall be removed from the calculation.
-
 #### arithmetic
 
 Arithmetic operations defined between polynomial and with real numbers.
@@ -427,7 +434,11 @@ Calculation of the direct and inverse fast Fourier transformation.
 
 #### roots
 
-Calculation of the roots with iterative method.
+Calculation of the real and complex roots of a polynomial of any degree, both with the method of eigenvalues and the iterative method. The null roots shall be removed from the calculation.
+
+#### convex hull
+
+Top convex hull of a set of points. Vectors turns and vectors cross product.
 
 ### Module polynomial_matrix
 
@@ -446,6 +457,20 @@ Addition between polynomials of matrices.
 Creation of a matrix whose elements are polynomial, that can be indexed.
 
 If the matrix has dimension 1x1 it is possible to extract the single element.
+
+### Module rational_function
+
+Creation of a rational function.
+
+Evaluation of a rational function given a complex number.
+
+Inversion of a function and arithmetical operations of negation, addition, subtraction, multiplication and division.
+
+Calculation of numerator and denominator roots, both real and complex.
+
+Formatting of the function as a string.
+
+Normalization of the function with a monic polynomial as denominator.
 
 ### Module signals
 
@@ -523,15 +548,21 @@ Conversion between Hertz and radians per second. Inversion between seconds and H
 
 Formatting of units of measurement as strings.
 
-### Module utils
-
-Determination of the pulse and the dump of a complex number.
+### Module iterator
 
 Zip two iterators with different lengths, also through a function, at the shortest elements are added.
 
 ### Module error
 
 String and debug string representation of Error.
+
+### Module enums
+
+Currently no test can be defined for enumerations.
+
+### Module complex
+
+Calculation of the natural pulse and the damping of a complex number, that represents a zero or a pole.
 
 ## Documentation tests
 
