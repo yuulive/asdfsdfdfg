@@ -1,7 +1,7 @@
 #[macro_use]
-extern crate automatica;
+extern crate au;
 
-use automatica::{units::ToDecibel, Tf};
+use au::{units::ToDecibel, Tf};
 
 use num_complex::Complex64;
 

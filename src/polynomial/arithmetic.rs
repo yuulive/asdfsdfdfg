@@ -536,7 +536,7 @@ impl<T: Float + FloatConst> Poly<T> {
     /// # Example
     ///
     /// ```
-    /// use automatica::poly;
+    /// use au::poly;
     /// let a = poly![1., 0., 3.];
     /// let b = poly![1., 0., 3.];
     /// let expected = &a * &b;
@@ -734,7 +734,7 @@ impl<T: Clone + Div<Output = T> + PartialEq + Zero> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::poly;
+    /// use au::poly;
     /// let mut p = poly!(3, 4, 5);
     /// p.div_mut(&2);
     /// assert_eq!(poly!(1, 2, 2), p);
@@ -756,7 +756,7 @@ impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::poly;
+    /// use au::poly;
     /// let p = poly!(0, 0, 1);
     /// let pow = p.powi(4);
     /// assert_eq!(poly!(0, 0, 0, 0, 0, 0, 0, 0, 1), pow);

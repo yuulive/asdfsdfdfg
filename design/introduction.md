@@ -14,15 +14,15 @@ This document is addressed to those that intend to use this library in their sof
 
 ## Scope
 
-The name of the library is `automatica`. The chosen programming language for the development is `Rust` [11].
+The name of the library is `au`. The chosen programming language for the development is `Rust` [11].
 
 The version control system is `git` [12] and the source code is hosted on `Gitlab` at the following link:
 
-<https://gitlab.com/daingun/automatica>
+<https://github.com/yuulive/au>
 
 The access to the public registry crates.io [13] is available at the following link:
 
-<https://crates.io/crates/automatica>
+<https://crates.io/crates/au>
 
 The library supplies an infrastructure that contains calculation methods for the design of computer aided control systems. This software does not supply an interface with the final user.
 

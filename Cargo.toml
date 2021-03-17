@@ -1,19 +1,19 @@
 [package]
-name = "automatica"
+name = "au"
 version = "0.10.0"
 authors = ["daingun <>"]
 edition = "2018"
 description = "Automatic control systems library"
 readme = "README.md"
-homepage = "https://daingun.gitlab.io/automatica"
-repository = "https://gitlab.com/daingun/automatica"
+homepage = "https://github.com/yuulive/au"
+repository = "https://github.com/yuulive/au"
 license = "GPL-3.0-only"
 keywords = ["control", "system", "signal", "engineering", "polynomial"]
 categories = ["science", "mathematics", "simulation"]
 exclude = [".gitlab-ci.yml", ".gitignore", "Makefile", "/design", "update-version.sh"]
 
 [badges]
-gitlab = { repository = "daingun/automatica", branch = "master" }
+github = { repository = "yuulive/au", branch = "master" }
 
 [dependencies]
 num-traits = "0.2"

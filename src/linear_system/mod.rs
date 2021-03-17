@@ -115,7 +115,7 @@ impl<T: Scalar, U: Time> SsGen<T, U> {
     /// # Example
     ///
     /// ```
-    /// use automatica::Ss;
+    /// use au::Ss;
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// ```
     pub fn new_from_slice(
@@ -148,7 +148,7 @@ impl<T: Scalar, U: Time> SsGen<T, U> {
     /// # Example
     ///
     /// ```
-    /// use automatica::Ssd;
+    /// use au::Ssd;
     /// let sys = Ssd::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// let dimensions = sys.dim();
     /// ```
@@ -165,7 +165,7 @@ impl<T: ComplexField + Float + RealField, U: Time> SsGen<T, U> {
     /// # Example
     ///
     /// ```
-    /// use automatica::Ss;
+    /// use au::Ss;
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// let poles = sys.poles();
     /// assert_eq!(-2., poles[0].re);
@@ -263,7 +263,7 @@ impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{linear_system::SsGen, Discrete};
+    /// use au::{linear_system::SsGen, Discrete};
     /// let a = [-1., 3., 0., 2.];
     /// let b = [1., 2.];
     /// let c = [1., 1.];
@@ -288,7 +288,7 @@ impl<T: RealField + Scalar, U: Time> SsGen<T, U> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{linear_system::SsGen, Continuous};
+    /// use au::{linear_system::SsGen, Continuous};
     /// let a = [-1., 3., 0., 2.];
     /// let b = [1., 2.];
     /// let c = [1., 1.];

@@ -1,12 +1,12 @@
-# Automatica - Automatic Control Systems Library
+# Au - Automatic Control Systems Library
 
-[Home page and software specification](https://daingun.gitlab.io/automatica)
+[Home page and software specification](https://daingun.gitlab.io/au)
 
-[Repository](https://gitlab.com/daingun/automatica)
+[Repository](https://github.com/yuulive/au)
 
-[Crate registry](https://crates.io/crates/automatica)
+[Crate registry](https://crates.io/crates/au)
 
-[Documentation](https://docs.rs/automatica)
+[Documentation](https://docs.rs/au)
 
 ## State-Space representation
 

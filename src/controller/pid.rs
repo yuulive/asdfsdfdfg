@@ -34,7 +34,7 @@ impl<T: Float> Pid<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::controller::pid::Pid;
+    /// use au::controller::pid::Pid;
     /// let pid = Pid::new_ideal(4., 6., 0.1);
     /// ```
     pub fn new_ideal(kp: T, ti: T, td: T) -> Self {
@@ -57,7 +57,7 @@ impl<T: Float> Pid<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::controller::pid::Pid;
+    /// use au::controller::pid::Pid;
     /// let pid = Pid::new(4., 6., 12., 0.1);
     /// ```
     pub fn new(kp: T, ti: T, td: T, n: T) -> Self {
@@ -91,8 +91,8 @@ impl<T: Float> Pid<T> {
     ///
     /// # Example
     /// ```
-    /// #[macro_use] extern crate automatica;
-    /// use automatica::{controller::pid::Pid, Tf};
+    /// #[macro_use] extern crate au;
+    /// use au::{controller::pid::Pid, Tf};
     /// let pid = Pid::new_ideal(2., 2., 0.5);
     /// let tf = Tf::new(poly![1., 2., 1.], poly![0., 1.]);
     /// assert_eq!(tf, pid.tf());

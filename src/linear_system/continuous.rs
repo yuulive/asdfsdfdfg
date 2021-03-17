@@ -34,7 +34,7 @@ impl<T: ComplexField> Ss<T> {
     /// # Example
     ///
     /// ```
-    /// use automatica::Ss;
+    /// use au::Ss;
     /// let a = [-1., 1., -1., 0.25];
     /// let b = [1., 0.25];
     /// let c = [0., 1., -1., 1.];
@@ -66,7 +66,7 @@ impl<T: ComplexField + Float + RealField> Ss<T> {
     /// # Example
     ///
     /// ```
-    /// use automatica::Ss;
+    /// use au::Ss;
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-2., 0., 3., -7.], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// assert!(sys.is_stable());
     /// ```

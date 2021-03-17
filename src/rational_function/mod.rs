@@ -41,7 +41,7 @@ impl<T> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Rf};
+    /// use au::{poly, Rf};
     /// let rf = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
     /// ```
     #[must_use]
@@ -53,7 +53,7 @@ impl<T> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Rf};
+    /// use au::{poly, Rf};
     /// let num = poly!(1., 2.);
     /// let rf = Rf::new(num.clone(), poly!(-4., 6., -2.));
     /// assert_eq!(&num, rf.num());
@@ -67,7 +67,7 @@ impl<T> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Rf};
+    /// use au::{poly, Rf};
     /// let den = poly!(-4., 6., -2.);
     /// let rf = Rf::new(poly!(1., 2.), den.clone());
     /// assert_eq!(&den, rf.den());
@@ -83,7 +83,7 @@ impl<T: Clone + PartialEq + Zero> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{num_traits::Inv, poly, Rf};
+    /// use au::{num_traits::Inv, poly, Rf};
     /// let rf = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
     /// let expected = rf.relative_degree();
     /// assert_eq!(expected, 1);
@@ -146,7 +146,7 @@ impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Rf};
+    /// use au::{poly, Rf};
     /// let rf = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
     /// let expected = Rf::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
     /// assert_eq!(expected, rf.normalize());
@@ -179,7 +179,7 @@ impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Rf};
+    /// use au::{poly, Rf};
     /// let mut rf = Rf::new(poly!(1., 2.), poly!(-4., 6., -2.));
     /// rf.normalize_mut();
     /// let expected = Rf::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
@@ -203,8 +203,8 @@ impl<T: Clone> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Rf};
-    /// use automatica::num_complex::Complex as C;
+    /// use au::{poly, Rf};
+    /// use au::num_complex::Complex as C;
     /// let rf = Rf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
     /// assert_eq!(-8.5, rf.eval_by_val(3.));
     /// assert_eq!(C::new(0.64, -0.98), rf.eval_by_val(C::new(0., 2.0_f32)));
@@ -226,8 +226,8 @@ impl<T> Rf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Rf};
-    /// use automatica::num_complex::Complex as C;
+    /// use au::{poly, Rf};
+    /// use au::num_complex::Complex as C;
     /// let rf = Rf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
     /// assert_eq!(-8.5, rf.eval(&3.));
     /// assert_eq!(C::new(0.64, -0.98), rf.eval(&C::new(0., 2.0_f32)));

@@ -44,8 +44,8 @@ pub struct Poly<T> {
 ///
 /// # Example
 /// ```
-/// #[macro_use] extern crate automatica;
-/// use automatica::polynomial::Poly;
+/// #[macro_use] extern crate au;
+/// use au::polynomial::Poly;
 /// let p1 = poly!(1, 2, 3);
 /// let p2 = Poly::new_from_coeffs(&[1, 2, 3]);
 /// assert_eq!(p1, p2);
@@ -67,7 +67,7 @@ impl<T> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let c = &[1., 2., 3.];
     /// let p = Poly::new_from_coeffs(c);
     /// assert_eq!(c, p.as_slice());
@@ -88,7 +88,7 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
     /// ```
     pub fn new_from_coeffs(coeffs: &[T]) -> Self {
@@ -108,7 +108,7 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_coeffs_iter(1..4);
     /// ```
     pub fn new_from_coeffs_iter<II>(coeffs: II) -> Self
@@ -139,7 +139,7 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
     /// assert_eq!(Some(2), p.degree());
     /// ```
@@ -165,7 +165,7 @@ impl<T: Clone + PartialEq + Zero> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let mut p = Poly::new_from_coeffs(&[1, 2, 3]);
     /// p.extend(5);
     /// assert_eq!(vec![1, 2, 3, 0, 0, 0], p.coeffs());
@@ -185,7 +185,7 @@ impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 2., 10.]);
     /// let (p2, c) = p.monic();
     /// assert_eq!(Poly::new_from_coeffs(&[0.1, 0.2, 1.]), p2);
@@ -205,7 +205,7 @@ impl<T: Clone + Div<Output = T> + One + PartialEq + Zero> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let mut p = Poly::new_from_coeffs(&[1., 2., 10.]);
     /// let c = p.monic_mut();
     /// assert_eq!(Poly::new_from_coeffs(&[0.1, 0.2, 1.]), p);
@@ -223,7 +223,7 @@ impl<T: Clone + One> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 2., 10.]);
     /// let c = p.leading_coeff();
     /// assert_eq!(10., c);
@@ -244,7 +244,7 @@ impl<T: Clone + Mul<Output = T> + Neg<Output = T> + One + PartialEq + Zero> Poly
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_roots(&[1., 2., 3.]);
     /// ```
     pub fn new_from_roots(roots: &[T]) -> Self {
@@ -266,7 +266,7 @@ impl<T: Clone + Mul<Output = T> + Neg<Output = T> + One + PartialEq + Zero> Poly
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_roots_iter((1..4));
     /// ```
     pub fn new_from_roots_iter<II>(roots: II) -> Self
@@ -292,7 +292,7 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
     ///
     /// # Example
     ///```
-    /// use automatica::Poly;
+    /// use au::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
     /// let actual = p.roundoff(&0.01);
     /// let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
@@ -315,7 +315,7 @@ impl<T: Clone + PartialEq + PartialOrd + Signed + Zero> Poly<T> {
     ///
     /// # Example
     ///```
-    /// use automatica::Poly;
+    /// use au::Poly;
     /// let mut p = Poly::new_from_coeffs(&[1., 0.002, 1., -0.0001]);
     /// p.roundoff_mut(&0.01);
     /// let expected = Poly::new_from_coeffs(&[1., 0., 1.]);
@@ -337,7 +337,7 @@ impl<T: Clone + Mul<Output = T> + NumCast + One + PartialEq + Zero> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
     /// let d = p.derive();
     /// assert_eq!(Poly::new_from_coeffs(&[0., 2.]), d);
@@ -380,7 +380,7 @@ impl<T: Clone + Div<Output = T> + NumCast + PartialEq + Zero> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 0., 3.]);
     /// let d = p.integrate(5.3);
     /// assert_eq!(Poly::new_from_coeffs(&[5.3, 1., 0., 1.]), d);
@@ -430,7 +430,7 @@ impl<T: Clone + Div<Output = T> + NumCast + PartialEq + Zero> Poly<T> {
 //     ///
 //     /// # Example
 //     /// ```
-//     /// use automatica::{Eval, num_complex::Complex, polynomial::Poly};
+//     /// use au::{Eval, num_complex::Complex, polynomial::Poly};
 //     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
 //     /// assert_eq!(18., p.eval(3.));
 //     /// assert_eq!(Complex::new(-18., 0.), p.eval(Complex::new(0., 3.)));
@@ -448,7 +448,7 @@ impl<T: Clone> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 2., 3.]);
     /// assert_eq!(vec![1., 2., 3.], p.coeffs());
     /// ```
@@ -467,7 +467,7 @@ impl<T: Clone> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{num_complex::Complex, Poly};
+    /// use au::{num_complex::Complex, Poly};
     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
     /// assert_eq!(18., p.eval_by_val(3.));
     /// assert_eq!(Complex::new(-18., 0.), p.eval_by_val(Complex::new(0., 3.)));
@@ -492,7 +492,7 @@ impl<T> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{num_complex::Complex, Poly};
+    /// use au::{num_complex::Complex, Poly};
     /// let p = Poly::new_from_coeffs(&[0., 0., 2.]);
     /// assert_eq!(18., p.eval(&3.));
     /// assert_eq!(Complex::new(-18., 0.), p.eval(&Complex::new(0., 3.)));
@@ -522,7 +522,7 @@ impl<T> Poly<T> {
 ///
 /// # Example
 /// ```
-/// use automatica::{polynomial, Poly};
+/// use au::{polynomial, Poly};
 /// let p1 = Poly::new_from_coeffs(&[4., 5., 1.]);
 /// let p2 = Poly::new_from_coeffs(&[1., 2., 3., 1.]);
 /// let x = -1e30_f32;
@@ -565,7 +565,7 @@ where
 ///
 /// # Example
 /// ```
-/// use automatica::polynomial::Poly;
+/// use au::polynomial::Poly;
 /// let p = Poly::new_from_coeffs(&[0, 1, 2, 3]);
 /// assert_eq!(2, p[2]);
 /// ```
@@ -587,7 +587,7 @@ impl<T> Index<usize> for Poly<T> {
 ///
 /// # Example
 /// ```
-/// use automatica::polynomial::Poly;
+/// use au::polynomial::Poly;
 /// let mut p = Poly::new_from_coeffs(&[0, 1, 2, 3]);
 /// p[2] = 4;
 /// assert_eq!(4, p[2]);
@@ -602,7 +602,7 @@ impl<T> IndexMut<usize> for Poly<T> {
 ///
 /// # Example
 /// ```
-/// use automatica::{num_traits::Zero, polynomial::Poly};
+/// use au::{num_traits::Zero, polynomial::Poly};
 /// let zero = Poly::<u8>::zero();
 /// assert!(zero.is_zero());
 /// ```
@@ -623,7 +623,7 @@ impl<T: Clone + PartialEq + Zero> Zero for Poly<T> {
 ///
 /// # Example
 /// ```
-/// use automatica::{num_traits::One, polynomial::Poly};
+/// use au::{num_traits::One, polynomial::Poly};
 /// let one = Poly::<u8>::one();
 /// assert!(one.is_one());
 /// ```
@@ -644,7 +644,7 @@ impl<T: Clone + Mul<Output = T> + One + PartialEq + Zero> One for Poly<T> {
 ///
 /// # Example
 /// ```
-/// use automatica::polynomial::Poly;
+/// use au::polynomial::Poly;
 /// let p = Poly::new_from_coeffs(&[0, 1, 2, 0, 3]);
 /// assert_eq!("1s +2s^2 +3s^4", format!("{}", p));
 /// ```
@@ -721,7 +721,7 @@ impl<T> AsRef<[T]> for Poly<T> {
 ///
 /// # Example
 ///```
-/// use automatica::{num_complex::Complex, polynomial};
+/// use au::{num_complex::Complex, polynomial};
 /// let actual = polynomial::complex_quadratic_roots(0., 1.);
 /// assert_eq!((-Complex::i(), Complex::i()), actual);
 ///```
@@ -738,7 +738,7 @@ pub fn complex_quadratic_roots<T: Float>(b: T, c: T) -> (Complex<T>, Complex<T>)
 ///
 /// # Example
 ///```
-/// use automatica::polynomial;
+/// use au::polynomial;
 /// let actual = polynomial::real_quadratic_roots(-2., 1.);
 /// assert_eq!(Some((1., 1.)), actual);
 ///```
@@ -1093,7 +1093,7 @@ mod tests {
 
 mod compile_fail_test {
     /// ```compile_fail
-    /// use automatica::{poly, Eval};
+    /// use au::{poly, Eval};
     /// let p = poly!(1.0e200, 2., 3.);
     /// p.eval(5.0_f32);
     /// ```
@@ -1101,7 +1101,7 @@ mod compile_fail_test {
     fn a() {}
 
     /// ``` compile_fail
-    /// use automatica::{poly, Eval};
+    /// use au::{poly, Eval};
     /// let p = poly!(1.5, 2., 3.);
     /// assert_eq!(86, p.eval(5));
     /// ```

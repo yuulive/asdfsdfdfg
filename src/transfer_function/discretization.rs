@@ -59,14 +59,14 @@ impl<T: Float> TfDiscretization<T> {
     ///
     /// Example
     /// ```
-    /// use automatica::{
+    /// use au::{
     ///     polynomial::Poly,
     ///     transfer_function::discretization::TfDiscretization,
     ///     Discretization,
     ///     Seconds,
     ///     Tf
     /// };
-    /// use automatica::num_complex::Complex64;
+    /// use au::num_complex::Complex64;
     /// let tf = Tf::new(
     ///     Poly::new_from_coeffs(&[2., 20.]),
     ///     Poly::new_from_coeffs(&[1., 0.1]),
@@ -93,8 +93,8 @@ impl<T: Float> Tf<T> {
     ///
     /// Example
     /// ```
-    /// use automatica::{polynomial::Poly, Discretization, Seconds, Tf, Tfz};
-    /// use automatica::num_complex::Complex64;
+    /// use au::{polynomial::Poly, Discretization, Seconds, Tf, Tfz};
+    /// use au::num_complex::Complex64;
     /// let tf = Tf::new(
     ///     Poly::new_from_coeffs(&[2., 20.]),
     ///     Poly::new_from_coeffs(&[1., 0.1]),
@@ -133,8 +133,8 @@ impl<T: Float> Tf<T> {
     ///
     /// Example
     /// ```
-    /// use automatica::{polynomial::Poly, Discretization, RadiansPerSecond, Seconds, Tf, Tfz};
-    /// use automatica::num_complex::Complex64;
+    /// use au::{polynomial::Poly, Discretization, RadiansPerSecond, Seconds, Tf, Tfz};
+    /// use au::num_complex::Complex64;
     /// let tf = Tf::new(
     ///     Poly::new_from_coeffs(&[2.0_f32, 20.]),
     ///     Poly::new_from_coeffs(&[1., 0.1]),

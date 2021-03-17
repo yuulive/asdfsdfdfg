@@ -1,6 +1,6 @@
-extern crate automatica;
+extern crate au;
 
-use automatica::{signals::discrete, Ssd};
+use au::{signals::discrete, Ssd};
 
 // Boyd S., Introduction to Applied Linear Algebra, Cambridge University Press 2018, par. 9.3
 fn main() {

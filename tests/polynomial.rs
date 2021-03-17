@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate approx;
 
-use automatica::{
+use au::{
     num_complex::Complex,
     num_traits::{One, Zero},
     poly, Poly,

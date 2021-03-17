@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate approx;
 
-use automatica::{poly, Tfz};
+use au::{poly, Tfz};
 
 /// TC4.7
 #[test]

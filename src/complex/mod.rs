@@ -11,7 +11,7 @@ use num_traits::Float;
 ///
 /// # Example
 /// ```
-/// use automatica::{num_complex::Complex, pulse};
+/// use au::{num_complex::Complex, pulse};
 /// let i = Complex::new(0., 1.);
 /// assert_eq!(1., pulse(i));
 /// ```
@@ -31,7 +31,7 @@ pub fn pulse<T: Float>(c: Complex<T>) -> T {
 ///
 /// # Example
 /// ```
-/// use automatica::{num_complex::Complex, damp};
+/// use au::{num_complex::Complex, damp};
 /// let i = Complex::new(0., 1.);
 /// assert_eq!(0., damp(i));
 /// ```

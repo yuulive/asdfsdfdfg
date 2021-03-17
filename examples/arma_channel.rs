@@ -1,10 +1,10 @@
-extern crate automatica;
+extern crate au;
 
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
-use automatica::{poly, Tfz};
+use au::{poly, Tfz};
 
 fn main() {
     let tf = Tfz::new(poly!(1.), poly!(1., 0.5));

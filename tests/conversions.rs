@@ -1,4 +1,4 @@
-use automatica::{poly, Ss, Tf};
+use au::{poly, Ss, Tf};
 
 /// TC2.2
 #[test]

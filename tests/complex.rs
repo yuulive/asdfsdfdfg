@@ -3,7 +3,7 @@ extern crate approx;
 
 use std::str::FromStr;
 
-use automatica::{damp, num_complex::Complex, pulse};
+use au::{damp, num_complex::Complex, pulse};
 
 /// TC6.1
 #[test]

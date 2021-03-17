@@ -1,9 +1,9 @@
-extern crate automatica;
+extern crate au;
 
 use num_complex::Complex;
 use num_traits::One;
 
-use automatica::{
+use au::{
     plots::bode::Bode,
     poly,
     units::{RadiansPerSecond, ToDecibel},

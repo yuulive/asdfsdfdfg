@@ -60,7 +60,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
+    /// use au::{poly, Tfz};
     /// let tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
     /// ```
     #[must_use]
@@ -75,7 +75,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{num_traits::Inv, poly, Tfz};
+    /// use au::{num_traits::Inv, poly, Tfz};
     /// let tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
     /// let expected = tfz.relative_degree();
     /// assert_eq!(expected, 1);
@@ -92,7 +92,7 @@ impl<T, U: Time> TfGen<T, U> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
+    /// use au::{poly, Tfz};
     /// let num = poly!(1., 2.);
     /// let tfz = Tfz::new(num.clone(), poly!(-4., 6., -2.));
     /// assert_eq!(&num, tfz.num());
@@ -106,7 +106,7 @@ impl<T, U: Time> TfGen<T, U> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
+    /// use au::{poly, Tfz};
     /// let den = poly!(-4., 6., -2.);
     /// let tfz = Tfz::new(poly!(1., 2.), den.clone());
     /// assert_eq!(&den, tfz.den());
@@ -223,7 +223,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
+    /// use au::{poly, Tfz};
     /// let tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
     /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
     /// assert_eq!(expected, tfz.normalize());
@@ -254,7 +254,7 @@ impl<T: Float, U: Time> TfGen<T, U> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
+    /// use au::{poly, Tfz};
     /// let mut tfz = Tfz::new(poly!(1., 2.), poly!(-4., 6., -2.));
     /// tfz.normalize_mut();
     /// let expected = Tfz::new(poly!(-0.5, -1.), poly!(2., -3., 1.));
@@ -463,8 +463,8 @@ impl<T: Clone, U: Time> TfGen<T, U> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tf};
-    /// use automatica::num_complex::Complex as C;
+    /// use au::{poly, Tf};
+    /// use au::num_complex::Complex as C;
     /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
     /// assert_eq!(-8.5, tf.eval_by_val(3.));
     /// assert_eq!(C::new(0.64, -0.98), tf.eval_by_val(C::new(0., 2.0_f32)));
@@ -486,8 +486,8 @@ impl<T, U: Time> TfGen<T, U> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tf};
-    /// use automatica::num_complex::Complex as C;
+    /// use au::{poly, Tf};
+    /// use au::num_complex::Complex as C;
     /// let tf = Tf::new(poly!(1., 2., 3.), poly!(-4., -3., 1.));
     /// assert_eq!(-8.5, tf.eval(&3.));
     /// assert_eq!(C::new(0.64, -0.98), tf.eval(&C::new(0., 2.0_f32)));

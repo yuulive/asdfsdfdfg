@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate approx;
 
-use automatica::{
+use au::{
     plots::{bode::Bode, polar::Polar},
     poly,
     units::ToDecibel,

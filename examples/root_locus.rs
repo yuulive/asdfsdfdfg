@@ -1,6 +1,6 @@
-extern crate automatica;
+extern crate au;
 
-use automatica::{poly, Poly, Tf};
+use au::{poly, Poly, Tf};
 
 fn main() {
     let tf = Tf::new(poly!(1.0_f32), Poly::new_from_roots(&[-1., -2.]));

@@ -1,8 +1,8 @@
-extern crate automatica;
+extern crate au;
 
 use num_complex::Complex;
 
-use automatica::{signals::continuous, Seconds, Ss, TfMatrix};
+use au::{signals::continuous, Seconds, Ss, TfMatrix};
 
 #[allow(clippy::many_single_char_names)]
 #[allow(clippy::non_ascii_literal)]
@@ -91,7 +91,7 @@ fn main() {
     );
 }
 
-fn print_step(s: &automatica::linear_system::solver::Step<f64>) {
+fn print_step(s: &au::linear_system::solver::Step<f64>) {
     println!(
         "Time: {:.2}; state: [{:.4}; {:.4}]; output: [{:.4}; {:.4}]",
         s.time(),
@@ -102,7 +102,7 @@ fn print_step(s: &automatica::linear_system::solver::Step<f64>) {
     );
 }
 
-fn print_step_with_error(s: &automatica::linear_system::solver::StepWithError<f64>) {
+fn print_step_with_error(s: &au::linear_system::solver::StepWithError<f64>) {
     println!(
         "Time: {:.2}; state: [{:.4}; {:.4}]; output: [{:.4}; {:.4}]; error: {:.5}",
         s.time(),

@@ -1,6 +1,6 @@
 use num_traits::One;
 
-use automatica::{Discretization, Poly, Seconds, Ss, Tf, TfMatrix, Tfz};
+use au::{Discretization, Poly, Seconds, Ss, Tf, TfMatrix, Tfz};
 
 #[allow(non_snake_case)]
 fn main() {

@@ -1,6 +1,6 @@
-extern crate automatica;
+extern crate au;
 
-use automatica::{signals::continuous, Seconds, Ss, Tf};
+use au::{signals::continuous, Seconds, Ss, Tf};
 
 #[allow(clippy::many_single_char_names)]
 fn main() {

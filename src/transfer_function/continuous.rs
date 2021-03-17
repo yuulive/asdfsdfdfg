@@ -39,7 +39,7 @@ impl<T: Float> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{num_complex::Complex, Seconds, Tf};
+    /// use au::{num_complex::Complex, Seconds, Tf};
     /// let d = Tf::delay(Seconds(2.));
     /// assert_eq!(1., d(Complex::new(0., 10.)).norm());
     /// ```
@@ -52,7 +52,7 @@ impl<T: Float> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tf};
+    /// use au::{poly, Tf};
     /// let tf = Tf::new(poly!(4.), poly!(1., 5.));
     /// assert_eq!(0., tf.init_value());
     /// ```
@@ -72,7 +72,7 @@ impl<T: Float> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tf};
+    /// use au::{poly, Tf};
     /// let tf = Tf::new(poly!(1., -3.), poly!(1., 3., 2.));
     /// assert_eq!(-1.5, tf.init_value_der());
     /// ```
@@ -100,7 +100,7 @@ impl<T: Float> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tf};
+    /// use au::{poly, Tf};
     /// let g = Tf::new(poly!(1.), poly!(0., 1.));
     /// let r = Tf::new(poly!(4.), poly!(1., 1.));
     /// let s = g.sensitivity(&r);
@@ -129,7 +129,7 @@ impl<T: Float> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tf};
+    /// use au::{poly, Tf};
     /// let g = Tf::new(poly!(1.), poly!(0., 1.));
     /// let r = Tf::new(poly!(4.), poly!(1., 1.));
     /// let f = g.compl_sensitivity(&r);
@@ -154,7 +154,7 @@ impl<T: Float> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tf};
+    /// use au::{poly, Tf};
     /// let g = Tf::new(poly!(1.), poly!(0., 1.));
     /// let r = Tf::new(poly!(4.), poly!(1., 1.));
     /// let q = g.control_sensitivity(&r);
@@ -178,7 +178,7 @@ impl<T: Float + RealField> Tf<T> {
     /// # Example
     ///
     /// ```
-    /// use automatica::{Poly, Tf};
+    /// use au::{Poly, Tf};
     /// let tf = Tf::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_roots(&[-1., -2.]));
     /// assert!(tf.is_stable());
     /// ```
@@ -195,7 +195,7 @@ impl<T: Float + RealField> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{num_complex::Complex, poly, Poly, Tf};
+    /// use au::{num_complex::Complex, poly, Poly, Tf};
     /// let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
     /// let locus = l.root_locus(0.25);
     /// assert_eq!(Complex::new(-1.5, 0.), locus[0]);
@@ -222,7 +222,7 @@ impl<T: Float + RealField> Tf<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{num_complex::Complex, poly, Poly, Tf};
+    /// use au::{num_complex::Complex, poly, Poly, Tf};
     /// let l = Tf::new(poly!(1.), Poly::new_from_roots(&[-1., -2.]));
     /// let locus = l.root_locus_plot(0.1, 1.0, 0.05).into_iter();
     /// assert_eq!(19, locus.count());
@@ -240,7 +240,7 @@ impl<T> Tf<T> {
     /// Example
     ///
     /// ```
-    /// use automatica::{poly, Tf};
+    /// use au::{poly, Tf};
     /// let tf = Tf::new(poly!(4., -3.),poly!(2., 5., -0.5));
     /// assert_eq!(2., tf.static_gain());
     /// ```

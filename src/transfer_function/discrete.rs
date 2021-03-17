@@ -40,7 +40,7 @@ impl<T: Float> Tfz<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{num_complex::Complex, units::Seconds, Tfz};
+    /// use au::{num_complex::Complex, units::Seconds, Tfz};
     /// let d = Tfz::delay(2);
     /// assert_eq!(0.010000001, d(Complex::new(0., 10.0_f32)).norm());
     /// ```
@@ -53,7 +53,7 @@ impl<T: Float> Tfz<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, Tfz};
+    /// use au::{poly, Tfz};
     /// let tf = Tfz::new(poly!(4.), poly!(1., 5.));
     /// assert_eq!(0., tf.init_value());
     /// ```
@@ -77,7 +77,7 @@ impl<'a, T: 'a + Add<&'a T, Output = T> + Div<Output = T> + Zero> Tfz<T> {
     /// Example
     ///
     /// ```
-    /// use automatica::{poly, Tfz};
+    /// use au::{poly, Tfz};
     /// let tf = Tfz::new(poly!(5., -3.),poly!(2., 5., -6.));
     /// assert_eq!(2., tf.static_gain());
     /// ```
@@ -103,7 +103,7 @@ impl<T: Float + RealField> Tfz<T> {
     /// # Example
     ///
     /// ```
-    /// use automatica::{Poly, Tfz};
+    /// use au::{Poly, Tfz};
     /// let tfz = Tfz::new(Poly::new_from_coeffs(&[1.]), Poly::new_from_roots(&[0.5, 1.5]));
     /// assert!(!tfz.is_stable());
     /// ```
@@ -177,7 +177,7 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, signals::discrete, Tfz};
+    /// use au::{poly, signals::discrete, Tfz};
     /// let tfz = Tfz::new(poly!(1., 2., 3.), poly!(0., 0., 0., 1.));
     /// let mut iter = tfz.arma_fn(discrete::step(1., 0));
     /// assert_eq!(Some(0.), iter.next());
@@ -223,7 +223,7 @@ impl<T: Float + Mul<Output = T> + Sum> Tfz<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::{poly, signals::discrete, Tfz};
+    /// use au::{poly, signals::discrete, Tfz};
     /// let tfz = Tfz::new(poly!(1., 2., 3.), poly!(0., 0., 0., 1.));
     /// let mut iter = tfz.arma_iter(std::iter::repeat(1.));
     /// assert_eq!(Some(0.), iter.next());

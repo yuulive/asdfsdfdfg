@@ -215,7 +215,7 @@ impl<T: Float + RealField> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let roots = &[1., -1., 0.];
     /// let p = Poly::new_from_roots(roots);
     /// assert_eq!(roots, p.real_roots().unwrap().as_slice());
@@ -241,7 +241,7 @@ impl<T: Float + RealField> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
     /// let i = num_complex::Complex::i();
     /// assert_eq!(vec![-i, i], p.complex_roots());
@@ -271,7 +271,7 @@ impl<T: Float + FloatConst> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
     /// let i = num_complex::Complex::i();
     /// assert_eq!(vec![-i, i], p.iterative_roots());
@@ -290,7 +290,7 @@ impl<T: Float + FloatConst> Poly<T> {
     ///
     /// # Example
     /// ```
-    /// use automatica::polynomial::Poly;
+    /// use au::polynomial::Poly;
     /// let p = Poly::new_from_coeffs(&[1., 0., 1.]);
     /// let i = num_complex::Complex::i();
     /// assert_eq!(vec![-i, i], p.iterative_roots_with_max(10));

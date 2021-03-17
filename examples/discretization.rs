@@ -1,7 +1,7 @@
 #[macro_use]
-extern crate automatica;
+extern crate au;
 
-use automatica::{
+use au::{
     signals::{continuous, discrete},
     Discretization, Seconds, Ss, Tf,
 };

@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate approx;
 
-use automatica::{poly, signals::discrete, Poly, Ssd, Tfz};
+use au::{poly, signals::discrete, Poly, Ssd, Tfz};
 
 /// TC4.1
 #[test]

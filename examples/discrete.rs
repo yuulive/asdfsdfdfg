@@ -1,6 +1,6 @@
-extern crate automatica;
+extern crate au;
 
-use automatica::{signals::discrete, Ssd};
+use au::{signals::discrete, Ssd};
 
 fn main() {
     let a = [0.2, 0., 0., 0.6, 0.15, 0., 0., 0.8, 0.08];

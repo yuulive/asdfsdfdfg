@@ -42,7 +42,7 @@ impl<T: ComplexField> Ssd<T> {
     /// # Example
     ///
     /// ```
-    /// use automatica::Ssd;
+    /// use au::Ssd;
     /// let a = [-1., 1., -1., 0.25];
     /// let b = [1., 0.25];
     /// let c = [0., 1., -1., 1.];
@@ -83,7 +83,7 @@ impl<T: Scalar> Ssd<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::{Discretization, Ssd};
+    /// use au::{Discretization, Ssd};
     /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = |t| if t == 0 { vec![1.] } else { vec![0.] };
     /// let evo = disc_sys.evolution_fn(20, impulse, &[0., 0.]);
@@ -116,7 +116,7 @@ impl<T: Scalar> Ssd<T> {
     /// # Example
     /// ```
     /// use std::iter;
-    /// use automatica::{Discretization, Ssd};
+    /// use au::{Discretization, Ssd};
     /// let disc_sys = Ssd::new_from_slice(2, 1, 1, &[0.6, 0., 0., 0.4], &[1., 5.], &[1., 3.], &[0.]);
     /// let impulse = iter::once(vec![1.]).chain(iter::repeat(vec![0.])).take(20);
     /// let evo = disc_sys.evolution_iter(impulse, &[0., 0.]);
@@ -146,7 +146,7 @@ impl<T: ComplexField + Float + RealField> Ssd<T> {
     /// # Example
     ///
     /// ```
-    /// use automatica::Ssd;
+    /// use au::Ssd;
     /// let sys = Ssd::new_from_slice(2, 1, 1, &[-0.2, 0., 3., 0.1], &[1., 3.], &[-1., 0.5], &[0.1]);
     /// assert!(sys.is_stable());
     /// ```
@@ -167,7 +167,7 @@ impl<T: ComplexField + Float> Ss<T> {
     /// # Example
     /// ```
     /// # #[macro_use] extern crate approx;
-    /// use automatica::{Discretization, Ss};
+    /// use au::{Discretization, Ss};
     /// let sys = Ss::new_from_slice(2, 1, 1, &[-3., 0., -4., -4.], &[0., 1.], &[1., 1.], &[0.]);
     /// let disc_sys = sys.discretize(0.1, Discretization::Tustin).unwrap();
     /// let evo = disc_sys.evolution_fn(20, |t| vec![1.], &[0., 0.]);
